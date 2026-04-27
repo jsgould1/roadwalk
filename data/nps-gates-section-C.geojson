@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "dataset": "gates",
+    "section": "C",
+    "count": 0,
+    "tolerance_ft": 300.0,
+    "source": "NPS GRSM ArcGIS Hub opendata"
+  },
+  "features": []
+}

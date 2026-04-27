@@ -1,0 +1,1554 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "dataset": "bridge-pt",
+    "section": "A",
+    "count": 6,
+    "tolerance_ft": 300.0,
+    "source": "NPS GRSM ArcGIS Hub opendata"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 69,
+        "NAME": "Southbound Spur Bridge Over West Prong Little Pigeon River",
+        "ROAD": "Gatlinburg Spur Road (South)",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": "61992",
+        "BIPID": "5460-089",
+        "DESCRIPTION": "Bridge @ WP Little Pigeon River, ND  ST 5460-089P",
+        "API": "77",
+        "FCI": "0.024",
+        "CRV": 3197730.84,
+        "DM": 76560.0,
+        "QTY": 6901,
+        "UM": "SF",
+        "STATUS": "OPERATING",
+        "HISTORICAL_STATUS": "5",
+        "OCCUPANT": "NPS",
+        "SITE": "P434",
+        "BRDGLOAD": "OPEN, NO RESTRICTION",
+        "BRDLOAD": "20.00",
+        "NATLDMRK": "N",
+        "OPSEAS": "N",
+        "PRIMUSE": "Public Use",
+        "TOTAL_LENGTH": 200.6,
+        "SPAN_LENGTH": 72.2,
+        "DECK_WIDTH": 33.5,
+        "CURB_TO_CURB_WIDTH": 28.0,
+        "INVENTORY_RATING_H": 24,
+        "INVENTORY_RATING_HS": 29,
+        "INVENTORY_RATING_TYPE3": 27,
+        "INVENTORY_RATING_TYPE3S2": 37,
+        "INVENTORY_RATING_TYPE3_3": 44,
+        "OPERATING_RATING_H": 41,
+        "OPERATING_RATING_HS": 49,
+        "OPERATING_RATING_TYPE3": 46,
+        "OPERATING_RATING_TYPE3S2": 63,
+        "OPERATING_RATING_TYPE3_3": 74,
+        "NOTES": "None",
+        "ELEVATION": 1278,
+        "X_COORD": 272363,
+        "Y_COORD": 3956509,
+        "LON": -83.51678476,
+        "LAT": 35.72626742,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Differential GPS",
+        "SOURCEDATE": "2018-10-25T12:17:51Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "ab10f096-6113-4f1f-83eb-79d6cdeeaa2b",
+        "_section": "A",
+        "_sta_ft": 0.0,
+        "_sta": "0+00.00",
+        "_dist_from_alignment_ft": 233.3,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.516788818095,
+          35.7262743031756
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 68,
+        "NAME": "Southbound Spur Bridge Over Bypass Ramp",
+        "ROAD": "Gatlinburg Spur Road (South)",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": "60892",
+        "BIPID": "5460-044",
+        "DESCRIPTION": "Bridge @ Gatlinburg BP, ND  ST 5460-044P",
+        "API": "67",
+        "FCI": "0.002",
+        "CRV": 2397822.27,
+        "DM": 5280.0,
+        "QTY": 5315,
+        "UM": "SF",
+        "STATUS": "OPERATING",
+        "HISTORICAL_STATUS": "5",
+        "OCCUPANT": "NPS",
+        "SITE": "P434",
+        "BRDGLOAD": "OPEN, NO RESTRICTION",
+        "BRDLOAD": "20.00",
+        "NATLDMRK": "N",
+        "OPSEAS": "N",
+        "PRIMUSE": "Public Use",
+        "TOTAL_LENGTH": 144.8,
+        "SPAN_LENGTH": 56.0,
+        "DECK_WIDTH": 34.8,
+        "CURB_TO_CURB_WIDTH": 28.0,
+        "INVENTORY_RATING_H": 36,
+        "INVENTORY_RATING_HS": 47,
+        "INVENTORY_RATING_TYPE3": 43,
+        "INVENTORY_RATING_TYPE3S2": 59,
+        "INVENTORY_RATING_TYPE3_3": 65,
+        "OPERATING_RATING_H": 60,
+        "OPERATING_RATING_HS": 79,
+        "OPERATING_RATING_TYPE3": 72,
+        "OPERATING_RATING_TYPE3S2": 99,
+        "OPERATING_RATING_TYPE3_3": 108,
+        "NOTES": "None",
+        "ELEVATION": 1252,
+        "X_COORD": 272462,
+        "Y_COORD": 3956462,
+        "LON": -83.51568498,
+        "LAT": 35.72586679,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Differential GPS",
+        "SOURCEDATE": "2018-10-25T12:17:51Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "ceee17c4-2aa0-4a56-91a4-54ea5c14d5eb",
+        "_section": "A",
+        "_sta_ft": 112.2,
+        "_sta": "1+12.22",
+        "_dist_from_alignment_ft": 69.1,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5156890457484,
+          35.7258736721365
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 67,
+        "NAME": "Gatlinburg Bypass Bridge #4",
+        "ROAD": "Gatlinburg Bypass Road",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": "60871",
+        "BIPID": "5460-043",
+        "DESCRIPTION": "Bridge @ WP Little Pigeon, ND  ST 5460-043P",
+        "API": "67",
+        "FCI": "0.051",
+        "CRV": 2388348.48,
+        "DM": 122320.0,
+        "QTY": 6549,
+        "UM": "SF",
+        "STATUS": "OPERATING",
+        "HISTORICAL_STATUS": "5",
+        "OCCUPANT": "NPS",
+        "SITE": "P434",
+        "BRDGLOAD": "POSTED (OTHER)",
+        "BRDLOAD": "15.00",
+        "NATLDMRK": "N",
+        "OPSEAS": "N",
+        "PRIMUSE": "Public Use",
+        "TOTAL_LENGTH": 152.1,
+        "SPAN_LENGTH": 50.8,
+        "DECK_WIDTH": 36.3,
+        "CURB_TO_CURB_WIDTH": 28.6,
+        "INVENTORY_RATING_H": 18,
+        "INVENTORY_RATING_HS": 24,
+        "INVENTORY_RATING_TYPE3": 22,
+        "INVENTORY_RATING_TYPE3S2": 31,
+        "INVENTORY_RATING_TYPE3_3": 37,
+        "OPERATING_RATING_H": 31,
+        "OPERATING_RATING_HS": 40,
+        "OPERATING_RATING_TYPE3": 36,
+        "OPERATING_RATING_TYPE3S2": 53,
+        "OPERATING_RATING_TYPE3_3": 62,
+        "NOTES": "None",
+        "ELEVATION": 1272,
+        "X_COORD": 272559,
+        "Y_COORD": 3956318,
+        "LON": -83.51456747,
+        "LAT": 35.7245913,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Differential GPS",
+        "SOURCEDATE": "2018-10-25T12:17:51Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "77d347ef-365e-49bc-958a-60e203548e79",
+        "_section": "A",
+        "_sta_ft": 677.8,
+        "_sta": "6+77.81",
+        "_dist_from_alignment_ft": 0.4,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5145715323443,
+          35.724598184917
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 125,
+        "NAME": "Gatlingurg Bypass Bridge #3",
+        "ROAD": "Gatlinburg Bypass Road",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": null,
+        "BIPID": "5460-042",
+        "DESCRIPTION": null,
+        "API": null,
+        "FCI": null,
+        "CRV": null,
+        "DM": null,
+        "QTY": null,
+        "UM": null,
+        "STATUS": null,
+        "HISTORICAL_STATUS": null,
+        "OCCUPANT": null,
+        "SITE": null,
+        "BRDGLOAD": null,
+        "BRDLOAD": null,
+        "NATLDMRK": null,
+        "OPSEAS": null,
+        "PRIMUSE": null,
+        "TOTAL_LENGTH": 96.0,
+        "SPAN_LENGTH": 96.0,
+        "DECK_WIDTH": 29.4,
+        "CURB_TO_CURB_WIDTH": 24.0,
+        "INVENTORY_RATING_H": null,
+        "INVENTORY_RATING_HS": null,
+        "INVENTORY_RATING_TYPE3": null,
+        "INVENTORY_RATING_TYPE3S2": null,
+        "INVENTORY_RATING_TYPE3_3": null,
+        "OPERATING_RATING_H": null,
+        "OPERATING_RATING_HS": null,
+        "OPERATING_RATING_TYPE3": null,
+        "OPERATING_RATING_TYPE3S2": null,
+        "OPERATING_RATING_TYPE3_3": null,
+        "NOTES": null,
+        "ELEVATION": 1853,
+        "X_COORD": 271312,
+        "Y_COORD": 3955184,
+        "LON": -83.52801983,
+        "LAT": 35.71409191,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": null,
+        "XYACCURACY": "Unknown",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "b14495dc-cffe-4830-b38b-c0127f3a563c",
+        "_section": "A",
+        "_sta_ft": 9446.5,
+        "_sta": "94+46.46",
+        "_dist_from_alignment_ft": 0.9,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5280238926597,
+          35.7140987892078
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 39,
+        "NAME": "Gatlinburg Bypass Bridge #2",
+        "ROAD": "Gatlinburg Bypass Road",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": "60869",
+        "BIPID": "5460-041",
+        "DESCRIPTION": "Gatlinburg Bypass Bridge # 2, ND  ST 5460-041P",
+        "API": "67",
+        "FCI": "0.04",
+        "CRV": 5288714.58,
+        "DM": 212272.15,
+        "QTY": 10332,
+        "UM": "SF",
+        "STATUS": "OPERATING",
+        "HISTORICAL_STATUS": "5",
+        "OCCUPANT": "NPS",
+        "SITE": "P434",
+        "BRDGLOAD": "OPEN, NO RESTRICTION",
+        "BRDLOAD": "15.00",
+        "NATLDMRK": "N",
+        "OPSEAS": "N",
+        "PRIMUSE": "Public Use",
+        "TOTAL_LENGTH": 283.0,
+        "SPAN_LENGTH": 109.0,
+        "DECK_WIDTH": 36.0,
+        "CURB_TO_CURB_WIDTH": 28.3,
+        "INVENTORY_RATING_H": 44,
+        "INVENTORY_RATING_HS": 52,
+        "INVENTORY_RATING_TYPE3": 49,
+        "INVENTORY_RATING_TYPE3S2": 65,
+        "INVENTORY_RATING_TYPE3_3": 76,
+        "OPERATING_RATING_H": 73,
+        "OPERATING_RATING_HS": 88,
+        "OPERATING_RATING_TYPE3": 83,
+        "OPERATING_RATING_TYPE3S2": 109,
+        "OPERATING_RATING_TYPE3_3": 127,
+        "NOTES": "None",
+        "ELEVATION": 1723,
+        "X_COORD": 270778,
+        "Y_COORD": 3954366,
+        "LON": -83.5336824,
+        "LAT": 35.70660116,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Differential GPS",
+        "SOURCEDATE": "2018-10-25T12:17:51Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "066eadf2-2525-495f-97b1-08f43497d1e9",
+        "_section": "A",
+        "_sta_ft": 13349.0,
+        "_sta": "133+48.96",
+        "_dist_from_alignment_ft": 0.4,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5336864698712,
+          35.7066080354315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 38,
+        "NAME": "Gatlinburg Bypass Bridge #1",
+        "ROAD": "Gatlinburg Bypass Road",
+        "FACILITYTYPE": 1710,
+        "FMSS_LOC": "60868",
+        "BIPID": "5460-040",
+        "DESCRIPTION": "Bridge @ WP of Little Pigeon, ND  ST 5460-040P",
+        "API": "67",
+        "FCI": "0.01",
+        "CRV": 4298248.6,
+        "DM": 40927.06,
+        "QTY": 8388,
+        "UM": "SF",
+        "STATUS": "OPERATING",
+        "HISTORICAL_STATUS": "5",
+        "OCCUPANT": "NPS",
+        "SITE": "P434",
+        "BRDGLOAD": "POSTED (OTHER)",
+        "BRDLOAD": "15.00",
+        "NATLDMRK": "N",
+        "OPSEAS": "N",
+        "PRIMUSE": "Public Use",
+        "TOTAL_LENGTH": 230.0,
+        "SPAN_LENGTH": 90.0,
+        "DECK_WIDTH": 36.0,
+        "CURB_TO_CURB_WIDTH": 28.0,
+        "INVENTORY_RATING_H": 16,
+        "INVENTORY_RATING_HS": 22,
+        "INVENTORY_RATING_TYPE3": 21,
+        "INVENTORY_RATING_TYPE3S2": 27,
+        "INVENTORY_RATING_TYPE3_3": 31,
+        "OPERATING_RATING_H": 27,
+        "OPERATING_RATING_HS": 37,
+        "OPERATING_RATING_TYPE3": 35,
+        "OPERATING_RATING_TYPE3S2": 45,
+        "OPERATING_RATING_TYPE3_3": 53,
+        "NOTES": "None",
+        "ELEVATION": 1425,
+        "X_COORD": 271036,
+        "Y_COORD": 3953087,
+        "LON": -83.53047097,
+        "LAT": 35.69514,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Differential GPS",
+        "SOURCEDATE": "2018-10-25T12:17:51Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "e8dd8e3b-27cd-4e23-861e-e7063e3477ac",
+        "_section": "A",
+        "_sta_ft": 18706.1,
+        "_sta": "187+06.07",
+        "_dist_from_alignment_ft": 2.4,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                56,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170,
+                177,
+                302,
+                304,
+                305,
+                306,
+                318
+              ],
+              "0012ZZ": [
+                9,
+                14,
+                32,
+                33,
+                51,
+                54,
+                77,
+                88,
+                114,
+                115,
+                116,
+                140,
+                141,
+                142,
+                170
+              ],
+              "0012AZ": [
+                54,
+                171,
+                300,
+                302,
+                303
+              ],
+              "0012BZ": [
+                54,
+                172,
+                302,
+                303
+              ],
+              "0012CZ": [
+                54,
+                173,
+                304,
+                307
+              ],
+              "0012DZ": [
+                54,
+                174,
+                305,
+                307
+              ],
+              "0012EZ": [
+                54,
+                175,
+                306
+              ],
+              "0012FZ": [
+                54,
+                176,
+                304,
+                305,
+                307
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0012Z": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                62,
+                89,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463,
+                660,
+                666,
+                667,
+                668,
+                669,
+                670,
+                698
+              ],
+              "0012ZZ": [
+                9,
+                11,
+                15,
+                35,
+                54,
+                58,
+                121,
+                122,
+                123,
+                153,
+                154,
+                155,
+                156,
+                157,
+                158,
+                159,
+                160,
+                461,
+                462,
+                463
+              ],
+              "0012AZ": [
+                58,
+                89,
+                154,
+                665,
+                667,
+                670
+              ],
+              "0012BZ": [
+                58,
+                89,
+                155,
+                666,
+                667
+              ],
+              "0012CZ": [
+                58,
+                89,
+                156,
+                660,
+                668,
+                669,
+                670
+              ],
+              "0012DZ": [
+                58,
+                89,
+                157,
+                668,
+                669
+              ],
+              "0012EZ": [
+                58,
+                89,
+                158,
+                660,
+                669,
+                670
+              ],
+              "0012FZ": [
+                58,
+                89,
+                159,
+                660,
+                668,
+                669
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5304750382437,
+          35.6951468801865
+        ]
+      }
+    }
+  ]
+}

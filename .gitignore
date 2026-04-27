@@ -1,0 +1,13 @@
+# Field photos — too large for git
+data/photos/
+
+# Aerial imagery strips — too large for git
+data/aerial-strips/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS junk
+.DS_Store
+Thumbs.db

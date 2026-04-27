@@ -1,0 +1,16 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "GRSM_GIPReport.pdf",
+    "report": "GIP",
+    "section": "C",
+    "count": 0,
+    "default_length_ft": 100.0,
+    "side_offset_ft": 20.0,
+    "length_source_counts": {
+      "pdf_text_layer": 0,
+      "estimated_pending_ocr": 0
+    }
+  },
+  "features": []
+}

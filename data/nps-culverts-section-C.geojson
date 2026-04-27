@@ -1,0 +1,174 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "GRSM Road Culverts (NPS ArcGIS Hub)",
+    "section": "C",
+    "filter": "Within 200.0 ft of section alignment polyline",
+    "count": 1,
+    "geometry_note": "Culverts rendered as perpendicular LineStrings synthesized from GIS points + road tangent.",
+    "perpendicular_length_ft": 40.0,
+    "endpoint_role_assignment": "unassigned \u2014 field walk determines inlet vs outlet"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 762,
+        "loc_name": "Big Cove Connector Road, SD    RT 0144",
+        "type": "Cross Drainage",
+        "material": "Galvan Steel",
+        "fmss_loc": "57815",
+        "lat": 35.4991762474947,
+        "lng": -83.3025586857834,
+        "sta_ft": 1764.8,
+        "sta_formatted": "17+64.75",
+        "dist_from_alignment_ft": 117.8,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0010S": [
+                8,
+                9,
+                10,
+                11,
+                13,
+                15,
+                17,
+                25,
+                26,
+                27,
+                51,
+                52,
+                57,
+                63,
+                87,
+                117,
+                118,
+                119,
+                120,
+                143,
+                144,
+                145,
+                146,
+                164,
+                165,
+                166,
+                167,
+                255,
+                260,
+                261,
+                262,
+                263,
+                264,
+                265,
+                266,
+                267,
+                268,
+                313
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0010S": [
+                8,
+                9,
+                11,
+                13,
+                14,
+                17,
+                28,
+                29,
+                30,
+                50,
+                55,
+                56,
+                63,
+                71,
+                72,
+                89,
+                124,
+                125,
+                126,
+                127,
+                147,
+                148,
+                149,
+                150,
+                355,
+                356,
+                357,
+                358,
+                359,
+                360,
+                361,
+                362,
+                363,
+                364,
+                365,
+                366,
+                367,
+                368,
+                369,
+                370,
+                371,
+                372,
+                374,
+                375,
+                376,
+                546,
+                644,
+                662,
+                663,
+                664,
+                674,
+                685,
+                686,
+                691,
+                692,
+                703
+              ]
+            }
+          }
+        },
+        "_geometry_source": "synthesized_perpendicular_from_point",
+        "_perpendicular_length_ft": 40.0,
+        "_tangent_bearing_deg": 270.0,
+        "_original_point_lat": 35.4991762474947,
+        "_original_point_lng": -83.3025586857834,
+        "endpoint_1": {
+          "lat": 35.4995539,
+          "lng": -83.3025585,
+          "role": "unassigned (inlet or outlet)",
+          "headwall": null,
+          "flange_end_section": null
+        },
+        "endpoint_2": {
+          "lat": 35.4994442,
+          "lng": -83.3025585,
+          "role": "unassigned (inlet or outlet)",
+          "headwall": null,
+          "flange_end_section": null
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -83.30255848900934,
+            35.499553887955095
+          ],
+          [
+            -83.3025585463107,
+            35.49944424267498
+          ]
+        ]
+      }
+    }
+  ]
+}

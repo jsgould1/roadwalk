@@ -1,0 +1,86 @@
+{
+  "per_route_summary": {
+    "0010N": {
+      "gip_assets_on_route": 89,
+      "wip_assets_on_route": 116,
+      "gip_page_mentions": 103,
+      "wip_page_mentions": 144,
+      "c5_page_mentions": 31,
+      "c6_page_mentions": 53
+    },
+    "0010S": {
+      "gip_assets_on_route": 30,
+      "wip_assets_on_route": 34,
+      "gip_page_mentions": 38,
+      "wip_page_mentions": 44,
+      "c5_page_mentions": 38,
+      "c6_page_mentions": 56
+    },
+    "0012AZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 1,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 5,
+      "c6_page_mentions": 6
+    },
+    "0012BZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 0,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 4,
+      "c6_page_mentions": 5
+    },
+    "0012CZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 0,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 4,
+      "c6_page_mentions": 7
+    },
+    "0012DZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 0,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 4,
+      "c6_page_mentions": 5
+    },
+    "0012EZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 0,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 3,
+      "c6_page_mentions": 6
+    },
+    "0012FZ": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 0,
+      "wip_page_mentions": 0,
+      "c5_page_mentions": 5,
+      "c6_page_mentions": 6
+    },
+    "0012Z": {
+      "gip_assets_on_route": 0,
+      "wip_assets_on_route": 0,
+      "gip_page_mentions": 42,
+      "wip_page_mentions": 19,
+      "c5_page_mentions": 22,
+      "c6_page_mentions": 29
+    },
+    "0012ZZ": {
+      "gip_assets_on_route": 36,
+      "wip_assets_on_route": 19,
+      "gip_page_mentions": 42,
+      "wip_page_mentions": 19,
+      "c5_page_mentions": 15,
+      "c6_page_mentions": 20
+    }
+  },
+  "gip_asset_count": 400,
+  "wip_asset_count": 377
+}

@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Road &amp; Lot Inventory — Field Tool · Design Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F1EA;
+    --bg-alt: #EDE7DC;
+    --bg-deep: #E4DCCD;
+    --ink: #111418;
+    --ink-soft: #3A3F47;
+    --ink-faint: #6B7079;
+    --rule: #C8BFAE;
+    --rule-soft: #D9D1C0;
+    --blue: #0B3D66;
+    --blue-soft: #1E5688;
+    --orange: #C85A2B;
+    --orange-soft: #E07B4A;
+    --green: #3A7A3F;
+    --yellow: #D4A82C;
+    --red: #B33A2F;
+    --gray-chip: #8A8F98;
+
+    /* Ribbon heat palette (edge drop-off) */
+    --heat-0: #B5C0AA;  /* gray / measured zero */
+    --heat-1: #5A8F3E;  /* 0-2" green */
+    --heat-2: #D4A82C;  /* 2-4" yellow */
+    --heat-3: #D67830;  /* 4-6" orange */
+    --heat-4: #B33A2F;  /* >6" red */
+
+    --serif: 'IBM Plex Serif', Georgia, serif;
+    --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ==================== HEADER ==================== */
+  header.doc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    backdrop-filter: blur(8px);
+    background: rgba(245, 241, 234, 0.92);
+  }
+
+  .masthead { display: flex; flex-direction: column; min-width: 0; }
+  .masthead .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  .masthead .title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Viewport toggle */
+  .viewport-toggle {
+    display: inline-flex;
+    background: var(--bg-deep);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 2px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .viewport-toggle button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 6px 14px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    border-radius: 1px;
+    transition: all 0.15s;
+  }
+  .viewport-toggle button.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  /* ==================== LAYOUT ==================== */
+  .doc-wrap {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 56px;
+    padding: 48px 28px 120px;
+  }
+
+  @media (max-width: 900px) {
+    .doc-wrap { grid-template-columns: 1fr; gap: 24px; padding: 28px 20px 80px; }
+    nav.toc { position: static; max-height: none; }
+    nav.toc.collapsed ol { display: none; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    font-family: var(--sans);
+    font-size: 13px;
+    padding-right: 12px;
+    border-right: 1px solid var(--rule-soft);
+  }
+  @media (max-width: 900px) {
+    nav.toc { border-right: 0; border-bottom: 1px solid var(--rule-soft); padding-bottom: 16px; }
+  }
+  nav.toc h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin: 0 0 14px 0;
+  }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  nav.toc li { counter-increment: toc; margin: 0; padding: 5px 0; border-bottom: 1px dotted var(--rule-soft); }
+  nav.toc li:last-child { border-bottom: 0; }
+  nav.toc a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    transition: color 0.1s;
+  }
+  nav.toc a:hover { color: var(--blue); }
+  nav.toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    min-width: 20px;
+  }
+  nav.toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    min-width: 22px;
+    display: inline-block;
+  }
+  nav.toc li::before { content: none; }
+
+  main.doc-main { min-width: 0; }
+
+  /* ==================== TYPOGRAPHY ==================== */
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.012em; }
+  h1 {
+    font-size: 56px;
+    line-height: 1.05;
+    margin: 0 0 12px 0;
+    font-weight: 500;
+  }
+  @media (max-width: 600px) { h1 { font-size: 38px; } }
+
+  h2 {
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 80px 0 8px 0;
+    font-weight: 600;
+    border-top: 1px solid var(--rule);
+    padding-top: 28px;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+  h2::before {
+    content: attr(data-num);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--orange);
+    letter-spacing: 0.04em;
+    padding-top: 6px;
+  }
+  @media (max-width: 600px) { h2 { font-size: 24px; } }
+
+  h3 {
+    font-size: 20px;
+    line-height: 1.3;
+    margin: 40px 0 8px;
+    color: var(--blue);
+  }
+
+  h4 {
+    font-size: 14px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 28px 0 8px;
+  }
+
+  p { margin: 0 0 14px 0; max-width: 68ch; }
+  p.lead {
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin-bottom: 28px;
+    font-weight: 400;
+  }
+
+  .section-kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 16px;
+    margin-bottom: 0;
+  }
+
+  code, kbd { font-family: var(--mono); font-size: 0.88em; background: var(--bg-deep); padding: 1px 5px; border-radius: 2px; }
+
+  strong { font-weight: 600; color: var(--ink); }
+  em { font-style: italic; }
+
+  a { color: var(--blue); text-decoration: underline; text-decoration-color: rgba(11, 61, 102, 0.25); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--blue); }
+
+  ul, ol { padding-left: 22px; max-width: 68ch; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--ink-faint); }
+
+  hr { border: 0; border-top: 1px solid var(--rule-soft); margin: 32px 0; }
+
+  /* ==================== CALLOUTS, PANELS ==================== */
+  .panel {
+    background: var(--bg-alt);
+    border: 1px solid var(--rule-soft);
+    padding: 20px 24px;
+    margin: 20px 0;
+    border-radius: 2px;
+    font-size: 15px;
+  }
+  .panel.blueprint {
+    background: #0B3D66;
+    color: #D8E7F4;
+    border: 0;
+    padding: 28px 32px;
+  }
+  .panel.blueprint strong { color: #fff; }
+  .panel.blueprint h4 { color: rgba(255,255,255,0.6); }
+  .panel .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .panel.blueprint .label { color: rgba(255,255,255,0.55); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 20px 0; }
+  @media (max-width: 720px) { .three-col { grid-template-columns: 1fr; } }
+
+  /* ==================== TABLES ==================== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0 24px;
+    font-family: var(--sans);
+    font-size: 13.5px;
+    background: var(--bg-alt);
+    border: 1px solid var(--rule);
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-weight: 600;
+    vertical-align: bottom;
+  }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td code { font-size: 12px; background: var(--bg); }
+
+  .code-cell { font-family: var(--mono); font-weight: 500; color: var(--blue); }
+
+  /* ==================== SCHEMATICS (DEVICE FRAMES) ==================== */
+  .schematic {
+    margin: 28px 0 40px;
+  }
+  .schematic-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--rule-soft);
+    padding-bottom: 6px;
+  }
+  .schematic-header .tag { color: var(--orange); }
+
+  .device-stage {
+    background: var(--bg-deep);
+    padding: 28px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  /* Device frames respond to viewport toggle */
+  .device {
+    background: #FFFFFF;
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+    transition: width 0.3s ease, height 0.3s ease;
+    position: relative;
+  }
+  body.vp-mobile .device.phone { width: 390px; border-radius: 38px; border: 8px solid #111418; overflow: hidden; }
+  body.vp-mobile .device.phone svg { border-radius: 30px; }
+  body.vp-desktop .device.phone { width: 720px; border-radius: 10px; }
+
+  body.vp-mobile .device.desktop { width: 420px; border-radius: 6px; }
+  body.vp-desktop .device.desktop { width: 1080px; border-radius: 8px; }
+
+  .device-caption {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 10px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .annotation-list {
+    margin: 14px 0 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--sans);
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 22px;
+  }
+  @media (max-width: 720px) { .annotation-list { grid-template-columns: 1fr; } }
+  .annotation-list li {
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 0;
+  }
+  .annotation-list li::before {
+    content: attr(data-n);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--ink);
+    color: var(--bg);
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: 50%;
+    text-align: center;
+  }
+
+  /* ==================== CODE BADGE ==================== */
+  .code-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--blue);
+  }
+
+  /* ==================== CHIP MOCK (used in prose examples) ==================== */
+  .chip-mock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .chip-mock.side-l::before { content: "◀"; font-size: 10px; opacity: 0.85; }
+  .chip-mock.side-r::after { content: "▶"; font-size: 10px; opacity: 0.85; }
+
+  /* ==================== FOOTER ==================== */
+  footer.doc-footer {
+    border-top: 1px solid var(--rule);
+    margin-top: 80px;
+    padding: 28px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Key-value definition list */
+  dl.kv {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 8px 20px;
+    margin: 16px 0;
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  dl.kv dt {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    padding-top: 2px;
+  }
+  dl.kv dd { margin: 0; color: var(--ink); }
+
+  /* Status pill */
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .pill.v1 { background: #2C5E30; color: #EAF2E5; }
+  .pill.v2 { background: var(--orange); color: #fff; }
+  .pill.open { background: var(--bg-deep); color: var(--ink-soft); border: 1px solid var(--rule); }
+
+  /* Print-friendly */
+  @media print {
+    header.doc-header, nav.toc, .viewport-toggle { display: none; }
+    .doc-wrap { grid-template-columns: 1fr; padding: 0; }
+    body { font-size: 11pt; background: white; }
+    h2 { page-break-before: always; }
+  }
+</style>
+</head>
+<body class="vp-mobile">
+
+<!-- ================= HEADER ================= -->
+<header class="doc-header">
+  <div class="masthead">
+    <span class="eyebrow">Design Specification · v0.1 · Draft</span>
+    <span class="title">Road &amp; Lot Inventory — Field Tool</span>
+  </div>
+  <div class="viewport-toggle" role="tablist" aria-label="Schematic viewport">
+    <button type="button" class="active" data-vp="mobile">Mobile</button>
+    <button type="button" data-vp="desktop">Desktop</button>
+  </div>
+</header>
+
+<div class="doc-wrap">
+
+<!-- ================= TOC ================= -->
+<nav class="toc" aria-label="Table of contents">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#intent">Intent &amp; principles</a></li>
+    <li><a href="#datamodel">Data model</a></li>
+    <li><a href="#sections">Section types</a></li>
+    <li><a href="#catalog">Feature catalog</a></li>
+    <li><a href="#lifecycle">Lifecycle of a walk</a></li>
+    <li><a href="#screens">Screen schematics</a></li>
+    <li><a href="#ribbon">The ribbon, in detail</a></li>
+    <li><a href="#tally">Tally bar, in detail</a></li>
+    <li><a href="#architecture">Architecture notes</a></li>
+    <li><a href="#open">Open questions</a></li>
+    <li><a href="#phasing">Phased build</a></li>
+  </ol>
+</nav>
+
+<!-- ================= MAIN ================= -->
+<main class="doc-main">
+
+<!-- HERO -->
+<section>
+  <p class="section-kicker">Design document · April 2026</p>
+  <h1>A walk down the road,<br>turned into data.</h1>
+  <p class="lead">A mobile-first field inventory tool for roadway segments and parking lots, designed around the reality of walking a site with a phone in hand. Captures points, lines, polygons, and background tracks; renders a live plan-view ribbon as you walk; delivers tables and plan labels that flow straight into deliverables.</p>
+
+  <div class="panel blueprint">
+    <span class="label">One-sentence charter</span>
+    <p style="margin:0; font-size: 18px; line-height: 1.55;">
+      Geometry, photo, and type in under ten seconds; everything else deferrable — and the tool adapts to the job, not the other way around.
+    </p>
+  </div>
+
+  <p>This document assembles decisions made during design conversation into a coherent picture of the tool. It is deliberately prior to any code. Where questions remain, they are flagged in section 10.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- § 1  INTENT & PRINCIPLES                                    -->
+<!-- ============================================================ -->
+<section id="intent">
+<h2 data-num="01">Intent &amp; principles</h2>
+<p class="section-kicker">Why this tool, and why this shape</p>
+
+<p>Past inventory tools built on the same single-file HTML pattern have accumulated capability over time and, in doing so, become slow to use in the field. Forms grew long. Bottom bars filled up. Every feature looked like every other feature. The tool held its value at the desk, but the walk itself got harder.</p>
+
+<p>This tool is a reset on that trajectory. It starts from the walk and works outward.</p>
+
+<h3>Principles</h3>
+
+<dl class="kv">
+  <dt>Seconds, not minutes</dt>
+  <dd>A feature — point, line, or polygon — should be placed in under ten seconds. Photo, geometry, type, one required field. Everything else is deferrable.</dd>
+
+  <dt>Deferral is honest</dt>
+  <dd>Features that are partially filled in the field are explicitly marked incomplete. They do not hide. They resurface at the truck, at the desk, at section close. The tool never assumes the walk was complete.</dd>
+
+  <dt>Geometry in the background</dt>
+  <dd>Guardrail, fence, curb, swale, and edge drop-off are not stop-and-fill features. They are tracks that run while attention is elsewhere. The screen accommodates several simultaneous tracks without getting in the way.</dd>
+
+  <dt>The screen is a plan sheet</dt>
+  <dd>The ribbons running down the left and right edges of the screen are a live, schematic plan view. Drafting conventions — solid curb, dashed guardrail, double curb-and-gutter, <code>&gt;&gt;&gt;</code> swales — render as you walk. The field display and the deliverable speak the same visual language.</dd>
+
+  <dt>Configurable, not hardcoded</dt>
+  <dd>Feature types, codes, waypoint forms, kickoff and closeout questions, and ribbon symbology live in settings. Different jobs need different tools. The app adapts to the job.</dd>
+
+  <dt>Progressive disclosure</dt>
+  <dd>Forms start minimal and grow only where upstream answers demand it. An ADA ramp that is compliant does not unfold PROWAG deficiency fields. A grate inlet shows grate condition; a curb inlet does not.</dd>
+
+  <dt>Offline by default</dt>
+  <dd>Everything works with no connection. Data lives in IndexedDB. Sync is a later step, not a prerequisite.</dd>
+</dl>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 2  DATA MODEL                                             -->
+<!-- ============================================================ -->
+<section id="datamodel">
+<h2 data-num="02">Data model</h2>
+<p class="section-kicker">Three nested containers, and the things they hold</p>
+
+<p>The tool organizes around three nested levels: the <strong>project</strong> (the job), the <strong>section</strong> (a single road segment, parking lot, apron, etc.), and the <strong>feature</strong> (a sign, a culvert, a repair, a length of guardrail). Each level carries its own metadata; each lower level inherits context from the one above.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Data Model Overview</span>
+    <span class="tag">Diagram 2.1</span>
+  </div>
+  <div class="device-stage">
+    <svg viewBox="0 0 820 360" width="780" style="max-width: 100%; height: auto;">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3A3F47"/>
+        </marker>
+      </defs>
+      <style>
+        .boxlbl { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; fill: #6B7079; text-transform: uppercase; }
+        .boxttl { font-family: 'IBM Plex Serif', serif; font-size: 18px; font-weight: 600; fill: #111418; }
+        .boxttxt { font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; fill: #3A3F47; }
+      </style>
+
+      <!-- Project box -->
+      <rect x="30" y="30" width="200" height="140" fill="#fff" stroke="#0B3D66" stroke-width="1.5" rx="3"/>
+      <text x="45" y="52" class="boxlbl">Level 1</text>
+      <text x="45" y="78" class="boxttl">Project</text>
+      <text x="45" y="102" class="boxttxt">Name, client, site boundary</text>
+      <text x="45" y="120" class="boxttxt">Feature catalog (subset of master)</text>
+      <text x="45" y="138" class="boxttxt">Alignments (imported or drawn)</text>
+      <text x="45" y="156" class="boxttxt">Crew roster (A / B)</text>
+
+      <!-- Section box -->
+      <rect x="310" y="30" width="220" height="140" fill="#fff" stroke="#0B3D66" stroke-width="1.5" rx="3"/>
+      <text x="325" y="52" class="boxlbl">Level 2</text>
+      <text x="325" y="78" class="boxttl">Section</text>
+      <text x="325" y="102" class="boxttxt">Type: linear or area</text>
+      <text x="325" y="120" class="boxttxt">Boundary: alignment or polygon</text>
+      <text x="325" y="138" class="boxttxt">Kickoff answers</text>
+      <text x="325" y="156" class="boxttxt">Closeout recommendations</text>
+
+      <!-- Feature box -->
+      <rect x="610" y="30" width="180" height="140" fill="#fff" stroke="#0B3D66" stroke-width="1.5" rx="3"/>
+      <text x="625" y="52" class="boxlbl">Level 3</text>
+      <text x="625" y="78" class="boxttl">Feature</text>
+      <text x="625" y="102" class="boxttxt">Type (from catalog)</text>
+      <text x="625" y="120" class="boxttxt">Geometry + station</text>
+      <text x="625" y="138" class="boxttxt">Waypoints, photos</text>
+      <text x="625" y="156" class="boxttxt">Attributes (progressive)</text>
+
+      <!-- Arrows -->
+      <line x1="230" y1="100" x2="310" y2="100" stroke="#3A3F47" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="530" y1="100" x2="610" y2="100" stroke="#3A3F47" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="270" y="92" class="boxttxt" text-anchor="middle" style="font-size: 11px; fill: #6B7079;">contains</text>
+      <text x="570" y="92" class="boxttxt" text-anchor="middle" style="font-size: 11px; fill: #6B7079;">contains</text>
+
+      <!-- Footer: examples -->
+      <rect x="30" y="210" width="760" height="130" fill="#EDE7DC" stroke="#D9D1C0" stroke-width="1" rx="2"/>
+      <text x="45" y="232" class="boxlbl">Example</text>
+      <text x="45" y="256" style="font-family: 'IBM Plex Serif', serif; font-size: 14px; font-style: italic; fill: #111418;">Manchester Terminal Inspection (2026)</text>
+      <line x1="45" y1="268" x2="775" y2="268" stroke="#D9D1C0"/>
+      <text x="45" y="288" class="boxttxt"><tspan style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; fill: #0B3D66;">Project</tspan>   ·  Manchester Terminal · Houston TX · Logistec · 6 sections</text>
+      <text x="45" y="306" class="boxttxt"><tspan style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; fill: #0B3D66;">Sections</tspan>    ·  Main Access Rd · Truck Apron N · Truck Apron S · Gate Yard · Container Pad · Rail Access</text>
+      <text x="45" y="324" class="boxttxt"><tspan style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; fill: #0B3D66;">Features</tspan>  ·  218 total · 47 signs, 12 culverts, 63 repairs, 8 track runs, 88 drainage points</text>
+    </svg>
+  </div>
+</div>
+
+<h3>What travels with each level</h3>
+
+<p>A <strong>project</strong> holds the catalog that its sections draw from — a subset of the global feature-type master, optionally augmented with project-specific one-offs. It also holds the alignment library, the crew roster, and the site boundary. One project, many sections.</p>
+
+<p>A <strong>section</strong> is the unit of a walk. It has a type (linear or area), a boundary, a set of kickoff answers that configure its UI, and — at the end — a set of closeout recommendations that flow to the deliverable. A crew works one section at a time, but switches between sections freely via the header dropdown.</p>
+
+<p>A <strong>feature</strong> is a physical thing inventoried within a section. It inherits context from its section — if the section is linear, the feature carries station values; if area, it carries GPS extents only. Features follow a progressive-disclosure form tree defined in the catalog.</p>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 3  SECTION TYPES                                            -->
+<!-- ============================================================ -->
+<section id="sections">
+<h2 data-num="03">Section types</h2>
+<p class="section-kicker">Two modes, shared point features, different linear treatment</p>
+
+<p>Every section is either <strong>linear</strong> or <strong>area</strong>. This distinction drives a great deal — whether the ribbon is active, whether stationing applies, how repairs are authored, how certain features (edge drop-off in particular) are captured. Point features — signs, catch basins, monuments, ADA ramps — behave identically across both modes.</p>
+
+<p>Both types also carry a required <strong>pavement type</strong> attribute set at kickoff: <em>asphalt (AC)</em>, <em>Portland cement concrete (PCC)</em>, <em>composite</em> (AC over PCC), <em>chip seal</em>, <em>gravel / unpaved</em>, or <em>other</em>. Pavement type drives which distress vocabulary is offered (joint reflection cracking is a PCC-on-AC concept; faulting is a PCC concept; raveling is an AC concept), which photo subjects make sense, and how repairs are described. Mixing types within one section is allowed but flagged at closeout — the typical resolution is to split the section.</p>
+
+<p>Either type of section can be <strong>split</strong> into sub-sections at any point — useful for long roadways that report better as multiple shorter runs, or for one-polygon parking sites that contain three functionally distinct lots. Splits use a <code>name::01</code> / <code>::02</code> naming convention and reassign features by station (linear) or point-in-polygon (area). See § 9 for the mechanic.</p>
+
+<div class="two-col">
+  <div class="panel">
+    <span class="label">Section type · Linear</span>
+    <h3 style="margin-top: 4px;">Roadway segment</h3>
+    <p style="font-size: 14px;">Alignment-based. Stationing is the native coordinate. The ribbon is active, showing plan-view symbology on both sides of the pavement cut line. Repairs can be parametric (lane + position + length) or drawn. Background tracks — guardrail, fence, curb, swale, edge drop-off — run while walking.</p>
+    <p style="font-size: 14px;"><strong>Used for:</strong> road segments, taxiways, runway shoulders, rail intermodal access roads, any linear facility where centerline is meaningful.</p>
+  </div>
+
+  <div class="panel">
+    <span class="label">Section type · Area</span>
+    <h3 style="margin-top: 4px;">Parking lot, apron, pad</h3>
+    <p style="font-size: 14px;">Polygon-bounded. No stationing, no ribbon. Features collected within the polygon use GPS extents only. Edge conditions become polylines along the perimeter or polygons; repairs are always drawn. Kickoff asks stall counts, ADA stalls, fire lane, striping, drainage, curb stops (count + general condition), and the early distress impression by category.</p>
+    <p style="font-size: 14px;"><strong>Used for:</strong> parking lots, truck aprons, container yards, helipads, any facility where relative position matters more than station.</p>
+  </div>
+</div>
+
+<h3>Mode-specific behavior</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 26%;">Dimension</th>
+      <th>Linear section</th>
+      <th>Area section</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Native coordinate</td>
+      <td>Station along alignment</td>
+      <td>GPS only</td>
+    </tr>
+    <tr>
+      <td>Ribbon</td>
+      <td>Active; 5-slot cross-section per side</td>
+      <td>Hidden</td>
+    </tr>
+    <tr>
+      <td>Repair authoring</td>
+      <td>Parametric (default) or drawn</td>
+      <td>Drawn only</td>
+    </tr>
+    <tr>
+      <td>Edge drop-off</td>
+      <td>Track with stationed waypoints</td>
+      <td>Polyline along perimeter, or polygon (user chooses)</td>
+    </tr>
+    <tr>
+      <td>Background tracks</td>
+      <td>Up to ~5 per side, visible as chips</td>
+      <td>Not applicable</td>
+    </tr>
+    <tr>
+      <td>Tally bar (crack seal)</td>
+      <td>GPS-stamped increments; recent strip shows stations</td>
+      <td>Increments untagged; recent strip shows timestamps</td>
+    </tr>
+    <tr>
+      <td>Kickoff focus</td>
+      <td>Lanes, shoulder, curb, guardrail, drainage, distress impression by category</td>
+      <td>Stall counts, ADA, fire lane, striping, drainage, curb stops, distress impression by category</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 4  FEATURE CATALOG                                        -->
+<!-- ============================================================ -->
+<section id="catalog">
+<h2 data-num="04">Feature catalog</h2>
+<p class="section-kicker">What the tool knows how to collect, and how each thing behaves</p>
+
+<p>The catalog is a settings-editable master list. Each entry defines a feature type's name, two-letter plan-label code, geometry, and — for track-type features — ribbon symbology. Entries also carry a form tree describing what questions to ask and when.</p>
+
+<p>The catalog is <strong>hybrid</strong>: a global master list is maintained across projects; each project selects its active subset and may add project-specific types. Inactive types stay in the master but drop out of the field UI so the bottom bar stays short.</p>
+
+<h3>Starter catalog</h3>
+
+<p>Below is the working list assembled during design. Codes use title-case two-letter convention (<code>Si</code>, <code>Cu</code>, <code>GR</code>) — a standard to lock during build. Ribbon entries specify <em>how</em> the feature renders on the plan-view strip when active at the current station.</p>
+
+<h4>Point features</h4>
+<table>
+  <thead>
+    <tr><th>Name</th><th style="width:60px;">Code</th><th>Form notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sign</td><td class="code-cell">Si</td><td>Type (warning / regulatory / guide / informational), <strong>MUTCD code from in-app picker</strong> (R1-1 STOP, R1-2 YIELD, W1-1 turn arrow, W11-2 ped crossing, etc., grouped by series with search), condition, post condition. Picker carries the canonical name and shape, so the inspector taps the symbol they see rather than typing a code from memory. Free-text fallback for non-standard or custom signs.</td></tr>
+    <tr><td>Note</td><td class="code-cell">No</td><td>Free-text observation with photo; escape valve for anything uncategorized</td></tr>
+    <tr><td>Catch basin</td><td class="code-cell">CB</td><td>Grate type, rim condition, debris level, invert photos if accessible</td></tr>
+    <tr><td>Inlet</td><td class="code-cell">In</td><td>Curb inlet vs grate inlet; dimensions, condition</td></tr>
+    <tr><td>Manhole</td><td class="code-cell">MH</td><td>Cover type, rim elevation if surveyed, adjustment ring condition</td></tr>
+    <tr><td>Cleanout</td><td class="code-cell">CO</td><td>Diameter, cover condition, at-grade check</td></tr>
+    <tr><td>Gas gate / valve</td><td class="code-cell">GG</td><td>Utility owner if marked, cover condition, at-grade check</td></tr>
+    <tr><td>Monument</td><td class="code-cell">Mo</td><td>Type (survey, ROW, PLSS), inscription photo, condition</td></tr>
+    <tr><td>ADA ramp / pad</td><td class="code-cell">AR</td><td><strong>Three observable flags only</strong>: (1) ramp present yes/no, (2) detectable warning pad present yes/no, (3) appears clearly out of compliance yes/no (a single judgment call — gross slope, missing pad, broken surface, blocked path). Optional photo. Deliberately not a PROWAG survey — this captures presence and gross condition without pretending to measure compliance.</td></tr>
+    <tr><td>Pavement marking — symbol</td><td class="code-cell">PS</td><td>Symbol type (arrow / only / bike / HOV / RR), condition</td></tr>
+    <tr><td>Wheel stop</td><td class="code-cell">WS</td><td>Material (concrete / rubber / asphalt-rebar), condition (good / cracked / broken / loose / missing-anchor), ADA path encroachment flag. Typically captured one-per-stall in lots — also see lot-level kickoff count for quick totals.</td></tr>
+    <tr><td>Safety observation</td><td class="code-cell">Sa</td><td>Category (hazard / near-miss / missing equipment / traffic exposure / wildlife / other), severity (low / medium / high), description, photo. Drops onto the daily report's safety log automatically. Use case: live wire down at station 12+00, exposed rebar in walking path, aggressive dog at lot perimeter, anything the next crew or the office should know.</td></tr>
+  </tbody>
+</table>
+
+<h4>Linear features (polylines, editable vertices)</h4>
+<table>
+  <thead>
+    <tr><th>Name</th><th style="width:60px;">Code</th><th>Form notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Culvert</td><td class="code-cell">Cu</td><td>Polyline typically 2-pt (inlet / outlet); more vertices allowed. Size, material, inlet/outlet headwall sub-fields, flow direction</td></tr>
+    <tr><td>Gate</td><td class="code-cell">Ga</td><td>Short line across opening. Type (swing / slide / manual / electric), width, lock status</td></tr>
+    <tr><td>Traffic loop</td><td class="code-cell">TL</td><td>Representative centerline of saw-cut; approximate dimensions</td></tr>
+    <tr><td>Pavement marking — longitudinal</td><td class="code-cell">PL</td><td>Type (solid white / double yellow / skip / edge line), condition along run</td></tr>
+    <tr><td>Pavement marking — transverse</td><td class="code-cell">PT</td><td>Type (stop bar / crosswalk / yield line), condition</td></tr>
+    <tr><td>Crack seal area</td><td class="code-cell">CS</td><td>Length-only lightweight polyline; primary capture is via tally bar, but this is the escape for discrete cracked patches</td></tr>
+  </tbody>
+</table>
+
+<h4>Track features (polylines captured while walking)</h4>
+<table>
+  <thead>
+    <tr><th>Name</th><th style="width:60px;">Code</th><th>Ribbon behavior</th><th>Form notes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Guardrail</td>
+      <td class="code-cell">GR</td>
+      <td>Dashed line, guardrail slot</td>
+      <td>Rail type (W-beam / cable / concrete / thrie-beam), end terminal, damaged-post waypoints</td>
+    </tr>
+    <tr>
+      <td>Fence</td>
+      <td class="code-cell">Fe</td>
+      <td>Thin line, outermost slot</td>
+      <td>Material (chain-link / wood / ornamental), height, condition</td>
+    </tr>
+    <tr>
+      <td>Curb / curb &amp; gutter</td>
+      <td class="code-cell">Cb</td>
+      <td>Solid or double line, innermost non-pavement slot</td>
+      <td>Type (mountable / barrier / combo C&amp;G), material, condition, spall waypoints</td>
+    </tr>
+    <tr>
+      <td>Sidewalk</td>
+      <td class="code-cell">Sw</td>
+      <td>Solid line, sidewalk slot</td>
+      <td>Width, material (concrete / asphalt / pavers), heave / crack waypoints</td>
+    </tr>
+    <tr>
+      <td>Swale</td>
+      <td class="code-cell">Sl</td>
+      <td><code>&gt;&gt;&gt;</code> chevron symbols, swale slot</td>
+      <td>Editable polyline. Type (earth / turf / lined), blockage / erosion waypoints</td>
+    </tr>
+    <tr>
+      <td>Edge drop-off</td>
+      <td class="code-cell">ED</td>
+      <td>Heat-colored band, shares innermost curb slot</td>
+      <td>Continuous scalar. Waypoints carry depth × width; tally renders as heat ribbon</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Polygon features</h4>
+<table>
+  <thead>
+    <tr><th>Name</th><th style="width:60px;">Code</th><th>Form notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Repair</td><td class="code-cell">Re</td><td>Parametric (linear) or drawn. Distress type(s), severity, position (lane / wheelpath / shoulder), dimensions, recommended treatment</td></tr>
+    <tr><td>Pavement marking — area</td><td class="code-cell">PA</td><td>Hatched medians, gore areas, bike boxes. Condition</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Note on codes:</strong> the two-letter convention is a working standard. It must be unique across active types within a project, and the catalog editor enforces that. Codes flow directly to plan labels on the deliverable and to row keys in the inventory table.</p>
+
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 5  LIFECYCLE OF A WALK                                    -->
+<!-- ============================================================ -->
+<section id="lifecycle">
+<h2 data-num="05">Lifecycle of a walk</h2>
+<p class="section-kicker">From parking the truck to delivering the report</p>
+
+<p>A walk has a shape. Kickoff configures the walk; collection fills it; closeout validates it; export hands it off. Each stage has its own screens and its own rhythm. The tool pushes crews through that shape without getting in the way.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Walk Lifecycle — Seven Stages</span>
+    <span class="tag">Diagram 5.1</span>
+  </div>
+  <div class="device-stage">
+    <svg viewBox="0 0 900 280" width="880" style="max-width: 100%; height: auto;">
+      <style>
+        .stg-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; fill: #6B7079; text-transform: uppercase; }
+        .stg-ttl { font-family: 'IBM Plex Serif', serif; font-size: 14px; font-weight: 600; fill: #111418; }
+        .stg-txt { font-family: 'IBM Plex Sans', sans-serif; font-size: 10.5px; fill: #3A3F47; }
+        .stg-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; fill: #C85A2B; }
+      </style>
+
+      <!-- horizontal rail -->
+      <line x1="60" y1="130" x2="840" y2="130" stroke="#C8BFAE" stroke-width="1"/>
+
+      <!-- 7 nodes -->
+      <g transform="translate(60, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">01</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Open project</text>
+        <text class="stg-txt" y="50" text-anchor="middle">Pick section</text>
+        <text class="stg-txt" y="64" text-anchor="middle">from header</text>
+        <text class="stg-txt" y="78" text-anchor="middle">dropdown</text>
+      </g>
+
+      <g transform="translate(190, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">02</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Kickoff</text>
+        <text class="stg-txt" y="50" text-anchor="middle">Hard-gate</text>
+        <text class="stg-txt" y="64" text-anchor="middle">answers first;</text>
+        <text class="stg-txt" y="78" text-anchor="middle">deferrable later</text>
+      </g>
+
+      <g transform="translate(320, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">03</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Alignment</text>
+        <text class="stg-txt" y="50" text-anchor="middle">Import or</text>
+        <text class="stg-txt" y="64" text-anchor="middle">draw polyline;</text>
+        <text class="stg-txt" y="78" text-anchor="middle">set 0+00</text>
+      </g>
+
+      <g transform="translate(450, 130)">
+        <circle r="11" fill="#C85A2B"/>
+        <text class="stg-num" y="-20" text-anchor="middle" style="fill:#111418;">04</text>
+        <text class="stg-ttl" y="34" text-anchor="middle">Collect</text>
+        <text class="stg-txt" y="52" text-anchor="middle">Points, tracks,</text>
+        <text class="stg-txt" y="66" text-anchor="middle">repairs, tally,</text>
+        <text class="stg-txt" y="80" text-anchor="middle">waypoints</text>
+      </g>
+
+      <g transform="translate(580, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">05</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Review</text>
+        <text class="stg-txt" y="50" text-anchor="middle">Fill deferred</text>
+        <text class="stg-txt" y="64" text-anchor="middle">fields at the</text>
+        <text class="stg-txt" y="78" text-anchor="middle">truck or desk</text>
+      </g>
+
+      <g transform="translate(710, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">06</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Closeout</text>
+        <text class="stg-txt" y="50" text-anchor="middle">Auto-tally, QC,</text>
+        <text class="stg-txt" y="64" text-anchor="middle">reconciliation,</text>
+        <text class="stg-txt" y="78" text-anchor="middle">recommendations</text>
+      </g>
+
+      <g transform="translate(840, 130)">
+        <circle r="8" fill="#0B3D66"/>
+        <text class="stg-num" y="-18" text-anchor="middle">07</text>
+        <text class="stg-ttl" y="32" text-anchor="middle">Export</text>
+        <text class="stg-txt" y="50" text-anchor="middle">KML, CSV,</text>
+        <text class="stg-txt" y="64" text-anchor="middle">PDF report,</text>
+        <text class="stg-txt" y="78" text-anchor="middle">photo archive</text>
+      </g>
+
+      <!-- Top phase bars -->
+      <rect x="60" y="220" width="260" height="18" fill="#EDE7DC" stroke="#D9D1C0"/>
+      <text x="190" y="233" class="stg-txt" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; fill:#6B7079;">Setup · desk or tailgate</text>
+
+      <rect x="320" y="220" width="260" height="18" fill="#F5F1EA" stroke="#C85A2B" stroke-width="1.2"/>
+      <text x="450" y="233" class="stg-txt" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; fill:#C85A2B;">Field · on foot</text>
+
+      <rect x="580" y="220" width="260" height="18" fill="#EDE7DC" stroke="#D9D1C0"/>
+      <text x="710" y="233" class="stg-txt" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; fill:#6B7079;">Wrap · truck &amp; office</text>
+    </svg>
+  </div>
+</div>
+
+<h3>How it feels in sequence</h3>
+
+<p><strong>01 · Open project.</strong> App launches to the project list. Crew picks the job, lands on the section list. Each section shows a status pill: not started, in progress, or closed.</p>
+
+<p><strong>02 · Kickoff.</strong> Tapping an unstarted section opens the kickoff interview. Hard-gate questions (direction of travel, lane count, is this curbed, <em>distress impression by category — load-related, climate-related, other</em>) must be answered because they drive UI behavior and prime the inspector's eye for the walk ahead. Soft questions (estimated PCI numerical value, refined per-distress severities, lot details like exact curb stop count) can be deferred to closeout. The early distress-impression question takes seconds — three category toggles with a short multi-select chip group under each — but it sets the mental frame for what the crew is looking for and feeds the closeout reconciliation later.</p>
+
+<p><strong>03 · Alignment.</strong> For linear sections, the alignment is either imported (GeoJSON, KML, KMZ) or drawn in the app on top of the selected basemap. Station 0+00 is set and direction locked. Area sections skip this step — they draw a polygon boundary instead.</p>
+
+<p><strong>04 · Collect.</strong> The field view. This is where the crew spends 95% of their time. Map dominates the screen; top bar holds active track chips; ribbons run down both edges; bottom bar holds the "add feature" and "start track" actions; tally bar is persistent. Most interactions complete in under ten seconds.</p>
+
+<p><strong>05 · Review.</strong> Back at the truck, or that evening, crew opens the section's feature list and works through anything flagged incomplete. Fields that were deferred during the walk get filled now, while memory is still fresh.</p>
+
+<p><strong>06 · Closeout.</strong> When the section is complete, the closeout screen pulls auto-tallied data (repair count, total crack seal LF, drainage issues flagged), surfaces reconciliation items (kickoff said curbing but no curb track collected), and asks for recommendations (needs overlay, needs geotech, ADA concerns, safety concerns).</p>
+
+<p><strong>07 · Export.</strong> At project level, deliverables roll up. Inventory tables per section. Plan-label KML for drafting. Photo archive keyed to feature IDs. Executive summary PDF. Whatever the job demands.</p>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 6  SCREEN SCHEMATICS                                      -->
+<!-- ============================================================ -->
+<section id="screens">
+<h2 data-num="06">Screen schematics</h2>
+<p class="section-kicker">The critical views, at field scale</p>
+
+<p>These are wireframe-level layouts, not pixel-perfect mockups. The goal is to show where elements live, how they nest, and what interactions produce what outcomes. Use the Mobile / Desktop toggle at the top of the page to see each screen at its intended viewport.</p>
+
+<!-- ============================================== -->
+<!-- 6.1  Project home / section list                  -->
+<!-- ============================================== -->
+<h3>6.1 · Project home &amp; section list</h3>
+
+<p>The entry point after project selection. A flat list of sections with status pills. Each row shows name, type (linear or area), feature count, and completion state. The crew taps in to a section to begin or resume work. The header carries the section switcher used during the walk.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.1 — Section List</span>
+    <span class="tag">Project home</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 600" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <defs>
+          <style>
+            .ui-mono { font-family: 'IBM Plex Mono', monospace; }
+            .ui-sans { font-family: 'IBM Plex Sans', sans-serif; }
+            .ui-serif { font-family: 'IBM Plex Serif', serif; }
+            .eyebrow { font-size: 9px; letter-spacing: 0.14em; fill: #6B7079; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+          </style>
+        </defs>
+
+        <!-- Status bar -->
+        <rect x="0" y="0" width="374" height="24" fill="#F5F1EA"/>
+        <text x="20" y="16" class="ui-mono" font-size="10" fill="#111418" font-weight="600">9:41</text>
+        <text x="354" y="16" class="ui-mono" font-size="10" fill="#111418" text-anchor="end">▲ 5G · 92%</text>
+
+        <!-- App header -->
+        <rect x="0" y="24" width="374" height="52" fill="#F5F1EA"/>
+        <line x1="0" y1="76" x2="374" y2="76" stroke="#C8BFAE"/>
+        <text x="20" y="42" class="eyebrow">Project</text>
+        <text x="20" y="62" class="ui-serif" font-size="17" font-weight="600" fill="#111418">Manchester Terminal</text>
+
+        <!-- Small project-meta row -->
+        <text x="20" y="96" class="ui-sans" font-size="11" fill="#6B7079">Logistec · Houston · 6 sections · 218 features</text>
+
+        <!-- Section header -->
+        <text x="20" y="128" class="eyebrow">Sections</text>
+        <line x1="20" y1="136" x2="354" y2="136" stroke="#D9D1C0"/>
+
+        <!-- Section row 1 - CLOSED -->
+        <g transform="translate(0, 148)">
+          <rect x="20" y="0" width="334" height="58" fill="#EDE7DC" stroke="#D9D1C0"/>
+          <text x="32" y="20" class="ui-sans" font-size="9.5" fill="#6B7079">LINEAR · 0+00 to 12+40</text>
+          <text x="32" y="38" class="ui-serif" font-size="14" font-weight="600" fill="#111418">Main Access Rd</text>
+          <text x="32" y="52" class="ui-sans" font-size="10.5" fill="#3A3F47">54 features · 3 repairs · 820 LF crack seal</text>
+          <rect x="280" y="16" width="62" height="18" fill="#2C5E30" rx="9"/>
+          <text x="311" y="28" class="ui-mono" font-size="8.5" fill="#EAF2E5" text-anchor="middle" font-weight="600" letter-spacing="1">CLOSED</text>
+        </g>
+
+        <!-- Section row 2 - IN PROGRESS -->
+        <g transform="translate(0, 216)">
+          <rect x="20" y="0" width="334" height="58" fill="#fff" stroke="#C85A2B" stroke-width="1.4"/>
+          <text x="32" y="20" class="ui-sans" font-size="9.5" fill="#6B7079">AREA · 12,400 sf</text>
+          <text x="32" y="38" class="ui-serif" font-size="14" font-weight="600" fill="#111418">Truck Apron North</text>
+          <text x="32" y="52" class="ui-sans" font-size="10.5" fill="#3A3F47">18 features · kickoff done · closeout pending</text>
+          <rect x="268" y="16" width="76" height="18" fill="#C85A2B" rx="9"/>
+          <text x="306" y="28" class="ui-mono" font-size="8.5" fill="#fff" text-anchor="middle" font-weight="600" letter-spacing="1">IN PROGRESS</text>
+        </g>
+
+        <!-- Section row 3 - NOT STARTED -->
+        <g transform="translate(0, 284)">
+          <rect x="20" y="0" width="334" height="58" fill="#fff" stroke="#D9D1C0"/>
+          <text x="32" y="20" class="ui-sans" font-size="9.5" fill="#6B7079">AREA · 8,600 sf</text>
+          <text x="32" y="38" class="ui-serif" font-size="14" font-weight="600" fill="#111418">Truck Apron South</text>
+          <text x="32" y="52" class="ui-sans" font-size="10.5" fill="#3A3F47">Not started</text>
+          <rect x="268" y="16" width="76" height="18" fill="#EDE7DC" rx="9" stroke="#C8BFAE"/>
+          <text x="306" y="28" class="ui-mono" font-size="8.5" fill="#6B7079" text-anchor="middle" font-weight="600" letter-spacing="1">NOT STARTED</text>
+        </g>
+
+        <!-- Section row 4 - NOT STARTED -->
+        <g transform="translate(0, 352)">
+          <rect x="20" y="0" width="334" height="58" fill="#fff" stroke="#D9D1C0"/>
+          <text x="32" y="20" class="ui-sans" font-size="9.5" fill="#6B7079">AREA · 18,200 sf</text>
+          <text x="32" y="38" class="ui-serif" font-size="14" font-weight="600" fill="#111418">Container Pad</text>
+          <text x="32" y="52" class="ui-sans" font-size="10.5" fill="#3A3F47">Not started</text>
+          <rect x="268" y="16" width="76" height="18" fill="#EDE7DC" rx="9" stroke="#C8BFAE"/>
+          <text x="306" y="28" class="ui-mono" font-size="8.5" fill="#6B7079" text-anchor="middle" font-weight="600" letter-spacing="1">NOT STARTED</text>
+        </g>
+
+        <!-- Section row 5 - NOT STARTED -->
+        <g transform="translate(0, 420)">
+          <rect x="20" y="0" width="334" height="58" fill="#fff" stroke="#D9D1C0"/>
+          <text x="32" y="20" class="ui-sans" font-size="9.5" fill="#6B7079">LINEAR · 0+00 to 6+20</text>
+          <text x="32" y="38" class="ui-serif" font-size="14" font-weight="600" fill="#111418">Rail Access</text>
+          <text x="32" y="52" class="ui-sans" font-size="10.5" fill="#3A3F47">Not started</text>
+          <rect x="268" y="16" width="76" height="18" fill="#EDE7DC" rx="9" stroke="#C8BFAE"/>
+          <text x="306" y="28" class="ui-mono" font-size="8.5" fill="#6B7079" text-anchor="middle" font-weight="600" letter-spacing="1">NOT STARTED</text>
+        </g>
+
+        <!-- Add new section button -->
+        <g transform="translate(0, 495)">
+          <rect x="20" y="0" width="334" height="44" fill="none" stroke="#C8BFAE" stroke-dasharray="4 3"/>
+          <text x="187" y="28" class="ui-mono" font-size="11" fill="#6B7079" text-anchor="middle" font-weight="500" letter-spacing="1">＋  ADD SECTION (ad hoc)</text>
+        </g>
+
+        <!-- Bottom bar -->
+        <rect x="0" y="560" width="374" height="40" fill="#F5F1EA"/>
+        <line x1="0" y1="560" x2="374" y2="560" stroke="#C8BFAE"/>
+        <text x="20" y="583" class="ui-mono" font-size="10" fill="#3A3F47" font-weight="500">PROJECT</text>
+        <text x="130" y="583" class="ui-mono" font-size="10" fill="#6B7079">CATALOG</text>
+        <text x="230" y="583" class="ui-mono" font-size="10" fill="#6B7079">EXPORT</text>
+        <text x="320" y="583" class="ui-mono" font-size="10" fill="#6B7079">SETTINGS</text>
+      </svg>
+    </div>
+  </div>
+  <!-- ============================================== -->
+<!-- 6.2  Kickoff interview                          -->
+<!-- ============================================== -->
+<h3>6.2 · Kickoff interview</h3>
+
+<p>Opened when a section is started. The interview is templated per section type and defined in settings — the example below is for a parking lot. Hard-gate questions (those that change the UI) are grouped at the top and must be answered before collection begins. Soft-defer questions (summary judgments that depend on observation) can be skipped and revisited at closeout.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.2 — Kickoff (Parking Lot)</span>
+    <span class="tag">Hard-gate + soft-defer</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 940" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <style>
+          .k-mono { font-family: 'IBM Plex Mono', monospace; }
+          .k-sans { font-family: 'IBM Plex Sans', sans-serif; }
+          .k-serif { font-family: 'IBM Plex Serif', serif; }
+        </style>
+
+        <!-- Status bar -->
+        <rect x="0" y="0" width="374" height="24" fill="#F5F1EA"/>
+        <text x="20" y="16" class="k-mono" font-size="10" fill="#111418" font-weight="600">9:44</text>
+
+        <!-- App header with back button and section selector -->
+        <rect x="0" y="24" width="374" height="52" fill="#F5F1EA"/>
+        <line x1="0" y1="76" x2="374" y2="76" stroke="#C8BFAE"/>
+        <text x="20" y="52" class="k-mono" font-size="13" fill="#0B3D66">◀  Sections</text>
+        <text x="354" y="52" class="k-mono" font-size="11" fill="#3A3F47" text-anchor="end">Truck Apron N ▾</text>
+
+        <!-- Page title -->
+        <text x="20" y="106" class="k-mono" font-size="9" fill="#6B7079" letter-spacing="1.8">KICKOFF · PARKING LOT</text>
+        <text x="20" y="128" class="k-serif" font-size="20" font-weight="600" fill="#111418">Before we start</text>
+        <text x="20" y="148" class="k-sans" font-size="11" fill="#6B7079">Answer what you know. The rest you can fill at closeout.</text>
+
+        <!-- HARD-GATE section -->
+        <g transform="translate(0, 170)">
+          <rect x="20" y="0" width="334" height="26" fill="#0B3D66"/>
+          <text x="32" y="17" class="k-mono" font-size="10" fill="#fff" letter-spacing="1.5" font-weight="500">REQUIRED TO BEGIN</text>
+
+          <!-- Q1 -->
+          <g transform="translate(20, 38)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Section name</text>
+            <rect x="0" y="8" width="334" height="28" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="27" class="k-sans" font-size="12" fill="#111418">Truck Apron North</text>
+          </g>
+
+          <!-- Q2 NEW: Pavement type -->
+          <g transform="translate(20, 88)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Pavement type</text>
+            <rect x="0" y="8" width="64" height="26" fill="#111418"/>
+            <text x="32" y="25" class="k-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" letter-spacing="1">AC</text>
+            <rect x="68" y="8" width="64" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="100" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">PCC</text>
+            <rect x="136" y="8" width="64" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="168" y="25" class="k-mono" font-size="9" fill="#3A3F47" text-anchor="middle" letter-spacing="1">COMP</text>
+            <rect x="204" y="8" width="64" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="236" y="25" class="k-mono" font-size="9" fill="#3A3F47" text-anchor="middle" letter-spacing="1">CHIP</text>
+            <rect x="272" y="8" width="62" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="303" y="25" class="k-mono" font-size="9" fill="#3A3F47" text-anchor="middle" letter-spacing="1">OTHER</text>
+          </g>
+
+          <!-- Q3 -->
+          <g transform="translate(20, 138)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Curbed?</text>
+            <rect x="0" y="8" width="76" height="26" fill="#111418"/>
+            <text x="38" y="25" class="k-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" letter-spacing="1">YES</text>
+            <rect x="82" y="8" width="76" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="120" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">NO</text>
+            <rect x="164" y="8" width="76" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="202" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">PARTIAL</text>
+          </g>
+
+          <!-- Q4 -->
+          <g transform="translate(20, 188)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Sidewalk present?</text>
+            <rect x="0" y="8" width="76" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="38" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">YES</text>
+            <rect x="82" y="8" width="76" height="26" fill="#111418"/>
+            <text x="120" y="25" class="k-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" letter-spacing="1">NO</text>
+            <rect x="164" y="8" width="76" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="202" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">PARTIAL</text>
+          </g>
+
+          <!-- Q5 -->
+          <g transform="translate(20, 238)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Drainage</text>
+            <rect x="0" y="8" width="334" height="28" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="27" class="k-sans" font-size="12" fill="#111418">Closed system (inlets + manholes) ▾</text>
+          </g>
+
+          <!-- Q6 -->
+          <g transform="translate(20, 288)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Striped?</text>
+            <rect x="0" y="8" width="80" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="40" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">YES</text>
+            <rect x="86" y="8" width="80" height="26" fill="#111418"/>
+            <text x="126" y="25" class="k-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" letter-spacing="1">FADED</text>
+            <rect x="172" y="8" width="80" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="212" y="25" class="k-mono" font-size="10" fill="#3A3F47" text-anchor="middle" letter-spacing="1">WORN OFF</text>
+          </g>
+
+          <!-- Q7: Distress impression by category -->
+          <g transform="translate(20, 338)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#111418" font-weight="600">Distress impression on arrival</text>
+            <text x="0" y="14" class="k-sans" font-size="10" fill="#6B7079" font-style="italic">Quick read · refine at closeout</text>
+
+            <!-- Load-related row -->
+            <text x="0" y="36" class="k-mono" font-size="9.5" fill="#3A3F47" font-weight="600" letter-spacing="0.5">LOAD</text>
+            <rect x="44" y="22" width="290" height="22" fill="#fff" stroke="#C8BFAE"/>
+            <text x="52" y="37" class="k-sans" font-size="10" fill="#111418">▣ alligator  ▣ rutting  ▢ shoving  ▢ depression</text>
+
+            <!-- Climate-related row -->
+            <text x="0" y="64" class="k-mono" font-size="9.5" fill="#3A3F47" font-weight="600" letter-spacing="0.5">CLIMATE</text>
+            <rect x="44" y="50" width="290" height="22" fill="#fff" stroke="#C8BFAE"/>
+            <text x="52" y="65" class="k-sans" font-size="10" fill="#111418">▢ block  ▣ long/trans  ▣ raveling  ▢ bleeding</text>
+
+            <!-- Other row -->
+            <text x="0" y="92" class="k-mono" font-size="9.5" fill="#3A3F47" font-weight="600" letter-spacing="0.5">OTHER</text>
+            <rect x="44" y="78" width="290" height="22" fill="#fff" stroke="#C8BFAE"/>
+            <text x="52" y="93" class="k-sans" font-size="10" fill="#111418">▢ edge  ▢ drop-off  ▢ potholes  ▢ patching  +</text>
+          </g>
+        </g>
+
+        <!-- SOFT-DEFER section -->
+        <g transform="translate(0, 664)">
+          <rect x="20" y="0" width="334" height="26" fill="#EDE7DC" stroke="#C8BFAE"/>
+          <text x="32" y="17" class="k-mono" font-size="10" fill="#6B7079" letter-spacing="1.5" font-weight="500">OPTIONAL · DEFER TO CLOSEOUT</text>
+
+          <!-- Q8 -->
+          <g transform="translate(20, 38)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#6B7079" font-weight="600">Parking stalls (total · ADA)</text>
+            <rect x="0" y="8" width="160" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="25" class="k-sans" font-size="12" fill="#C8BFAE">Total</text>
+            <rect x="174" y="8" width="160" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="184" y="25" class="k-sans" font-size="12" fill="#C8BFAE">ADA</text>
+          </g>
+
+          <!-- Q9: Curb stops -->
+          <g transform="translate(20, 88)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#6B7079" font-weight="600">Curb stops (count · condition)</text>
+            <rect x="0" y="8" width="80" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="25" class="k-sans" font-size="12" fill="#C8BFAE">Count</text>
+            <rect x="86" y="8" width="248" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="96" y="25" class="k-sans" font-size="11" fill="#C8BFAE">Mostly good ▾  · individual WS for damaged</text>
+          </g>
+
+          <!-- Q10 -->
+          <g transform="translate(20, 138)">
+            <text x="0" y="0" class="k-sans" font-size="12" fill="#6B7079" font-weight="600">Estimated PCI</text>
+            <rect x="0" y="8" width="334" height="26" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="25" class="k-sans" font-size="12" fill="#C8BFAE">— / 100 (or pick bucket)</text>
+          </g>
+        </g>
+
+        <!-- Bottom sticky button -->
+        <rect x="0" y="890" width="374" height="50" fill="#F5F1EA"/>
+        <line x1="0" y1="890" x2="374" y2="890" stroke="#C8BFAE"/>
+        <rect x="20" y="900" width="334" height="32" fill="#111418" rx="1"/>
+        <text x="187" y="921" class="k-mono" font-size="11.5" fill="#F5F1EA" text-anchor="middle" font-weight="600" letter-spacing="2">BEGIN COLLECTION  →</text>
+      </svg>
+    </div>
+  </div>
+  <!-- ============================================== -->
+<!-- 6.3  Main field view                             -->
+<!-- ============================================== -->
+<h3>6.3 · Main field view</h3>
+
+<p>The field view. Where the walk happens. Map dominates the center of the screen. Track chips line the top, one row for each side. Ribbons run down the left and right edges, live plan-view of what has been inventoried in the last stretch. Tally bar sits above the bottom action bar. Everything the crew needs reachable with a thumb.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.3 — Field View</span>
+    <span class="tag">The hot path</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 744" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <defs>
+          <pattern id="mapGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+            <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#E4DCCD" stroke-width="0.5"/>
+          </pattern>
+          <pattern id="asphalt" width="6" height="6" patternUnits="userSpaceOnUse">
+            <rect width="6" height="6" fill="#6B7079"/>
+            <circle cx="1" cy="1" r="0.3" fill="#5A5F67"/>
+            <circle cx="4" cy="3" r="0.3" fill="#7B8087"/>
+            <circle cx="2" cy="5" r="0.3" fill="#5A5F67"/>
+          </pattern>
+          <style>
+            .f-mono { font-family: 'IBM Plex Mono', monospace; }
+            .f-sans { font-family: 'IBM Plex Sans', sans-serif; }
+            .f-serif { font-family: 'IBM Plex Serif', serif; }
+          </style>
+        </defs>
+
+        <!-- Status bar -->
+        <rect x="0" y="0" width="374" height="24" fill="#F5F1EA"/>
+        <text x="20" y="16" class="f-mono" font-size="10" fill="#111418" font-weight="600">9:52</text>
+        <text x="354" y="16" class="f-mono" font-size="10" fill="#111418" text-anchor="end">▲ GPS · 88%</text>
+
+        <!-- App header - compact -->
+        <rect x="0" y="24" width="374" height="40" fill="#F5F1EA"/>
+        <line x1="0" y1="64" x2="374" y2="64" stroke="#C8BFAE"/>
+        <text x="20" y="48" class="f-mono" font-size="11" fill="#0B3D66" font-weight="600">◀</text>
+        <text x="38" y="48" class="f-sans" font-size="13" fill="#111418" font-weight="600">Main Access Rd  ▾</text>
+        <text x="354" y="48" class="f-mono" font-size="10" fill="#C85A2B" text-anchor="end" font-weight="600">STA 14+25</text>
+
+        <!-- CHIP BARS - two rows, L top, R bottom -->
+        <rect x="0" y="64" width="374" height="72" fill="#EDE7DC"/>
+        <text x="8" y="76" class="f-mono" font-size="7.5" fill="#6B7079" letter-spacing="1">LEFT</text>
+        <text x="8" y="112" class="f-mono" font-size="7.5" fill="#6B7079" letter-spacing="1">RIGHT</text>
+
+        <!-- Left chips (row 1, y ~82-104) -->
+        <!-- Chip: GR Left -->
+        <g transform="translate(36, 78)">
+          <rect width="78" height="22" fill="#111418" rx="11"/>
+          <text x="6" y="15" class="f-mono" font-size="8" fill="#F5F1EA">◀</text>
+          <text x="16" y="15" class="f-mono" font-size="10" fill="#F5F1EA" font-weight="600">GR · 820 · 2</text>
+        </g>
+        <!-- Chip: ED Left -->
+        <g transform="translate(120, 78)">
+          <rect width="74" height="22" fill="#111418" rx="11"/>
+          <text x="6" y="15" class="f-mono" font-size="8" fill="#F5F1EA">◀</text>
+          <text x="16" y="15" class="f-mono" font-size="10" fill="#F5F1EA" font-weight="600">ED · 820 · 6</text>
+        </g>
+        <!-- Chip: Sl Left -->
+        <g transform="translate(200, 78)">
+          <rect width="68" height="22" fill="#111418" rx="11"/>
+          <text x="6" y="15" class="f-mono" font-size="8" fill="#F5F1EA">◀</text>
+          <text x="16" y="15" class="f-mono" font-size="10" fill="#F5F1EA" font-weight="600">Sl · 410 · 1</text>
+        </g>
+
+        <!-- Right chips (row 2) -->
+        <g transform="translate(36, 110)">
+          <rect width="74" height="22" fill="#111418" rx="11"/>
+          <text x="8" y="15" class="f-mono" font-size="10" fill="#F5F1EA" font-weight="600">Cb · 820 · 3</text>
+          <text x="64" y="15" class="f-mono" font-size="8" fill="#F5F1EA">▶</text>
+        </g>
+        <g transform="translate(116, 110)">
+          <rect width="74" height="22" fill="#111418" rx="11"/>
+          <text x="8" y="15" class="f-mono" font-size="10" fill="#F5F1EA" font-weight="600">ED · 820 · 5</text>
+          <text x="64" y="15" class="f-mono" font-size="8" fill="#F5F1EA">▶</text>
+        </g>
+
+        <!-- + Start track button -->
+        <g transform="translate(290, 92)">
+          <rect width="60" height="24" fill="#F5F1EA" stroke="#C8BFAE" rx="3"/>
+          <text x="30" y="16" class="f-mono" font-size="10" fill="#0B3D66" text-anchor="middle" font-weight="600">＋ TRACK</text>
+        </g>
+
+        <!-- ============ MAP AREA with RIBBONS ============ -->
+        <!-- Map background -->
+        <rect x="0" y="136" width="374" height="440" fill="#EFE9DD"/>
+        <rect x="0" y="136" width="374" height="440" fill="url(#mapGrid)"/>
+
+        <!-- Road centerline in map -->
+        <rect x="120" y="136" width="134" height="440" fill="url(#asphalt)" opacity="0.85"/>
+        <!-- Lane lines -->
+        <line x1="187" y1="136" x2="187" y2="576" stroke="#FFD93F" stroke-width="1.5" stroke-dasharray="20 14"/>
+        <line x1="128" y1="136" x2="128" y2="576" stroke="#F5F1EA" stroke-width="1"/>
+        <line x1="246" y1="136" x2="246" y2="576" stroke="#F5F1EA" stroke-width="1"/>
+
+        <!-- Walk breadcrumb (recent GPS trail) -->
+        <path d="M 170 576 Q 172 500 180 420 Q 186 370 184 320 Q 182 280 188 220 L 186 160" 
+              stroke="#C85A2B" stroke-width="2" fill="none" stroke-dasharray="3 2" opacity="0.7"/>
+        <!-- Current position dot -->
+        <circle cx="186" cy="160" r="6" fill="#C85A2B" stroke="#fff" stroke-width="2"/>
+        <circle cx="186" cy="160" r="12" fill="none" stroke="#C85A2B" stroke-width="1.5" opacity="0.5"/>
+
+        <!-- Example features on map -->
+        <!-- Sign point -->
+        <g transform="translate(90, 220)">
+          <rect x="-8" y="-8" width="16" height="16" fill="#fff" stroke="#0B3D66" stroke-width="1.5"/>
+          <text y="4" class="f-mono" font-size="9" fill="#0B3D66" text-anchor="middle" font-weight="700">Si</text>
+        </g>
+        <!-- Culvert line -->
+        <g transform="translate(0, 340)">
+          <line x1="96" y1="0" x2="280" y2="0" stroke="#0B3D66" stroke-width="1.8"/>
+          <circle cx="96" cy="0" r="4" fill="#fff" stroke="#0B3D66" stroke-width="1.5"/>
+          <circle cx="280" cy="0" r="4" fill="#fff" stroke="#0B3D66" stroke-width="1.5"/>
+          <text x="188" y="-5" class="f-mono" font-size="8" fill="#0B3D66" text-anchor="middle" font-weight="700">Cu</text>
+        </g>
+        <!-- Repair polygon -->
+        <g transform="translate(128, 450)">
+          <rect x="0" y="0" width="28" height="50" fill="#C85A2B" fill-opacity="0.35" stroke="#C85A2B" stroke-width="1.2"/>
+          <text x="14" y="30" class="f-mono" font-size="8" fill="#C85A2B" text-anchor="middle" font-weight="700">Re</text>
+        </g>
+        <!-- Catch basin -->
+        <g transform="translate(290, 500)">
+          <circle r="6" fill="#fff" stroke="#0B3D66" stroke-width="1.5"/>
+          <text y="3" class="f-mono" font-size="7" fill="#0B3D66" text-anchor="middle" font-weight="700">CB</text>
+        </g>
+
+        <!-- ============ LEFT RIBBON ============ -->
+        <!-- Ribbon background -->
+        <rect x="0" y="136" width="48" height="440" fill="#F5F1EA" opacity="0.9"/>
+        <line x1="48" y1="136" x2="48" y2="576" stroke="#C8BFAE"/>
+
+        <!-- Ribbon slots, outside-in: Fence | Swale | Guardrail | Sidewalk | Curb/ED -->
+        <!-- Slot labels at top -->
+        <text x="4" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">FE</text>
+        <text x="13" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">SL</text>
+        <text x="22" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">GR</text>
+        <text x="31" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">SW</text>
+        <text x="40" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">ED</text>
+
+        <!-- Fence slot: thin line present -->
+        <line x1="7" y1="155" x2="7" y2="575" stroke="#6B7079" stroke-width="1"/>
+        <!-- Swale slot: chevrons -->
+        <text x="15" y="200" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="260" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="320" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="380" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="440" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="500" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+        <text x="15" y="560" class="f-mono" font-size="9" fill="#3A7A3F">&gt;</text>
+
+        <!-- Guardrail slot: dashed line -->
+        <line x1="25" y1="155" x2="25" y2="420" stroke="#111418" stroke-width="1.3" stroke-dasharray="5 3"/>
+
+        <!-- Sidewalk slot: empty (no sidewalk on rural left) -->
+
+        <!-- Edge drop heat band (left) - varying severity -->
+        <rect x="36" y="155" width="10" height="60" fill="#5A8F3E"/>
+        <rect x="36" y="215" width="10" height="70" fill="#D4A82C"/>
+        <rect x="34" y="285" width="12" height="55" fill="#D67830"/>
+        <rect x="32" y="340" width="14" height="60" fill="#B33A2F"/>
+        <rect x="34" y="400" width="12" height="50" fill="#D67830"/>
+        <rect x="36" y="450" width="10" height="70" fill="#D4A82C"/>
+        <rect x="36" y="520" width="10" height="56" fill="#5A8F3E"/>
+
+        <!-- Station tick marks on left ribbon -->
+        <g font-family="IBM Plex Mono" font-size="7" fill="#6B7079">
+          <text x="38" y="167">+</text>
+          <text x="38" y="230">+</text>
+          <text x="38" y="293">+</text>
+          <text x="38" y="356">+</text>
+          <text x="38" y="419">+</text>
+          <text x="38" y="482">+</text>
+          <text x="38" y="545">+</text>
+        </g>
+
+        <!-- "Next waypoint" pacing box at top of left ribbon -->
+        <rect x="2" y="555" width="44" height="18" fill="#F5F1EA" stroke="#C85A2B" stroke-width="1.3"/>
+        <text x="24" y="562" class="f-mono" font-size="5.5" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">NEXT ED</text>
+        <text x="24" y="570" class="f-mono" font-size="6.5" fill="#C85A2B" text-anchor="middle" font-weight="700">22 ft</text>
+
+        <!-- ============ RIGHT RIBBON ============ -->
+        <rect x="326" y="136" width="48" height="440" fill="#F5F1EA" opacity="0.9"/>
+        <line x1="326" y1="136" x2="326" y2="576" stroke="#C8BFAE"/>
+
+        <!-- Slot labels -->
+        <text x="330" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">CB</text>
+        <text x="339" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">SW</text>
+        <text x="348" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">GR</text>
+        <text x="357" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">SL</text>
+        <text x="366" y="148" class="f-mono" font-size="6" fill="#6B7079" letter-spacing="1">FE</text>
+
+        <!-- Right: Curb/gutter present - double line -->
+        <line x1="333" y1="155" x2="333" y2="575" stroke="#111418" stroke-width="1"/>
+        <line x1="336" y1="155" x2="336" y2="575" stroke="#111418" stroke-width="1"/>
+
+        <!-- Sidewalk present - solid line -->
+        <line x1="360" y1="155" x2="360" y2="575" stroke="#111418" stroke-width="1.2"/>
+
+        <!-- Station tick marks on right ribbon -->
+        <g font-family="IBM Plex Mono" font-size="7" fill="#6B7079">
+          <text x="330" y="167">+</text>
+          <text x="330" y="230">+</text>
+          <text x="330" y="293">+</text>
+          <text x="330" y="356">+</text>
+          <text x="330" y="419">+</text>
+          <text x="330" y="482">+</text>
+          <text x="330" y="545">+</text>
+        </g>
+
+        <!-- Pacing box right -->
+        <rect x="328" y="555" width="44" height="18" fill="#F5F1EA" stroke="#5A8F3E" stroke-width="1.3"/>
+        <text x="350" y="562" class="f-mono" font-size="5.5" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">NEXT ED</text>
+        <text x="350" y="570" class="f-mono" font-size="6.5" fill="#5A8F3E" text-anchor="middle" font-weight="700">68 ft</text>
+
+        <!-- =========== TALLY BAR =========== -->
+        <rect x="0" y="576" width="374" height="84" fill="#EDE7DC"/>
+        <line x1="0" y1="576" x2="374" y2="576" stroke="#C8BFAE"/>
+        <line x1="0" y1="660" x2="374" y2="660" stroke="#C8BFAE"/>
+
+        <text x="12" y="592" class="f-mono" font-size="8" fill="#6B7079" letter-spacing="1.5">CRACK SEAL TALLY · A=JON B=MIKE</text>
+
+        <g transform="translate(12, 598)">
+          <text x="0" y="16" class="f-serif" font-size="20" fill="#111418" font-weight="600">520</text>
+          <text x="44" y="16" class="f-mono" font-size="9" fill="#6B7079">LF</text>
+          <text x="0" y="30" class="f-sans" font-size="9.5" fill="#3A3F47">A 270 · B 250</text>
+        </g>
+
+        <g transform="translate(120, 600)">
+          <rect width="40" height="28" fill="#fff" stroke="#111418" stroke-width="1.3" rx="2"/>
+          <text x="20" y="18" class="f-mono" font-size="11" fill="#111418" text-anchor="middle" font-weight="700">+10</text>
+        </g>
+        <g transform="translate(168, 600)">
+          <rect width="40" height="28" fill="#fff" stroke="#111418" stroke-width="1.3" rx="2"/>
+          <text x="20" y="18" class="f-mono" font-size="11" fill="#111418" text-anchor="middle" font-weight="700">+50</text>
+        </g>
+        <g transform="translate(216, 600)">
+          <rect width="40" height="28" fill="#111418" rx="2"/>
+          <text x="20" y="18" class="f-mono" font-size="11" fill="#F5F1EA" text-anchor="middle" font-weight="700">+N</text>
+        </g>
+        <g transform="translate(270, 600)">
+          <rect width="80" height="28" fill="#fff" stroke="#C8BFAE" rx="2"/>
+          <text x="40" y="12" class="f-mono" font-size="6" fill="#6B7079" text-anchor="middle" letter-spacing="1">TALLY LOG</text>
+          <text x="40" y="22" class="f-mono" font-size="8.5" fill="#3A3F47" text-anchor="middle">view all ▾</text>
+        </g>
+
+        <!-- Recent strip -->
+        <g transform="translate(12, 638)">
+          <text x="0" y="10" class="f-mono" font-size="8.5" fill="#3A3F47">A+50 <tspan fill="#6B7079">22+00</tspan></text>
+          <text x="70" y="10" class="f-mono" font-size="8.5" fill="#3A3F47">B+250 <tspan fill="#6B7079">~20+10</tspan></text>
+          <text x="154" y="10" class="f-mono" font-size="8.5" fill="#3A3F47">A+10 <tspan fill="#6B7079">20+10</tspan></text>
+          <text x="224" y="10" class="f-mono" font-size="8.5" fill="#3A3F47">A+50 <tspan fill="#6B7079">19+75</tspan></text>
+          <text x="294" y="10" class="f-mono" font-size="8.5" fill="#3A3F47">A+10 <tspan fill="#6B7079">18+20</tspan></text>
+        </g>
+
+        <!-- ========== BOTTOM ACTION BAR ========== -->
+        <rect x="0" y="660" width="374" height="84" fill="#F5F1EA"/>
+        <!-- Six feature actions -->
+        <g transform="translate(8, 672)">
+          <g>
+            <rect width="56" height="58" fill="#fff" stroke="#C8BFAE" rx="3"/>
+            <text x="28" y="20" class="f-mono" font-size="11" fill="#0B3D66" text-anchor="middle" font-weight="700">Si</text>
+            <text x="28" y="36" class="f-sans" font-size="8.5" fill="#3A3F47" text-anchor="middle">SIGN</text>
+            <text x="28" y="50" class="f-mono" font-size="6" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">POINT</text>
+          </g>
+          <g transform="translate(60, 0)">
+            <rect width="56" height="58" fill="#fff" stroke="#C8BFAE" rx="3"/>
+            <text x="28" y="20" class="f-mono" font-size="11" fill="#0B3D66" text-anchor="middle" font-weight="700">CB</text>
+            <text x="28" y="36" class="f-sans" font-size="8.5" fill="#3A3F47" text-anchor="middle">BASIN</text>
+            <text x="28" y="50" class="f-mono" font-size="6" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">POINT</text>
+          </g>
+          <g transform="translate(120, 0)">
+            <rect width="56" height="58" fill="#fff" stroke="#C8BFAE" rx="3"/>
+            <text x="28" y="20" class="f-mono" font-size="11" fill="#0B3D66" text-anchor="middle" font-weight="700">Cu</text>
+            <text x="28" y="36" class="f-sans" font-size="8.5" fill="#3A3F47" text-anchor="middle">CULVERT</text>
+            <text x="28" y="50" class="f-mono" font-size="6" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">LINE</text>
+          </g>
+          <g transform="translate(180, 0)">
+            <rect width="56" height="58" fill="#C85A2B" rx="3"/>
+            <text x="28" y="20" class="f-mono" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">Re</text>
+            <text x="28" y="36" class="f-sans" font-size="8.5" fill="#fff" text-anchor="middle">REPAIR</text>
+            <text x="28" y="50" class="f-mono" font-size="6" fill="#fff" text-anchor="middle" letter-spacing="0.5">POLYGON</text>
+          </g>
+          <g transform="translate(240, 0)">
+            <rect width="56" height="58" fill="#fff" stroke="#C8BFAE" rx="3"/>
+            <text x="28" y="20" class="f-mono" font-size="11" fill="#0B3D66" text-anchor="middle" font-weight="700">No</text>
+            <text x="28" y="36" class="f-sans" font-size="8.5" fill="#3A3F47" text-anchor="middle">NOTE</text>
+            <text x="28" y="50" class="f-mono" font-size="6" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">POINT</text>
+          </g>
+          <g transform="translate(300, 0)">
+            <rect width="56" height="58" fill="#fff" stroke="#C8BFAE" rx="3"/>
+            <text x="28" y="22" class="f-mono" font-size="16" fill="#3A3F47" text-anchor="middle" font-weight="500">⋯</text>
+            <text x="28" y="42" class="f-sans" font-size="8.5" fill="#3A3F47" text-anchor="middle">MORE</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <!-- ============================================== -->
+<!-- 6.4  Waypoint entry sheet                       -->
+<!-- ============================================== -->
+<h3>6.4 · Waypoint entry sheet</h3>
+
+<p>Opens over the map when a track chip is tapped. Type-specific — the example below is edge drop-off, which is the densest waypoint form. Other tracks have lighter forms. Copy-last and recent strip are the two ergonomic features that save the most time on long walks.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.4 — Waypoint Sheet (Edge Drop-off)</span>
+    <span class="tag">Copy-last ergonomic</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 620" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <style>
+          .w-mono { font-family: 'IBM Plex Mono', monospace; }
+          .w-sans { font-family: 'IBM Plex Sans', sans-serif; }
+          .w-serif { font-family: 'IBM Plex Serif', serif; }
+        </style>
+
+        <!-- Faded map backdrop -->
+        <rect x="0" y="0" width="374" height="620" fill="#111418" opacity="0.3"/>
+        <rect x="0" y="0" width="374" height="160" fill="#6B7079" opacity="0.5"/>
+
+        <!-- Sheet -->
+        <rect x="0" y="160" width="374" height="460" fill="#F5F1EA"/>
+        <rect x="160" y="168" width="54" height="4" fill="#C8BFAE" rx="2"/>
+
+        <!-- Sheet header -->
+        <text x="20" y="202" class="w-mono" font-size="9" fill="#6B7079" letter-spacing="1.8">NEW WAYPOINT · ED LEFT · STA 14+25</text>
+        <text x="20" y="224" class="w-serif" font-size="19" font-weight="600" fill="#111418">Edge drop-off</text>
+
+        <!-- Copy last prominent button -->
+        <g transform="translate(20, 242)">
+          <rect x="0" y="0" width="334" height="42" fill="#0B3D66" rx="2"/>
+          <text x="14" y="17" class="w-mono" font-size="9" fill="#D8E7F4" letter-spacing="1.5">COPY LAST</text>
+          <text x="14" y="34" class="w-serif" font-size="15" fill="#fff" font-weight="500">3" × 18" · tap to prefill</text>
+          <text x="310" y="26" class="w-mono" font-size="14" fill="#fff" font-weight="700">↺</text>
+        </g>
+
+        <!-- Recent strip -->
+        <text x="20" y="310" class="w-mono" font-size="9" fill="#6B7079" letter-spacing="1.5">RECENT (LEFT SIDE)</text>
+        <g transform="translate(20, 318)">
+          <g>
+            <rect width="52" height="32" fill="#fff" stroke="#C8BFAE" rx="2"/>
+            <text x="26" y="14" class="w-mono" font-size="10" fill="#111418" text-anchor="middle" font-weight="600">3×18</text>
+            <text x="26" y="25" class="w-mono" font-size="7" fill="#6B7079" text-anchor="middle">14+00</text>
+          </g>
+          <g transform="translate(58, 0)">
+            <rect width="52" height="32" fill="#fff" stroke="#C8BFAE" rx="2"/>
+            <text x="26" y="14" class="w-mono" font-size="10" fill="#111418" text-anchor="middle" font-weight="600">3×18</text>
+            <text x="26" y="25" class="w-mono" font-size="7" fill="#6B7079" text-anchor="middle">13+75</text>
+          </g>
+          <g transform="translate(116, 0)">
+            <rect width="52" height="32" fill="#fff" stroke="#C8BFAE" rx="2"/>
+            <text x="26" y="14" class="w-mono" font-size="10" fill="#111418" text-anchor="middle" font-weight="600">4×24</text>
+            <text x="26" y="25" class="w-mono" font-size="7" fill="#6B7079" text-anchor="middle">13+50</text>
+          </g>
+          <g transform="translate(174, 0)">
+            <rect width="52" height="32" fill="#fff" stroke="#C8BFAE" rx="2"/>
+            <text x="26" y="14" class="w-mono" font-size="10" fill="#111418" text-anchor="middle" font-weight="600">2×12</text>
+            <text x="26" y="25" class="w-mono" font-size="7" fill="#6B7079" text-anchor="middle">13+25</text>
+          </g>
+          <g transform="translate(232, 0)">
+            <rect width="52" height="32" fill="#fff" stroke="#C8BFAE" rx="2"/>
+            <text x="26" y="14" class="w-mono" font-size="10" fill="#111418" text-anchor="middle" font-weight="600">3×20</text>
+            <text x="26" y="25" class="w-mono" font-size="7" fill="#6B7079" text-anchor="middle">13+00</text>
+          </g>
+        </g>
+
+        <!-- Depth & width number pads side by side -->
+        <g transform="translate(20, 372)">
+          <text x="0" y="0" class="w-sans" font-size="12" fill="#111418" font-weight="600">Depth (in)</text>
+          <rect x="0" y="8" width="160" height="52" fill="#fff" stroke="#C85A2B" stroke-width="1.6"/>
+          <text x="80" y="46" class="w-serif" font-size="28" fill="#111418" text-anchor="middle" font-weight="600">3.0</text>
+          <text x="150" y="20" class="w-mono" font-size="8" fill="#6B7079" text-anchor="end">TAP EDIT</text>
+        </g>
+        <g transform="translate(194, 372)">
+          <text x="0" y="0" class="w-sans" font-size="12" fill="#111418" font-weight="600">Width (in)</text>
+          <rect x="0" y="8" width="160" height="52" fill="#fff" stroke="#C8BFAE"/>
+          <text x="80" y="46" class="w-serif" font-size="28" fill="#111418" text-anchor="middle" font-weight="600">18</text>
+        </g>
+
+        <!-- Photo row -->
+        <g transform="translate(20, 454)">
+          <rect width="64" height="64" fill="#EDE7DC" stroke="#C8BFAE"/>
+          <text x="32" y="38" class="w-mono" font-size="20" fill="#6B7079" text-anchor="middle">📷</text>
+          <text x="32" y="56" class="w-mono" font-size="7.5" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">ADD PHOTO</text>
+        </g>
+        <g transform="translate(92, 454)">
+          <rect width="262" height="64" fill="none" stroke="#C8BFAE" stroke-dasharray="3 3"/>
+          <text x="131" y="38" class="w-sans" font-size="11" fill="#6B7079" text-anchor="middle">Optional note · tap to add</text>
+        </g>
+
+        <!-- Save / expand more -->
+        <g transform="translate(20, 540)">
+          <rect x="0" y="0" width="220" height="44" fill="#111418" rx="2"/>
+          <text x="110" y="27" class="w-mono" font-size="11.5" fill="#F5F1EA" text-anchor="middle" font-weight="600" letter-spacing="1.5">SAVE WAYPOINT  ✓</text>
+        </g>
+        <g transform="translate(248, 540)">
+          <rect x="0" y="0" width="106" height="44" fill="#F5F1EA" stroke="#C8BFAE"/>
+          <text x="53" y="27" class="w-mono" font-size="10" fill="#3A3F47" text-anchor="middle" font-weight="500">MORE ▾</text>
+        </g>
+
+      </svg>
+    </div>
+  </div>
+  <ul class="annotation-list">
+    <li data-n="1"><strong>Copy last</strong> button front-and-center, showing the values it will fill. Prefills both fields but leaves them editable.</li>
+    <li data-n="2"><strong>Recent strip</strong> shows last five waypoints on this side, tappable to prefill from that one (not just the most recent).</li>
+    <li data-n="3"><strong>Dual number pads</strong> — depth and width — auto-advance between them. Five taps typical.</li>
+    <li data-n="4"><strong>Photo optional</strong>, not required. For repetitive waypoints on a long stretch, photos aren't needed every time.</li>
+    <li data-n="5"><strong>"More" expands</strong> Tier 2 and 3 fields: severity rating, damage type, notes, repeat photos. Off-screen until requested.</li>
+  </ul>
+</div>
+
+
+<!-- ============================================== -->
+<!-- 6.5  Parametric repair form                     -->
+<!-- ============================================== -->
+<h3>6.5 · Parametric repair form</h3>
+
+<p>The default path for authoring a repair on a linear section. Choose direction, lane, and width preset; set length; the app computes the polygon from the alignment. Drawn polygons remain available for irregular cases. Same form drives both paths — only the geometry source differs.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.5 — Parametric Repair</span>
+    <span class="tag">Default path for linear</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 700" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <style>
+          .r-mono { font-family: 'IBM Plex Mono', monospace; }
+          .r-sans { font-family: 'IBM Plex Sans', sans-serif; }
+          .r-serif { font-family: 'IBM Plex Serif', serif; }
+        </style>
+
+        <!-- header -->
+        <rect x="0" y="0" width="374" height="24" fill="#F5F1EA"/>
+        <rect x="0" y="24" width="374" height="48" fill="#F5F1EA"/>
+        <line x1="0" y1="72" x2="374" y2="72" stroke="#C8BFAE"/>
+        <text x="20" y="52" class="r-mono" font-size="13" fill="#0B3D66">✕</text>
+        <text x="187" y="52" class="r-mono" font-size="11" fill="#111418" text-anchor="middle" font-weight="600" letter-spacing="1.5">NEW REPAIR</text>
+        <text x="354" y="52" class="r-mono" font-size="10" fill="#3A3F47" text-anchor="end">DRAW ↗</text>
+
+        <!-- Method toggle -->
+        <g transform="translate(20, 88)">
+          <rect width="334" height="34" fill="#EDE7DC" stroke="#C8BFAE" rx="2"/>
+          <rect x="3" y="3" width="164" height="28" fill="#111418" rx="1"/>
+          <text x="85" y="22" class="r-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" font-weight="600" letter-spacing="1.5">PARAMETRIC</text>
+          <text x="249" y="22" class="r-mono" font-size="10" fill="#6B7079" text-anchor="middle" letter-spacing="1.5">DRAW</text>
+        </g>
+
+        <!-- Direction -->
+        <g transform="translate(20, 144)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Direction of travel</text>
+          <rect x="0" y="8" width="82" height="30" fill="#111418" rx="1"/>
+          <text x="41" y="27" class="r-mono" font-size="11" fill="#F5F1EA" text-anchor="middle" font-weight="600">NB</text>
+          <rect x="88" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="129" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">SB</text>
+          <rect x="176" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="217" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">EB</text>
+          <rect x="264" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="305" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">WB</text>
+        </g>
+
+        <!-- Lane -->
+        <g transform="translate(20, 200)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Lane · outside → in</text>
+          <rect x="0" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="41" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">SHLDR</text>
+          <rect x="88" y="8" width="82" height="30" fill="#111418" rx="1"/>
+          <text x="129" y="27" class="r-mono" font-size="11" fill="#F5F1EA" text-anchor="middle" font-weight="600">L1</text>
+          <rect x="176" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="217" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">L2</text>
+          <rect x="264" y="8" width="82" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="305" y="27" class="r-mono" font-size="11" fill="#3A3F47" text-anchor="middle">L3</text>
+        </g>
+
+        <!-- Width preset -->
+        <g transform="translate(20, 256)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Width preset</text>
+          <rect x="0" y="8" width="66" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="33" y="20" class="r-mono" font-size="9" fill="#3A3F47" text-anchor="middle" font-weight="600">FULL</text>
+          <text x="33" y="31" class="r-mono" font-size="7.5" fill="#6B7079" text-anchor="middle">WIDTH</text>
+          <rect x="70" y="8" width="66" height="30" fill="#111418" rx="1"/>
+          <text x="103" y="20" class="r-mono" font-size="9" fill="#F5F1EA" text-anchor="middle" font-weight="600">FULL</text>
+          <text x="103" y="31" class="r-mono" font-size="7.5" fill="#F5F1EA" text-anchor="middle">LANE 12'</text>
+          <rect x="140" y="8" width="66" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="173" y="20" class="r-mono" font-size="9" fill="#3A3F47" text-anchor="middle" font-weight="600">½ LANE</text>
+          <text x="173" y="31" class="r-mono" font-size="7.5" fill="#6B7079" text-anchor="middle">6'</text>
+          <rect x="210" y="8" width="66" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="243" y="20" class="r-mono" font-size="9" fill="#3A3F47" text-anchor="middle" font-weight="600">⅓ LANE</text>
+          <text x="243" y="31" class="r-mono" font-size="7.5" fill="#6B7079" text-anchor="middle">4'</text>
+          <rect x="280" y="8" width="66" height="30" fill="#fff" stroke="#C8BFAE"/>
+          <text x="313" y="20" class="r-mono" font-size="9" fill="#3A3F47" text-anchor="middle" font-weight="600">SHLDR</text>
+          <text x="313" y="31" class="r-mono" font-size="7.5" fill="#6B7079" text-anchor="middle">VAR</text>
+        </g>
+
+        <!-- Length & station -->
+        <g transform="translate(20, 312)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Length (ft)</text>
+          <rect x="0" y="8" width="160" height="42" fill="#fff" stroke="#C85A2B" stroke-width="1.6"/>
+          <text x="80" y="38" class="r-serif" font-size="22" fill="#111418" text-anchor="middle" font-weight="600">25</text>
+        </g>
+        <g transform="translate(194, 312)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Start station</text>
+          <rect x="0" y="8" width="160" height="42" fill="#fff" stroke="#C8BFAE"/>
+          <text x="80" y="38" class="r-mono" font-size="16" fill="#111418" text-anchor="middle" font-weight="500">14+25</text>
+        </g>
+
+        <!-- computed preview -->
+        <g transform="translate(20, 374)">
+          <rect x="0" y="0" width="334" height="68" fill="#EDE7DC" stroke="#C8BFAE"/>
+          <text x="12" y="18" class="r-mono" font-size="9" fill="#6B7079" letter-spacing="1.5">COMPUTED GEOMETRY</text>
+          <text x="12" y="40" class="r-serif" font-size="15" fill="#111418" font-weight="500">NB L1 · 12' × 25' = 300 sf</text>
+          <text x="12" y="58" class="r-mono" font-size="10" fill="#3A3F47">Sta 14+25 — 14+50 · centroid 14+37.5</text>
+        </g>
+
+        <!-- Distress type -->
+        <g transform="translate(20, 460)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Distress type</text>
+          <rect x="0" y="8" width="110" height="28" fill="#111418" rx="1"/>
+          <text x="55" y="27" class="r-mono" font-size="10" fill="#F5F1EA" text-anchor="middle" font-weight="600">ALLIGATOR</text>
+          <rect x="116" y="8" width="78" height="28" fill="#fff" stroke="#C8BFAE"/>
+          <text x="155" y="27" class="r-mono" font-size="10" fill="#3A3F47" text-anchor="middle">BLOCK</text>
+          <rect x="200" y="8" width="78" height="28" fill="#fff" stroke="#C8BFAE"/>
+          <text x="239" y="27" class="r-mono" font-size="10" fill="#3A3F47" text-anchor="middle">RUTTING</text>
+          <rect x="284" y="8" width="62" height="28" fill="#fff" stroke="#C8BFAE"/>
+          <text x="315" y="27" class="r-mono" font-size="10" fill="#3A3F47" text-anchor="middle">OTHER</text>
+        </g>
+
+        <!-- Severity -->
+        <g transform="translate(20, 512)">
+          <text x="0" y="0" class="r-sans" font-size="12" fill="#111418" font-weight="600">Severity</text>
+          <rect x="0" y="8" width="106" height="28" fill="#fff" stroke="#C8BFAE"/>
+          <text x="53" y="27" class="r-mono" font-size="10" fill="#3A7A3F" text-anchor="middle" font-weight="600">LOW</text>
+          <rect x="112" y="8" width="106" height="28" fill="#D4A82C"/>
+          <text x="165" y="27" class="r-mono" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">MEDIUM</text>
+          <rect x="224" y="8" width="106" height="28" fill="#fff" stroke="#C8BFAE"/>
+          <text x="277" y="27" class="r-mono" font-size="10" fill="#B33A2F" text-anchor="middle" font-weight="600">HIGH</text>
+        </g>
+
+        <!-- Photo + save -->
+        <g transform="translate(20, 568)">
+          <rect width="64" height="64" fill="#EDE7DC" stroke="#C8BFAE"/>
+          <text x="32" y="38" class="r-mono" font-size="20" fill="#6B7079" text-anchor="middle">📷</text>
+          <text x="32" y="56" class="r-mono" font-size="7.5" fill="#6B7079" text-anchor="middle" letter-spacing="0.5">PHOTO 1</text>
+        </g>
+        <g transform="translate(88, 568)">
+          <rect width="64" height="64" fill="none" stroke="#C8BFAE" stroke-dasharray="3 3"/>
+          <text x="32" y="38" class="r-mono" font-size="18" fill="#C8BFAE" text-anchor="middle">＋</text>
+        </g>
+
+        <g transform="translate(20, 648)">
+          <rect x="0" y="0" width="334" height="44" fill="#111418" rx="2"/>
+          <text x="167" y="28" class="r-mono" font-size="11.5" fill="#F5F1EA" text-anchor="middle" font-weight="600" letter-spacing="2">SAVE REPAIR  ✓</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <ul class="annotation-list">
+    <li data-n="1"><strong>Method toggle</strong> at top: parametric (default) or draw. Both share the same attribute form below.</li>
+    <li data-n="2"><strong>Direction + Lane</strong> chip pickers lay out consistently — outside to inside — mirroring the ribbon's convention.</li>
+    <li data-n="3"><strong>Width presets</strong> map to standard treatments. Custom override via tap-to-edit on any preset.</li>
+    <li data-n="4"><strong>Computed geometry preview</strong> shows the polygon the app will build: lane, width, length, station range, centroid, area.</li>
+    <li data-n="5"><strong>Distress type and severity</strong> as chip pickers. Multi-select is allowed when more than one distress applies.</li>
+  </ul>
+</div>
+
+
+<!-- ============================================== -->
+<!-- 6.6  Section closeout                             -->
+<!-- ============================================== -->
+<h3>6.6 · Section closeout</h3>
+
+<p>Entered from the section list or from a "close section" action in the field view. Three stacked concerns: auto-tallied data, reconciliation with kickoff, and engineering recommendations. Nothing is required, but unreconciled items raise warnings on close.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.6 — Section Closeout</span>
+    <span class="tag">QC + recommendations</span>
+  </div>
+  <div class="device-stage">
+    <div class="device phone">
+      <svg viewBox="0 0 374 740" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <style>
+          .c-mono { font-family: 'IBM Plex Mono', monospace; }
+          .c-sans { font-family: 'IBM Plex Sans', sans-serif; }
+          .c-serif { font-family: 'IBM Plex Serif', serif; }
+        </style>
+
+        <!-- header -->
+        <rect x="0" y="0" width="374" height="24" fill="#F5F1EA"/>
+        <rect x="0" y="24" width="374" height="52" fill="#F5F1EA"/>
+        <line x1="0" y1="76" x2="374" y2="76" stroke="#C8BFAE"/>
+        <text x="20" y="52" class="c-mono" font-size="13" fill="#0B3D66">◀ Section</text>
+        <text x="20" y="102" class="c-mono" font-size="9" fill="#6B7079" letter-spacing="1.8">CLOSEOUT · MAIN ACCESS RD</text>
+        <text x="20" y="124" class="c-serif" font-size="20" font-weight="600" fill="#111418">Almost done.</text>
+
+        <!-- AUTO-TALLY section -->
+        <g transform="translate(0, 142)">
+          <rect x="20" y="0" width="334" height="26" fill="#EDE7DC" stroke="#C8BFAE"/>
+          <text x="32" y="17" class="c-mono" font-size="10" fill="#6B7079" letter-spacing="1.5" font-weight="500">AUTO-TALLY · FROM COLLECTED FEATURES</text>
+
+          <g transform="translate(32, 36)">
+            <text y="0" class="c-sans" font-size="11" fill="#3A3F47">Features collected</text>
+            <text x="310" y="0" class="c-serif" font-size="14" fill="#111418" text-anchor="end" font-weight="600">54</text>
+          </g>
+          <g transform="translate(32, 58)">
+            <text y="0" class="c-sans" font-size="11" fill="#3A3F47">Repairs · 3 polygons</text>
+            <text x="310" y="0" class="c-serif" font-size="14" fill="#111418" text-anchor="end" font-weight="600">612 sf</text>
+          </g>
+          <g transform="translate(32, 80)">
+            <text y="0" class="c-sans" font-size="11" fill="#3A3F47">Crack seal · tally + drawn</text>
+            <text x="310" y="0" class="c-serif" font-size="14" fill="#111418" text-anchor="end" font-weight="600">820 LF</text>
+          </g>
+          <g transform="translate(32, 102)">
+            <text y="0" class="c-sans" font-size="11" fill="#3A3F47">Drainage issues flagged</text>
+            <text x="310" y="0" class="c-serif" font-size="14" fill="#111418" text-anchor="end" font-weight="600">4</text>
+          </g>
+        </g>
+
+        <!-- RECONCILIATION section -->
+        <g transform="translate(0, 268)">
+          <rect x="20" y="0" width="334" height="26" fill="#B33A2F"/>
+          <text x="32" y="17" class="c-mono" font-size="10" fill="#fff" letter-spacing="1.5" font-weight="500">RECONCILE · 2 ITEMS</text>
+
+          <g transform="translate(20, 32)">
+            <rect width="334" height="50" fill="#fff" stroke="#C8BFAE"/>
+            <text x="12" y="20" class="c-sans" font-size="11" fill="#B33A2F" font-weight="600">⚠ Kickoff said curbing present · no Cb track collected</text>
+            <text x="12" y="38" class="c-mono" font-size="9" fill="#6B7079">COLLECT NOW · MARK SECTION-WIDE · REVISE KICKOFF</text>
+          </g>
+          <g transform="translate(20, 88)">
+            <rect width="334" height="50" fill="#fff" stroke="#C8BFAE"/>
+            <text x="12" y="20" class="c-sans" font-size="11" fill="#B33A2F" font-weight="600">⚠ 3 features marked incomplete</text>
+            <text x="12" y="38" class="c-mono" font-size="9" fill="#6B7079">REVIEW EACH · ACCEPT AS-IS · RETURN TO FIELD</text>
+          </g>
+        </g>
+
+        <!-- RECOMMENDATIONS section -->
+        <g transform="translate(0, 424)">
+          <rect x="20" y="0" width="334" height="26" fill="#0B3D66"/>
+          <text x="32" y="17" class="c-mono" font-size="10" fill="#fff" letter-spacing="1.5" font-weight="500">RECOMMENDATIONS</text>
+
+          <g transform="translate(32, 40)">
+            <text y="0" class="c-sans" font-size="11.5" fill="#111418" font-weight="600">Needs crack seal</text>
+            <rect x="220" y="-12" width="44" height="20" fill="#111418" rx="2"/>
+            <text x="242" y="2" class="c-mono" font-size="9" fill="#F5F1EA" text-anchor="middle" font-weight="600">YES</text>
+            <rect x="270" y="-12" width="44" height="20" fill="#fff" stroke="#C8BFAE"/>
+            <text x="292" y="2" class="c-mono" font-size="9" fill="#6B7079" text-anchor="middle">NO</text>
+          </g>
+          <text x="32" y="60" class="c-mono" font-size="10" fill="#6B7079">820 LF auto-tallied · <tspan fill="#0B3D66">add estimate ↻</tspan></text>
+
+          <g transform="translate(32, 88)">
+            <text y="0" class="c-sans" font-size="11.5" fill="#111418" font-weight="600">Needs overlay</text>
+            <rect x="220" y="-12" width="44" height="20" fill="#fff" stroke="#C8BFAE"/>
+            <text x="242" y="2" class="c-mono" font-size="9" fill="#6B7079" text-anchor="middle">YES</text>
+            <rect x="270" y="-12" width="44" height="20" fill="#111418" rx="2"/>
+            <text x="292" y="2" class="c-mono" font-size="9" fill="#F5F1EA" text-anchor="middle" font-weight="600">NO</text>
+          </g>
+
+          <g transform="translate(32, 122)">
+            <text y="0" class="c-sans" font-size="11.5" fill="#111418" font-weight="600">Needs geotechnical</text>
+            <rect x="220" y="-12" width="44" height="20" fill="#111418" rx="2"/>
+            <text x="242" y="2" class="c-mono" font-size="9" fill="#F5F1EA" text-anchor="middle" font-weight="600">YES</text>
+            <rect x="270" y="-12" width="44" height="20" fill="#fff" stroke="#C8BFAE"/>
+            <text x="292" y="2" class="c-mono" font-size="9" fill="#6B7079" text-anchor="middle">NO</text>
+          </g>
+          <text x="32" y="142" class="c-mono" font-size="10" fill="#6B7079">Subgrade concern near Sta 08+40 · <tspan fill="#0B3D66">note ↻</tspan></text>
+
+          <g transform="translate(32, 170)">
+            <text y="0" class="c-sans" font-size="11.5" fill="#111418" font-weight="600">Safety concerns</text>
+            <rect x="220" y="-12" width="44" height="20" fill="#fff" stroke="#C8BFAE"/>
+            <text x="242" y="2" class="c-mono" font-size="9" fill="#6B7079" text-anchor="middle">YES</text>
+            <rect x="270" y="-12" width="44" height="20" fill="#111418" rx="2"/>
+            <text x="292" y="2" class="c-mono" font-size="9" fill="#F5F1EA" text-anchor="middle" font-weight="600">NO</text>
+          </g>
+        </g>
+
+        <!-- Close section button -->
+        <g transform="translate(20, 680)">
+          <rect x="0" y="0" width="334" height="44" fill="#2C5E30" rx="2"/>
+          <text x="167" y="28" class="c-mono" font-size="11.5" fill="#EAF2E5" text-anchor="middle" font-weight="600" letter-spacing="2">CLOSE SECTION  ✓</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <ul class="annotation-list">
+    <li data-n="1"><strong>Auto-tally block</strong> shows what the collected features already tell us. Nothing to fill; these are derived numbers.</li>
+    <li data-n="2"><strong>Reconciliation block</strong> (red banner) surfaces kickoff/feature mismatches and incomplete features. Warnings, not blockers.</li>
+    <li data-n="3"><strong>Recommendations block</strong> (navy banner) holds the engineering judgments that drive the deliverable summary.</li>
+    <li data-n="4"><strong>Per-recommendation notes</strong> accept location, length, or narrative as relevant. Crack seal auto-fills from tally.</li>
+    <li data-n="5"><strong>Close section</strong> changes status to closed but section stays editable — closeout can be revisited.</li>
+  </ul>
+</div>
+
+
+<!-- ============================================== -->
+<!-- 6.7  Catalog editor                             -->
+<!-- ============================================== -->
+<h3>6.7 · Catalog editor (settings)</h3>
+
+<p>Where feature types are managed. Master catalog at the top, project-specific additions below. Each row shows name, code, geometry type, ribbon behavior (for tracks), and active flag. Tap a row to edit its form tree and ribbon symbology. This view is deliberately desktop-friendly — it's not a field screen.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Screen 6.7 — Catalog Editor</span>
+    <span class="tag">Desktop-leaning</span>
+  </div>
+  <div class="device-stage">
+    <div class="device desktop">
+      <svg viewBox="0 0 1080 540" width="100%" style="display:block;" preserveAspectRatio="xMidYMin meet">
+        <style>
+          .cat-mono { font-family: 'IBM Plex Mono', monospace; }
+          .cat-sans { font-family: 'IBM Plex Sans', sans-serif; }
+          .cat-serif { font-family: 'IBM Plex Serif', serif; }
+        </style>
+
+        <!-- Top app bar -->
+        <rect x="0" y="0" width="1080" height="52" fill="#F5F1EA"/>
+        <line x1="0" y1="52" x2="1080" y2="52" stroke="#C8BFAE"/>
+        <text x="24" y="33" class="cat-mono" font-size="10" fill="#6B7079" letter-spacing="1.8">SETTINGS</text>
+        <text x="100" y="33" class="cat-serif" font-size="15" fill="#111418" font-weight="600">· Feature catalog</text>
+
+        <text x="900" y="33" class="cat-mono" font-size="10" fill="#3A3F47" letter-spacing="0.5">PROJECT ▾</text>
+        <text x="1040" y="33" class="cat-mono" font-size="10" fill="#0B3D66" text-anchor="end" font-weight="600">＋ ADD TYPE</text>
+
+        <!-- Left side tabs -->
+        <rect x="0" y="52" width="180" height="488" fill="#EDE7DC"/>
+        <line x1="180" y1="52" x2="180" y2="540" stroke="#C8BFAE"/>
+        <text x="20" y="84" class="cat-mono" font-size="9" fill="#6B7079" letter-spacing="1.5">SECTIONS</text>
+        <g transform="translate(20, 100)" font-family="IBM Plex Sans" font-size="13">
+          <rect x="-6" y="-14" width="160" height="26" fill="#111418" rx="2"/>
+          <text y="4" fill="#F5F1EA" font-weight="600">Feature catalog</text>
+        </g>
+        <text x="20" y="136" class="cat-sans" font-size="13" fill="#3A3F47">Kickoff templates</text>
+        <text x="20" y="164" class="cat-sans" font-size="13" fill="#3A3F47">Closeout templates</text>
+        <text x="20" y="192" class="cat-sans" font-size="13" fill="#3A3F47">Alignment library</text>
+        <text x="20" y="220" class="cat-sans" font-size="13" fill="#3A3F47">Basemap sources</text>
+        <text x="20" y="248" class="cat-sans" font-size="13" fill="#3A3F47">Crew &amp; roles</text>
+        <text x="20" y="276" class="cat-sans" font-size="13" fill="#3A3F47">Sync &amp; export</text>
+        <text x="20" y="304" class="cat-sans" font-size="13" fill="#3A3F47">About</text>
+
+        <!-- Main panel with table -->
+        <g transform="translate(200, 72)">
+          <text x="0" y="12" class="cat-serif" font-size="22" fill="#111418" font-weight="600">Feature catalog</text>
+          <text x="0" y="32" class="cat-sans" font-size="12" fill="#6B7079">Master list and project subset · 19 types · 14 active in this project</text>
+
+          <!-- Search + filter row -->
+          <g transform="translate(0, 50)">
+            <rect x="0" y="0" width="260" height="30" fill="#fff" stroke="#C8BFAE"/>
+            <text x="10" y="20" class="cat-sans" font-size="12" fill="#6B7079">Search name or code…</text>
+            <rect x="272" y="0" width="110" height="30" fill="#fff" stroke="#C8BFAE"/>
+            <text x="327" y="20" class="cat-sans" font-size="12" fill="#3A3F47" text-anchor="middle">All geometry ▾</text>
+            <rect x="394" y="0" width="110" height="30" fill="#fff" stroke="#C8BFAE"/>
+            <text x="449" y="20" class="cat-sans" font-size="12" fill="#3A3F47" text-anchor="middle">Active only ▾</text>
+          </g>
+
+          <!-- Column headers -->
+          <g transform="translate(0, 104)">
+            <rect x="0" y="0" width="860" height="28" fill="#EDE7DC"/>
+            <text x="16" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">NAME</text>
+            <text x="244" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">CODE</text>
+            <text x="310" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">GEOMETRY</text>
+            <text x="440" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">RIBBON</text>
+            <text x="640" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">FORM FIELDS</text>
+            <text x="790" y="19" class="cat-mono" font-size="9.5" fill="#3A3F47" letter-spacing="1.2" font-weight="600">ACTIVE</text>
+          </g>
+
+          <!-- Row 1 -->
+          <g transform="translate(0, 136)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Sign</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">Si</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Point</text>
+            <text x="440" y="20" class="cat-sans" font-size="11.5" fill="#6B7079">—</text>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">8 fields · 3 required</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 2: Guardrail -->
+          <g transform="translate(0, 168)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Guardrail</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">GR</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Track · polyline</text>
+            <g transform="translate(440, 14)">
+              <line x1="0" y1="0" x2="48" y2="0" stroke="#111418" stroke-width="1.3" stroke-dasharray="5 3"/>
+              <text x="56" y="4" class="cat-sans" font-size="11" fill="#3A3F47">dashed · guardrail slot</text>
+            </g>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">6 fields · 2 required</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 3: Swale -->
+          <g transform="translate(0, 200)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Swale</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">Sl</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Track · polyline</text>
+            <g transform="translate(440, 14)">
+              <text y="4" class="cat-mono" font-size="11" fill="#3A7A3F" font-weight="600">&gt; &gt; &gt; &gt;</text>
+              <text x="56" y="4" class="cat-sans" font-size="11" fill="#3A3F47">chevron · swale slot</text>
+            </g>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">5 fields · 2 required</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 4: Edge drop-off -->
+          <g transform="translate(0, 232)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Edge drop-off</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">ED</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Track · continuous scalar</text>
+            <g transform="translate(440, 8)">
+              <rect x="0" y="0" width="8" height="14" fill="#5A8F3E"/>
+              <rect x="8" y="0" width="8" height="14" fill="#D4A82C"/>
+              <rect x="16" y="0" width="8" height="14" fill="#D67830"/>
+              <rect x="24" y="0" width="8" height="14" fill="#B33A2F"/>
+              <text x="40" y="10" class="cat-sans" font-size="11" fill="#3A3F47">heat · depth-driven</text>
+            </g>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">3 fields · 2 required (waypoint)</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 5: Culvert -->
+          <g transform="translate(0, 264)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Culvert</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">Cu</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Polyline · editable vertices</text>
+            <text x="440" y="20" class="cat-sans" font-size="11" fill="#6B7079">—</text>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">9 fields · 3 required · headwalls</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 6: Repair -->
+          <g transform="translate(0, 296)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Repair</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">Re</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Polygon · parametric or drawn</text>
+            <g transform="translate(440, 8)">
+              <rect x="0" y="0" width="44" height="14" fill="#C85A2B" opacity="0.4" stroke="#C85A2B" stroke-width="1.1"/>
+              <text x="54" y="10" class="cat-sans" font-size="11" fill="#3A3F47">filled · on pavement</text>
+            </g>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">10 fields · 4 required</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Row 7: Fence -->
+          <g transform="translate(0, 328)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Fence</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">Fe</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Track · polyline</text>
+            <g transform="translate(440, 14)">
+              <line x1="0" y1="0" x2="48" y2="0" stroke="#6B7079" stroke-width="1"/>
+              <text x="56" y="4" class="cat-sans" font-size="11" fill="#3A3F47">thin · outermost slot</text>
+            </g>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">4 fields · 1 required</text>
+            <circle cx="810" cy="16" r="6" fill="#EDE7DC" stroke="#C8BFAE" stroke-width="1"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#6B7079" font-weight="600">OFF</text>
+          </g>
+
+          <!-- Row 8: Gas gate -->
+          <g transform="translate(0, 360)">
+            <line x1="0" y1="32" x2="860" y2="32" stroke="#D9D1C0"/>
+            <text x="16" y="20" class="cat-sans" font-size="12.5" fill="#111418" font-weight="500">Gas gate</text>
+            <text x="244" y="20" class="cat-mono" font-size="11" fill="#0B3D66" font-weight="600">GG</text>
+            <text x="310" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">Point</text>
+            <text x="440" y="20" class="cat-sans" font-size="11.5" fill="#6B7079">—</text>
+            <text x="640" y="20" class="cat-sans" font-size="11.5" fill="#3A3F47">4 fields · 1 required</text>
+            <circle cx="810" cy="16" r="6" fill="#2C5E30"/>
+            <text x="826" y="20" class="cat-mono" font-size="9" fill="#2C5E30" font-weight="600">ON</text>
+          </g>
+
+          <!-- Ellipsis more rows indicator -->
+          <text x="430" y="418" class="cat-mono" font-size="12" fill="#6B7079" text-anchor="middle">… 11 more types</text>
+
+          <!-- Edit panel preview (right inset) -->
+          <g transform="translate(0, 432)">
+            <rect x="0" y="0" width="860" height="36" fill="#EDE7DC" stroke="#C8BFAE"/>
+            <text x="16" y="23" class="cat-sans" font-size="11.5" fill="#3A3F47"><tspan fill="#6B7079" font-family="IBM Plex Mono" font-size="10" letter-spacing="1">SELECTED</tspan>  ·  Edge drop-off · <tspan fill="#0B3D66">edit form tree</tspan> · <tspan fill="#0B3D66">edit ribbon symbology</tspan> · <tspan fill="#0B3D66">export type as template</tspan></text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <ul class="annotation-list">
+    <li data-n="1"><strong>Section selector</strong> at top: "Project" vs. "Master" catalog. Project inherits from master; additions stay in the project.</li>
+    <li data-n="2"><strong>Each row</strong> shows code, geometry, ribbon preview, form depth (field count), and active toggle.</li>
+    <li data-n="3"><strong>Ribbon previews</strong> inline — a guardrail dashed line, swale chevrons, edge-drop heat band — match exactly what renders in the field.</li>
+    <li data-n="4"><strong>Row action bar</strong> at bottom exposes the three editors per type: form tree, ribbon symbology, export as template.</li>
+    <li data-n="5"><strong>Active toggle</strong> controls whether the type appears in the field UI — inactive types stay in the catalog but don't clutter the bottom bar.</li>
+  </ul>
+</div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 7  THE RIBBON, IN DETAIL                                  -->
+<!-- ============================================================ -->
+<section id="ribbon">
+<h2 data-num="07">The ribbon, in detail</h2>
+<p class="section-kicker">Live plan-symbology strip, one per side of the road</p>
+
+<p>The ribbon is the tool's signature element. It is a narrow vertical strip along each screen edge that renders a live, schematic plan view of the road cross-section at the current station — and the 100 ft or so behind it. As the crew walks and tracks fill in, the ribbon fills in with them. What appears on the ribbon is the same drafting language that will appear on the plan sheet.</p>
+
+<h3>Slot structure</h3>
+
+<p>Each ribbon carries five fixed slots, ordered outside-in from the screen edge toward the pavement. The slots are always there; what renders <em>in</em> them depends on which tracks are active on that side. Pavement lanes occupy additional thin slots inside the cut line, but those are driven by lane count from kickoff, not by tracks.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Ribbon — Annotated Cross-Section</span>
+    <span class="tag">Diagram 7.1</span>
+  </div>
+  <div class="device-stage">
+    <svg viewBox="0 0 820 400" width="800" style="max-width: 100%; height: auto;">
+      <style>
+        .rb-mono { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #3A3F47; letter-spacing: 0.05em; }
+        .rb-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9px; fill: #6B7079; letter-spacing: 0.14em; text-transform: uppercase; }
+        .rb-ttl { font-family: 'IBM Plex Serif', serif; font-size: 12px; fill: #111418; font-weight: 600; }
+        .rb-tag { font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; fill: #0B3D66; font-weight: 600; }
+      </style>
+
+      <!-- Enlarged ribbon cross-section -->
+      <!-- Slot boundaries shown with faint vertical lines -->
+      <g transform="translate(60, 40)">
+        <text x="0" y="-14" class="rb-lbl">SCREEN EDGE  ▸</text>
+
+        <!-- Five slots with widths -->
+        <!-- Fence slot: 14px -->
+        <rect x="0" y="0" width="14" height="280" fill="#F5F1EA" stroke="#C8BFAE" stroke-dasharray="2 2"/>
+        <line x1="7" y1="8" x2="7" y2="272" stroke="#6B7079" stroke-width="1"/>
+        <text x="7" y="296" class="rb-tag" text-anchor="middle">Fe</text>
+
+        <!-- Swale slot: 18px -->
+        <rect x="14" y="0" width="18" height="280" fill="#F5F1EA" stroke="#C8BFAE" stroke-dasharray="2 2"/>
+        <g font-family="IBM Plex Mono" font-size="12" fill="#3A7A3F" font-weight="600">
+          <text x="23" y="30" text-anchor="middle">&gt;</text>
+          <text x="23" y="60" text-anchor="middle">&gt;</text>
+          <text x="23" y="90" text-anchor="middle">&gt;</text>
+          <text x="23" y="120" text-anchor="middle">&gt;</text>
+          <text x="23" y="150" text-anchor="middle">&gt;</text>
+          <text x="23" y="180" text-anchor="middle">&gt;</text>
+          <text x="23" y="210" text-anchor="middle">&gt;</text>
+          <text x="23" y="240" text-anchor="middle">&gt;</text>
+          <text x="23" y="270" text-anchor="middle">&gt;</text>
+        </g>
+        <text x="23" y="296" class="rb-tag" text-anchor="middle">Sl</text>
+
+        <!-- Guardrail slot: 18px -->
+        <rect x="32" y="0" width="18" height="280" fill="#F5F1EA" stroke="#C8BFAE" stroke-dasharray="2 2"/>
+        <line x1="41" y1="8" x2="41" y2="180" stroke="#111418" stroke-width="1.3" stroke-dasharray="5 3"/>
+        <text x="41" y="296" class="rb-tag" text-anchor="middle">GR</text>
+
+        <!-- Sidewalk slot: 18px -->
+        <rect x="50" y="0" width="18" height="280" fill="#F5F1EA" stroke="#C8BFAE" stroke-dasharray="2 2"/>
+        <!-- empty in this example -->
+        <text x="59" y="296" class="rb-tag" text-anchor="middle">Sw</text>
+
+        <!-- ED / Curb slot: 22px. Shows both behaviors possible -->
+        <rect x="68" y="0" width="22" height="280" fill="#F5F1EA" stroke="#C8BFAE" stroke-dasharray="2 2"/>
+        <!-- Heat band (edge drop example) -->
+        <rect x="72" y="8" width="14" height="50" fill="#5A8F3E"/>
+        <rect x="72" y="58" width="14" height="50" fill="#D4A82C"/>
+        <rect x="70" y="108" width="18" height="50" fill="#D67830"/>
+        <rect x="68" y="158" width="22" height="50" fill="#B33A2F"/>
+        <rect x="70" y="208" width="18" height="40" fill="#D67830"/>
+        <rect x="72" y="248" width="14" height="30" fill="#D4A82C"/>
+        <text x="79" y="296" class="rb-tag" text-anchor="middle">ED / Cb</text>
+
+        <!-- Cut line -->
+        <line x1="90" y1="0" x2="90" y2="285" stroke="#111418" stroke-width="1" stroke-dasharray="8 4"/>
+        <text x="90" y="-4" class="rb-lbl" text-anchor="middle">◂ cut line</text>
+
+        <!-- Pavement slots inside cut line: shoulder, L1, L2 -->
+        <rect x="90" y="0" width="10" height="280" fill="#6B7079" opacity="0.15"/>
+        <text x="95" y="296" class="rb-tag" text-anchor="middle" fill="#6B7079">Sh</text>
+
+        <rect x="100" y="0" width="12" height="280" fill="#6B7079" opacity="0.25"/>
+        <text x="106" y="296" class="rb-tag" text-anchor="middle" fill="#6B7079">L1</text>
+
+        <rect x="112" y="0" width="12" height="280" fill="#6B7079" opacity="0.35"/>
+        <text x="118" y="296" class="rb-tag" text-anchor="middle" fill="#6B7079">L2</text>
+
+        <!-- Station ticks -->
+        <g font-family="IBM Plex Mono" font-size="8" fill="#6B7079">
+          <text x="94" y="30">+</text>
+          <text x="94" y="90">+</text>
+          <text x="94" y="150">+</text>
+          <text x="94" y="210">+</text>
+          <text x="94" y="270">+</text>
+        </g>
+      </g>
+
+      <!-- Annotation callouts to the right -->
+      <g transform="translate(260, 40)">
+        <!-- Outermost -->
+        <line x1="0" y1="10" x2="-184" y2="10" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="10" r="10" fill="#C85A2B"/>
+        <text x="0" y="13" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">1</text>
+        <text x="16" y="8" class="rb-ttl">Fence</text>
+        <text x="16" y="22" class="rb-mono">Thin solid line · outermost slot</text>
+        <text x="16" y="34" class="rb-mono">Present when Fe track active</text>
+
+        <line x1="0" y1="60" x2="-174" y2="60" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="60" r="10" fill="#C85A2B"/>
+        <text x="0" y="63" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">2</text>
+        <text x="16" y="58" class="rb-ttl">Swale</text>
+        <text x="16" y="72" class="rb-mono">Chevrons <tspan font-family="IBM Plex Mono" font-weight="700" fill="#3A7A3F">&gt; &gt; &gt;</tspan> in flow direction</text>
+        <text x="16" y="84" class="rb-mono">Editable polyline; vertices taggable</text>
+
+        <line x1="0" y1="110" x2="-160" y2="110" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="110" r="10" fill="#C85A2B"/>
+        <text x="0" y="113" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">3</text>
+        <text x="16" y="108" class="rb-ttl">Guardrail</text>
+        <text x="16" y="122" class="rb-mono">Dashed line · standard drafting</text>
+        <text x="16" y="134" class="rb-mono">Ends where run terminates</text>
+
+        <line x1="0" y1="160" x2="-152" y2="160" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="160" r="10" fill="#C85A2B"/>
+        <text x="0" y="163" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">4</text>
+        <text x="16" y="158" class="rb-ttl">Sidewalk</text>
+        <text x="16" y="172" class="rb-mono">Solid line · pedestrian slot</text>
+        <text x="16" y="184" class="rb-mono">Empty here; section has no sidewalk left side</text>
+
+        <line x1="0" y1="210" x2="-140" y2="210" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="210" r="10" fill="#C85A2B"/>
+        <text x="0" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">5</text>
+        <text x="16" y="208" class="rb-ttl">Edge drop / Curb</text>
+        <text x="16" y="222" class="rb-mono">Shared slot. Heat band or line, not both</text>
+        <text x="16" y="234" class="rb-mono">Heat color = depth; thickness = width</text>
+        <text x="16" y="246" class="rb-mono">Curb renders as solid or double-solid line</text>
+
+        <line x1="0" y1="280" x2="-120" y2="280" stroke="#C85A2B" stroke-width="0.8"/>
+        <circle cx="0" cy="280" r="10" fill="#C85A2B"/>
+        <text x="0" y="283" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#fff" font-weight="700">6</text>
+        <text x="16" y="278" class="rb-ttl">Pavement slots</text>
+        <text x="16" y="292" class="rb-mono">Shoulder + L1 + L2 (per kickoff)</text>
+        <text x="16" y="304" class="rb-mono">Station ticks every 25 ft: <tspan font-family="IBM Plex Mono" fill="#6B7079">+</tspan></text>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<h3>Heat encoding for edge drop-off</h3>
+
+<p>Edge drop is the only track whose ribbon output carries two independent scalars: depth and width. Depth drives color; width drives stroke thickness. Between waypoints, the displayed value is the most recent measurement — the ribbon updates in steps, not in gradients.</p>
+
+<table>
+  <thead>
+    <tr><th style="width: 100px;">Swatch</th><th>Depth range</th><th>Semantics</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span style="display:inline-block; width:42px; height:14px; background:#B5C0AA; border:1px solid #9AA593;"></span></td>
+      <td>Measured zero</td>
+      <td>Edge drop confirmed absent at waypoint</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block; width:42px; height:14px; background:#5A8F3E;"></span></td>
+      <td>0 &ndash; 2 in</td>
+      <td>Acceptable; noted for record</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block; width:42px; height:14px; background:#D4A82C;"></span></td>
+      <td>2 &ndash; 4 in</td>
+      <td>Marginal; candidate for shoulder rebuild</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block; width:42px; height:14px; background:#D67830;"></span></td>
+      <td>4 &ndash; 6 in</td>
+      <td>Deficient; flagged on deliverable</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block; width:42px; height:14px; background:#B33A2F;"></span></td>
+      <td>&gt; 6 in</td>
+      <td>Hazard; triggers safety recommendation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Width caps the heat band at about 5 ft equivalent on screen. Drops wider than that render with an <code>&lt;&gt;</code> overflow indicator rather than growing further — the screen is narrow, and visual accuracy matters less than the fact that the drop is wide.</p>
+
+<h3>Pacing indicator</h3>
+
+<p>A small chip at the top of each ribbon shows distance since the last waypoint on that side's most-recently-touched track. Green under 50 ft, yellow 50&ndash;100, red over 100. This exists because the single biggest failure mode of track features is forgetting to take a waypoint for a long stretch — the map and the chip row don't make that obvious, but a pacing chip can.</p>
+
+<h3>Body-relative orientation</h3>
+
+<p>The ribbon is always oriented walk-forward-is-up, independent of map rotation. A crew walking south on a northbound road sees north-up on the map and still sees the current station advancing up the ribbon as they walk. Left chip row is their physical left; right chip row is their physical right. This is the piece that most complicates the rendering math, but the alternative — map-orientation-dependent ribbon — is disorienting in the field.</p>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 8  TALLY BAR, IN DETAIL                                   -->
+<!-- ============================================================ -->
+<section id="tally">
+<h2 data-num="08">Tally bar, in detail</h2>
+<p class="section-kicker">Crack-seal totals that three capture paths roll up into</p>
+
+<p>Crack seal is a quantity-driven line item. Mile after mile of incidental cracks at unknown locations do not deserve a feature each; they deserve a running total. The tally bar is where that total lives. It stays visible on the field screen so the number is never ambiguous.</p>
+
+<div class="schematic">
+  <div class="schematic-header">
+    <span>Tally Bar — Annotated</span>
+    <span class="tag">Diagram 8.1</span>
+  </div>
+  <div class="device-stage">
+    <svg viewBox="0 0 820 280" width="800" style="max-width: 100%; height: auto;">
+      <style>
+        .tl-mono { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #3A3F47; }
+        .tl-sans { font-family: 'IBM Plex Sans', sans-serif; font-size: 11.5px; fill: #3A3F47; }
+        .tl-serif { font-family: 'IBM Plex Serif', serif; fill: #111418; font-weight: 600; }
+        .tl-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9px; fill: #0B3D66; font-weight: 600; letter-spacing: 0.1em; }
+      </style>
+
+      <!-- Tally bar enlarged -->
+      <g transform="translate(40, 40)">
+        <rect x="0" y="0" width="580" height="150" fill="#EDE7DC" stroke="#C8BFAE"/>
+
+        <!-- Header row -->
+        <text x="16" y="22" class="tl-mono" fill="#6B7079" letter-spacing="1.5" font-size="9">CRACK SEAL TALLY · A = JON · B = MIKE</text>
+
+        <!-- Big number + split -->
+        <text x="16" y="58" class="tl-serif" font-size="32">520</text>
+        <text x="84" y="58" class="tl-mono" fill="#6B7079">LF</text>
+        <text x="16" y="78" class="tl-sans">A 270 &middot; B 250</text>
+
+        <!-- Three increment buttons -->
+        <g transform="translate(180, 30)">
+          <rect width="64" height="42" fill="#fff" stroke="#111418" stroke-width="1.3" rx="2"/>
+          <text x="32" y="27" class="tl-mono" font-size="14" text-anchor="middle" font-weight="700" fill="#111418">+10</text>
+        </g>
+        <g transform="translate(252, 30)">
+          <rect width="64" height="42" fill="#fff" stroke="#111418" stroke-width="1.3" rx="2"/>
+          <text x="32" y="27" class="tl-mono" font-size="14" text-anchor="middle" font-weight="700" fill="#111418">+50</text>
+        </g>
+        <g transform="translate(324, 30)">
+          <rect width="64" height="42" fill="#111418" rx="2"/>
+          <text x="32" y="27" class="tl-mono" font-size="14" text-anchor="middle" font-weight="700" fill="#F5F1EA">+N</text>
+        </g>
+        <text x="356" y="90" class="tl-mono" text-anchor="middle" font-size="8" fill="#6B7079" letter-spacing="0.5">CUSTOM AMOUNT</text>
+
+        <!-- A/B toggle -->
+        <g transform="translate(400, 30)">
+          <rect width="64" height="20" fill="#111418" rx="1"/>
+          <text x="32" y="14" class="tl-mono" fill="#F5F1EA" text-anchor="middle" font-weight="700" font-size="10">A · JON</text>
+          <rect y="22" width="64" height="20" fill="#fff" stroke="#C8BFAE"/>
+          <text x="32" y="36" class="tl-mono" fill="#3A3F47" text-anchor="middle" font-size="10">B · MIKE</text>
+        </g>
+        <text x="432" y="90" class="tl-mono" text-anchor="middle" font-size="8" fill="#6B7079" letter-spacing="0.5">ATTRIBUTE · A OR B</text>
+
+        <!-- Log button -->
+        <g transform="translate(480, 30)">
+          <rect width="80" height="42" fill="#fff" stroke="#C8BFAE" rx="2"/>
+          <text x="40" y="20" class="tl-mono" text-anchor="middle" font-size="8" fill="#6B7079" letter-spacing="0.8">TALLY LOG</text>
+          <text x="40" y="34" class="tl-sans" text-anchor="middle" fill="#3A3F47">edit / undo ▸</text>
+        </g>
+
+        <!-- Recent strip -->
+        <line x1="16" y1="102" x2="564" y2="102" stroke="#C8BFAE"/>
+        <text x="16" y="118" class="tl-mono" fill="#6B7079" font-size="8.5" letter-spacing="1">RECENT · LAST 5</text>
+        <text x="16" y="136" class="tl-mono" fill="#111418" font-weight="500">A+50 <tspan fill="#6B7079">22+00</tspan></text>
+        <text x="110" y="136" class="tl-mono" fill="#111418" font-weight="500">B+250 <tspan fill="#6B7079">~20+10</tspan></text>
+        <text x="214" y="136" class="tl-mono" fill="#111418" font-weight="500">A+10 <tspan fill="#6B7079">20+10</tspan></text>
+        <text x="296" y="136" class="tl-mono" fill="#111418" font-weight="500">A+50 <tspan fill="#6B7079">19+75</tspan></text>
+        <text x="378" y="136" class="tl-mono" fill="#111418" font-weight="500">A+10 <tspan fill="#6B7079">18+20</tspan></text>
+      </g>
+
+      <!-- Annotations -->
+      <g transform="translate(640, 40)">
+        <text y="0" class="tl-lbl">CAPTURE PATHS</text>
+
+        <text x="0" y="24" class="tl-serif" font-size="12">1 · Increment buttons</text>
+        <text x="0" y="40" class="tl-mono" fill="#6B7079">Quick taps for partner-reported feet.</text>
+        <text x="0" y="54" class="tl-mono" fill="#6B7079">Most common during walk.</text>
+
+        <text x="0" y="80" class="tl-serif" font-size="12">2 · Drawn CS polylines</text>
+        <text x="0" y="96" class="tl-mono" fill="#6B7079">For discrete patches. Feature-level</text>
+        <text x="0" y="110" class="tl-mono" fill="#6B7079">precision; auto-adds to total.</text>
+
+        <text x="0" y="136" class="tl-serif" font-size="12">3 · Closeout adjustment</text>
+        <text x="0" y="152" class="tl-mono" fill="#6B7079">Estimator revises number on section</text>
+        <text x="0" y="166" class="tl-mono" fill="#6B7079">close; overrides with note.</text>
+      </g>
+
+      <!-- Side note at bottom -->
+      <g transform="translate(40, 210)">
+        <rect x="0" y="0" width="740" height="50" fill="#F5F1EA" stroke="#0B3D66" stroke-width="1.2"/>
+        <text x="14" y="18" class="tl-lbl">SIDE NOTE · PARTNER-REPORTED STATIONING</text>
+        <text x="14" y="36" class="tl-sans" fill="#3A3F47">B's taps are stamped with the <em>current</em> GPS of the taper — not B's location. Recent strip prepends a <tspan font-family="IBM Plex Mono" font-weight="700" fill="#C85A2B">~</tspan> (tilde) on B entries to mark stationing as approximate.</text>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<h3>Where the running total comes from</h3>
+
+<p>Three paths sum to one number:</p>
+
+<dl class="kv">
+  <dt>1 · Increments</dt>
+  <dd>The <code>+10</code> / <code>+50</code> / <code>+N</code> buttons in the tally bar, attributed to A or B. Partner (B) values are stationed with a tilde to mark them approximate.</dd>
+  <dt>2 · Drawn CS</dt>
+  <dd>Any crack seal polyline feature captured on the map as a discrete patch contributes its length to the tally. These are feature-level and carry photos.</dd>
+  <dt>3 · Closeout adjustment</dt>
+  <dd>At closeout, the crew can override the total with a note — useful when partner estimates drift or when a summary number is provided by a contractor at end of day.</dd>
+</dl>
+
+<h3>Area-section behavior</h3>
+
+<p>In a parking lot section, there is no station. Increments time-stamp instead of station-stamp, and the recent strip shows HH:MM. The math and buttons are otherwise identical.</p>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 9  ARCHITECTURE NOTES                                     -->
+<!-- ============================================================ -->
+<section id="architecture">
+<h2 data-num="09">Architecture notes</h2>
+<p class="section-kicker">How the pieces hold together under the surface</p>
+
+<p>The tool follows the single-file HTML pattern established in prior builds: one HTML file, no bundler, no runtime dependencies except the browser. Storage is IndexedDB. All rendering is vanilla DOM and SVG. Map rendering uses Leaflet loaded from a local copy bundled with the file — no CDN dependencies at runtime.</p>
+
+<h3>Storage model</h3>
+
+<p>One IndexedDB database per installation. Object stores:</p>
+
+<dl class="kv">
+  <dt>projects</dt>
+  <dd>Project records. Key: UUID. Value: name, client, catalog subset, alignment refs, crew, site boundary.</dd>
+  <dt>sections</dt>
+  <dd>Section records. Key: UUID. Value: project FK, type (linear/area), boundary geometry, kickoff answers, closeout recommendations, status.</dd>
+  <dt>features</dt>
+  <dd>All collected features. Key: UUID. Value: section FK, type code, geometry (GeoJSON), station range (linear only), attributes, photos (blob refs), <code>device_id</code>, <code>client_created_at</code>, <code>client_updated_at</code>, completeness flag. The device and timestamp fields exist from v1 to keep v2 sync additive rather than a rewrite.</dd>
+  <dt>waypoints</dt>
+  <dd>Track waypoints. Key: UUID. Value: feature FK (of the track), position (GPS + station), attributes (e.g. depth/width for ED), photo ref, timestamp, attribution (A or B).</dd>
+  <dt>tally_entries</dt>
+  <dd>Crack-seal tally log. Key: UUID. Value: section FK, amount, attribution, GPS, station, approximate-flag, timestamp.</dd>
+  <dt>daily_reports</dt>
+  <dd>One record per project per crew-day. Key: project FK + ISO date. Value: crew roster (with A/B device mapping), weather, surface state, time-on-site per inspector, sections worked, equipment used, free-text journal, pre-walk checklist responses. The day's Sa features are joined in at render time, not duplicated here.</dd>
+  <dt>sketches</dt>
+  <dd>Standalone sketch records. Key: UUID. Value: parent (project / section / feature) FK, backdrop type (blank / aerial-image / section-polygon / alignment), vector annotation JSON, title block metadata, photo blob ref for the rendered output, scale factor for measurement.</dd>
+  <dt>catalog</dt>
+  <dd>Master and per-project feature type definitions.</dd>
+  <dt>photos</dt>
+  <dd>Per-photo metadata records. Key: UUID. Value: parent feature/waypoint FK, blob refs (original + thumbnail), annotation layer (vector JSON), watermark override, capture context (GPS, station, timestamp, <code>device_id</code>, photographer A/B), <code>derived_cache</code> ref to the most recent rendered watermarked-and-annotated version. The photos store sits between feature records and the raw blob bytes, owning all the metadata and overlays so the original blob never needs to change.</dd>
+  <dt>blobs</dt>
+  <dd>Image binaries. Each record carries a <code>kind</code> field (<code>original</code>, <code>thumbnail</code>, or <code>derived</code>) and a parent photo UUID. Originals are immutable after capture; thumbnails are immutable after generation; derived (watermarked + annotated) blobs are a lazy cache, regenerated on demand and evicted under storage pressure.</dd>
+  <dt>snapshots</dt>
+  <dd>Rolling JSON backups of the active project. Key: timestamp. Value: full records bundle (no blobs). Retention is capped to the last N snapshots (default 10). See <em>Data durability</em> below.</dd>
+</dl>
+
+<h3>Section splits</h3>
+
+<p>A section that started life as a single unit can be subdivided in the field or at the desk. Two motivating cases recur: a long roadway that turns out to be more useful broken into shorter inspectable runs, and a parking site that reads as one big lot but functionally contains several distinct lots that should report separately.</p>
+
+<p><strong>Naming convention.</strong> Splits append a zero-padded ordinal suffix using a double-colon separator. Splitting "Lot A" produces "Lot A::01" and "Lot A::02". Splitting "Main St 0+00 to 50+00" produces "Main St 0+00 to 50+00::01" and "::02" (with their own station ranges). The suffix is part of the display name, not a separate field; the section's UUID stays stable so feature references never break. Re-splitting an already-split child appends another suffix — "Lot A::02::01" — which is visually clunky but unambiguous and rare in practice.</p>
+
+<p><strong>Linear-section splits.</strong> The crew taps <em>Split section</em>, then either enters a station value (e.g. "split at 25+00") or drags a divider on the alignment overview map. Features and waypoints with station less than the divider stay with ::01; those greater move to ::02; ties default to ::01. The alignment polyline is shared by reference between the two children — splits do not duplicate or fragment the underlying alignment geometry. Each child gets its own station range, kickoff answers, tally, and closeout. Tally entries are reattributed by their stamped station; entries with no station (rare) are flagged for manual reassignment.</p>
+
+<p><strong>Area-section splits.</strong> The crew taps <em>Split section</em>, then draws a dividing polyline through the section's boundary polygon — either a single cut producing two children, or multiple cuts producing N children. Point features are reassigned by point-in-polygon. Linear and polygon features that cross a cut are flagged for the crew to decide: assign whole to one side, or duplicate-and-clip into both. The default is "ask," because guessing wrong here loses information that's expensive to re-collect.</p>
+
+<p><strong>What carries over to the children.</strong> Kickoff answers are copied to both children with a "review per section" flag, so the crew is prompted at the next open of each child to confirm or modify. The watermark template, photo settings, and catalog subset are project-level and unaffected. Closeout is per-child and starts fresh. The original section's UUID becomes ::01's UUID; ::02 onward get new UUIDs. This means historical references to the un-split section silently resolve to ::01, which is the conservative behavior.</p>
+
+<p><strong>Reverse operation.</strong> Two sibling children can be merged back via <em>Merge with sibling</em>. Features combine, station ranges concatenate (linear), polygons union (area), tallies sum, and the merged section takes the parent's name without a suffix. Kickoff answers from both children are preserved as a diff in the merged section's notes for the crew to reconcile. Merge is more dangerous than split because it can erase distinctions the crew cared about; it requires a confirmation dialog that lists what will be lost.</p>
+
+<h3>Alignment projection</h3>
+
+<p>For linear sections, every GPS fix must be converted to a station value along the alignment. The projection is a perpendicular-drop from the GPS point to the alignment polyline, returning both the station (distance along the polyline from 0+00) and the perpendicular offset (signed — left or right).</p>
+
+<p>Two practical concerns. First, the crew does not walk a straight line — they zigzag, step off the road, come back. A naïve projection will assign station values that oscillate. The tool uses a monotonic-constrained projection that only advances or stays put, never retreats, as long as the crew is still moving forward in the section. Direction reversals are explicit (a toggle in the header), not inferred.</p>
+
+<p>Second, offset direction (left vs right) is resolved against the alignment's tangent and the recorded direction of travel. "Left" is always the crew's physical left while walking the alignment in the kickoff-declared direction — this is what drives chip rows and ribbon sides consistently.</p>
+
+<h3>Offline-first behavior</h3>
+
+<p>Everything works with no connection. Basemap tiles are cached opportunistically when online (section kickoff is a natural time to pre-cache). All data writes go to IndexedDB synchronously. In v1, a project is exported as a bundle (JSON + photo archive) and re-imported on the office machine. Multi-device sync is a v2 feature, described below — but the data model is built to support it from the start.</p>
+
+<h3>Multi-device collaboration <span class="pill v2">v2</span></h3>
+
+<p>Crews routinely work a site as a pair — one walking each side of the road, or splitting a lot between them. In v1, each phone captures its own section and the two bundles are merged at the desk. In v2, the two devices pair in the field and sync their work in real time.</p>
+
+<p>The v2 architecture uses a <strong>QR-code handshake plus WebRTC DataChannel</strong>, entirely peer-to-peer, no server required:</p>
+
+<ul>
+  <li><strong>Pairing.</strong> Phone A generates a QR code containing a WebRTC offer. Phone B scans it with the in-app camera, generates an answer, and displays its own QR. Phone A scans that. Total handshake: ~15 seconds. Animated QR is used if the payload exceeds the capacity of a single static code.</li>
+  <li><strong>Transport.</strong> Once paired, the two devices hold a bidirectional DataChannel. Features, waypoints, and tally increments stream between them as small JSON messages. Works on iPhone and cellular iPad equally — they are functionally the same in Safari for this purpose.</li>
+  <li><strong>Network.</strong> The expected field setup is one device running Personal Hotspot, the other(s) joined to it. Pure local-network peer-to-peer; works without cellular signal, since the hotspot creates a local WiFi regardless. Cross-cellular pairing (each device on its own carrier) is a best-effort attempt via a public STUN server, with graceful fallback to "get on the same network."</li>
+  <li><strong>Merge model.</strong> Features and waypoints are CRDT-friendly: each record carries a UUID, a source <code>device_id</code>, and a <code>created_at</code> timestamp. Concurrent creation on two devices is never a conflict — both records are kept. Edits on the same record are resolved last-write-wins at the field level, with the loser's value preserved in a revision history for recovery. The tally bar treats increments as additive-only (never overwritten), which sidesteps conflict entirely.</li>
+  <li><strong>Attribution carry-over.</strong> The A/B labels chosen at section kickoff map to the paired devices. When B taps +50 on their phone, A's phone shows the total and the recent strip updates with B's contribution on B's row.</li>
+  <li><strong>Drop handling.</strong> Connection loss is expected and non-fatal. Each device continues capturing locally; on reconnection, a delta sync catches the other up. If the devices never reconnect in the field, the bundles still merge cleanly at the desk. A persistent <strong>sync-status chip</strong> in the field-view header shows the current state at a glance — <em>Synced</em> (green, all records acknowledged by peer), <em>N pending</em> (yellow, items captured locally but not yet confirmed across), or <em>Disconnected</em> (red, peer unreachable). Tapping the chip opens a small panel listing unsynced records and offering a manual retry. The chip also displays in solo mode as a neutral "Solo" pill, so the crew always knows what they are in.</li>
+</ul>
+
+<p>Two data-model decisions are made in v1 to avoid retrofit pain later: every record written to IndexedDB carries <code>device_id</code> and <code>client_created_at</code> from day one, even in single-device mode. Sync is additive when we get to it, not a rework.</p>
+
+<h3>Dimensional capture / LiDAR <span class="pill v2">v2+</span></h3>
+
+<p>iPad Pro (2020+) and iPhone Pro (12 Pro+) ship with LiDAR sensors accurate to roughly centimeter-level out to ~5 m. Fused with the camera via ARKit, they enable in-field measurement of sign face dimensions, guardrail heights, edge drop-off depth/width, repair polygon outlines (walk the perimeter and get an accurate shape in seconds), and post spacing on linear features. For several feature types, LiDAR would replace a ruler or an eyeball estimate with a measurement an inspector can defend.</p>
+
+<p><strong>The blocker for the v1 architecture:</strong> iOS Safari does not expose LiDAR or ARKit to web pages. A single-file HTML tool cannot reach the depth sensor. "Measure from an existing photo" is also a misconception — LiDAR records depth <em>at capture time</em> alongside the camera frame; a plain photo taken later cannot be retroactively measured.</p>
+
+<p>Three paths to unlock LiDAR, in ascending scope:</p>
+
+<ol>
+  <li><strong>URL-scheme handoff to a capture app.</strong> On LiDAR-eligible feature types (sign, guardrail, repair polygon), a "LiDAR capture" button launches Polycam or Canvas via iOS URL scheme. The inspector scans. The resulting model (OBJ/USDZ) or measurement (length, area) is imported back into the feature record as an attachment or an attribute. Zero native code; relies on the capture app being installed. Lowest scope, real value for repair polygons specifically.</li>
+  <li><strong>Capacitor wrapper with an ARKit plugin.</strong> Wrap the existing HTML in Capacitor. Write a small Swift plugin exposing LiDAR-backed measurement primitives (point-to-point distance, rectangle-on-plane, polygon-on-floor) to JS. Preserves the web codebase; adds an Apple Developer account, signing, and distribution mechanics. Unlocks in-app measurement without a full rewrite.</li>
+  <li><strong>Native iOS app.</strong> Full rewrite in SwiftUI with native ARKit integration. Highest capability, lowest leverage from what we've built. Not recommended unless a client deliverable explicitly requires it.</li>
+</ol>
+
+<p><strong>Where LiDAR earns its keep.</strong> Best ROI: repair polygons (walking perimeter is the slowest common interaction, a scan is seconds). Moderate ROI: edge drop-off (only when depths actually vary; "copy last" is already fast for uniform sections). Low ROI: sign sizing (MUTCD codes imply size) and guardrail height (categorical compliance is usually the deliverable, not exact height). Two LiDAR-capable iPads do not multiply the LiDAR benefit — one scan per feature is enough — but they compound with the v2 WebRTC split-walk pattern for partner-pace data entry.</p>
+
+<p><strong>Recommendation.</strong> v1 ships without LiDAR. Path 1 (URL-scheme handoff) is the right bolt-on for v2 if any client engagement prioritizes dimensional accuracy. Path 2 is a v3+ consideration if LiDAR becomes central.</p>
+
+<h3>Data durability &amp; auto-backup <span class="pill v1">v1</span></h3>
+
+<p>IndexedDB is durable across app restarts and phone restarts — every capture is persisted the moment it's written. The risk the tool defends against is not transient memory loss but <em>device-level loss</em>: a phone cracks, drowns, is stolen, is left on the tailgate and driven over, or its browser storage gets evicted under iOS storage pressure. Against any of those, the IndexedDB copy is gone with the device.</p>
+
+<p>The tool therefore runs a <strong>rolling auto-backup</strong> on a settable interval, writing a full JSON snapshot of the active project to the device's Files app (iOS) or Downloads folder (Android). The default interval is 15 minutes during an active walk; settings allow 5, 10, 15, 30, or 60-minute options, plus <em>on section close</em> and <em>on app background</em> triggers. Backups are cheap — a typical working project is a few hundred KB of JSON, plus photos referenced by UUID. Photos are <em>not</em> duplicated into each backup; they remain in the IndexedDB blob store and are also mirror-cached to a device-level folder on capture.</p>
+
+<p>Two technical constraints shape the design:</p>
+
+<ul>
+  <li><strong>iOS Safari cannot silently write to the file system.</strong> Every save requires a user gesture. The auto-backup therefore runs as a <em>prompt</em>, not a true background job: at each interval, a non-blocking banner appears at the top of the screen — "Backup ready · tap to save" — and remains until tapped, dismissed, or the next interval arrives. Tapping writes the JSON snapshot via the standard download anchor, landing in the Files app. The prompt is designed to be a single confident tap: no file picker, no naming dialog, just write.</li>
+  <li><strong>Section close is a hard gate.</strong> A section cannot be marked closed until its most recent backup is confirmed saved within the last 5 minutes. This is the one case where the backup prompt is blocking rather than dismissable, because closing a section is the point at which the crew mentally moves on from that data.</li>
+</ul>
+
+<p>In addition to the file-system backup, the tool maintains an <strong>in-database snapshot store</strong> — a second IndexedDB object store holding the last N full-project snapshots (default: last 10). This is silent, cheap, requires no user gesture, and provides a rollback path if a catalog edit or bulk operation corrupts the working set. It does not defend against device loss, but it defends against the crew's own mistakes.</p>
+
+<p>Settings surface three related controls: backup interval, number of in-DB snapshots to retain, and a one-tap <em>Export backup now</em> action for when the crew wants an explicit save before, say, walking into a building with unreliable GPS or handing the phone to someone else.</p>
+
+<p><strong>Phone-loss survival.</strong> The Files-app backup is the only layer that protects against physical destruction of the phone, and only when iCloud Drive is enabled for the Files app. With iCloud on, every backup is mirrored to iCloud within seconds and recoverable from a replacement device. Without iCloud, the backup lives only on the phone — same risk surface as the IndexedDB it copied from. The setup checklist for a new field device should include a confirmation that iCloud Drive is on for Files and that the user has authenticated.</p>
+
+<h3>Photo handling</h3>
+
+<p>Photos are first-class artifacts of the inspection record, not just attachments. The pipeline supports capture, on-device processing, in-app markup, and multi-version export — with the original always preserved, untouched, as the source of truth.</p>
+
+<p><strong>At capture.</strong> The camera API hands back a JPEG. The tool immediately produces three artifacts and writes them to IndexedDB:</p>
+
+<dl class="kv">
+  <dt>Original</dt>
+  <dd>Source image, downscaled to a max long-edge of 1920 px (configurable per project; some clients want full-resolution originals retained). Target ~200–400 KB. EXIF is stripped except for a synthetic timestamp and GPS block written from the device's current fix. This file is never modified after capture.</dd>
+  <dt>Thumbnail</dt>
+  <dd>256 px long-edge JPEG generated via canvas in the same capture handler. Used for fast scrolling in the in-app gallery, the deliverable PDF, and any list view. Generating thumbnails at capture rather than on demand avoids stutter when the gallery is opened over IndexedDB on a slow device.</dd>
+  <dt>Annotation layer</dt>
+  <dd>Empty at capture. A JSON document of vector annotations (strokes, arrows, circles, text callouts) layered over the original at render time. Stored in the photos record, not baked into the image. This is what makes annotations editable, removable, and re-stylable later.</dd>
+</dl>
+
+<p><strong>Watermark template.</strong> A project-level setting defines the watermark applied at render and export time (not at capture). Default template is a <strong>bottom-left corner stamp</strong>: a compact semi-transparent black block with white text containing project name, section, station (linear sections), GPS, capture timestamp, and a small AECOM logo above the metadata. Sized to occupy roughly the lower-left quarter at most, leaving the rest of the frame clean for the subject. Per-photo overrides exist (e.g. add a "DRAFT" diagonal stamp, swap to a partner's logo for a co-stamped project, or suppress the watermark entirely for one shot). Like annotations, watermarks are never baked into the stored image — they are composited at export.</p>
+
+<p><strong>In-app markup.</strong> Tapping a photo opens a full-screen viewer with annotation tools at the bottom: pen, arrow, circle/rectangle, text callout, color picker (5 fixed colors tuned for visibility on pavement: red, yellow, lime, white, black), undo, clear-all, save. Touch input is captured to canvas; strokes are stored as vector data in the annotation layer JSON, not rasterized. This means a small annotation file (a few KB) accompanies each photo regardless of what was drawn — and re-rendering at any size stays crisp.</p>
+
+<p><strong>Storage model addendum.</strong> The <code>blobs</code> store now holds two records per photo (original, thumbnail), each with a <code>kind</code> field. A new <code>photos</code> store sits between feature/waypoint records and the blob store, owning per-photo metadata: blob refs, annotation layer, watermark override, capture context (GPS, station, timestamp, device, photographer), and a <code>derived_cache</code> of the most recent rendered watermarked-and-annotated version (rebuilt lazily, evicted under storage pressure).</p>
+
+<h3>Photo export surface</h3>
+
+<p>The project export expands to four photo variants, each opt-in at export time. The crew picks which subset to include based on what the deliverable is for — internal QC, client report, archival, etc.</p>
+
+<dl class="kv">
+  <dt>originals/</dt>
+  <dd>The unmodified capture (resized only by the at-capture downscale). No watermark, no annotations. Use case: handing raw evidence to legal, or re-processing externally with different watermark templates.</dd>
+  <dt>watermarked/</dt>
+  <dd>Resized (default 1200 px long edge, configurable) with the watermark band composited in. No annotations. Use case: client deliverables where the photo speaks for itself but the metadata needs to be on-image for chain-of-custody.</dd>
+  <dt>annotated/</dt>
+  <dd>Resized with both watermark and annotations composited in. Use case: condition assessment reports, distress documentation, work-order back-up. This is the typical "report photo."</dd>
+  <dt>thumbnails/</dt>
+  <dd>256 px versions, no watermark, no annotations. Use case: report indexes, inline gallery in PDFs, or anywhere a fast-loading preview is needed without burdening the page count.</dd>
+</dl>
+
+<p>Photos are renamed at export to <code>{section}_{code}_{featureId}_{idx}.jpg</code> within their respective subfolder, so the same logical photo carries the same name across all variants. A manifest <code>photos.csv</code> at the archive root maps each filename to its parent feature, capture metadata, and which variants are present, making downstream batch processing and report generation straightforward.</p>
+
+<h3>Export surface</h3>
+
+<p>One project-level export action produces:</p>
+
+<ul>
+  <li>Inventory tables (CSV, one per feature type, keyed by two-letter code)</li>
+  <li>Plan-label KML (one layer per feature type, labels carry code + feature ID)</li>
+  <li>Executive PDF (auto-tally summary + reconciliation status + recommendations per section, with thumbnail strip per section)</li>
+  <li>Photo archive (ZIP, organized into the four variant subfolders described above; crew selects which variants to include)</li>
+  <li>Raw bundle (JSON of all records + originals + annotation JSON, for re-import — re-import preserves edit history)</li>
+</ul>
+
+<p>Export runs entirely client-side — no server round-trip. On iOS Safari, large ZIPs download via <code>File System Access API</code> where supported, otherwise via object-URL anchor download.</p>
+
+<h3>Daily collection report</h3>
+
+<p>Each calendar day a crew is in the field, the tool maintains a <strong>daily report</strong> — a project-level artifact, not section-level, capturing the conditions and people behind the day's data. This is the document QC needs when a deliverable is questioned six months later, and the document the office needs to bill the day correctly.</p>
+
+<p>Fields are minimal and entered once at the start and end of the day:</p>
+
+<dl class="kv">
+  <dt>Date</dt>
+  <dd>Auto, from device clock at first capture of the day.</dd>
+  <dt>Crew</dt>
+  <dd>Names of inspectors on site, mapped to A/B device attribution. Free text per slot. The crew list is suggested from prior days for fast pick.</dd>
+  <dt>Weather</dt>
+  <dd>Temperature, conditions (sunny / overcast / rain / snow / wind), pavement surface state (dry / damp / wet / icy). Manual entry; an optional weather API auto-fill is a v2 nicety. Captured at start of day; updateable mid-day if conditions change materially.</dd>
+  <dt>Time on site</dt>
+  <dd>Start and end timestamps per crew member. Used for billing and for deliverable QC ("PCI was rated by inspector X, who was on site from 0900 to 1530").</dd>
+  <dt>Sections worked</dt>
+  <dd>Auto-derived from any section with captures dated this day. Manual override for "we walked it but didn't capture anything."</dd>
+  <dt>Safety log</dt>
+  <dd>Auto-populated from the day's Sa (safety observation) features, plus a free-text block for end-of-day debrief notes that don't merit a pin (PPE issues, near-miss, things to flag for the next day's crew).</dd>
+  <dt>Equipment / vehicle</dt>
+  <dd>Truck or vehicle ID, any equipment used (drone, retro-meter, GPR, hand odometer). Useful for QC trace-back.</dd>
+  <dt>Notes</dt>
+  <dd>Free-text journal for the day. The "what happened that the data alone won't tell you" entry.</dd>
+</dl>
+
+<p>Daily reports are stored in their own <code>daily_reports</code> object store (project FK + date as composite key, one record per crew-day) and roll up into the project export as a <code>daily_log.csv</code> plus a per-day PDF page in the executive summary.</p>
+
+<h3>Safety module</h3>
+
+<p>The safety module is two things working together: the <code>Sa</code> point feature for capturing hazards and observations in the moment during a walk, and the safety log on the daily report that aggregates them. The intent is low-friction capture — when an inspector sees something unsafe, they drop a Sa pin in two taps, the way a note feature is dropped, and the rest of the day's report fills itself.</p>
+
+<p>Optional pre-walk safety checklist (settings-configurable per project): PPE on, two-way comms checked, traffic control plan verified, hazard awareness brief given. Captured once per day at first launch, stamped to the daily report. Not a hard gate — bypassable with a tap — because the tool's job is to record, not to enforce.</p>
+
+<p>For projects with formal safety reporting requirements (some clients require Job Hazard Analysis filed daily), the daily report PDF includes the safety log as a section that can be detached or printed standalone.</p>
+
+<h3>Sketch tool</h3>
+
+<p>Independent of photo annotation, the sketch tool produces standalone sketches: a blank canvas, an aerial-image background, or a section's polygon/alignment as backdrop. Same drawing primitives as the photo annotation tool (pen, arrow, shapes, text, colors, undo, clear), with an added "measure" tool that draws a labeled distance line based on the underlying scale.</p>
+
+<p>Sketches attach to a project, a section, or a feature. They export to the deliverable in two forms: as PNGs in a <code>sketches/</code> archive subfolder, and as PDF pages in the executive summary, sized to print clean on letter-size paper. Each sketch carries a title block with project, section, date, and inspector — composited at export, same model as photo watermarks.</p>
+
+<p>Use cases in the field: locating a sample unit for re-find ("here, 25 ft east of the third light pole"), sketching a complex distress that doesn't photograph well, drawing a recommended traffic-control diagram for a repair, capturing a partner's verbal description of a feature too far to walk to.</p>
+
+<h3>Desktop summary mode</h3>
+
+<p>The same single-file HTML serves a desktop layout for back-at-the-office work. The viewport detects width and switches modes — under ~900 px presents the mobile field UI, above presents a multi-pane summary layout with the project's data laid out as filterable tables, with the map alongside. Nothing the desktop mode does is unavailable on mobile; it's a layout optimization, not a separate app.</p>
+
+<p>Desktop mode focuses on three workflows:</p>
+
+<ul>
+  <li><strong>Review and complete</strong> — work through flagged-incomplete features, fill deferred kickoff fields, run closeout reconciliation across all sections at once.</li>
+  <li><strong>Tabular reporting</strong> — every feature type as a sortable, filterable table with all attributes visible. Copy-out to spreadsheet or paste into reports. The same data the export CSVs contain, browsable in-app.</li>
+  <li><strong>Print preparation</strong> — page-broken layouts of the executive summary, daily reports, and sketches, with print CSS that produces clean letter-size output. The "print final report" workflow that doesn't require leaving the tool.</li>
+</ul>
+
+<p>Architecturally this is just additional CSS media queries and a layout component — no new data, no new storage. The mobile field UI is the source of truth; desktop mode is a different lens on the same records.</p>
+
+<h3>Basemap sources</h3>
+
+<p>Licensing constrains basemap choices. Google and NearMap require API keys (AECOM may have or be able to provision enterprise keys); OSM and Esri World Imagery are free to use within their terms. Street View requires a Google key; Mapillary is the free alternative and may be adequate for inspection confirmation. The basemap source is a settings-level choice, swappable per project.</p>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 10  OPEN QUESTIONS                                         -->
+<!-- ============================================================ -->
+<section id="open">
+<h2 data-num="10">Open questions</h2>
+<p class="section-kicker">Decisions still to make before build</p>
+
+<p>These surfaced during design and were deferred. They are listed here so they do not disappear into the scaffolding. Each is tagged for priority: <span class="pill open">low</span> can wait until v2; <span class="pill v1">v1</span> is a blocker for first build; unpriortized items need a judgment call.</p>
+
+<h3>Naming &amp; conventions</h3>
+<dl class="kv">
+  <dt><span class="pill v1">v1</span></dt>
+  <dd><strong>Code casing.</strong> Lock one convention — all title case (<code>Si</code>, <code>Cu</code>, <code>Gr</code>), all upper (<code>SI</code>, <code>CU</code>, <code>GR</code>), or hybrid. Current working list is mixed. Recommendation: title case for readability, with catalog editor enforcing uniqueness.</dd>
+  <dt><span class="pill open">low</span></dt>
+  <dd><strong>Section naming.</strong> Free text or controlled from a template? Free text is faster to start; controlled names make exports cleaner.</dd>
+</dl>
+
+<h3>Ribbon extensibility</h3>
+<dl class="kv">
+  <dt><span class="pill v1">v1</span></dt>
+  <dd><strong>Lane count beyond 2 per side.</strong> Ribbon currently accommodates shoulder + L1 + L2. Roads with 3&ndash;4 lanes per side (highway mainline, some urban arterials) need a strategy — wider ribbon, collapsed inner lanes, or a tap-to-expand model.</dd>
+  <dt><span class="pill open">low</span></dt>
+  <dd><strong>Opposing-direction traffic.</strong> When a two-way road is walked in one direction, does the opposite direction's lane count render on the far-side ribbon? Probably yes for completeness, but adds complexity.</dd>
+  <dt></dt>
+  <dd><strong>Shoulder width variability.</strong> Single value per side, per direction, or stationed. Probably single per side with a <code>shoulder changes mid-section</code> escape in kickoff.</dd>
+</dl>
+
+<h3>Repairs</h3>
+<dl class="kv">
+  <dt></dt>
+  <dd><strong>Repairs spanning NB+SB lanes.</strong> One polygon crossing the centerline, or two distinct polygons? Leaning one polygon with a <code>crosses centerline</code> flag for the deliverable.</dd>
+  <dt><span class="pill open">low</span></dt>
+  <dd><strong>Lane-exact geometry.</strong> Parametric repairs currently assume centerline + lane-offset geometry. Lane-edge snapping from imported geometry would be more accurate but requires richer alignment data.</dd>
+</dl>
+
+<h3>Field ergonomics</h3>
+<dl class="kv">
+  <dt></dt>
+  <dd><strong>Swale vertex capture.</strong> Auto-simplify from GPS trail (fewer taps, less control) vs tap-to-add vertices (more control, more effort). Probably hybrid: auto-capture with tap-to-override.</dd>
+  <dt></dt>
+  <dd><strong>Polygon perimeter capture.</strong> Walk-the-perimeter with live trail or tap-the-corners at a distance. Parking lots especially — may need both modes.</dd>
+  <dt><span class="pill open">low</span></dt>
+  <dd><strong>Section switching mid-feature.</strong> If the crew opens a waypoint sheet and then switches section, what happens to the unsaved waypoint? Likely a modal prompt to save, discard, or stay.</dd>
+  <dt></dt>
+  <dd><strong>Depth interpolation.</strong> Edge drop heat between waypoints: stepped (show last measured value until next) or smooth (linear interp). Leaning stepped — matches reality; doesn't imply precision we don't have.</dd>
+</dl>
+
+<h3>Data &amp; export</h3>
+<dl class="kv">
+  <dt><span class="pill v1">v1</span></dt>
+  <dd><strong>Partner-reported station stamping.</strong> Document convention: taper reports ~30 ft seal, tally bar stamps that with taper's current station as approximate. Enshrine the tilde convention and surface it in the deliverable.</dd>
+</dl>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- § 11  PHASED BUILD                                           -->
+<!-- ============================================================ -->
+<section id="phasing">
+<h2 data-num="11">Phased build</h2>
+<p class="section-kicker">What ships first, what waits</p>
+
+<p>The tool is ambitious. Building all of it in one push invites the same accretion problem prior tools have suffered. The phased breakdown below separates the bones of the walk — the things without which the tool is pointless — from the refinements and edge cases.</p>
+
+<h3>Version 1 · The walk works</h3>
+
+<p>The minimum viable walk. A linear section can be kicked off, walked, collected, closed, and exported. Everything else is deferred until this is proven in the field.</p>
+
+<ul>
+  <li><span class="pill v1">v1</span> Project → section → feature data model and IndexedDB storage</li>
+  <li><span class="pill v1">v1</span> Linear and area section types</li>
+  <li><span class="pill v1">v1</span> <strong>Section splits and merges</strong> — <code>name::01</code> / <code>::02</code> naming, station-divider for linear, draw-cut for area, point-in-polygon feature reassignment, merge-with-sibling reverse op</li>
+  <li><span class="pill v1">v1</span> Kickoff interview with hard-gate / soft-defer split</li>
+  <li><span class="pill v1">v1</span> Alignment draw-in-app (polyline tap) and GeoJSON/KML import</li>
+  <li><span class="pill v1">v1</span> Perpendicular GPS → station projection with monotonic constraint</li>
+  <li><span class="pill v1">v1</span> Full catalog of point features (Si, No, CB, In, MH, CO, GG, Mo, AR, PS)</li>
+  <li><span class="pill v1">v1</span> Linear features: Cu, Ga, CS</li>
+  <li><span class="pill v1">v1</span> Track features with chip bar, waypoints, and ribbon symbology: GR, Cb, Sw, ED</li>
+  <li><span class="pill v1">v1</span> Parametric repairs and drawn repairs</li>
+  <li><span class="pill v1">v1</span> Tally bar with three capture paths, A/B attribution, recent strip</li>
+  <li><span class="pill v1">v1</span> Ribbon rendering: 5-slot cross-section, heat encoding, station ticks, pacing indicator</li>
+  <li><span class="pill v1">v1</span> Waypoint sheet with copy-last and recent strip</li>
+  <li><span class="pill v1">v1</span> Section closeout: auto-tally, reconciliation, recommendations</li>
+  <li><span class="pill v1">v1</span> Catalog editor (JSON-backed, minimal UI)</li>
+  <li><span class="pill v1">v1</span> Project export (CSV, KML, PDF summary, photo ZIP, raw bundle)</li>
+  <li><span class="pill v1">v1</span> <strong>Photo pipeline</strong> — capture with auto-thumbnail and EXIF strip, project-level watermark template (bottom-band metadata + corner logo), photos store with per-photo metadata, four export variants (originals, watermarked, annotated, thumbnails)</li>
+  <li><span class="pill v1">v1</span> <strong>Photo annotation tool</strong> — full-screen viewer with pen, arrow, circle/rect, text callout, color picker, undo/clear; vector storage so re-render stays crisp at any export size</li>
+  <li><span class="pill v1">v1</span> <strong>Rolling auto-backup</strong> — JSON snapshot to device Files at settable interval (default 15 min), forced before section close, plus rolling in-DB snapshot store for rollback</li>
+  <li><span class="pill v1">v1</span> <strong>Sync-status chip</strong> in field-view header (shows "Solo" in single-device mode; ready for v2 sync states without UI rework)</li>
+  <li><span class="pill v1">v1</span> <strong>Split-walk operational note</strong> — when two phones cover one project in v1 (no sync yet), each crew member exports their bundle to Files at section close; bundles merge at the desk on import</li>
+  <li><span class="pill v1">v1</span> <strong>Pavement type</strong> as required kickoff field (AC, PCC, composite, chip seal, gravel, other) driving distress vocabulary and repair description</li>
+  <li><span class="pill v1">v1</span> <strong>MUTCD sign code picker</strong> for Si feature — searchable, grouped by series, with shape preview; free-text fallback for non-standard signs</li>
+  <li><span class="pill v1">v1</span> <strong>Simplified ADA capture</strong> on AR feature — three observable flags (ramp present, pad present, appears clearly out of compliance), not a PROWAG survey</li>
+  <li><span class="pill v1">v1</span> <strong>Safety module</strong> — Sa point feature for in-the-moment hazard capture, plus aggregated safety log on the daily report</li>
+  <li><span class="pill v1">v1</span> <strong>Daily collection report</strong> — date, crew, weather, surface state, time on site, sections worked, equipment, free-text journal; rolls into daily_log.csv and per-day PDF page in executive summary</li>
+  <li><span class="pill v1">v1</span> <strong>Sketch tool</strong> — standalone canvas (blank / aerial / section backdrop) with measure tool, attaches to project/section/feature, exports as PNG and PDF page</li>
+  <li><span class="pill v1">v1</span> <strong>Desktop summary mode</strong> — same single-file HTML, CSS-driven layout switch above ~900 px viewport; tabular reporting, bulk review/complete, print preparation</li>
+  <li><span class="pill v1">v1</span> OSM and Esri basemaps</li>
+</ul>
+
+<h3>Version 2 · The walk gets easier</h3>
+
+<p>Refinements based on what the first walks teach. Expect this list to change as field experience accumulates.</p>
+
+<ul>
+  <li><span class="pill v2">v2</span> Fence (Fe), Swale (Sl), traffic loop (TL), marking polylines (PL, PT) and marking polygon (PA)</li>
+  <li><span class="pill v2">v2</span> 3+ lanes per side on the ribbon</li>
+  <li><span class="pill v2">v2</span> Opposing-direction lane rendering on the far-side ribbon</li>
+  <li><span class="pill v2">v2</span> Visual catalog editor (replaces JSON)</li>
+  <li><span class="pill v2">v2</span> Vertex editing component for line/polygon features (drag, insert, delete)</li>
+  <li><span class="pill v2">v2</span> Street View / Mapillary embed for feature verification</li>
+  <li><span class="pill v2">v2+</span> <strong>LiDAR / dimensional capture</strong> — URL-scheme handoff to Polycam or Canvas from repair, sign, and guardrail feature types, importing measurements back as attributes. Capacitor wrapper with an ARKit plugin if central (see § 9).</li>
+  <li><span class="pill v2">v2</span> <strong>Multi-device field sync</strong> — two-phone pairing via QR handshake + WebRTC DataChannel. Live tally, live feature awareness, split-walk assignment. Peer-to-peer over hotspot, no server. (See § 9 for architecture.)</li>
+  <li><span class="pill v2">v2</span> Voice-note capture with on-device transcription</li>
+  <li><span class="pill v2">v2</span> Google / NearMap basemap support (enterprise key)</li>
+  <li><span class="pill v2">v2</span> <strong>Shapefile (.shp) export</strong> — alongside KML, for direct ingest into ArcGIS without an office step</li>
+  <li><span class="pill v2">v2</span> <strong>Weather API auto-fill</strong> on daily report (NOAA / OpenWeatherMap) given GPS</li>
+  <li><span class="pill v2">v2</span> <strong>ASTM Branch / Sample Unit hierarchy</strong> — extend the data model with Branch above Section and Sample Unit below, plus PCI calculation engine. Deferred until a project specifically requires standards-compliant PCI; the current Project → Section → Feature model serves the inventory work that is the dominant case.</li>
+  <li><span class="pill v2">v2</span> <strong>Re-inspection mode</strong> — load a prior project bundle, surface previous PCI per section, capture this cycle as a delta against prior</li>
+  <li><span class="pill v2">v2</span> <strong>Audit trail</strong> — per-record edit history with who/when/why, for litigation defensibility</li>
+</ul>
+
+<div class="panel blueprint" style="margin-top: 36px;">
+  <span class="label">Last thought</span>
+  <p style="margin:0; font-size: 17px; line-height: 1.55;">
+    Build the walk first. Walk it. See what hurts. Then build the refinements.
+  </p>
+</div>
+
+</section>
+</main>
+</div>
+
+<footer class="doc-footer">
+  Road &amp; Lot Inventory · AECOM · Design draft · Prepared for internal review
+</footer>
+
+<script>
+  // Viewport toggle
+  document.querySelectorAll('.viewport-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vp = btn.dataset.vp;
+      document.body.classList.remove('vp-mobile', 'vp-desktop');
+      document.body.classList.add('vp-' + vp);
+      document.querySelectorAll('.viewport-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // TOC collapse on mobile
+  const toc = document.querySelector('nav.toc');
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    toc.classList.add('collapsed');
+    const h = toc.querySelector('h4');
+    h.style.cursor = 'pointer';
+    h.addEventListener('click', () => toc.classList.toggle('collapsed'));
+  }
+</script>
+
+</body>
+</html>

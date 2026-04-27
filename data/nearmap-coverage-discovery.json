@@ -1,0 +1,128 @@
+{
+  "A": {
+    "section": "A",
+    "bbox": [
+      -83.53441020000001,
+      35.693803200000005,
+      -83.51391869999999,
+      35.72653569248997
+    ],
+    "by_season": {
+      "Winter": [
+        {
+          "date": "2026-01-21",
+          "survey_id": "d5e3196b-2d7c-5ef2-ae02-adbeb8bd6ca7",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2025-02-23",
+          "survey_id": "8ed0b6d6-001c-11f0-9bbb-ef7fa58adbb2",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2024-02-05",
+          "survey_id": "a9aae5ce-c9ec-11ee-be5a-f705530ead1c",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2023-01-28",
+          "survey_id": "d03e4eec-aca6-11ed-9ad2-0768e0ccbaf5",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2022-02-08",
+          "survey_id": "57fe53b6-9675-11ec-aae5-8be525a8f6a2",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        }
+      ]
+    }
+  },
+  "B": {
+    "section": "B",
+    "bbox": [
+      -83.43662730000001,
+      35.5852803,
+      -83.39669549999999,
+      35.61132499078871
+    ],
+    "by_season": {}
+  },
+  "C": {
+    "section": "C",
+    "bbox": [
+      -83.3041077,
+      35.498899,
+      -83.2984176,
+      35.5033184
+    ],
+    "by_season": {}
+  },
+  "D": {
+    "section": "D",
+    "bbox": [
+      -83.53463443446739,
+      35.636214100000004,
+      -83.49266309999999,
+      35.683601078373755
+    ],
+    "by_season": {
+      "Winter": [
+        {
+          "date": "2026-01-21",
+          "survey_id": "d5e3196b-2d7c-5ef2-ae02-adbeb8bd6ca7",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2025-02-23",
+          "survey_id": "8ed0b6d6-001c-11f0-9bbb-ef7fa58adbb2",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2024-02-05",
+          "survey_id": "a9aae5ce-c9ec-11ee-be5a-f705530ead1c",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2023-01-28",
+          "survey_id": "d03e4eec-aca6-11ed-9ad2-0768e0ccbaf5",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        },
+        {
+          "date": "2022-02-08",
+          "survey_id": "57fe53b6-9675-11ec-aae5-8be525a8f6a2",
+          "resolution": null,
+          "tags": {
+            "disaster": ""
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "dataset": "gates",
+    "section": "D",
+    "count": 1,
+    "tolerance_ft": 300.0,
+    "source": "NPS GRSM ArcGIS Hub opendata"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 47,
+        "LOC_NAME": null,
+        "KEY_": null,
+        "CLOSURE": null,
+        "NOTES": null,
+        "FMSS_LOC": null,
+        "FMSS_ASSET": null,
+        "ROAD": "Chimney Picnic Area #1",
+        "TRAIL": "Cove Hardwood Nature Trail",
+        "ELEVATION": 2714,
+        "X_COORD": 274215,
+        "Y_COORD": 3946536,
+        "LON": -83.49353752,
+        "LAT": 35.63685991,
+        "DMSLAT": "35 38 12.72039568N",
+        "DMSLON": "083 29 36.74964817W",
+        "DDMLAT": "35 38.21200659N",
+        "DDMLON": "083 29.61249414W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Certified",
+        "GlobalID": "4eec797f-2b75-4e83-af30-f520fd1efcb1",
+        "_section": "D",
+        "_sta_ft": 22797.6,
+        "_sta": "227+97.57",
+        "_dist_from_alignment_ft": 13.8,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0010N": [
+                8,
+                9,
+                11,
+                13,
+                15,
+                18,
+                19,
+                23,
+                24,
+                25,
+                51,
+                54,
+                57,
+                87,
+                111,
+                115,
+                116,
+                117,
+                137,
+                141,
+                142,
+                143,
+                161,
+                162,
+                163,
+                259,
+                304,
+                305,
+                306,
+                307,
+                308
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0010N": [
+                8,
+                9,
+                14,
+                16,
+                20,
+                26,
+                27,
+                28,
+                54,
+                58,
+                59,
+                63,
+                89,
+                121,
+                123,
+                124,
+                144,
+                145,
+                146,
+                334,
+                335,
+                336,
+                337,
+                338,
+                339,
+                340,
+                341,
+                342,
+                343,
+                344,
+                345,
+                346,
+                347,
+                348,
+                349,
+                350,
+                351,
+                352,
+                353,
+                354,
+                660,
+                661,
+                662,
+                663,
+                668,
+                669,
+                670,
+                671,
+                672,
+                674,
+                693,
+                702,
+                730
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.4935415659373,
+          35.6368667785769
+        ]
+      }
+    }
+  ]
+}

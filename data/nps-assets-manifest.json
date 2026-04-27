@@ -1,0 +1,128 @@
+{
+  "sections": {
+    "A": {
+      "signs": {
+        "file": "nps-signs-section-A.geojson",
+        "count": 30
+      },
+      "mile-markers": {
+        "file": "nps-mile-markers-section-A.geojson",
+        "count": 5
+      },
+      "bridge-pt": {
+        "file": "nps-bridge-pt-section-A.geojson",
+        "count": 6
+      },
+      "bridge-ln": {
+        "file": "nps-bridge-ln-section-A.geojson",
+        "count": 4
+      },
+      "gates": {
+        "file": "nps-gates-section-A.geojson",
+        "count": 3
+      },
+      "parking": {
+        "file": "nps-parking-section-A.geojson",
+        "count": 5
+      },
+      "culverts": {
+        "file": "nps-culverts-section-A.geojson",
+        "count": 23
+      }
+    },
+    "B": {
+      "signs": {
+        "file": "nps-signs-section-B.geojson",
+        "count": 72
+      },
+      "mile-markers": {
+        "file": "nps-mile-markers-section-B.geojson",
+        "count": 6
+      },
+      "bridge-pt": {
+        "file": "nps-bridge-pt-section-B.geojson",
+        "count": 1
+      },
+      "bridge-ln": {
+        "file": "nps-bridge-ln-section-B.geojson",
+        "count": 1
+      },
+      "gates": {
+        "file": "nps-gates-section-B.geojson",
+        "count": 1
+      },
+      "parking": {
+        "file": "nps-parking-section-B.geojson",
+        "count": 15
+      },
+      "culverts": {
+        "file": "nps-culverts-section-B.geojson",
+        "count": 71
+      }
+    },
+    "C": {
+      "signs": {
+        "file": "nps-signs-section-C.geojson",
+        "count": 35
+      },
+      "mile-markers": {
+        "file": "nps-mile-markers-section-C.geojson",
+        "count": 0
+      },
+      "bridge-pt": {
+        "file": "nps-bridge-pt-section-C.geojson",
+        "count": 0
+      },
+      "bridge-ln": {
+        "file": "nps-bridge-ln-section-C.geojson",
+        "count": 0
+      },
+      "gates": {
+        "file": "nps-gates-section-C.geojson",
+        "count": 0
+      },
+      "parking": {
+        "file": "nps-parking-section-C.geojson",
+        "count": 2
+      },
+      "culverts": {
+        "file": "nps-culverts-section-C.geojson",
+        "count": 1
+      }
+    },
+    "D": {
+      "signs": {
+        "file": "nps-signs-section-D.geojson",
+        "count": 42
+      },
+      "mile-markers": {
+        "file": "nps-mile-markers-section-D.geojson",
+        "count": 6
+      },
+      "bridge-pt": {
+        "file": "nps-bridge-pt-section-D.geojson",
+        "count": 1
+      },
+      "bridge-ln": {
+        "file": "nps-bridge-ln-section-D.geojson",
+        "count": 1
+      },
+      "gates": {
+        "file": "nps-gates-section-D.geojson",
+        "count": 1
+      },
+      "parking": {
+        "file": "nps-parking-section-D.geojson",
+        "count": 26
+      },
+      "culverts": {
+        "file": "nps-culverts-section-D.geojson",
+        "count": 70
+      }
+    }
+  },
+  "meta": {
+    "tolerance_ft": 300.0,
+    "source": "NPS GRSM ArcGIS Hub opendata"
+  }
+}

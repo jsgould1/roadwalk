@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PathWeb is a web based application for viewing PathRunner data." />
+
+    
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/rip/client/pathweb/images/favicon/apple-touch-icon.png?v=1" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/rip/client/pathweb/images/favicon/favicon-32x32.png?v=1" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/rip/client/pathweb/images/favicon/favicon-16x16.png?v=1" />
+    <link rel="manifest" href="/rip/client/pathweb/images/favicon/site.webmanifest?v=1" />
+    <link rel="mask-icon" href="/rip/client/pathweb/images/favicon/safari-pinned-tab.svg?v=1" color="#c4242c" />
+    <link rel="shortcut icon" href="/rip/client/pathweb/images/favicon/favicon.ico?v=1" />
+    <meta name="msapplication-config" content="/rip/client/pathweb/images/favicon/browserconfig.xml?v=1" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta name="theme-color" content="#ffffff" />
+    <!-- End Favicon -->
+
+    <title>PathWeb</title>
+    <link rel="stylesheet" href="/rip/client/arcgis-assets/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="/rip/client/kendo-ui/css/kendo.common.css" />
+    <link rel="stylesheet" href="/rip/client/pathweb/css/pathweb.css?v=2.33.2" />
+    <link rel="stylesheet" href="/rip/client/pannellum/pannellum.css" />
+    <link rel="stylesheet" href="/rip/client/billboard.js/billboard.min.css"/>
+    
+    <script>
+        var pwebBaseUrl = '/rip/';
+        var pwebVersion = '2.33.2';
+        var pwebLoadParams = {
+sectionId: 6416,
+locationIndex: 0,
+            userLoginMode: 'public',
+            adminUserIsConfigured: false,
+            defaultCycle: '',
+            locationSearchResults: []
+
+        };
+    </script>
+    <script src="/rip/client/pathweb/pathweb.js?v=2.33.2"></script>
+
+</head>
+<body class="pw-no-scroll">
+    
+
+
+<div id="pathweb-main">
+    <div id="pw-react-root"></div>
+</div>
+
+</body>
+</html>

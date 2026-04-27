@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Strip Diagram — Feature Slot Reference</title>
+<style>
+  body { margin: 0; background: #F5F1EA; font-family: 'IBM Plex Sans', sans-serif; color: #2A2825; }
+  h2 { font-size: 13px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;
+       text-transform: uppercase; color: #7A7570; margin: 16px 20px 4px; }
+  .strip-wrap { padding: 0 20px 20px; }
+  svg text { font-family: 'IBM Plex Mono', monospace; }
+
+  /* Legend table */
+  table { border-collapse: collapse; margin: 16px 20px; font-size: 12px; }
+  th { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #7A7570;
+       font-family: 'IBM Plex Mono', monospace; padding: 4px 10px; border-bottom: 1px solid #D8D3CB; text-align: left; }
+  td { padding: 4px 10px; border-bottom: 1px solid #EDEAE3; vertical-align: middle; }
+  .swatch { display: inline-block; width: 36px; height: 6px; border-radius: 2px; vertical-align: middle; }
+  .slot-pill { display: inline-block; font-size: 9px; font-family: 'IBM Plex Mono', monospace;
+               background: #EDEAE3; border-radius: 3px; padding: 1px 5px; color: #5A5550; }
+</style>
+</head>
+<body>
+
+<h2>Straight-line strip — polyline feature slots</h2>
+<div class="strip-wrap">
+<svg viewBox="0 0 820 290" width="820" height="290" style="display:block;background:#F5F1EA;border:1px solid #D8D3CB;border-radius:4px;">
+
+  <!-- ── Station axis labels ── -->
+  <text x="60" y="14" font-size="9" fill="#9A9590" letter-spacing="1">FEATURES (L SIDE)</text>
+  <text x="520" y="14" font-size="9" fill="#9A9590" letter-spacing="1">SLOT</text>
+  <text x="600" y="14" font-size="9" fill="#9A9590" letter-spacing="1">FEATURES (R SIDE)</text>
+
+  <!-- ── Road pavement band (center) ── -->
+  <rect x="40" y="125" width="740" height="40" fill="#D8D3CB" rx="0"/>
+  <!-- Centerline -->
+  <line x1="40" y1="145" x2="780" y2="145" stroke="#B0A998" stroke-width="1" stroke-dasharray="10 6"/>
+  <!-- CL label -->
+  <text x="24" y="148" font-size="9" fill="#9A9590" text-anchor="middle">CL</text>
+
+  <!-- ── SLOT SCAFFOLD LINES (faint) ── -->
+  <!-- L side -->
+  <line x1="40" y1="115" x2="780" y2="115" stroke="#D8D3CB" stroke-width="1"/>  <!-- curb L -->
+  <line x1="40" y1="107" x2="780" y2="107" stroke="#D8D3CB" stroke-width="1"/>  <!-- sidewalk L -->
+  <line x1="40" y1="97"  x2="780" y2="97"  stroke="#D8D3CB" stroke-width="1"/>  <!-- guardrail L -->
+  <line x1="40" y1="86"  x2="780" y2="86"  stroke="#D8D3CB" stroke-width="1"/>  <!-- swale L -->
+  <line x1="40" y1="76"  x2="780" y2="76"  stroke="#D8D3CB" stroke-width="1"/>  <!-- fence L -->
+  <!-- R side -->
+  <line x1="40" y1="175" x2="780" y2="175" stroke="#D8D3CB" stroke-width="1"/>  <!-- curb R -->
+  <line x1="40" y1="183" x2="780" y2="183" stroke="#D8D3CB" stroke-width="1"/>  <!-- sidewalk R -->
+  <line x1="40" y1="193" x2="780" y2="193" stroke="#D8D3CB" stroke-width="1"/>  <!-- guardrail R -->
+  <line x1="40" y1="202" x2="780" y2="202" stroke="#D8D3CB" stroke-width="1"/>  <!-- swale R -->
+  <line x1="40" y1="216" x2="780" y2="216" stroke="#D8D3CB" stroke-width="1"/>  <!-- fence R -->
+
+  <!-- ══════════════════════════════════════════════════
+       SLOT LABELS (center column)
+  ══════════════════════════════════════════════════ -->
+  <text x="515" y="148" font-size="9" fill="#9A9590" letter-spacing="0.5">road zone</text>
+  <text x="515" y="118" font-size="9" fill="#9A9590" letter-spacing="0.5">curb</text>
+  <text x="515" y="109" font-size="9" fill="#9A9590" letter-spacing="0.5">sidewalk</text>
+  <text x="515" y="100" font-size="9" fill="#9A9590" letter-spacing="0.5">guardrail</text>
+  <text x="515" y="89"  font-size="9" fill="#9A9590" letter-spacing="0.5">swale</text>
+  <text x="515" y="79"  font-size="9" fill="#9A9590" letter-spacing="0.5">fence</text>
+  <text x="515" y="178" font-size="9" fill="#9A9590" letter-spacing="0.5">curb</text>
+  <text x="515" y="187" font-size="9" fill="#9A9590" letter-spacing="0.5">sidewalk</text>
+  <text x="515" y="197" font-size="9" fill="#9A9590" letter-spacing="0.5">guardrail</text>
+  <text x="515" y="206" font-size="9" fill="#9A9590" letter-spacing="0.5">swale</text>
+  <text x="515" y="220" font-size="9" fill="#9A9590" letter-spacing="0.5">fence</text>
+
+  <!-- ══════════════════════════════════════════════════
+       L SIDE  — feature bars (right-justified at x=500)
+  ══════════════════════════════════════════════════ -->
+
+  <!-- FENCE L  (#8A5A2B dashed)  y=76 h=3 -->
+  <line x1="60" y1="76" x2="500" y2="76" stroke="#8A5A2B" stroke-width="3" stroke-dasharray="5 7"/>
+  <rect x="60" y="71" width="20" height="10" rx="2" fill="#8A5A2B"/>
+  <text x="70" y="79" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">FN</text>
+
+  <!-- SWALE L  (#0B3D66 solid)  y=86 h=6 -->
+  <line x1="80" y1="86" x2="500" y2="86" stroke="#0B3D66" stroke-width="6"/>
+  <rect x="80" y="81" width="20" height="10" rx="2" fill="#0B3D66"/>
+  <text x="90" y="89" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">Sl</text>
+
+  <!-- GUARDRAIL L  (#4A6B4D solid)  y=97 h=5 -->
+  <line x1="100" y1="97" x2="500" y2="97" stroke="#4A6B4D" stroke-width="5"/>
+  <rect x="100" y="92" width="20" height="10" rx="2" fill="#4A6B4D"/>
+  <text x="110" y="100" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">GR</text>
+
+  <!-- (also in guardrail slot) RETAINING WALL — offset slightly for visibility -->
+  <line x1="140" y1="100" x2="500" y2="100" stroke="#8A5A2B" stroke-width="5"/>
+  <rect x="140" y="95" width="20" height="10" rx="2" fill="#8A5A2B"/>
+  <text x="150" y="103" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">RW</text>
+
+  <!-- SIDEWALK L  (#9B9490 solid)  y=107 h=6 -->
+  <line x1="180" y1="107" x2="500" y2="107" stroke="#9B9490" stroke-width="6"/>
+  <rect x="180" y="102" width="20" height="10" rx="2" fill="#9B9490"/>
+  <text x="190" y="110" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">SW</text>
+
+  <!-- CURB L  (#6B7079 solid)  y=115 h=3 -->
+  <line x1="210" y1="115" x2="500" y2="115" stroke="#6B7079" stroke-width="3"/>
+  <rect x="210" y="110" width="20" height="10" rx="2" fill="#6B7079"/>
+  <text x="220" y="118" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">Cu</text>
+
+  <!-- ROAD ZONE features — pavement markings, utilities, pvmt change -->
+  <!-- pvmt change (dashed dark) — CROSSING line -->
+  <line x1="320" y1="125" x2="320" y2="165" stroke="#444" stroke-width="3" stroke-dasharray="4 3"/>
+  <rect x="309" y="138" width="22" height="14" rx="2" fill="#444"/>
+  <text x="320" y="149" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">PC</text>
+
+  <!-- culvert crossing SVG style -->
+  <circle cx="380" cy="125" r="4" fill="none" stroke="#0B3D66" stroke-width="1.5"/>
+  <line x1="380" y1="129" x2="380" y2="161" stroke="#0B3D66" stroke-width="2"/>
+  <circle cx="380" cy="165" r="4" fill="none" stroke="#0B3D66" stroke-width="1.5"/>
+  <rect x="369" y="138" width="22" height="14" rx="2" fill="#0B3D66"/>
+  <text x="380" y="149" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">CL</text>
+
+  <!-- U/G utility (purple dashed, parallel) -->
+  <line x1="440" y1="135" x2="510" y2="135" stroke="#6B4D8A" stroke-width="3" stroke-dasharray="6 3"/>
+  <rect x="440" y="130" width="20" height="10" rx="2" fill="#6B4D8A"/>
+  <text x="450" y="138" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">UG</text>
+
+  <!-- pavement marking (yellow) -->
+  <line x1="440" y1="150" x2="510" y2="150" stroke="#D4A943" stroke-width="4"/>
+  <rect x="440" y="145" width="20" height="10" rx="2" fill="#D4A943"/>
+  <text x="450" y="153" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">SB</text>
+
+
+  <!-- ══════════════════════════════════════════════════
+       R SIDE — feature bars (left-justified at x=530+)
+  ══════════════════════════════════════════════════ -->
+
+  <!-- CURB R  (#6B7079)  y=175 h=3 -->
+  <line x1="530" y1="175" x2="760" y2="175" stroke="#6B7079" stroke-width="3"/>
+  <rect x="530" y="170" width="20" height="10" rx="2" fill="#6B7079"/>
+  <text x="540" y="178" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">CG</text>
+
+  <!-- SIDEWALK R  (#9B9490)  y=183 h=6 -->
+  <line x1="530" y1="183" x2="760" y2="183" stroke="#9B9490" stroke-width="6"/>
+  <rect x="530" y="178" width="20" height="10" rx="2" fill="#9B9490"/>
+  <text x="540" y="186" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">SW</text>
+
+  <!-- GUARDRAIL R  (#4A6B4D)  y=193 h=5 -->
+  <line x1="530" y1="193" x2="760" y2="193" stroke="#4A6B4D" stroke-width="5"/>
+  <rect x="530" y="188" width="20" height="10" rx="2" fill="#4A6B4D"/>
+  <text x="540" y="196" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">GR</text>
+
+  <!-- BARRIER R  (#4A6B4D lighter)  offset -->
+  <line x1="560" y1="196" x2="760" y2="196" stroke="#4A6B4D" stroke-width="3" opacity="0.6"/>
+  <rect x="560" y="191" width="20" height="10" rx="2" fill="#4A6B4D" opacity="0.75"/>
+  <text x="570" y="199" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">BR</text>
+
+  <!-- SWALE R  (#0B3D66)  y=202 h=6 -->
+  <line x1="530" y1="202" x2="760" y2="202" stroke="#0B3D66" stroke-width="6"/>
+  <rect x="530" y="197" width="20" height="10" rx="2" fill="#0B3D66"/>
+  <text x="540" y="205" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">Sl</text>
+
+  <!-- FENCE R  (#8A5A2B dashed)  y=216 h=3 -->
+  <line x1="530" y1="216" x2="760" y2="216" stroke="#8A5A2B" stroke-width="3" stroke-dasharray="5 7"/>
+  <rect x="530" y="211" width="20" height="10" rx="2" fill="#8A5A2B"/>
+  <text x="540" y="219" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">FN</text>
+
+  <!-- ── L / R side labels ── -->
+  <text x="24" y="97"  font-size="9" fill="#9A9590" text-anchor="middle">L</text>
+  <text x="24" y="193" font-size="9" fill="#9A9590" text-anchor="middle">R</text>
+
+  <!-- ── Station tick ── -->
+  <line x1="320" y1="250" x2="380" y2="250" stroke="#C85A2B" stroke-width="2"/>
+  <line x1="350" y1="125" x2="350" y2="270" stroke="#C85A2B" stroke-width="1.5" opacity="0.3"/>
+  <text x="350" y="268" font-size="9" fill="#C85A2B" text-anchor="middle">86+00</text>
+
+</svg>
+</div>
+
+<!-- ── Legend ── -->
+<h2>Feature legend</h2>
+<table>
+  <tr>
+    <th>Code</th><th>Feature</th><th>Slot</th><th>Color / Style</th><th>Kind</th>
+  </tr>
+  <!-- Road zone -->
+  <tr><td><b>CL</b></td><td>Culvert</td><td><span class="slot-pill">road zone (SVG crossing)</span></td>
+      <td><span class="swatch" style="background:#0B3D66"></span></td><td>ln_culvert</td></tr>
+  <tr><td><b>BC</b></td><td>Box Culvert</td><td><span class="slot-pill">road zone (SVG crossing)</span></td>
+      <td><span class="swatch" style="background:#0B3D66"></span></td><td>ln_box_culvert</td></tr>
+  <tr><td><b>PC</b></td><td>Pvmt Change</td><td><span class="slot-pill">road zone (crossing)</span></td>
+      <td><span class="swatch" style="background:#444;background:repeating-linear-gradient(90deg,#444 0 4px,transparent 4px 7px)"></span></td><td>ln_pvmt_change</td></tr>
+  <tr><td><b>SB/CW/DY…</b></td><td>Pavement markings</td><td><span class="slot-pill">road zone</span></td>
+      <td><span class="swatch" style="background:#D4A943"></span></td><td>ln_stop_bar, ln_crosswalk, ln_dycl…</td></tr>
+  <tr><td><b>UG</b></td><td>Underground utility</td><td><span class="slot-pill">road zone</span></td>
+      <td><span class="swatch" style="background:#6B4D8A;background:repeating-linear-gradient(90deg,#6B4D8A 0 6px,transparent 6px 9px)"></span></td><td>ln_ug</td></tr>
+  <tr><td><b>OH</b></td><td>Overhead utility</td><td><span class="slot-pill">road zone</span></td>
+      <td><span class="swatch" style="background:#6B4D8A"></span></td><td>ln_oh</td></tr>
+  <!-- Curb -->
+  <tr><td><b>Cu / CG</b></td><td>Curb / Curb &amp; Gutter</td><td><span class="slot-pill">curb</span></td>
+      <td><span class="swatch" style="background:#6B7079"></span></td><td>ln_curb, ln_cg</td></tr>
+  <!-- Sidewalk -->
+  <tr><td><b>SW</b></td><td>Sidewalk</td><td><span class="slot-pill">sidewalk</span></td>
+      <td><span class="swatch" style="background:#9B9490"></span></td><td>ln_sidewalk</td></tr>
+  <!-- Guardrail slot -->
+  <tr><td><b>GR</b></td><td>Guardrail</td><td><span class="slot-pill">guardrail</span></td>
+      <td><span class="swatch" style="background:#4A6B4D"></span></td><td>ln_guardrail</td></tr>
+  <tr><td><b>RW</b></td><td>Retaining Wall</td><td><span class="slot-pill">guardrail</span></td>
+      <td><span class="swatch" style="background:#8A5A2B"></span></td><td>ln_retaining_wall</td></tr>
+  <tr><td><b>BR</b></td><td>Barrier</td><td><span class="slot-pill">guardrail</span></td>
+      <td><span class="swatch" style="background:#4A6B4D;opacity:0.65"></span></td><td>ln_barrier</td></tr>
+  <!-- Swale -->
+  <tr><td><b>Sl</b></td><td>Swale</td><td><span class="slot-pill">swale</span></td>
+      <td><span class="swatch" style="background:#0B3D66"></span></td><td>ln_swale</td></tr>
+  <tr><td><b>OT</b></td><td>Drain Other</td><td><span class="slot-pill">swale</span></td>
+      <td><span class="swatch" style="background:#0B3D66;opacity:0.65"></span></td><td>ln_drain_other</td></tr>
+  <!-- Fence -->
+  <tr><td><b>FN</b></td><td>Fence</td><td><span class="slot-pill">fence</span></td>
+      <td><span class="swatch" style="background:repeating-linear-gradient(90deg,#8A5A2B 0 5px,transparent 5px 12px)"></span></td><td>ln_fence</td></tr>
+</table>
+
+<p style="font-size:11px;color:#9A9590;padding:0 20px 20px;font-family:'IBM Plex Mono',monospace;">
+  Note: multiple features sharing a slot (GR / RW / BR) render at the same track — only one will typically be present on a given side.
+  Road-zone line features run parallel to the road; culvert/pvmt-change render as crossings.
+</p>
+</body>
+</html>

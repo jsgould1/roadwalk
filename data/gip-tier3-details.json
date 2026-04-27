@@ -1,0 +1,1486 @@
+{
+  "source": "GRSM_GIPReport_reduced.pdf",
+  "extraction_method": "fitz text-layer (no OCR)",
+  "target_routes": [
+    "0010N",
+    "0010S",
+    "0012ZZ"
+  ],
+  "total_assets": 147,
+  "assets_with_length": 147,
+  "pages_summary_table": 30,
+  "pages_detail": 0,
+  "pages_skipped": 487,
+  "assets": {
+    "0010N-0.468-R": {
+      "asset_id": "0010N-0.468-R",
+      "route": "0010N",
+      "mp": 0.468,
+      "side": "R",
+      "length_ft": 194.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 22
+    },
+    "0010N-0.505-R": {
+      "asset_id": "0010N-0.505-R",
+      "route": "0010N",
+      "mp": 0.505,
+      "side": "R",
+      "length_ft": 129.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 22
+    },
+    "0010N-0.530-R": {
+      "asset_id": "0010N-0.530-R",
+      "route": "0010N",
+      "mp": 0.53,
+      "side": "R",
+      "length_ft": 304.0,
+      "inspection_date": "9/14/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 22
+    },
+    "0010N-0.782-R": {
+      "asset_id": "0010N-0.782-R",
+      "route": "0010N",
+      "mp": 0.782,
+      "side": "R",
+      "length_ft": 498.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 22
+    },
+    "0010N-1.144-R": {
+      "asset_id": "0010N-1.144-R",
+      "route": "0010N",
+      "mp": 1.144,
+      "side": "R",
+      "length_ft": 392.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 22
+    },
+    "0010N-1.471-R": {
+      "asset_id": "0010N-1.471-R",
+      "route": "0010N",
+      "mp": 1.471,
+      "side": "R",
+      "length_ft": 104.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 23
+    },
+    "0010N-1.490-L": {
+      "asset_id": "0010N-1.490-L",
+      "route": "0010N",
+      "mp": 1.49,
+      "side": "L",
+      "length_ft": 52.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 23
+    },
+    "0010N-1.492-R": {
+      "asset_id": "0010N-1.492-R",
+      "route": "0010N",
+      "mp": 1.492,
+      "side": "R",
+      "length_ft": 52.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 23
+    },
+    "0010N-1.532-L": {
+      "asset_id": "0010N-1.532-L",
+      "route": "0010N",
+      "mp": 1.532,
+      "side": "L",
+      "length_ft": 52.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 23
+    },
+    "0010N-1.534-R": {
+      "asset_id": "0010N-1.534-R",
+      "route": "0010N",
+      "mp": 1.534,
+      "side": "R",
+      "length_ft": 51.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 23
+    },
+    "0010N-3.646-L": {
+      "asset_id": "0010N-3.646-L",
+      "route": "0010N",
+      "mp": 3.646,
+      "side": "L",
+      "length_ft": 860.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 24
+    },
+    "0010N-3.932-L": {
+      "asset_id": "0010N-3.932-L",
+      "route": "0010N",
+      "mp": 3.932,
+      "side": "L",
+      "length_ft": 118.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 24
+    },
+    "0010N-5.927-L": {
+      "asset_id": "0010N-5.927-L",
+      "route": "0010N",
+      "mp": 5.927,
+      "side": "L",
+      "length_ft": 167.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 24
+    },
+    "0010N-6.144-L": {
+      "asset_id": "0010N-6.144-L",
+      "route": "0010N",
+      "mp": 6.144,
+      "side": "L",
+      "length_ft": 640.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 24
+    },
+    "0010N-6.271-L": {
+      "asset_id": "0010N-6.271-L",
+      "route": "0010N",
+      "mp": 6.271,
+      "side": "L",
+      "length_ft": 33.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 24
+    },
+    "0010N-6.275-R": {
+      "asset_id": "0010N-6.275-R",
+      "route": "0010N",
+      "mp": 6.275,
+      "side": "R",
+      "length_ft": 52.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 25
+    },
+    "0010N-6.303-R": {
+      "asset_id": "0010N-6.303-R",
+      "route": "0010N",
+      "mp": 6.303,
+      "side": "R",
+      "length_ft": 54.0,
+      "inspection_date": "9/14/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 25
+    },
+    "0010N-6.308-L": {
+      "asset_id": "0010N-6.308-L",
+      "route": "0010N",
+      "mp": 6.308,
+      "side": "L",
+      "length_ft": 32.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 25
+    },
+    "0010N-6.998-R": {
+      "asset_id": "0010N-6.998-R",
+      "route": "0010N",
+      "mp": 6.998,
+      "side": "R",
+      "length_ft": 483.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 25
+    },
+    "0010N-8.225-R": {
+      "asset_id": "0010N-8.225-R",
+      "route": "0010N",
+      "mp": 8.225,
+      "side": "R",
+      "length_ft": 136.0,
+      "inspection_date": "9/15/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 25
+    },
+    "0010N-8.392-R": {
+      "asset_id": "0010N-8.392-R",
+      "route": "0010N",
+      "mp": 8.392,
+      "side": "R",
+      "length_ft": 436.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 26
+    },
+    "0010N-8.446-L": {
+      "asset_id": "0010N-8.446-L",
+      "route": "0010N",
+      "mp": 8.446,
+      "side": "L",
+      "length_ft": 152.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 26
+    },
+    "0010N-8.521-L": {
+      "asset_id": "0010N-8.521-L",
+      "route": "0010N",
+      "mp": 8.521,
+      "side": "L",
+      "length_ft": 111.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 26
+    },
+    "0010N-8.522-R": {
+      "asset_id": "0010N-8.522-R",
+      "route": "0010N",
+      "mp": 8.522,
+      "side": "R",
+      "length_ft": 110.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 26
+    },
+    "0010N-8.654-R": {
+      "asset_id": "0010N-8.654-R",
+      "route": "0010N",
+      "mp": 8.654,
+      "side": "R",
+      "length_ft": 134.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 26
+    },
+    "0010N-8.676-R": {
+      "asset_id": "0010N-8.676-R",
+      "route": "0010N",
+      "mp": 8.676,
+      "side": "R",
+      "length_ft": 158.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 27
+    },
+    "0010N-8.710-R": {
+      "asset_id": "0010N-8.710-R",
+      "route": "0010N",
+      "mp": 8.71,
+      "side": "R",
+      "length_ft": 154.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 27
+    },
+    "0010N-8.740-R": {
+      "asset_id": "0010N-8.740-R",
+      "route": "0010N",
+      "mp": 8.74,
+      "side": "R",
+      "length_ft": 85.0,
+      "inspection_date": "9/15/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 27
+    },
+    "0010N-9.030-R": {
+      "asset_id": "0010N-9.030-R",
+      "route": "0010N",
+      "mp": 9.03,
+      "side": "R",
+      "length_ft": 392.0,
+      "inspection_date": "9/16/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 27
+    },
+    "0010N-9.061-L": {
+      "asset_id": "0010N-9.061-L",
+      "route": "0010N",
+      "mp": 9.061,
+      "side": "L",
+      "length_ft": 232.0,
+      "inspection_date": "9/16/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 27
+    },
+    "0010N-9.268-L": {
+      "asset_id": "0010N-9.268-L",
+      "route": "0010N",
+      "mp": 9.268,
+      "side": "L",
+      "length_ft": 40.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 28
+    },
+    "0010N-9.268-R": {
+      "asset_id": "0010N-9.268-R",
+      "route": "0010N",
+      "mp": 9.268,
+      "side": "R",
+      "length_ft": 44.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 28
+    },
+    "0010N-9.281-L": {
+      "asset_id": "0010N-9.281-L",
+      "route": "0010N",
+      "mp": 9.281,
+      "side": "L",
+      "length_ft": 43.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 28
+    },
+    "0010N-9.281-R": {
+      "asset_id": "0010N-9.281-R",
+      "route": "0010N",
+      "mp": 9.281,
+      "side": "R",
+      "length_ft": 42.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 28
+    },
+    "0010N-9.291-R": {
+      "asset_id": "0010N-9.291-R",
+      "route": "0010N",
+      "mp": 9.291,
+      "side": "R",
+      "length_ft": 412.0,
+      "inspection_date": "9/16/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 28
+    },
+    "0010N-9.437-R": {
+      "asset_id": "0010N-9.437-R",
+      "route": "0010N",
+      "mp": 9.437,
+      "side": "R",
+      "length_ft": 82.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 29
+    },
+    "0010N-9.446-L": {
+      "asset_id": "0010N-9.446-L",
+      "route": "0010N",
+      "mp": 9.446,
+      "side": "L",
+      "length_ft": 40.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 29
+    },
+    "0010N-9.604-L": {
+      "asset_id": "0010N-9.604-L",
+      "route": "0010N",
+      "mp": 9.604,
+      "side": "L",
+      "length_ft": 76.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 29
+    },
+    "0010N-9.604-R": {
+      "asset_id": "0010N-9.604-R",
+      "route": "0010N",
+      "mp": 9.604,
+      "side": "R",
+      "length_ft": 75.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 29
+    },
+    "0010N-9.688-R": {
+      "asset_id": "0010N-9.688-R",
+      "route": "0010N",
+      "mp": 9.688,
+      "side": "R",
+      "length_ft": 40.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 29
+    },
+    "0010N-9.690-L": {
+      "asset_id": "0010N-9.690-L",
+      "route": "0010N",
+      "mp": 9.69,
+      "side": "L",
+      "length_ft": 53.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 30
+    },
+    "0010N-9.712-R": {
+      "asset_id": "0010N-9.712-R",
+      "route": "0010N",
+      "mp": 9.712,
+      "side": "R",
+      "length_ft": 52.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 30
+    },
+    "0010N-9.717-L": {
+      "asset_id": "0010N-9.717-L",
+      "route": "0010N",
+      "mp": 9.717,
+      "side": "L",
+      "length_ft": 35.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 30
+    },
+    "0010N-9.724-L": {
+      "asset_id": "0010N-9.724-L",
+      "route": "0010N",
+      "mp": 9.724,
+      "side": "L",
+      "length_ft": 111.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 30
+    },
+    "0010N-10.137-L": {
+      "asset_id": "0010N-10.137-L",
+      "route": "0010N",
+      "mp": 10.137,
+      "side": "L",
+      "length_ft": 63.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 30
+    },
+    "0010N-10.149-L": {
+      "asset_id": "0010N-10.149-L",
+      "route": "0010N",
+      "mp": 10.149,
+      "side": "L",
+      "length_ft": 65.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 31
+    },
+    "0010N-10.158-L": {
+      "asset_id": "0010N-10.158-L",
+      "route": "0010N",
+      "mp": 10.158,
+      "side": "L",
+      "length_ft": 86.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 31
+    },
+    "0010N-10.174-L": {
+      "asset_id": "0010N-10.174-L",
+      "route": "0010N",
+      "mp": 10.174,
+      "side": "L",
+      "length_ft": 68.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 31
+    },
+    "0010N-10.745-L": {
+      "asset_id": "0010N-10.745-L",
+      "route": "0010N",
+      "mp": 10.745,
+      "side": "L",
+      "length_ft": 101.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 31
+    },
+    "0010N-11.610-L": {
+      "asset_id": "0010N-11.610-L",
+      "route": "0010N",
+      "mp": 11.61,
+      "side": "L",
+      "length_ft": 460.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 31
+    },
+    "0010N-11.863-L": {
+      "asset_id": "0010N-11.863-L",
+      "route": "0010N",
+      "mp": 11.863,
+      "side": "L",
+      "length_ft": 139.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 32
+    },
+    "0010N-12.125-L": {
+      "asset_id": "0010N-12.125-L",
+      "route": "0010N",
+      "mp": 12.125,
+      "side": "L",
+      "length_ft": 28.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 32
+    },
+    "0010N-12.127-R": {
+      "asset_id": "0010N-12.127-R",
+      "route": "0010N",
+      "mp": 12.127,
+      "side": "R",
+      "length_ft": 32.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 32
+    },
+    "0010N-12.140-L": {
+      "asset_id": "0010N-12.140-L",
+      "route": "0010N",
+      "mp": 12.14,
+      "side": "L",
+      "length_ft": 30.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 32
+    },
+    "0010N-12.142-R": {
+      "asset_id": "0010N-12.142-R",
+      "route": "0010N",
+      "mp": 12.142,
+      "side": "R",
+      "length_ft": 26.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 32
+    },
+    "0010N-12.321-R": {
+      "asset_id": "0010N-12.321-R",
+      "route": "0010N",
+      "mp": 12.321,
+      "side": "R",
+      "length_ft": 260.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 33
+    },
+    "0010N-12.791-L": {
+      "asset_id": "0010N-12.791-L",
+      "route": "0010N",
+      "mp": 12.791,
+      "side": "L",
+      "length_ft": 107.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 33
+    },
+    "0010N-12.979-R": {
+      "asset_id": "0010N-12.979-R",
+      "route": "0010N",
+      "mp": 12.979,
+      "side": "R",
+      "length_ft": 22.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 33
+    },
+    "0010N-12.980-L": {
+      "asset_id": "0010N-12.980-L",
+      "route": "0010N",
+      "mp": 12.98,
+      "side": "L",
+      "length_ft": 29.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 33
+    },
+    "0010N-12.990-L": {
+      "asset_id": "0010N-12.990-L",
+      "route": "0010N",
+      "mp": 12.99,
+      "side": "L",
+      "length_ft": 30.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 33
+    },
+    "0010N-12.991-R": {
+      "asset_id": "0010N-12.991-R",
+      "route": "0010N",
+      "mp": 12.991,
+      "side": "R",
+      "length_ft": 30.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 34
+    },
+    "0010N-12.992-R": {
+      "asset_id": "0010N-12.992-R",
+      "route": "0010N",
+      "mp": 12.992,
+      "side": "R",
+      "length_ft": 464.0,
+      "inspection_date": "9/16/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 34
+    },
+    "0010N-13.084-R": {
+      "asset_id": "0010N-13.084-R",
+      "route": "0010N",
+      "mp": 13.084,
+      "side": "R",
+      "length_ft": 500.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 34
+    },
+    "0010N-13.176-R": {
+      "asset_id": "0010N-13.176-R",
+      "route": "0010N",
+      "mp": 13.176,
+      "side": "R",
+      "length_ft": 1275.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 34
+    },
+    "0010N-13.417-R": {
+      "asset_id": "0010N-13.417-R",
+      "route": "0010N",
+      "mp": 13.417,
+      "side": "R",
+      "length_ft": 640.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 34
+    },
+    "0010N-13.538-R": {
+      "asset_id": "0010N-13.538-R",
+      "route": "0010N",
+      "mp": 13.538,
+      "side": "R",
+      "length_ft": 121.0,
+      "inspection_date": "9/16/2010",
+      "type": "W-BEAM STRONG POST",
+      "_source_page": 35
+    },
+    "0010N-13.563-R": {
+      "asset_id": "0010N-13.563-R",
+      "route": "0010N",
+      "mp": 13.563,
+      "side": "R",
+      "length_ft": 522.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 35
+    },
+    "0010N-13.789-R": {
+      "asset_id": "0010N-13.789-R",
+      "route": "0010N",
+      "mp": 13.789,
+      "side": "R",
+      "length_ft": 156.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 35
+    },
+    "0010N-13.819-R": {
+      "asset_id": "0010N-13.819-R",
+      "route": "0010N",
+      "mp": 13.819,
+      "side": "R",
+      "length_ft": 172.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 35
+    },
+    "0010N-13.852-R": {
+      "asset_id": "0010N-13.852-R",
+      "route": "0010N",
+      "mp": 13.852,
+      "side": "R",
+      "length_ft": 765.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 35
+    },
+    "0010N-13.859-L": {
+      "asset_id": "0010N-13.859-L",
+      "route": "0010N",
+      "mp": 13.859,
+      "side": "L",
+      "length_ft": 21.0,
+      "inspection_date": "9/16/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 36
+    },
+    "0010N-13.916-R": {
+      "asset_id": "0010N-13.916-R",
+      "route": "0010N",
+      "mp": 13.916,
+      "side": "R",
+      "length_ft": 530.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 36
+    },
+    "0010N-14.076-R": {
+      "asset_id": "0010N-14.076-R",
+      "route": "0010N",
+      "mp": 14.076,
+      "side": "R",
+      "length_ft": 173.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 36
+    },
+    "0010N-14.109-R": {
+      "asset_id": "0010N-14.109-R",
+      "route": "0010N",
+      "mp": 14.109,
+      "side": "R",
+      "length_ft": 193.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 36
+    },
+    "0010N-14.146-R": {
+      "asset_id": "0010N-14.146-R",
+      "route": "0010N",
+      "mp": 14.146,
+      "side": "R",
+      "length_ft": 450.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 36
+    },
+    "0010N-14.231-R": {
+      "asset_id": "0010N-14.231-R",
+      "route": "0010N",
+      "mp": 14.231,
+      "side": "R",
+      "length_ft": 50.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 37
+    },
+    "0010N-14.240-R": {
+      "asset_id": "0010N-14.240-R",
+      "route": "0010N",
+      "mp": 14.24,
+      "side": "R",
+      "length_ft": 253.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 37
+    },
+    "0010N-14.288-R": {
+      "asset_id": "0010N-14.288-R",
+      "route": "0010N",
+      "mp": 14.288,
+      "side": "R",
+      "length_ft": 433.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 37
+    },
+    "0010N-14.360-R": {
+      "asset_id": "0010N-14.360-R",
+      "route": "0010N",
+      "mp": 14.36,
+      "side": "R",
+      "length_ft": 1048.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
+      "_source_page": 37
+    },
+    "0010N-14.567-R": {
+      "asset_id": "0010N-14.567-R",
+      "route": "0010N",
+      "mp": 14.567,
+      "side": "R",
+      "length_ft": 254.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 37
+    },
+    "0010N-14.594-R": {
+      "asset_id": "0010N-14.594-R",
+      "route": "0010N",
+      "mp": 14.594,
+      "side": "R",
+      "length_ft": 792.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 38
+    },
+    "0010N-14.750-R": {
+      "asset_id": "0010N-14.750-R",
+      "route": "0010N",
+      "mp": 14.75,
+      "side": "R",
+      "length_ft": 271.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 38
+    },
+    "0010N-14.808-R": {
+      "asset_id": "0010N-14.808-R",
+      "route": "0010N",
+      "mp": 14.808,
+      "side": "R",
+      "length_ft": 340.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 38
+    },
+    "0010S-15.039-L": {
+      "asset_id": "0010S-15.039-L",
+      "route": "0010S",
+      "mp": 15.039,
+      "side": "L",
+      "length_ft": 896.0,
+      "inspection_date": "9/20/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 39
+    },
+    "0010S-15.275-L": {
+      "asset_id": "0010S-15.275-L",
+      "route": "0010S",
+      "mp": 15.275,
+      "side": "L",
+      "length_ft": 334.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 39
+    },
+    "0010S-15.397-L": {
+      "asset_id": "0010S-15.397-L",
+      "route": "0010S",
+      "mp": 15.397,
+      "side": "L",
+      "length_ft": 919.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 39
+    },
+    "0010S-16.313-L": {
+      "asset_id": "0010S-16.313-L",
+      "route": "0010S",
+      "mp": 16.313,
+      "side": "L",
+      "length_ft": 398.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 39
+    },
+    "0010S-16.340-R": {
+      "asset_id": "0010S-16.340-R",
+      "route": "0010S",
+      "mp": 16.34,
+      "side": "R",
+      "length_ft": 725.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 39
+    },
+    "0010S-16.660-R": {
+      "asset_id": "0010S-16.660-R",
+      "route": "0010S",
+      "mp": 16.66,
+      "side": "R",
+      "length_ft": 640.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 40
+    },
+    "0010S-17.018-R": {
+      "asset_id": "0010S-17.018-R",
+      "route": "0010S",
+      "mp": 17.018,
+      "side": "R",
+      "length_ft": 1062.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 40
+    },
+    "0010S-17.049-L": {
+      "asset_id": "0010S-17.049-L",
+      "route": "0010S",
+      "mp": 17.049,
+      "side": "L",
+      "length_ft": 665.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 40
+    },
+    "0010S-17.853-R": {
+      "asset_id": "0010S-17.853-R",
+      "route": "0010S",
+      "mp": 17.853,
+      "side": "R",
+      "length_ft": 718.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 40
+    },
+    "0010S-18.033-R": {
+      "asset_id": "0010S-18.033-R",
+      "route": "0010S",
+      "mp": 18.033,
+      "side": "R",
+      "length_ft": 584.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 40
+    },
+    "0010S-18.349-R": {
+      "asset_id": "0010S-18.349-R",
+      "route": "0010S",
+      "mp": 18.349,
+      "side": "R",
+      "length_ft": 472.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 41
+    },
+    "0010S-18.351-L": {
+      "asset_id": "0010S-18.351-L",
+      "route": "0010S",
+      "mp": 18.351,
+      "side": "L",
+      "length_ft": 414.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 41
+    },
+    "0010S-18.568-R": {
+      "asset_id": "0010S-18.568-R",
+      "route": "0010S",
+      "mp": 18.568,
+      "side": "R",
+      "length_ft": 315.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 41
+    },
+    "0010S-18.674-R": {
+      "asset_id": "0010S-18.674-R",
+      "route": "0010S",
+      "mp": 18.674,
+      "side": "R",
+      "length_ft": 1147.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 41
+    },
+    "0010S-18.923-R": {
+      "asset_id": "0010S-18.923-R",
+      "route": "0010S",
+      "mp": 18.923,
+      "side": "R",
+      "length_ft": 634.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 41
+    },
+    "0010S-19.205-R": {
+      "asset_id": "0010S-19.205-R",
+      "route": "0010S",
+      "mp": 19.205,
+      "side": "R",
+      "length_ft": 792.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 42
+    },
+    "0010S-19.431-R": {
+      "asset_id": "0010S-19.431-R",
+      "route": "0010S",
+      "mp": 19.431,
+      "side": "R",
+      "length_ft": 438.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 42
+    },
+    "0010S-19.587-R": {
+      "asset_id": "0010S-19.587-R",
+      "route": "0010S",
+      "mp": 19.587,
+      "side": "R",
+      "length_ft": 400.0,
+      "inspection_date": "9/20/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 42
+    },
+    "0010S-24.324-L": {
+      "asset_id": "0010S-24.324-L",
+      "route": "0010S",
+      "mp": 24.324,
+      "side": "L",
+      "length_ft": 205.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 42
+    },
+    "0010S-25.776-L": {
+      "asset_id": "0010S-25.776-L",
+      "route": "0010S",
+      "mp": 25.776,
+      "side": "L",
+      "length_ft": 220.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 42
+    },
+    "0010S-25.826-L": {
+      "asset_id": "0010S-25.826-L",
+      "route": "0010S",
+      "mp": 25.826,
+      "side": "L",
+      "length_ft": 372.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 43
+    },
+    "0010S-28.172-L": {
+      "asset_id": "0010S-28.172-L",
+      "route": "0010S",
+      "mp": 28.172,
+      "side": "L",
+      "length_ft": 319.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 43
+    },
+    "0010S-28.913-L": {
+      "asset_id": "0010S-28.913-L",
+      "route": "0010S",
+      "mp": 28.913,
+      "side": "L",
+      "length_ft": 53.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 43
+    },
+    "0010S-28.914-R": {
+      "asset_id": "0010S-28.914-R",
+      "route": "0010S",
+      "mp": 28.914,
+      "side": "R",
+      "length_ft": 53.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 43
+    },
+    "0010S-29.918-L": {
+      "asset_id": "0010S-29.918-L",
+      "route": "0010S",
+      "mp": 29.918,
+      "side": "L",
+      "length_ft": 61.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY CRENELLATED WITHOUT CORE WALL",
+      "_source_page": 43
+    },
+    "0010S-30.126-R": {
+      "asset_id": "0010S-30.126-R",
+      "route": "0010S",
+      "mp": 30.126,
+      "side": "R",
+      "length_ft": 27.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 44
+    },
+    "0010S-30.131-L": {
+      "asset_id": "0010S-30.131-L",
+      "route": "0010S",
+      "mp": 30.131,
+      "side": "L",
+      "length_ft": 22.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 44
+    },
+    "0010S-30.138-R": {
+      "asset_id": "0010S-30.138-R",
+      "route": "0010S",
+      "mp": 30.138,
+      "side": "R",
+      "length_ft": 16.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 44
+    },
+    "0010S-30.145-L": {
+      "asset_id": "0010S-30.145-L",
+      "route": "0010S",
+      "mp": 30.145,
+      "side": "L",
+      "length_ft": 21.0,
+      "inspection_date": "9/23/2010",
+      "type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
+      "_source_page": 44
+    },
+    "0010S-31.229-L": {
+      "asset_id": "0010S-31.229-L",
+      "route": "0010S",
+      "mp": 31.229,
+      "side": "L",
+      "length_ft": 132.0,
+      "inspection_date": "9/23/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 44
+    },
+    "0012ZZ-0.016-R": {
+      "asset_id": "0012ZZ-0.016-R",
+      "route": "0012ZZ",
+      "mp": 0.016,
+      "side": "R",
+      "length_ft": 266.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
+      "_source_page": 45
+    },
+    "0012ZZ-0.082-R": {
+      "asset_id": "0012ZZ-0.082-R",
+      "route": "0012ZZ",
+      "mp": 0.082,
+      "side": "R",
+      "length_ft": 113.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
+      "_source_page": 45
+    },
+    "0012ZZ-0.088-L": {
+      "asset_id": "0012ZZ-0.088-L",
+      "route": "0012ZZ",
+      "mp": 0.088,
+      "side": "L",
+      "length_ft": 124.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
+      "_source_page": 45
+    },
+    "0012ZZ-0.151-L": {
+      "asset_id": "0012ZZ-0.151-L",
+      "route": "0012ZZ",
+      "mp": 0.151,
+      "side": "L",
+      "length_ft": 78.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 45
+    },
+    "0012ZZ-0.151-R": {
+      "asset_id": "0012ZZ-0.151-R",
+      "route": "0012ZZ",
+      "mp": 0.151,
+      "side": "R",
+      "length_ft": 440.0,
+      "inspection_date": "9/14/2010",
+      "type": "STONE MASONRY WITH CONCRETE CORE WALL",
+      "_source_page": 45
+    },
+    "0012ZZ-0.015-L": {
+      "asset_id": "0012ZZ-0.015-L",
+      "route": "0012ZZ",
+      "mp": 0.015,
+      "side": "L",
+      "length_ft": 436.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 46
+    },
+    "0012ZZ-0.080-R": {
+      "asset_id": "0012ZZ-0.080-R",
+      "route": "0012ZZ",
+      "mp": 0.08,
+      "side": "R",
+      "length_ft": 137.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 46
+    },
+    "0012ZZ-0.181-L": {
+      "asset_id": "0012ZZ-0.181-L",
+      "route": "0012ZZ",
+      "mp": 0.181,
+      "side": "L",
+      "length_ft": 188.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 46
+    },
+    "0012ZZ-0.338-L": {
+      "asset_id": "0012ZZ-0.338-L",
+      "route": "0012ZZ",
+      "mp": 0.338,
+      "side": "L",
+      "length_ft": 1030.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 46
+    },
+    "0012ZZ-0.727-L": {
+      "asset_id": "0012ZZ-0.727-L",
+      "route": "0012ZZ",
+      "mp": 0.727,
+      "side": "L",
+      "length_ft": 530.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 46
+    },
+    "0012ZZ-1.268-L": {
+      "asset_id": "0012ZZ-1.268-L",
+      "route": "0012ZZ",
+      "mp": 1.268,
+      "side": "L",
+      "length_ft": 416.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 47
+    },
+    "0012ZZ-1.386-L": {
+      "asset_id": "0012ZZ-1.386-L",
+      "route": "0012ZZ",
+      "mp": 1.386,
+      "side": "L",
+      "length_ft": 230.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 47
+    },
+    "0012ZZ-1.394-R": {
+      "asset_id": "0012ZZ-1.394-R",
+      "route": "0012ZZ",
+      "mp": 1.394,
+      "side": "R",
+      "length_ft": 221.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 47
+    },
+    "0012ZZ-1.471-R": {
+      "asset_id": "0012ZZ-1.471-R",
+      "route": "0012ZZ",
+      "mp": 1.471,
+      "side": "R",
+      "length_ft": 115.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 47
+    },
+    "0012ZZ-1.474-L": {
+      "asset_id": "0012ZZ-1.474-L",
+      "route": "0012ZZ",
+      "mp": 1.474,
+      "side": "L",
+      "length_ft": 396.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 47
+    },
+    "0012ZZ-1.502-R": {
+      "asset_id": "0012ZZ-1.502-R",
+      "route": "0012ZZ",
+      "mp": 1.502,
+      "side": "R",
+      "length_ft": 225.0,
+      "inspection_date": "9/13/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 48
+    },
+    "0012ZZ-1.621-L": {
+      "asset_id": "0012ZZ-1.621-L",
+      "route": "0012ZZ",
+      "mp": 1.621,
+      "side": "L",
+      "length_ft": 483.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 48
+    },
+    "0012ZZ-1.724-L": {
+      "asset_id": "0012ZZ-1.724-L",
+      "route": "0012ZZ",
+      "mp": 1.724,
+      "side": "L",
+      "length_ft": 359.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 48
+    },
+    "0012ZZ-1.740-R": {
+      "asset_id": "0012ZZ-1.740-R",
+      "route": "0012ZZ",
+      "mp": 1.74,
+      "side": "R",
+      "length_ft": 175.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 48
+    },
+    "0012ZZ-1.836-L": {
+      "asset_id": "0012ZZ-1.836-L",
+      "route": "0012ZZ",
+      "mp": 1.836,
+      "side": "L",
+      "length_ft": 838.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 48
+    },
+    "0012ZZ-2.106-R": {
+      "asset_id": "0012ZZ-2.106-R",
+      "route": "0012ZZ",
+      "mp": 2.106,
+      "side": "R",
+      "length_ft": 257.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 49
+    },
+    "0012ZZ-2.212-L": {
+      "asset_id": "0012ZZ-2.212-L",
+      "route": "0012ZZ",
+      "mp": 2.212,
+      "side": "L",
+      "length_ft": 658.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 49
+    },
+    "0012ZZ-2.306-R": {
+      "asset_id": "0012ZZ-2.306-R",
+      "route": "0012ZZ",
+      "mp": 2.306,
+      "side": "R",
+      "length_ft": 215.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 49
+    },
+    "0012ZZ-2.673-R": {
+      "asset_id": "0012ZZ-2.673-R",
+      "route": "0012ZZ",
+      "mp": 2.673,
+      "side": "R",
+      "length_ft": 224.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 49
+    },
+    "0012ZZ-2.719-L": {
+      "asset_id": "0012ZZ-2.719-L",
+      "route": "0012ZZ",
+      "mp": 2.719,
+      "side": "L",
+      "length_ft": 803.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 49
+    },
+    "0012ZZ-2.922-L": {
+      "asset_id": "0012ZZ-2.922-L",
+      "route": "0012ZZ",
+      "mp": 2.922,
+      "side": "L",
+      "length_ft": 260.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 50
+    },
+    "0012ZZ-2.922-R": {
+      "asset_id": "0012ZZ-2.922-R",
+      "route": "0012ZZ",
+      "mp": 2.922,
+      "side": "R",
+      "length_ft": 214.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 50
+    },
+    "0012ZZ-2.994-L": {
+      "asset_id": "0012ZZ-2.994-L",
+      "route": "0012ZZ",
+      "mp": 2.994,
+      "side": "L",
+      "length_ft": 325.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 50
+    },
+    "0012ZZ-3.044-R": {
+      "asset_id": "0012ZZ-3.044-R",
+      "route": "0012ZZ",
+      "mp": 3.044,
+      "side": "R",
+      "length_ft": 185.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 50
+    },
+    "0012ZZ-3.087-L": {
+      "asset_id": "0012ZZ-3.087-L",
+      "route": "0012ZZ",
+      "mp": 3.087,
+      "side": "L",
+      "length_ft": 161.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 50
+    },
+    "0012ZZ-3.150-R": {
+      "asset_id": "0012ZZ-3.150-R",
+      "route": "0012ZZ",
+      "mp": 3.15,
+      "side": "R",
+      "length_ft": 179.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 51
+    },
+    "0012ZZ-3.152-L": {
+      "asset_id": "0012ZZ-3.152-L",
+      "route": "0012ZZ",
+      "mp": 3.152,
+      "side": "L",
+      "length_ft": 179.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 51
+    },
+    "0012ZZ-3.211-L": {
+      "asset_id": "0012ZZ-3.211-L",
+      "route": "0012ZZ",
+      "mp": 3.211,
+      "side": "L",
+      "length_ft": 149.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 51
+    },
+    "0012ZZ-3.511-R": {
+      "asset_id": "0012ZZ-3.511-R",
+      "route": "0012ZZ",
+      "mp": 3.511,
+      "side": "R",
+      "length_ft": 264.0,
+      "inspection_date": "9/14/2010",
+      "type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
+      "_source_page": 51
+    }
+  }
+}
