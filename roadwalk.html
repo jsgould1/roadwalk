@@ -3546,6 +3546,17 @@ a { color: inherit; text-decoration: none; }
               <path d="M5.5 7 L10.5 7 L10 13 L9 21 L7 21 L6 13 Z" fill="#1A73E8"/>
             </svg>
           </button>
+          <!-- Adjust alignment: trace a corrected CL over the aerial, re-drape pins -->
+          <button class="map-ctl-btn" id="adjust-cl-btn"
+                  title="Adjust centerline — trace corrected alignment over aerial" hidden>
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" class="ctl-icon">
+              <!-- road line -->
+              <path d="M2 15 Q7 5 18 7" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round"/>
+              <!-- pencil tip -->
+              <path d="M15 3 L17 5 L10 12 L8 12 L8 10 Z" fill="currentColor"/>
+            </svg>
+          </button>
           <button class="map-ctl-btn" id="cl-toggle-btn" title="Show / hide road centerline">
             <svg viewBox="0 0 22 16" width="20" height="16" aria-hidden="true" class="ctl-icon">
               <path d="M1 8 C 4 2, 18 2, 21 8 C 18 14, 4 14, 1 8 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
@@ -4423,6 +4434,8 @@ a { color: inherit; text-decoration: none; }
       els.headerKicker.textContent = 'PROJECT';
       const shortName = BUNDLE?.short_name || (PROJECT?.name || '').split('·')[0].trim().slice(0, 20) || 'RoadWalk';
       els.headerName.textContent = shortName;
+      const adjBtn = $('#adjust-cl-btn');
+      if (adjBtn) adjBtn.hidden = true;
     } else if (name === 'ko-picker') {
       els.backBtn.style.visibility = 'visible';
       els.headerKicker.textContent = 'NEW SECTION';
@@ -4443,26 +4456,30 @@ a { color: inherit; text-decoration: none; }
       const sec = SECTIONS.find(s => s.id === sectionId);
       els.headerKicker.textContent = sec.type === 'linear' ? 'SECTION · LINEAR' : 'SECTION · AREA';
       els.headerName.textContent = sec.name;
+      // Show "Adjust CL" button only for sections with a traced/imported alignment
+      const adjBtn = $('#adjust-cl-btn');
+      if (adjBtn) adjBtn.hidden = !(sec.alignment && sec.alignment.length >= 2);
       // Defer Leaflet init to next paint so the container has its real size
       requestAnimationFrame(() => initOrUpdateMap(sec));
     } else if (name === 'trace') {
       els.backBtn.style.visibility = 'visible';
-      const typeLabel = traceState.type === 'area' ? 'AREA' : 'LINEAR';
-      els.headerKicker.textContent = `TRACE · ${typeLabel}`;
-      els.headerName.textContent = 'Draw alignment';
+      const typeLabel   = traceState.type === 'area' ? 'AREA' : 'LINEAR';
+      const isReplace   = !!traceState.replaceSectionId;
+      const replaceSec  = isReplace ? SECTIONS.find(s => s.id === traceState.replaceSectionId) : null;
+      els.headerKicker.textContent = isReplace ? 'ADJUST CL' : `TRACE · ${typeLabel}`;
+      els.headerName.textContent   = isReplace ? (replaceSec?.name || 'Adjust centerline') : 'Draw alignment';
       requestAnimationFrame(() => {
         if (!state.map) {
-          // Bootstrap map with the first known section center, or a GRSM default
-          const fallbackCenter = SECTIONS.length ? SECTIONS[0].center : [35.68, -83.52];
-          // Reuse initOrUpdateMap with a minimal stub so all controls wire up
+          const fallbackCenter = (replaceSec?.center) || (SECTIONS.length ? SECTIONS[0].center : [35.68, -83.52]);
           const stub = { id: '__trace__', center: fallbackCenter, alignment: null, pins: [] };
           initOrUpdateMap(stub);
-          state.mapLayers._lastSecId = null; // don't treat stub as a real section
+          state.mapLayers._lastSecId = null;
         } else {
-          state.map.invalidateSize();
+          if (replaceSec) state.map.setView(replaceSec.center, 17);
+          else state.map.invalidateSize();
         }
         $('#trace-banner').classList.add('open');
-        $('#trace-banner-type').textContent = `TRACING ${typeLabel}`;
+        $('#trace-banner-type').textContent = isReplace ? 'ADJUSTING CL' : `TRACING ${typeLabel}`;
         document.querySelector('.app')?.classList.add('drawing');
         if (state.map?.doubleClickZoom) state.map.doubleClickZoom.disable();
       });
@@ -7474,11 +7491,14 @@ a { color: inherit; text-decoration: none; }
   // Used for Track 2: drawing a new section's centerline/boundary on the map.
   // Separate from drawState — no current section is required.
   const traceState = {
-    active:    false,
-    type:      null,   // 'linear' | 'area'
-    vertices:  [],     // [[lat, lng], ...]
-    layers:    [],     // Leaflet vertex circle layers
-    polyLayer: null,   // preview polyline/polygon layer
+    active:          false,
+    type:            null,   // 'linear' | 'area'
+    vertices:        [],     // [[lat, lng], ...]
+    layers:          [],     // Leaflet vertex circle layers
+    polyLayer:       null,   // preview polyline/polygon layer
+    // Replace-mode fields (Track 2e — adjust existing CL)
+    replaceSectionId: null,  // if set, we're replacing an existing section's alignment
+    ghostLayer:      null,   // gray ghost of the old alignment shown during tracing
   };
 
   function _fmtTraceDist(ft) {
@@ -7525,25 +7545,67 @@ a { color: inherit; text-decoration: none; }
   }
 
   function cancelAlignmentTrace() {
+    const wasReplace = !!traceState.replaceSectionId;
+    const secId      = traceState.replaceSectionId;
     if (state.map) {
       traceState.layers.forEach(l => state.map.removeLayer(l));
       if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
+      if (traceState.ghostLayer) state.map.removeLayer(traceState.ghostLayer);
     }
-    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null });
+    Object.assign(traceState, {
+      active: false, type: null, vertices: [], layers: [],
+      polyLayer: null, replaceSectionId: null, ghostLayer: null,
+    });
     $('#trace-banner').classList.remove('open');
-    $('#nsd-overlay').hidden = true;
+    $('#nsd-overlay').hidden     = true;
+    $('#cl-confirm-overlay').hidden = true;
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
-    showView('ko-picker');
+    // Return to the section that was being adjusted, or to ko-picker for new sections
+    if (wasReplace && secId) showView('field', secId);
+    else showView('ko-picker');
   }
 
   function finishAlignmentTrace() {
     const n = traceState.vertices.length;
     const minPts = traceState.type === 'area' ? 3 : 2;
     if (n < minPts) return; // not enough points — silently ignore
-    // Hide banner but keep preview so user can see their trace while filling in the dialog
+    // Hide banner; keep preview + ghost visible while user reads the dialog
     $('#trace-banner').classList.remove('open');
-    // Populate and show the New Section dialog
+
+    // --- Replace-mode: show CL confirm dialog ---
+    if (traceState.replaceSectionId) {
+      const sec = SECTIONS.find(s => s.id === traceState.replaceSectionId);
+      if (!sec) { cancelAlignmentTrace(); return; }
+
+      // Compute old and new lengths
+      let oldFt = 0, newFt = 0;
+      const ov = sec.alignment || [];
+      for (let i = 1; i < ov.length; i++) oldFt += havFt(ov[i-1], ov[i]);
+      const nv = traceState.vertices;
+      for (let i = 1; i < nv.length; i++) newFt += havFt(nv[i-1], nv[i]);
+
+      const pointPins = (sec.pins || []).filter(p => p.geometry?.type === 'Point' && p.sta_ft != null);
+      const linePins  = (sec.pins || []).filter(p => p.geometry?.type === 'LineString');
+      const scale     = oldFt > 0 ? newFt / oldFt : 1;
+      const scalePct  = Math.abs(scale - 1) * 100;
+
+      let body = `Section: ${sec.name}\n`;
+      body += `Old CL: ${_fmtTraceDist(oldFt)}\n`;
+      body += `New CL: ${_fmtTraceDist(newFt)} (${n} vertices)\n`;
+      if (scalePct > 2) body += `⚠ Length change: ${scalePct > 0 ? '+' : ''}${(scale - 1)*100 > 0 ? '+' : ''}${((scale-1)*100).toFixed(1)}% — stations will be scaled proportionally\n`;
+      body += `\nReproject: ${pointPins.length} point pins`;
+      if (linePins.length) body += `, ${linePins.length} line pins`;
+      body += '\n(Area features left in place)';
+
+      $('#cl-confirm-body').style.whiteSpace = 'pre-line';
+      $('#cl-confirm-body').textContent = body;
+      $('#cl-confirm-err').textContent   = '';
+      $('#cl-confirm-overlay').hidden    = false;
+      return;
+    }
+
+    // --- New-section mode: show name/MP dialog ---
     const isLinear = traceState.type === 'linear';
     $('#nsd-linear-fields').style.display = isLinear ? '' : 'none';
     let distFt = 0;
@@ -7600,6 +7662,96 @@ a { color: inherit; text-decoration: none; }
 
     renderSectionList('all');
     showView('field', newId);
+  }
+
+  // --- Track 2e: Adjust existing section centerline -------------------------
+
+  // Entry point — called from the "⟲ CL" button in the field view.
+  // Shows the existing CL as a ghost gray polyline, then enters trace mode.
+  function startCLAdjust(sec) {
+    if (!sec.alignment) return;
+    traceState.active          = true;
+    traceState.type            = sec.type;
+    traceState.replaceSectionId = sec.id;
+    traceState.vertices        = [];
+    traceState.layers          = [];
+    traceState.polyLayer       = null;
+    traceState.ghostLayer      = null;
+    showView('trace');
+    // Add ghost alignment after map is ready
+    requestAnimationFrame(() => {
+      traceState.ghostLayer = L.polyline(sec.alignment, {
+        color: '#888', weight: 2, opacity: 0.55, dashArray: '5 4', interactive: false,
+      }).addTo(state.map);
+    });
+  }
+
+  // Re-drape all pins in `sec` from their old sta_ft onto `newVerts`.
+  // Points get a new lat/lng; LineStrings get each vertex re-projected
+  // via old-CL perpendicular offset; Polygons are left in place.
+  function _replaceSectionAlignment(sec, newVerts) {
+    const oldVerts = sec.alignment;
+    // Compute length scale for proportional station correction
+    let oldFt = 0, newFt = 0;
+    for (let i = 1; i < oldVerts.length; i++) oldFt += havFt(oldVerts[i-1], oldVerts[i]);
+    for (let i = 1; i < newVerts.length; i++) newFt += havFt(newVerts[i-1], newVerts[i]);
+    const scale = (oldFt > 0 && newFt > 0) ? newFt / oldFt : 1;
+
+    for (const pin of (sec.pins || [])) {
+      if (pin.geometry?.type === 'Point' && pin.sta_ft != null) {
+        const newSta = pin.sta_ft * scale;
+        const pt = pointAt(newVerts, newSta);
+        pin.geometry.coordinates = [pt[1], pt[0]]; // GeoJSON is [lng, lat]
+        pin.sta_ft = newSta;
+        const s = Math.floor(newSta / 100);
+        pin.sta = `${s}+${(newSta - s * 100).toFixed(2).padStart(5, '0')}`;
+      } else if (pin.geometry?.type === 'LineString') {
+        // Reproject each vertex via its projection onto the old CL
+        pin.geometry.coordinates = pin.geometry.coordinates.map(coord => {
+          const [sta, perp] = projectOntoAlignment({ lat: coord[1], lng: coord[0] }, oldVerts);
+          const newSta = sta * scale;
+          const base   = pointAt(newVerts, newSta);
+          const bear   = tangentAt(newVerts, newSta);
+          // Determine which side of the old CL this vertex was on
+          const side   = sideOfAlignment({ lat: coord[1], lng: coord[0] }, oldVerts);
+          const perpSign = side === 'R' ? 1 : -1;
+          const shifted = offsetLatLng(base, bear + Math.PI / 2, perp * perpSign);
+          return [shifted[1], shifted[0]]; // back to [lng, lat]
+        });
+        if (pin.sta_ft != null) pin.sta_ft = pin.sta_ft * scale;
+      }
+      // Polygons: left in place — no sta_ft to work from
+    }
+
+    // Commit geometry
+    sec.alignment = newVerts;
+    sec.center    = newVerts[Math.floor(newVerts.length / 2)];
+  }
+
+  // Confirm handler — called when user clicks "Replace →" in the confirm dialog.
+  function _commitCLReplace() {
+    const sec = SECTIONS.find(s => s.id === traceState.replaceSectionId);
+    if (!sec) { cancelAlignmentTrace(); return; }
+
+    _replaceSectionAlignment(sec, traceState.vertices.slice());
+
+    // Tear down trace state
+    $('#cl-confirm-overlay').hidden = true;
+    if (state.map) {
+      traceState.layers.forEach(l => state.map.removeLayer(l));
+      if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
+      if (traceState.ghostLayer) state.map.removeLayer(traceState.ghostLayer);
+    }
+    Object.assign(traceState, {
+      active: false, type: null, vertices: [], layers: [],
+      polyLayer: null, replaceSectionId: null, ghostLayer: null,
+    });
+    document.querySelector('.app')?.classList.remove('drawing');
+    if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
+
+    // Re-render map + strip with new alignment
+    showView('field', sec.id);
+    if (typeof renderStrip === 'function' && stripCurrentSec === sec) renderStrip();
   }
 
   function _drawHintText(tool) {
@@ -9671,6 +9823,20 @@ a { color: inherit; text-decoration: none; }
   // Enter in name field commits form
   $('#nsd-name').addEventListener('keydown', e => { if (e.key === 'Enter') _commitNewSection(); });
 
+  // --- CL Replace confirm dialog ---
+  $('#cl-confirm-ok').addEventListener('click', () => _commitCLReplace());
+  $('#cl-confirm-cancel').addEventListener('click', () => {
+    // Go back to trace mode so user can keep tracing or cancel fully
+    $('#cl-confirm-overlay').hidden = true;
+    $('#trace-banner').classList.add('open');
+  });
+
+  // --- Adjust CL button (field view, linear sections) ---
+  $('#adjust-cl-btn').addEventListener('click', () => {
+    const sec = SECTIONS.find(s => s.id === state.sectionId);
+    if (sec) startCLAdjust(sec);
+  });
+
   // Also: back button from 'trace' view should cancel the trace
   // (handled in the back-button context-aware listener below)
 
@@ -10962,6 +11128,20 @@ a { color: inherit; text-decoration: none; }
 
 })();
 </script>
+
+  <!-- ============ CL REPLACE CONFIRM (shown after adjust-CL trace) ============ -->
+  <div class="nsd-overlay" id="cl-confirm-overlay" hidden>
+    <div class="nsd-card">
+      <div class="nsd-title">Replace alignment?</div>
+      <div id="cl-confirm-body" style="font-family:'IBM Plex Mono',monospace;font-size:11px;
+           color:var(--ink-2);line-height:1.7;margin-bottom:16px;"></div>
+      <div class="nsd-foot">
+        <span class="nsd-err" id="cl-confirm-err"></span>
+        <button class="nsd-cancel-btn" id="cl-confirm-cancel">Cancel</button>
+        <button class="nsd-save-btn"   id="cl-confirm-ok">Replace →</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ NEW SECTION DIALOG (shown after alignment trace) ============ -->
   <div class="nsd-overlay" id="nsd-overlay" hidden>
