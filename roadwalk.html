@@ -6677,10 +6677,10 @@ a { color: inherit; text-decoration: none; }
       } else {
         aerialPicker.style.display = 'none';
       }
-      // Pavement band lives in overlay so it's always viewport-centred
+      // Pavement band scrolls with content — span full inner width at 50% height
       const pav = document.createElement('div');
       pav.className = 'strip-pavement-band';
-      overlay.appendChild(pav);
+      inner.appendChild(pav);
     } else {
       aerialPicker.style.display = 'none';
     }
@@ -6704,8 +6704,8 @@ a { color: inherit; text-decoration: none; }
       && p.geometry && p.geometry.type === 'LineString' && p.attrs && p.attrs.side
     );
 
-    // Slot scaffold in overlay — viewport-fixed guides shown for any slot that
-    // has a feature anywhere in this section (not just the visible window).
+    // Slot scaffold in inner — scrolls with content; % positions are same as when
+    // overlay-contained since inner has the same height/width as the canvas.
     const activeSlots = new Set(trackPins.map(p => `${KIND_TO_SLOT[p.kind]||'line'}-${p.attrs.side}`));
     const SLOT_ORDER = ['fence', 'swale', 'guardrail', 'sidewalk', 'curb', 'line'];
     for (const side of ['L', 'R']) {
@@ -6714,7 +6714,7 @@ a { color: inherit; text-decoration: none; }
         const el = document.createElement('div');
         el.className = `strip-slot side-${side}`;
         el.dataset.slot = slot; el.dataset.side = side;
-        overlay.appendChild(el);
+        inner.appendChild(el);
       }
     }
 
@@ -6920,6 +6920,8 @@ a { color: inherit; text-decoration: none; }
       el.style[axisKey] = `${pct}%`;
       el.style.background = style.color;
       el.style.opacity = pin.status === 'discarded' ? '0.3' : '1';
+      el.style.zIndex = '3';       // above pavement band (z-index:1) and feature bars (z-index:2)
+      el.style.cursor = 'pointer';
       el.textContent = style.code;
       el.title = `${pin.id} · ${pin.kind.replace('_',' ')} · STA ${pin.sta} · ${pin.attrs?.side || ''}`;
       el.addEventListener('click', () => openPinSheet(pin, sec));
@@ -6941,7 +6943,8 @@ a { color: inherit; text-decoration: none; }
       }
     }
 
-    // ── +250 / −250 ft navigation buttons (overlay) ───────────────────────────
+    // ── +250 / −250 ft navigation buttons (direct canvas children — z-index:6,
+    //    above both inner content and the overlay, always viewport-fixed) ────────
     [
       { sign: -1, label: horiz ? '◀' : '▲', title: '−250 ft', pos: horiz ? 'left:4px;top:50%;transform:translateY(-50%)' : 'top:4px;left:50%;transform:translateX(-50%)' },
       { sign: +1, label: horiz ? '▶' : '▼', title: '+250 ft', pos: horiz ? 'right:4px;top:50%;transform:translateY(-50%)' : 'bottom:4px;left:50%;transform:translateX(-50%)' },
@@ -6953,7 +6956,7 @@ a { color: inherit; text-decoration: none; }
       btn.addEventListener('click', () => {
         scroller.scrollBy({ [horiz ? 'left' : 'top']: sign * STRIP_WINDOW_FT * pxPerFt, behavior: 'smooth' });
       });
-      overlay.appendChild(btn);
+      canvas.appendChild(btn);
     });
 
     // ── Scroll setup ──────────────────────────────────────────────────────────
@@ -6973,7 +6976,16 @@ a { color: inherit; text-decoration: none; }
       // Briefly suppress tap-to-place/start-line after a scroll flick
       _stripDragWasMoved = true;
       clearTimeout(_stripScrollTimer);
-      _stripScrollTimer = setTimeout(() => { _stripDragWasMoved = false; }, 150);
+      _stripScrollTimer = setTimeout(() => {
+        _stripDragWasMoved = false;
+        // Sync Leaflet map to the current centre STA when scroll settles
+        if (state.map && sec.alignment) {
+          try {
+            const pt = pointAt(sec.alignment, stripCenterSta);
+            state.map.panTo(pt, { animate: true, duration: 0.5 });
+          } catch (_) {}
+        }
+      }, 150);
     }, { passive: true });
   }
 
