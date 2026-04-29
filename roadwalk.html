@@ -258,6 +258,124 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
 }
 
+/* Change-project button in masthead */
+.change-project-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.change-project-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
+
+/* ---- Project picker overlay ---- */
+.project-picker {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.52);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.project-picker[hidden] { display: none; }
+.pp-card {
+  background: var(--paper);
+  border-radius: 10px;
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 24px 20px 20px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+}
+.pp-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.pp-project-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+  margin-bottom: 8px;
+}
+.pp-project-row:hover { background: var(--bg); border-color: var(--ink-3); }
+.pp-project-row.pp-loading-row { opacity: 0.5; pointer-events: none; }
+.pp-project-name {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.pp-project-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+}
+.pp-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.pp-or::before, .pp-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.pp-file-btn {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+.pp-file-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
+.pp-status {
+  margin-top: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-align: center;
+  min-height: 16px;
+}
+.pp-status.pp-err { color: #B33A2F; }
+
 .list-tabs {
   display: flex;
   border-bottom: 1px solid var(--rule);
@@ -3104,6 +3222,7 @@ a { color: inherit; text-decoration: none; }
           <span><strong id="project-feature-count">47</strong> features</span>
           <span><strong>Mar 14</strong> kickoff</span>
         </div>
+        <button class="change-project-btn" id="change-project-btn" title="Load a different project">⇄ Change project</button>
       </div>
 
       <div class="list-tabs" role="tablist">
@@ -3580,6 +3699,197 @@ a { color: inherit; text-decoration: none; }
   let SECTIONS = [];   // populated from prewalk bundle
   let BUNDLE = null;   // raw bundle JSON for pin access
 
+  // --- IndexedDB project cache -------------------------------------------
+  // Stores the active project bundle so it survives page reload without
+  // requiring the user to re-pick a file or re-fetch the manifest.
+  const _IDB_NAME  = 'roadwalk-v1';
+  const _IDB_STORE = 'active-project';
+
+  function _openProjectDB() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(_IDB_NAME, 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore(_IDB_STORE);
+      req.onsuccess = e => res(e.target.result);
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+  async function _getProjectFromDB() {
+    const db = await _openProjectDB();
+    return new Promise((res, rej) => {
+      const req = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).get('bundle');
+      req.onsuccess = e => res(e.target.result ?? null);
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+  async function _saveProjectToDB(bundle) {
+    const db = await _openProjectDB();
+    return new Promise((res, rej) => {
+      const req = db.transaction(_IDB_STORE, 'readwrite').objectStore(_IDB_STORE).put(bundle, 'bundle');
+      req.onsuccess = () => res();
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+  async function _clearProjectFromDB() {
+    const db = await _openProjectDB();
+    return new Promise((res, rej) => {
+      const req = db.transaction(_IDB_STORE, 'readwrite').objectStore(_IDB_STORE).delete('bundle');
+      req.onsuccess = () => res();
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  // --- applyBundle ----------------------------------------------------------
+  // Ingests a parsed bundle object, populates BUNDLE / SECTIONS / PROJECT,
+  // and updates the header UI. Called after a fetch, file-pick, or IDB restore.
+  function applyBundle(bundle) {
+    BUNDLE = bundle;
+    PROJECT = {
+      id:          bundle.id          || 'proj',
+      name:        bundle.name        || bundle.description || 'Untitled Project',
+      client:      bundle.client      || '',
+      kickoffDate: bundle.kickoff_date || '',
+    };
+    SECTIONS = bundle.sections.map(s => {
+      // alignment in bundle is [lng, lat]; Leaflet wants [lat, lng]
+      const alignmentLL = s.alignment.map(c => [c[1], c[0]]);
+      const mid = alignmentLL[Math.floor(alignmentLL.length / 2)];
+      const pinCount = (s.pins || []).length;
+      return {
+        id:           s.id,
+        name:         s.name,
+        type:         s.type,
+        status:       'prog',
+        featureCount: pinCount,
+        meta:         `${s.project_code} · ${s.mp_start.toFixed(2)} → ${s.mp_end.toFixed(2)} MP · ${pinCount} pins`,
+        kickoff:      true,
+        center:       mid,
+        alignment:    alignmentLL,
+        pathwebRefs:  s.pathweb_refs,
+        projectCode:  s.project_code,
+        mpStart:      s.mp_start,
+        mpEnd:        s.mp_end,
+        pins:         s.pins || [],
+      };
+    });
+    // Update project header
+    $('#project-name').textContent = PROJECT.name;
+    const shortName = bundle.short_name || PROJECT.name.split('·')[0].trim().slice(0, 18);
+    $('#header-name').textContent = shortName;
+  }
+
+  // --- Project manifest + picker --------------------------------------------
+  let _ppManifest = null;
+
+  async function _loadProjectManifest() {
+    if (_ppManifest) return _ppManifest;
+    try {
+      const res = await fetch('./data/projects/manifest.json', { cache: 'no-store' });
+      if (res.ok) _ppManifest = await res.json();
+    } catch (_) { /* manifest optional */ }
+    return _ppManifest;
+  }
+
+  // Renders the project picker overlay and resolves when a project is loaded.
+  // Returns a Promise that resolves to true once the user has picked a project.
+  // showProjectPicker(statusMsg, cancellable)
+  // cancellable = true adds a "Keep current" button (used by "Change project").
+  // Returns a Promise that resolves to true (loaded) or false (cancelled).
+  function showProjectPicker(statusMsg = '', cancellable = false) {
+    return new Promise(resolve => {
+      const picker  = $('#project-picker');
+      const list    = $('#pp-project-list');
+      const status  = $('#pp-status');
+      const fileBtn = $('#pp-file-btn');
+      const fileIn  = $('#project-file-input');
+      const card    = picker.querySelector('.pp-card');
+
+      // Remove any previous cancel button
+      card.querySelector('.pp-cancel-btn')?.remove();
+
+      status.textContent  = statusMsg;
+      status.className    = 'pp-status' + (statusMsg ? ' pp-err' : '');
+      list.innerHTML      = '<div class="pp-project-meta" style="padding:4px 0">Loading available projects…</div>';
+      picker.hidden       = false;
+
+      // Optional cancel button (only when a project is already loaded)
+      if (cancellable) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className   = 'pp-file-btn pp-cancel-btn';
+        cancelBtn.style.marginTop = '8px';
+        cancelBtn.textContent = '✕ Keep current project';
+        cancelBtn.onclick = () => { picker.hidden = true; resolve(false); };
+        card.appendChild(cancelBtn);
+      }
+
+      // --- Apply a loaded bundle from inside the picker ---
+      async function _applyAndClose(bundle) {
+        try { await _saveProjectToDB(bundle); } catch (_) { /* non-fatal */ }
+        applyBundle(bundle);
+        picker.hidden = true;
+        // Remove stale cancel button for next open
+        card.querySelector('.pp-cancel-btn')?.remove();
+        resolve(true);
+      }
+
+      // --- File picker — use onchange assignment to prevent handler stacking ---
+      fileIn.onchange = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileIn.value = '';
+        status.textContent = `Reading ${file.name}…`;
+        status.className   = 'pp-status';
+        try {
+          const text   = await file.text();
+          const bundle = JSON.parse(text);
+          if (!bundle.sections) throw new Error('Not a valid project bundle (missing "sections")');
+          await _applyAndClose(bundle);
+        } catch (err) {
+          status.textContent = `⚠ ${err.message}`;
+          status.className   = 'pp-status pp-err';
+        }
+      };
+      fileBtn.onclick = () => fileIn.click();
+
+      // --- Manifest rows ---
+      _loadProjectManifest().then(manifest => {
+        list.innerHTML = '';
+        const projects = manifest?.projects || [];
+        if (projects.length === 0) {
+          list.innerHTML = '<div class="pp-project-meta" style="padding:4px 0">No projects found in manifest.</div>';
+          return;
+        }
+        for (const proj of projects) {
+          const row = document.createElement('div');
+          row.className = 'pp-project-row';
+          row.innerHTML = `
+            <div class="pp-project-name">${proj.name}</div>
+            <div class="pp-project-meta">${[proj.client, proj.description].filter(Boolean).join(' · ')}</div>
+          `;
+          row.addEventListener('click', async () => {
+            row.classList.add('pp-loading-row');
+            status.textContent  = 'Loading…';
+            status.className    = 'pp-status';
+            try {
+              const res = await fetch('./' + proj.file, { cache: 'no-store' });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const bundle = await res.json();
+              // Inject manifest metadata when the bundle itself lacks root fields
+              if (!bundle.name)   bundle.name   = proj.name;
+              if (!bundle.client) bundle.client  = proj.client || '';
+              if (!bundle.id)     bundle.id      = proj.id;
+              await _applyAndClose(bundle);
+            } catch (err) {
+              status.textContent = `⚠ ${err.message}`;
+              status.className   = 'pp-status pp-err';
+              row.classList.remove('pp-loading-row');
+            }
+          });
+          list.appendChild(row);
+        }
+      });
+    });
+  }
+
   // Kickoff form definitions — single source of truth for area + linear interviews.
   // Fields: { id, label, type, required?, options?, placeholder?, hint?, showIf? }
   // type: text | number | select | textarea | chips
@@ -3746,45 +4056,21 @@ a { color: inherit; text-decoration: none; }
     },
   };
 
-  // --- Pre-walk bundle loader -------------------------------------------
-  // Fetches data/prewalk-bundle.json (produced by data/bundle_prewalk.py) and
-  // transforms each bundle section into the SECTIONS shape the rest of the
-  // app expects. Falls back to a helpful message if unavailable.
+  // --- Pre-walk bundle loader (legacy direct-fetch helper) -----------------
+  // Still used as a fallback when no IDB-cached project exists but the
+  // canonical GRSM bundle is reachable on the same origin.  All the real
+  // SECTIONS/BUNDLE/PROJECT population is now done by applyBundle().
   async function loadPrewalkBundle() {
     try {
       const res = await fetch('./data/prewalk-bundle.json', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      BUNDLE = await res.json();
+      const bundle = await res.json();
+      applyBundle(bundle);
+      return true;
     } catch (err) {
       console.warn('Could not load prewalk-bundle.json:', err);
-      // Keep SECTIONS empty; renderSectionList will show a helpful empty state.
       return false;
     }
-    // Transform bundle into SECTIONS.
-    SECTIONS = BUNDLE.sections.map(s => {
-      // alignment in bundle is [lng, lat]; Leaflet wants [lat, lng]
-      const alignmentLL = s.alignment.map(c => [c[1], c[0]]);
-      const mid = alignmentLL[Math.floor(alignmentLL.length / 2)];
-      // Count pins as provisional "featureCount" for the list view
-      const pinCount = s.pins.length;
-      return {
-        id: s.id,
-        name: s.name,
-        type: s.type,
-        status: 'prog',          // all have kickoff + pins prepopulated
-        featureCount: pinCount,
-        meta: `${s.project_code} · ${s.mp_start.toFixed(2)} → ${s.mp_end.toFixed(2)} MP · ${pinCount} pins`,
-        kickoff: true,           // trial sections come pre-kicked-off
-        center: mid,
-        alignment: alignmentLL,
-        pathwebRefs: s.pathweb_refs,
-        projectCode: s.project_code,
-        mpStart: s.mp_start,
-        mpEnd: s.mp_end,
-        pins: s.pins,            // keep raw pins for map rendering
-      };
-    });
-    return true;
   }
 
   // --- Geo helpers -------------------------------------------------------
@@ -10291,32 +10577,67 @@ a { color: inherit; text-decoration: none; }
     state.settings.streetViewEnabled = e.target.checked;
   });
 
-  // --- Boot --------------------------------------------------------------
+  // --- Boot ----------------------------------------------------------------
+  // Load order:
+  //   1. IDB cache  — project loaded previously, survives reload instantly
+  //   2. Project picker — user selects from manifest or opens a file
+  // The legacy prewalk-bundle.json auto-fetch is intentionally removed;
+  // all projects go through the picker so they are stored in IDB.
   (async () => {
-    const bundleLoaded = await loadPrewalkBundle();
-    // Aerial manifest is independent — load in parallel; missing is non-fatal
+    // Aerial manifest is independent — fire in parallel; non-fatal if absent
     loadAerialManifest();
-    if (bundleLoaded) {
-      // Update project name from bundle if it carries one
-      if (BUNDLE?.description) console.log('Loaded bundle:', BUNDLE.description);
-      $('#project-name').textContent = PROJECT.name;
-      $('#header-name').textContent = 'GRSM · Trial';
-    } else {
-      // Show an in-UI hint if the bundle couldn't be loaded
-      const masthead = $('.list-masthead');
-      if (masthead) {
-        const warn = document.createElement('div');
-        warn.style.cssText = 'margin-top:10px; padding:10px 12px; background:#fdecea; border:1px solid #B33A2F; font-size:12px; color:#B33A2F;';
-        warn.innerHTML = '⚠ Pre-walk bundle not loaded. Serve this file over HTTP (e.g. <code>python -m http.server</code> in the RoadWalk folder) so <code>data/prewalk-bundle.json</code> can be fetched.';
-        masthead.appendChild(warn);
+
+    // 1. Try IDB
+    let bundleLoaded = false;
+    try {
+      const cached = await _getProjectFromDB();
+      if (cached) {
+        applyBundle(cached);
+        bundleLoaded = true;
+        console.log('Loaded project from IDB:', PROJECT.name);
       }
+    } catch (err) {
+      console.warn('IDB read failed:', err);
     }
+
+    // 2. If no cached project, show the project picker
+    if (!bundleLoaded) {
+      await showProjectPicker();
+      // showProjectPicker resolves after user picks + applyBundle is called
+    }
+
     renderSectionList('all');
     showView('list');
   })();
 
+  // "Change project" button — open picker with cancel option.
+  // Only clears IDB and resets state if the user actually picks a new project.
+  $('#change-project-btn').addEventListener('click', async () => {
+    const picked = await showProjectPicker('', true /* cancellable */);
+    if (picked) {
+      renderSectionList('all');
+      showView('list');
+    }
+  });
+
 })();
 </script>
+
+  <!-- ============ PROJECT PICKER OVERLAY ============ -->
+  <!-- Shown at boot when no project is cached, and when "Change project" is tapped. -->
+  <div class="project-picker" id="project-picker" hidden>
+    <div class="pp-card">
+      <div class="pp-title">Select project</div>
+      <div id="pp-project-list">
+        <!-- rows injected by showProjectPicker() -->
+      </div>
+      <div class="pp-or">or</div>
+      <button class="pp-file-btn" id="pp-file-btn">📂 Open project file from disk&hellip;</button>
+      <div class="pp-status" id="pp-status"></div>
+    </div>
+  </div>
+  <!-- Hidden file input — triggered by pp-file-btn -->
+  <input type="file" id="project-file-input" accept=".json" style="display:none">
 
 </body>
 </html>

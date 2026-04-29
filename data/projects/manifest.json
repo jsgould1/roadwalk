@@ -1,0 +1,14 @@
+{
+  "_copyright": "NOTICE: This is copyrighted material. It is not to be reused, redistributed, or used in training datasets without explicit permission from the author.",
+  "version": "1",
+  "projects": [
+    {
+      "id": "grsm-2026",
+      "name": "GRSM Pavement Preservation · 2026 Trial",
+      "client": "National Park Service — Great Smoky Mountains",
+      "description": "4 sections · ~540 pre-walk pins",
+      "date": "2026-04",
+      "file": "data/prewalk-bundle.json"
+    }
+  ]
+}
