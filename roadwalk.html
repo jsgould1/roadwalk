@@ -14,13 +14,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&display=swap" rel="stylesheet">
 
-<!-- Leaflet from CDN. Production: bundle locally per spec § 9. -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet — bundled locally so AECOM proxy can't block or corrupt it -->
+<link rel="stylesheet" href="lib/leaflet.css">
+<script src="lib/leaflet.js"></script>
 <!-- Adds map rotation (state.map.setBearing) — used by the rotate buttons -->
-<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+<script src="lib/leaflet-rotate.js"></script>
 
 <style>
 /* ============================================================
@@ -3849,6 +3847,19 @@ a { color: inherit; text-decoration: none; }
 
 (() => {
 
+  // --- Dependency guard ---------------------------------------------------
+  // If Leaflet failed to load (network blocked, file missing) every map op
+  // would silently fail. Surface it immediately so it's obvious what's wrong.
+  if (typeof L === 'undefined') {
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="position:fixed;inset:0;z-index:9999;background:#fff;display:flex;' +
+      'align-items:center;justify-content:center;font-family:monospace;font-size:14px;' +
+      'color:#b00;padding:32px;text-align:center">' +
+      '⚠ Leaflet failed to load.<br>Check that <strong>lib/leaflet.js</strong> exists ' +
+      'next to roadwalk.html, or reload the page.</div>'
+    );
+  }
+
   // --- Project + sections -----------------------------------------------
   // In v1 these get populated from data/prewalk-bundle.json via loadPrewalkBundle().
   // The bundle contains real GRSM trial data (4 sections, 540 ghost pins).
@@ -4208,7 +4219,7 @@ a { color: inherit; text-decoration: none; }
     draftKickoff: null,      // { sectionId, type, answers: {} }
     // settings
     settings: {
-      basemap: 'nearmap',    // default for testing — key is hardcoded below
+      basemap: 'esri_aerial',  // default — no API key; switch to nearmap when on Nearmap network
       autosaveMin: 5,
       backupMin: 60,
       streetViewEnabled: true,
@@ -4216,6 +4227,13 @@ a { color: inherit; text-decoration: none; }
       // Per-type ID counters (monotonic project-wide).
       // When any feature is saved of type X, counters[X]++; ID = X + "-" + padded counter.
       idCounters: { Si: 23, CB: 11, Re: 7, GR: 4, ED: 9, AR: 2, No: 5, Cu: 3 },
+      // Hardcoded API keys — initialized here so setBasemap() never sees undefined
+      // regardless of async timing.  The block at the bottom of the file also
+      // assigns these values (now a harmless no-op after the first init).
+      apiKeys: {
+        nearmap: 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5',
+        google:  'AIzaSyC08XlTHR2qzT46s19YGKBzjixAznwlzjM',
+      },
     },
   };
 
@@ -4477,6 +4495,8 @@ a { color: inherit; text-decoration: none; }
         } else {
           if (replaceSec) state.map.setView(replaceSec.center, 17);
           else state.map.invalidateSize();
+          // Recovery: ensure basemap is loaded if it was missed earlier
+          if (!state.currentBasemap) setBasemap(state.settings.basemap || 'nearmap');
         }
         $('#trace-banner').classList.add('open');
         $('#trace-banner-type').textContent = isReplace ? 'ADJUSTING CL' : `TRACING ${typeLabel}`;
@@ -4598,6 +4618,9 @@ a { color: inherit; text-decoration: none; }
         state.map.setView(sec.center, 17);
       }
       if (state.mapLayers.me) state.mapLayers.me.setLatLng(sec.center);
+      // Recovery: if the basemap layer was never added (e.g. previous API key
+      // alert aborted setBasemap), retry it now so the map isn't blank.
+      if (!state.currentBasemap) setBasemap(state.settings.basemap || 'nearmap');
     }
 
     // Clear and redraw alignment
@@ -7536,11 +7559,15 @@ a { color: inherit; text-decoration: none; }
   }
 
   function startAlignmentTrace(type) {
-    traceState.active   = true;
-    traceState.type     = type;
-    traceState.vertices = [];
-    traceState.layers   = [];
-    traceState.polyLayer = null;
+    // Clean up any stale CL-adjust ghost before starting a fresh trace
+    if (traceState.ghostLayer && state.map) state.map.removeLayer(traceState.ghostLayer);
+    traceState.active          = true;
+    traceState.type            = type;
+    traceState.vertices        = [];
+    traceState.layers          = [];
+    traceState.polyLayer       = null;
+    traceState.replaceSectionId = null;
+    traceState.ghostLayer      = null;
     showView('trace');
   }
 
@@ -10103,10 +10130,16 @@ a { color: inherit; text-decoration: none; }
 
   // Fit to section extent
   $('#map-fit-btn')?.addEventListener('click', () => {
+    if (!state.map) return;
     const sec = SECTIONS.find(s => s.id === state.sectionId);
-    if (!sec || !sec.alignment || !state.map) return;
-    const bounds = L.latLngBounds(sec.alignment);
-    state.map.flyToBounds(bounds, { padding: [24, 24], duration: 0.8 });
+    if (sec?.alignment?.length) {
+      // Field view: fit to this section's alignment
+      state.map.flyToBounds(L.latLngBounds(sec.alignment), { padding: [24, 24], duration: 0.8 });
+    } else if (SECTIONS.length) {
+      // Trace mode or no section selected: fit to the overall project extent
+      const allPts = SECTIONS.flatMap(s => s.alignment || []);
+      if (allPts.length) state.map.flyToBounds(L.latLngBounds(allPts), { padding: [32, 32], duration: 0.8 });
+    }
   });
 
   // Locate me (GPS) — button is colored blue when geolocation is available.
