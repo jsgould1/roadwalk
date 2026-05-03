@@ -2256,6 +2256,34 @@ a { color: inherit; text-decoration: none; }
 }
 /* Ensure the HTML `hidden` attribute wins over the flex display above */
 .tally-panel[hidden] { display: none !important; }
+/* Save-to-section footer row inside each tally panel */
+.tp-save-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 7px;
+  border-top: 1px solid var(--rule);
+}
+.tp-save-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  background: var(--paper);
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tp-save-btn:active { background: var(--blue); color: var(--paper); }
+.tp-save-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: #15803d;
+  white-space: nowrap;
+}
 .tally-panel .tp-handle {
   background: var(--ink);
   color: var(--paper);
@@ -3998,6 +4026,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
               <button class="tally-add-btn" id="tally-custom-add" style="height:40px;">+</button>
             </div>
           </div>
+          <div class="tp-save-row">
+            <button class="tp-save-btn" id="tally-save-btn">Save to Section</button>
+            <span class="tp-save-status" id="tally-save-status"></span>
+          </div>
         </div>
 
 
@@ -4037,6 +4069,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
               <span class="cs-size-lbl">Size</span>
               <input class="cs-size-input" id="cs-size-notes" type="text" placeholder="e.g. 6×6, 8-in, mixed">
             </div>
+          </div>
+          <div class="tp-save-row">
+            <button class="tp-save-btn" id="cs-save-btn">Save to Section</button>
+            <span class="tp-save-status" id="cs-save-status"></span>
           </div>
         </div>
 
@@ -4080,6 +4116,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
               <span class="pt-total-lbl">Total</span>
               <span class="pt-cnt pt-total-num" id="pt-total">0</span>
             </div>
+          </div>
+          <div class="tp-save-row">
+            <button class="tp-save-btn" id="pt-save-btn">Save to Section</button>
+            <span class="tp-save-status" id="pt-save-status"></span>
           </div>
         </div>
 
@@ -4811,6 +4851,8 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
             fields: [
               { id: 'pciEstimate', label: 'Estimated PCI bucket', type: 'select',
                 options: ['Excellent (85–100)', 'Good (70–84)', 'Fair (55–69)', 'Poor (40–54)', 'Failed (0–39)', 'Defer to closeout'] },
+              { id: 'crackSealLF', label: 'Crack seal quantity (LF)', type: 'number',
+                placeholder: '0 — fill from tally or estimate' },
               { id: 'narrative', label: 'Site notes', type: 'textarea',
                 placeholder: 'Anything the crew should know before walking...' },
             ],
@@ -11494,6 +11536,83 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         btn.classList.remove('on');
       }
     });
+  })();
+
+  // --- Tally → Save to Section -------------------------------------------------
+  // Each tally card has a "Save to Section" button that commits the current
+  // tally value(s) into the active section's kickoffAnswers, making them
+  // available in the kickoff form and section export.
+  (function wireTallySaveBtns() {
+
+    // Resolve the section currently being inspected (same logic as rerender).
+    function getActiveSec() {
+      return (typeof stripCurrentSec !== 'undefined' && stripCurrentSec)
+          || (typeof SECTIONS !== 'undefined' && state.sectionId
+              && SECTIONS.find(s => s.id === state.sectionId))
+          || null;
+    }
+
+    // Brief confirmation message that auto-clears after 2.5 s.
+    function flash(elId, msg) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.textContent = msg;
+      clearTimeout(el._flashTimer);
+      el._flashTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+    }
+
+    // Ensure the nested answers object exists, return the section-level answers.
+    function ensureSection(sec, sectionKey) {
+      if (!sec.kickoffAnswers)          sec.kickoffAnswers = {};
+      if (!sec.kickoffAnswers[sectionKey]) sec.kickoffAnswers[sectionKey] = {};
+      return sec.kickoffAnswers[sectionKey];
+    }
+
+    // ── Crack seal (linear sections) → pci.crackSealLF ─────────────────────
+    document.getElementById('tally-save-btn')?.addEventListener('click', () => {
+      const sec = getActiveSec();
+      if (!sec) { flash('tally-save-status', 'No active section'); return; }
+      if (sec.type && sec.type !== 'linear') {
+        flash('tally-save-status', 'Linear sections only'); return;
+      }
+      const answers = ensureSection(sec, 'pci');
+      answers.crackSealLF = state.tally;
+      flash('tally-save-status', `${state.tally.toLocaleString()} LF saved ✓`);
+    });
+
+    // ── Parking (area sections) → markings.stallCount + markings.adaCount ──
+    document.getElementById('pt-save-btn')?.addEventListener('click', () => {
+      const sec = getActiveSec();
+      if (!sec) { flash('pt-save-status', 'No active section'); return; }
+      if (sec.type && sec.type !== 'area') {
+        flash('pt-save-status', 'Area sections only'); return;
+      }
+      const pt    = state.parkingTally;
+      const total = pt.normal + pt.bus + pt.hc + pt.hcvan1;
+      const ada   = pt.hc + pt.hcvan1;
+      const answers = ensureSection(sec, 'markings');
+      answers.stallCount = total;
+      answers.adaCount   = ada;
+      flash('pt-save-status', `${total} stalls (${ada} ADA) saved ✓`);
+    });
+
+    // ── Curb stops (area sections) → markings.curbStops ────────────────────
+    document.getElementById('cs-save-btn')?.addEventListener('click', () => {
+      const sec = getActiveSec();
+      if (!sec) { flash('cs-save-status', 'No active section'); return; }
+      if (sec.type && sec.type !== 'area') {
+        flash('cs-save-status', 'Area sections only'); return;
+      }
+      const cs = state.curbStopTally;
+      const total = cs.concrete_p  + cs.concrete_f  + cs.concrete_d
+                  + cs.composite_p + cs.composite_f + cs.composite_d
+                  + cs.timber_p    + cs.timber_f    + cs.timber_d;
+      const answers = ensureSection(sec, 'markings');
+      answers.curbStops = total;
+      if (cs.size_notes) answers.curbStopsCondition = cs.size_notes;
+      flash('cs-save-status', `${total} curb stops saved ✓`);
+    });
+
   })();
 
   // --- Keyboard shortcuts ---------------------------------------------------
