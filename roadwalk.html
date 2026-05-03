@@ -1605,10 +1605,10 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   background: var(--blue);
   border-radius: 2px;
-  opacity: 0;
+  opacity: 0.5;
   transition: opacity 0.15s;
 }
-.strip-resize-handle:hover::after { opacity: 0.5; }
+.strip-resize-handle:hover::after { opacity: 0.8; }
 .strip-resize-handle:active::after { opacity: 1; }
 /* right dock — handle at left edge */
 .alignment-strip:not([data-pos]) .strip-resize-handle,
@@ -3490,6 +3490,251 @@ a { color: inherit; text-decoration: none; }
 .basemap-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 .basemap-btn:disabled { color: var(--ink-mute); cursor: not-allowed; opacity: 0.6; }
 
+
+/* ── Sign Wizard Overlay ──────────────────────────────────────────────── */
+#sw-overlay {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center;
+  padding: 12px;
+}
+#sw-modal {
+  background: #fff; border-radius: 16px;
+  width: min(820px, 96vw); max-height: 94vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 72px rgba(0,0,0,0.4);
+  overflow: hidden; font-family: system-ui,-apple-system,sans-serif;
+}
+.sw-header {
+  padding: 14px 28px 12px; border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb; display: flex; justify-content: space-between;
+  align-items: flex-start; flex-shrink: 0;
+}
+.sw-sub { font-size: 11px; letter-spacing:.1em; color:#15803d;
+  text-transform:uppercase; font-weight:700; margin-bottom:2px; }
+.sw-title { font-size: 19px; font-weight: 700; color: #111827; }
+.sw-step-badge { font-size:11px; color:#6b7280; font-weight:600;
+  letter-spacing:.06em; flex-shrink:0; padding-top:4px; }
+#sw-body {
+  flex: 1; overflow-y: auto; padding: 20px 28px;
+  overscroll-behavior: contain;
+}
+.sw-footer {
+  padding: 12px 20px; border-top: 1px solid #e5e7eb;
+  background: #f9fafb; display: flex; gap: 8px; flex-shrink: 0;
+}
+/* Buttons */
+.sw-btn { border-radius: 10px; font-size: 14px; font-weight: 600;
+  padding: 11px 18px; cursor: pointer; border: none; }
+.sw-btn-pri { background: #15803d; color: #fff; flex: 1; }
+.sw-btn-pri:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+.sw-btn-sec { background: #f3f4f6; color: #111827;
+  border: 1px solid #d1d5db; min-width: 80px; }
+.sw-btn-cancel { background: transparent; color: #6b7280;
+  border: 1px solid #d1d5db; min-width: 80px; }
+/* Field group */
+.sw-field-group { margin-bottom: 20px; }
+.sw-field-group.sw-dimmed { opacity: .38; pointer-events: none; }
+.sw-field-label {
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  font-weight: 700; color: #6b7280; margin-bottom: 7px;
+  display: flex; align-items: center; gap: 5px;
+}
+.sw-req { color: #dc2626; font-size: 9px; }
+.sw-optlabel { font-size: 11px; color: #9ca3af; font-weight: 400;
+  text-transform: none; letter-spacing: 0; }
+.sw-help { font-size: 11px; color: #9ca3af; margin-top: 5px; }
+/* ButtonRow options */
+.sw-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.sw-opt {
+  padding: 9px 14px; background: #fff; color: #111827;
+  border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: background .12s;
+}
+.sw-opt.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.sw-opt-more { background: #f3f4f6; color: #6b7280; border-color: #d1d5db; }
+/* Text / number inputs */
+.sw-text-input {
+  width: 100%; padding: 10px 12px; background: #fff;
+  border: 1px solid #d1d5db; border-radius: 8px;
+  color: #111827; font-size: 15px; font-weight: 500;
+  box-sizing: border-box;
+}
+.sw-num-input {
+  width: 80px; padding: 10px 10px; background: #fff;
+  border: 1px solid #d1d5db; border-radius: 6px;
+  color: #111827; font-size: 15px; text-align: right;
+}
+/* Info / GPS boxes */
+.sw-gps-badge {
+  padding: 9px 13px; background: #dcfce7; border: 1px solid #22c55e;
+  border-radius: 8px; color: #15803d; font-size: 13px; font-weight: 500;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.sw-info-box {
+  padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 8px; font-size: 13px; color: #6b7280; line-height: 1.6;
+}
+/* Stepper */
+.sw-stepper { display: flex; align-items: center; gap: 10px; }
+.sw-step-btn {
+  width: 36px; height: 36px; background: #f3f4f6;
+  border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 18px; font-weight: 700; color: #111827;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.sw-step-val {
+  width: 48px; text-align: center; font-size: 22px;
+  font-weight: 700; color: #111827;
+}
+.sw-step-val.positive { color: #2563eb; }
+/* Direction row */
+.sw-dir-row {
+  display: flex; align-items: center; padding: 10px 12px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+  gap: 12px;
+}
+.sw-dir-icon {
+  width: 28px; height: 28px; background: #f3f4f6; border: 1px solid #e5e7eb;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #15803d; font-weight: 700; flex-shrink: 0;
+}
+/* Rating buttons */
+.sw-rating-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sw-rating-label { flex: 1; font-size: 12px; color: #6b7280; font-weight: 500; }
+.sw-rating-btns { display: flex; gap: 4px; }
+.sw-rating-btn {
+  width: 34px; height: 34px; border-radius: 6px; font-weight: 800;
+  font-size: 14px; cursor: pointer; border: 1.5px solid #d1d5db;
+  color: #6b7280; background: #fff;
+}
+.sw-rating-btn.active { border-color: transparent; }
+/* Chips multi-select */
+.sw-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.sw-chip {
+  padding: 5px 12px; background: #fff; color: #6b7280;
+  border: 1.5px solid #d1d5db; border-radius: 16px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.sw-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.sw-sub-label { font-size: 10px; color: #d97706; font-weight: 700;
+  letter-spacing:.05em; margin-bottom: 5px; }
+/* Photo button */
+.sw-photo-btn {
+  width: 100%; padding: 12px 14px; background: #fff;
+  border: 1.5px solid #d1d5db; border-radius: 8px; color: #111827;
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; cursor: pointer; font-weight: 500; text-align: left;
+}
+.sw-photo-btn.taken { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+.sw-photo-btn.required { border-color: #ef4444; color: #dc2626; }
+.sw-photo-req { margin-left: auto; font-size: 11px; font-weight: 700; color: #dc2626; }
+/* Inspector block */
+.sw-inspector-block {
+  padding: 12px 14px; background: #f9fafb;
+  border: 1.5px solid #3b82f6; border-radius: 10px; margin-bottom: 10px;
+}
+.sw-inspector-block.muted { border-color: #e5e7eb; opacity: .75; }
+.sw-inspector-hdr {
+  font-size: 11px; font-weight: 700; letter-spacing:.08em; color: #2563eb;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.sw-inspector-block.muted .sw-inspector-hdr { color: #6b7280; }
+.sw-muted-pill {
+  font-size: 9px; color: #9ca3af; padding: 2px 6px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 3px;
+  font-weight: 600; letter-spacing: 0; text-transform: none;
+}
+/* Warning banner */
+.sw-warn { padding: 11px 14px; background: #fee2e2;
+  border: 1.5px solid #ef4444; border-radius: 8px; margin-top: 8px;
+  display: flex; gap: 10px; align-items: flex-start; }
+.sw-warn-title { font-size: 13px; color: #dc2626; font-weight: 700; margin-bottom: 2px; }
+.sw-warn-body { font-size: 12px; color: #111827; line-height: 1.5; }
+/* Sign card */
+.sw-sign-card {
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
+  margin-bottom: 18px;
+}
+.sw-sign-thumb {
+  width: 72px; height: 72px; background: #fff;
+  border: 1.5px solid #e5e7eb; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.sw-sign-thumb img { max-width:85%; max-height:85%; object-fit:contain; }
+.sw-sign-thumb .sw-no-img { text-align:center; color:#9ca3af;
+  font-size:9px; line-height:1.3; }
+/* Review sections */
+.sw-review-section { margin-bottom: 16px; }
+.sw-review-label {
+  font-size: 11px; letter-spacing:.08em; font-weight:700;
+  color: #15803d; text-transform:uppercase; margin-bottom:6px;
+}
+.sw-review-card {
+  padding: 10px 12px; background: #f9fafb;
+  border: 1px solid #e5e7eb; border-radius: 8px;
+  font-size: 13px; color: #111827; line-height: 1.6;
+}
+.sw-review-card + .sw-review-card { margin-top: 4px; }
+/* Flag chips */
+.sw-flag-row { display:flex; gap:8px; align-items:center; padding:8px 12px;
+  border-radius:8px; font-size:12px; margin-bottom:4px; }
+.sw-flag-badge { font-size:9px; padding:2px 6px; border-radius:3px;
+  font-weight:700; letter-spacing:.05em; flex-shrink:0; }
+/* Concrete expansion */
+.sw-concrete-expand {
+  margin-top: 12px; padding: 12px; background: #f9fafb;
+  border: 1px solid #e5e7eb; border-radius: 8px;
+}
+.sw-concrete-hdr { font-size:10px; color:#15803d; font-weight:700;
+  letter-spacing:.08em; margin-bottom:8px; }
+.sw-inline-num { display:flex; gap:18px; flex-wrap:wrap; }
+.sw-inline-num-field > div:first-child { font-size:11px; color:#6b7280; margin-bottom:4px; }
+/* Total badge */
+.sw-total-badge {
+  margin-top: 10px; padding: 10px 14px; background: #dcfce7;
+  border: 1px solid #22c55e; border-radius: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sw-total-lbl { color:#15803d; font-size:12px; letter-spacing:.08em; font-weight:700; }
+.sw-total-val { color:#15803d; font-size:20px; font-weight:800; }
+/* Submitted screen */
+.sw-submitted-wrap { text-align:center; padding:40px 0; }
+.sw-submitted-circle {
+  width:72px; height:72px; background:#15803d; border-radius:50%;
+  margin:0 auto 18px; display:flex; align-items:center; justify-content:center;
+  font-size:36px; color:white;
+}
+/* Other text area */
+.sw-other-expand {
+  margin-top:8px; padding:10px; background:#dbeafe;
+  border:1px dashed #3b82f6; border-radius:8px;
+}
+.sw-other-hdr { font-size:10px; color:#2563eb; font-weight:700;
+  letter-spacing:.05em; margin-bottom:6px; }
+textarea.sw-text-input { resize:vertical; min-height:52px; }
+/* Rollup summary */
+.sw-rollup { padding:12px; background:#f9fafb; border:1px solid #e5e7eb;
+  border-radius:8px; font-size:13px; line-height:1.6; margin-bottom:16px; }
+.sw-rollup-title { color:#15803d; font-weight:700; margin-bottom:4px; }
+/* Same-as-last options */
+.sw-sal-option {
+  padding: 13px 14px; background:#fff; border:1.5px solid #d1d5db;
+  border-radius:10px; font-size:14px; font-weight:600; text-align:left;
+  cursor:pointer; width:100%; margin-bottom:8px;
+}
+.sw-sal-option.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+.sw-sal-sub { font-size:11px; font-weight:400; margin-top:2px;
+  color:#6b7280; }
+.sw-sal-option.active .sw-sal-sub { color:rgba(255,255,255,.85); }
+/* Reason chips inline */
+.sw-reason-wrap { margin-top:10px; padding:10px; background:#fef3c7;
+  border:1px solid #f59e0b; border-radius:8px; }
+.sw-reason-hdr { font-size:10px; color:#d97706; font-weight:700;
+  letter-spacing:.05em; margin-bottom:6px; }
+
 </style>
 </head>
 <body>
@@ -4470,7 +4715,7 @@ a { color: inherit; text-decoration: none; }
     draftKickoff: null,      // { sectionId, type, answers: {} }
     // settings
     settings: {
-      basemap: 'esri_aerial',  // default — no API key; switch to nearmap when on Nearmap network
+      basemap: 'nearmap',  // default — Nearmap has better zoom resolution
       autosaveMin: 5,
       backupMin: 60,
       streetViewEnabled: true,
@@ -6280,6 +6525,8 @@ a { color: inherit; text-decoration: none; }
 
   // --- Sign/Post inspection sheet ---------------------------------------
   function openSignSheet(pin, sec) {
+    // Route pt_sign through the Sign Wizard if available
+    if (window._swIntercept && window._swIntercept(pin, sec)) return;
     sheetState.pin = pin;
     sheetState.sec = sec;
     const style = PIN_STYLE[pin.kind] || { code: 'Si' };
@@ -7744,7 +7991,7 @@ a { color: inherit; text-decoration: none; }
           lab.style.top       = pin.attrs.side === 'L' ? barCrossL : barCrossR;
         } else {
           lab.style.top       = `${axPct}%`;
-          lab.style.transform = 'translateY(-50%)';
+          lab.style.transform = 'translateY(-50%) rotate(90deg)';
           if (pin.attrs.side === 'L') lab.style.right = `calc(50% + ${roadHalf + baseOffset}px)`;
           else                        lab.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`;
         }
@@ -7885,7 +8132,7 @@ a { color: inherit; text-decoration: none; }
         // Vertical mode: anchor at left:50% (centre of the 40px road band),
         // top:pct% for station position. Use same zero-size anchor + absolute
         // spans trick as horiz so the + glyph sits exactly at the station tick.
-        lbl.style.cssText = `top:${pct}%;left:50%;width:0;height:0;overflow:visible;z-index:4;`;
+        lbl.style.cssText = `top:${pct}%;left:50%;width:0;height:0;overflow:visible;z-index:4;color:var(--ink-1);font-weight:600;`;
         lbl.innerHTML =
           `<span class="t-pre" style="position:absolute;right:4px;top:0;transform:translateY(-50%);white-space:nowrap;">${stations}</span>` +
           `<span class="t-plus" style="position:absolute;left:0;top:0;transform:translate(-50%,-50%);">+</span>` +
@@ -11823,6 +12070,746 @@ a { color: inherit; text-decoration: none; }
   </div>
   <!-- Hidden file input — triggered by pp-file-btn -->
   <input type="file" id="project-file-input" accept=".json" style="display:none">
+
+
+<script>
+// ── Sign Wizard ── v1.0 ─────────────────────────────────────────────────────
+(function() {
+  'use strict';
+
+  // ── Compact MUTCD catalog (171 signs) ─────────────────────────────────────
+  const SW_CAT = {"R1-1":{"n":"STOP","sz":"30x30","img":"MUTCD_R1-1.svg","bg":"red","lg":"white","cat":"R"},"R1-2":{"n":"YIELD","sz":"36x36x36","img":"MUTCD_R1-2.svg","bg":"white","lg":"red","cat":"R"},"R1-3P":{"n":"ALL WAY (plaque)","sz":"18x6","img":"MUTCD_R1-3P.svg","bg":"red","lg":"white","cat":"R"},"R1-4":{"n":"YIELD HERE TO PEDESTRIANS","sz":"30x36","img":"MUTCD_R1-5.svg","bg":"white","lg":"red/black","cat":"R"},"R2-1":{"n":"SPEED LIMIT","sz":"24x30","img":"MUTCD_R2-1.svg","bg":"white","lg":"black","cat":"R"},"R2-2":{"n":"TRUCK SPEED LIMIT","sz":"24x30","img":"MUTCD_R2-2.svg","bg":"white","lg":"black","cat":"R"},"R2-3":{"n":"NIGHT SPEED LIMIT","sz":"24x30","img":"MUTCD_R2-3.svg","bg":"white","lg":"black","cat":"R"},"R2-4":{"n":"MINIMUM SPEED LIMIT","sz":"36x48","img":"MUTCD_R2-4.svg","bg":"white","lg":"black","cat":"R"},"R2-5a":{"n":"REDUCED SPEED LIMIT AHEAD","sz":"24x30","img":"MUTCD_R2-5a.svg","bg":"white","lg":"black","cat":"R"},"R3-1":{"n":"NO RIGHT TURN","sz":"30x30","img":"MUTCD_R3-1.svg","bg":"white","lg":"black/red","cat":"R"},"R3-2":{"n":"NO LEFT TURN","sz":"30x30","img":"MUTCD_R3-2.svg","bg":"white","lg":"black/red","cat":"R"},"R3-3":{"n":"NO TURNS","sz":"30x30","img":"MUTCD_R3-3.svg","bg":"white","lg":"black/red","cat":"R"},"R3-4":{"n":"NO U-TURN","sz":"30x30","img":"MUTCD_R3-4.svg","bg":"white","lg":"black/red","cat":"R"},"R3-5":{"n":"Mandatory Movement Lane Control","sz":"30x36","img":"MUTCD_R3-5R.svg","bg":"white","lg":"black","cat":"R"},"R3-7":{"n":"RIGHT (LEFT) LANE MUST TURN RIGHT (LEFT)","sz":"30x36","img":"MUTCD_R3-7R.svg","bg":"white","lg":"black","cat":"R"},"R3-8":{"n":"Advance Intersection Lane Control (Optional Movement)","sz":"30x36","img":"MUTCD_R3-8.svg","bg":"white","lg":"black","cat":"R"},"R4-1":{"n":"DO NOT PASS","sz":"24x30","img":"MUTCD_R4-1.svg","bg":"white","lg":"black","cat":"R"},"R4-2":{"n":"PASS WITH CARE","sz":"24x30","img":"MUTCD_R4-2.svg","bg":"white","lg":"black","cat":"R"},"R4-7":{"n":"KEEP RIGHT","sz":"24x30","img":"MUTCD_R4-7.svg","bg":"white","lg":"black","cat":"R"},"R4-8":{"n":"KEEP LEFT","sz":"24x30","img":"MUTCD_R4-8.svg","bg":"white","lg":"black","cat":"R"},"R5-1":{"n":"DO NOT ENTER","sz":"30x30","img":"MUTCD_R5-1.svg","bg":"red","lg":"white","cat":"R"},"R5-1a":{"n":"WRONG WAY","sz":"36x24","img":"MUTCD_R5-1a.svg","bg":"red","lg":"white","cat":"R"},"R5-2":{"n":"NO TRUCKS","sz":"24x24","img":"MUTCD_R5-2.svg","bg":"white","lg":"black/red","cat":"R"},"R5-6":{"n":"NO BICYCLES","sz":"24x24","img":"MUTCD_R5-6.svg","bg":"white","lg":"black/red","cat":"R"},"R6-1":{"n":"ONE WAY (Arrow)","sz":"36x12","img":"MUTCD_R6-1R.svg","bg":"black","lg":"white","cat":"R"},"R6-2":{"n":"ONE WAY (Vertical Arrow)","sz":"12x36","img":"MUTCD_R6-2R.svg","bg":"black","lg":"white","cat":"R"},"R7-1":{"n":"NO PARKING ANY TIME","sz":"12x18","img":"MUTCD_R7-1.svg","bg":"white","lg":"red/black","cat":"R"},"R7-1a":{"n":"NO STOPPING ANY TIME","sz":"12x18","img":"MUTCD_R7-1a.svg","bg":"white","lg":"red/black","cat":"R"},"R7-2":{"n":"NO PARKING (with arrow)","sz":"12x18","img":"MUTCD_R7-2.svg","bg":"white","lg":"red/black","cat":"R"},"R7-2a":{"n":"NO PARKING (double arrow)","sz":"12x18","img":"MUTCD_R7-2a.svg","bg":"white","lg":"red/black","cat":"R"},"R7-4":{"n":"NO STANDING ANY TIME","sz":"12x18","img":"MUTCD_R7-4.svg","bg":"white","lg":"red/black","cat":"R"},"R7-5":{"n":"PARKING (time/condition limit)","sz":"12x18","img":"MUTCD_R7-5.svg","bg":"white","lg":"green/black","cat":"R"},"R7-6":{"n":"NO PARKING LOADING ZONE","sz":"12x18","img":"MUTCD_R7-6.svg","bg":"white","lg":"red/black","cat":"R"},"R7-7":{"n":"NO PARKING BUS STOP","sz":"12x18","img":"MUTCD_R7-7.svg","bg":"white","lg":"red/black","cat":"R"},"R7-8":{"n":"RESERVED PARKING (Person with Disabilities)","sz":"12x18","img":"MUTCD_R7-8.svg","bg":"white","lg":"blue/white/green","cat":"R"},"R7-8aP":{"n":"VAN ACCESSIBLE (plaque)","sz":"12x6","img":"MUTCD_R7-8aP.svg","bg":"white","lg":"blue","cat":"R"},"R7-8bP":{"n":"Penalty plaque (Reserved Parking)","sz":"12x6","img":"MUTCD_R7-8bP.svg","bg":"white","lg":"black","cat":"R"},"R7-9":{"n":"PARKING (time-limit, e.g. 2 HOUR PARKING)","sz":"12x18","img":"MUTCD_R7-9.svg","bg":"white","lg":"green/black","cat":"R"},"R7-21":{"n":"PARKING (Permit)","sz":"12x18","img":"MUTCD_R7-21.svg","bg":"white","lg":"green/black","cat":"R"},"R7-107":{"n":"TOW-AWAY ZONE","sz":"12x6","img":"MUTCD_R7-201aP.svg","bg":"white","lg":"red/black","cat":"R"},"R8-3":{"n":"NO PARKING (general)","sz":"12x18","img":"MUTCD_R8-3.svg","bg":"white","lg":"red/black","cat":"R"},"R8-3a":{"n":"NO PARKING (with double-headed arrow)","sz":"12x18","img":"MUTCD_R8-3a.svg","bg":"white","lg":"red/black","cat":"R"},"R8-3b":{"n":"NO PARKING (with hours)","sz":"12x18","img":"MUTCD_R8-3b.svg","bg":"white","lg":"red/black","cat":"R"},"R8-31":{"n":"NO PARKING FIRE LANE","sz":"12x18","img":null,"bg":"white","lg":"red","cat":"R"},"FIRE-LANE-CURB":{"n":"Fire Lane Curb Marking","sz":null,"img":null,"bg":"red","lg":"white","cat":"R"},"R10-3":{"n":"PUSH BUTTON FOR WALK SIGNAL","sz":"9x12","img":"MUTCD_R10-3.svg","bg":"white","lg":"black","cat":"R"},"R10-11":{"n":"NO TURN ON RED","sz":"24x30","img":"MUTCD_R10-11.svg","bg":"white","lg":"black/red","cat":"R"},"R10-12":{"n":"LEFT TURN YIELD ON GREEN","sz":"30x36","img":"MUTCD_R10-12.svg","bg":"white","lg":"black/green","cat":"R"},"R10-15":{"n":"TURNING VEHICLES YIELD TO PEDESTRIANS","sz":"30x36","img":"MUTCD_R10-15.svg","bg":"white","lg":"black/red","cat":"R"},"W1-1":{"n":"Turn (Right/Left)","sz":"30x30","img":"MUTCD_W1-1.svg","bg":"yellow","lg":"black","cat":"W"},"W1-2":{"n":"Curve (Right/Left)","sz":"30x30","img":"MUTCD_W1-2.svg","bg":"yellow","lg":"black","cat":"W"},"W1-3":{"n":"Reverse Turn","sz":"30x30","img":"MUTCD_W1-3.svg","bg":"yellow","lg":"black","cat":"W"},"W1-4":{"n":"Reverse Curve","sz":"30x30","img":"MUTCD_W1-4.svg","bg":"yellow","lg":"black","cat":"W"},"W1-5":{"n":"Winding Road","sz":"30x30","img":"MUTCD_W1-5.svg","bg":"yellow","lg":"black","cat":"W"},"W1-6":{"n":"Large Arrow (One-direction)","sz":"48x24","img":"MUTCD_W1-6.svg","bg":"yellow","lg":"black","cat":"W"},"W1-7":{"n":"Two-Direction Large Arrow","sz":"48x24","img":"MUTCD_W1-7.svg","bg":"yellow","lg":"black","cat":"W"},"W1-8":{"n":"Chevron (Alignment)","sz":"12x18","img":"MUTCD_W1-8.svg","bg":"yellow","lg":"black","cat":"W"},"W2-1":{"n":"Cross Road","sz":"30x30","img":"MUTCD_W2-1.svg","bg":"yellow","lg":"black","cat":"W"},"W2-2":{"n":"Side Road (Right/Left)","sz":"30x30","img":"MUTCD_W2-2.svg","bg":"yellow","lg":"black","cat":"W"},"W2-3":{"n":"T-Intersection","sz":"30x30","img":"MUTCD_W2-3.svg","bg":"yellow","lg":"black","cat":"W"},"W2-4":{"n":"Y-Intersection","sz":"30x30","img":"MUTCD_W2-4.svg","bg":"yellow","lg":"black","cat":"W"},"W2-6":{"n":"Roundabout (Circular Intersection) Ahead","sz":"30x30","img":"MUTCD_W2-6.svg","bg":"yellow","lg":"black","cat":"W"},"W3-1":{"n":"Stop Ahead","sz":"30x30","img":"MUTCD_W3-1.svg","bg":"yellow","lg":"black/red","cat":"W"},"W3-2":{"n":"Yield Ahead","sz":"30x30","img":"MUTCD_W3-2.svg","bg":"yellow","lg":"black/red","cat":"W"},"W3-3":{"n":"Signal Ahead","sz":"30x30","img":"MUTCD_W3-3.svg","bg":"yellow","lg":"black/red/yellow/green","cat":"W"},"W3-5":{"n":"Reduced Speed Limit Ahead","sz":"30x30","img":"MUTCD_W3-5.svg","bg":"yellow","lg":"black","cat":"W"},"W4-1":{"n":"Merge","sz":"30x30","img":"MUTCD_W4-1.svg","bg":"yellow","lg":"black","cat":"W"},"W4-2":{"n":"Lane Ends","sz":"30x30","img":"MUTCD_W4-2.svg","bg":"yellow","lg":"black","cat":"W"},"W4-3":{"n":"Added Lane","sz":"30x30","img":"MUTCD_W4-3.svg","bg":"yellow","lg":"black","cat":"W"},"W5-1":{"n":"Road Narrows","sz":"30x30","img":"MUTCD_W5-1.svg","bg":"yellow","lg":"black","cat":"W"},"W5-2":{"n":"Narrow Bridge","sz":"30x30","img":"MUTCD_W5-2.svg","bg":"yellow","lg":"black","cat":"W"},"W5-3":{"n":"One Lane Bridge","sz":"30x30","img":"MUTCD_W5-3.svg","bg":"yellow","lg":"black","cat":"W"},"W6-1":{"n":"Divided Highway","sz":"30x30","img":"MUTCD_W6-1.svg","bg":"yellow","lg":"black","cat":"W"},"W6-2":{"n":"Divided Highway Ends","sz":"30x30","img":"MUTCD_W6-2.svg","bg":"yellow","lg":"black","cat":"W"},"W6-3":{"n":"Two-Way Traffic","sz":"30x30","img":"MUTCD_W6-3.svg","bg":"yellow","lg":"black","cat":"W"},"W7-1":{"n":"Hill","sz":"30x30","img":"MUTCD_W7-1.svg","bg":"yellow","lg":"black","cat":"W"},"W8-1":{"n":"Bump","sz":"30x30","img":"MUTCD_W8-1.svg","bg":"yellow","lg":"black","cat":"W"},"W8-2":{"n":"Dip","sz":"30x30","img":"MUTCD_W8-2.svg","bg":"yellow","lg":"black","cat":"W"},"W8-5":{"n":"Slippery When Wet","sz":"30x30","img":"MUTCD_W8-5.svg","bg":"yellow","lg":"black","cat":"W"},"W8-9":{"n":"Low Shoulder","sz":"30x30","img":"MUTCD_W8-9.svg","bg":"yellow","lg":"black","cat":"W"},"W11-1":{"n":"Bicycle","sz":"30x30","img":"MUTCD_W11-1.svg","bg":"yellow","lg":"black","cat":"W"},"W11-2":{"n":"Pedestrian","sz":"30x30","img":"MUTCD_W11-2.svg","bg":"yellow_green","lg":"black","cat":"W"},"W11-3":{"n":"Deer Crossing","sz":"30x30","img":"MUTCD_W11-3.svg","bg":"yellow","lg":"black","cat":"W"},"W11-4":{"n":"Cattle (Livestock) Crossing","sz":"30x30","img":"MUTCD_W11-4.svg","bg":"yellow","lg":"black","cat":"W"},"W11-8":{"n":"Emergency Vehicle Warning","sz":"30x30","img":"MUTCD_W11-8.svg","bg":"yellow","lg":"black","cat":"W"},"W12-1":{"n":"Double Arrow","sz":"30x30","img":"MUTCD_W12-1.svg","bg":"yellow","lg":"black","cat":"W"},"W12-2":{"n":"Low Clearance","sz":"30x30","img":"MUTCD_W12-2.svg","bg":"yellow","lg":"black","cat":"W"},"W13-1P":{"n":"Advisory Speed (plaque)","sz":"18x18","img":"MUTCD_W13-1P.svg","bg":"yellow","lg":"black","cat":"W"},"W14-1":{"n":"Dead End","sz":"30x30","img":"MUTCD_W14-1.svg","bg":"yellow","lg":"black","cat":"W"},"W14-2":{"n":"No Outlet","sz":"30x30","img":"MUTCD_W14-2.svg","bg":"yellow","lg":"black","cat":"W"},"W14-3":{"n":"No Passing Zone","sz":"36x48","img":"MUTCD_W14-3.svg","bg":"yellow","lg":"black","cat":"W"},"W15-1":{"n":"Playground","sz":"30x30","img":"MUTCD_W15-1.svg","bg":"yellow","lg":"black","cat":"W"},"W17-1":{"n":"Speed Hump","sz":"30x30","img":"MUTCD_W17-1.svg","bg":"yellow","lg":"black","cat":"W"},"W20-1":{"n":"ROAD WORK AHEAD","sz":"48x48","img":"MUTCD_W20-1.svg","bg":"orange","lg":"black","cat":"W"},"W20-2":{"n":"DETOUR AHEAD","sz":"48x48","img":"MUTCD_W20-2.svg","bg":"orange","lg":"black","cat":"W"},"W20-3":{"n":"ROAD CLOSED AHEAD","sz":"48x48","img":"MUTCD_W20-3.svg","bg":"orange","lg":"black","cat":"W"},"W20-4":{"n":"ONE LANE ROAD AHEAD","sz":"48x48","img":"MUTCD_W20-4.svg","bg":"orange","lg":"black","cat":"W"},"W20-5":{"n":"RIGHT (LEFT) LANE CLOSED AHEAD","sz":"48x48","img":"MUTCD_W20-5.svg","bg":"orange","lg":"black","cat":"W"},"W20-7":{"n":"FLAGGER (Symbol)","sz":"48x48","img":"MUTCD_W20-7.svg","bg":"orange","lg":"black","cat":"W"},"W21-1":{"n":"WORKERS (Symbol)","sz":"48x48","img":"MUTCD_W21-1.svg","bg":"orange","lg":"black","cat":"W"},"W22-1":{"n":"BLASTING ZONE AHEAD","sz":"48x48","img":"MUTCD_W22-1.svg","bg":"orange","lg":"black","cat":"W"},"S1-1":{"n":"School (Symbol)","sz":"30x30","img":"MUTCD_S1-1.svg","bg":"yellow_green","lg":"black","cat":"S"},"S2-1":{"n":"School Speed Limit Assembly","sz":"24x48","img":"MUTCD_S5-1.svg","bg":"white/yellow_green","lg":"black","cat":"S"},"S4-3":{"n":"WHEN FLASHING (plaque)","sz":"24x12","img":"MUTCD_S4-3P.svg","bg":"white","lg":"black","cat":"S"},"D1-1":{"n":"Destination (One Line)","sz":"varies","img":"MUTCD_D1-1.svg","bg":"green","lg":"white","cat":"D"},"D9-1":{"n":"Hospital","sz":"24x24","img":"MUTCD_D9-2.svg","bg":"blue","lg":"white","cat":"D"},"D9-2":{"n":"Gas","sz":"24x24","img":"MUTCD_D9-7.svg","bg":"blue","lg":"white","cat":"D"},"D9-7":{"n":"Bicycle Parking","sz":"18x18","img":"MUTCD_D4-3.svg","bg":"blue","lg":"white","cat":"D"},"M1-1":{"n":"Interstate Route Marker","sz":"24x24","img":"MUTCD_M1-1.svg","bg":"blue/red","lg":"white","cat":"M"},"M1-4":{"n":"U.S. Route Marker","sz":"24x24","img":"MUTCD_M1-4.svg","bg":"white","lg":"black","cat":"M"},"M1-5":{"n":"State Route Marker (Generic)","sz":"24x24","img":"MUTCD_M1-5.svg","bg":"varies","lg":"varies","cat":"M"},"M2-1":{"n":"Junction (auxiliary)","sz":"21x12","img":"MUTCD_M2-1.svg","bg":"white","lg":"black","cat":"M"},"M3-1":{"n":"Cardinal Direction (NORTH)","sz":"21x12","img":"MUTCD_M3-1.svg","bg":"white","lg":"black","cat":"M"},"M4-1":{"n":"ALTERNATE (auxiliary)","sz":"21x12","img":"MUTCD_M4-1.svg","bg":"white","lg":"black","cat":"M"},"M6-1":{"n":"Directional Arrow Auxiliary","sz":"21x15","img":"MUTCD_M6-1.svg","bg":"white","lg":"black","cat":"M"},"OM1-1":{"n":"Object Marker (Type 1)","sz":"18x18","img":"MUTCD_OM1-1.svg","bg":"yellow","lg":"yellow_reflectors","cat":"OM"},"OM3-L":{"n":"Object Marker (Type 3 Left)","sz":"12x36","img":"MUTCD_OM3-L.svg","bg":"yellow_black_stripes","lg":"yellow","cat":"OM"},"OM3-R":{"n":"Object Marker (Type 3 Right)","sz":"12x36","img":"MUTCD_OM3-R.svg","bg":"yellow_black_stripes","lg":"yellow","cat":"OM"},"OM4-1":{"n":"End-of-Road Marker","sz":"30x12","img":"MUTCD_OM4-1.svg","bg":"red","lg":"red_reflectors","cat":"OM"},"R15-1":{"n":"Crossbuck (Railroad)","sz":"48x9 (per blade)","img":"MUTCD_R15-1.svg","bg":"white","lg":"black","cat":"R"},"W10-1":{"n":"Railroad Crossing Advance Warning","sz":"36x36","img":"MUTCD_W10-1.svg","bg":"yellow","lg":"black","cat":"W"},"I1-1":{"n":"SIGNALS SET FOR XX MPH","sz":"30x36","img":"MUTCD_I1-1.svg","bg":"white","lg":"black","cat":"I"},"D10-1":{"n":"Mile Marker (1 digit)","sz":"10x36","img":"MUTCD_D10-1.svg","bg":"green","lg":"white","cat":"D"},"D10-2":{"n":"Mile Marker (2 digits)","sz":"12x36","img":"MUTCD_D10-2.svg","bg":"green","lg":"white","cat":"D"},"D10-3":{"n":"Mile Marker (3 digits)","sz":"16x36","img":"MUTCD_D10-3.svg","bg":"green","lg":"white","cat":"D"},"D10-1a":{"n":"Intermediate Mile Marker (1 digit + tenth)","sz":"12x36","img":"MUTCD_D10-1a.svg","bg":"green","lg":"white","cat":"D"},"D10-2a":{"n":"Intermediate Mile Marker (2 digits + tenth)","sz":"16x36","img":"MUTCD_D10-2a.svg","bg":"green","lg":"white","cat":"D"},"D10-3a":{"n":"Intermediate Mile Marker (3 digits + tenth)","sz":"18x36","img":"MUTCD_D10-3a.svg","bg":"green","lg":"white","cat":"D"},"D10-4":{"n":"Enhanced Reference Location Sign","sz":"30x60","img":"MUTCD_D10-4.svg","bg":"blue_or_green","lg":"white","cat":"D"},"D10-5":{"n":"Intermediate Enhanced Reference Location Sign","sz":"30x60","img":"MUTCD_D10-5.svg","bg":"blue_or_green","lg":"white","cat":"D"},"DEL-W":{"n":"Delineator \u2014 White","sz":"3x3 element on 4ft post","img":null,"bg":"post_color","lg":"white_retroreflector","cat":"DEL"},"DEL-Y":{"n":"Delineator \u2014 Yellow","sz":"3x3 element on 4ft post","img":null,"bg":"post_color","lg":"yellow_retroreflector","cat":"DEL"},"DEL-Y2":{"n":"Delineator \u2014 Double Yellow","sz":"two 3x3 elements","img":null,"bg":"post_color","lg":"yellow_retroreflectors_2","cat":"DEL"},"DEL-R":{"n":"Delineator \u2014 Red","sz":"3x3 element","img":null,"bg":"post_color","lg":"red_retroreflector","cat":"DEL"},"DEL-B":{"n":"Delineator \u2014 Blue (Fire Hydrant)","sz":"4x4 RPM","img":null,"bg":"blue","lg":null,"cat":"DEL"},"DEL-FLEX-WHT":{"n":"Flexible Delineator Post \u2014 White","sz":"36-48 in tall","img":null,"bg":"white","lg":"white_or_silver_reflective_bands","cat":"DEL"},"DEL-FLEX-ORG":{"n":"Flexible Delineator Post \u2014 Orange (Work Zone)","sz":"36-48 in tall","img":null,"bg":"orange","lg":"white_or_silver_reflective_bands","cat":"DEL"},"EM-1":{"n":"Evacuation Route Marker","sz":"24x30","img":"MUTCD_EM-1.svg","bg":"white","lg":"black","cat":"EM"},"R6-4":{"n":"Roundabout Directional Chevron (2 Chevrons)","sz":"30x18","img":"MUTCD_R6-4.svg","bg":"white","lg":"black","cat":"R"},"R6-4a":{"n":"Roundabout Directional Chevron (3 Chevrons)","sz":"42x18","img":"MUTCD_R6-4a.svg","bg":"white","lg":"black","cat":"R"},"R6-4b":{"n":"Roundabout Directional Chevron (4 Chevrons)","sz":"54x18","img":"MUTCD_R6-4b.svg","bg":"white","lg":"black","cat":"R"},"R3-5aP":{"n":"ONLY (plaque)","sz":"30x18","img":"MUTCD_R3-5aP.svg","bg":"white","lg":"black","cat":"R"},"R6-1aP":{"n":"ONE WAY (plaque, with route assembly)","sz":"21x9","img":"MUTCD_R6-1aP.svg","bg":"white","lg":"black","cat":"R"},"R10-10P":{"n":"EXCEPT RIGHT TURN (plaque)","sz":"24x18","img":"MUTCD_R10-10P.svg","bg":"white","lg":"black","cat":"R"},"W7-3aP":{"n":"NEXT XX MILES (plaque, hill/grade)","sz":"30x18","img":"MUTCD_W7-3aP.svg","bg":"yellow","lg":"black","cat":"W"},"W16-1P":{"n":"NEXT XX MILES (plaque)","sz":"24x12","img":"MUTCD_W16-1P.svg","bg":"yellow","lg":"black","cat":"W"},"W16-2P":{"n":"XX FEET (plaque)","sz":"24x12","img":"MUTCD_W16-2P.svg","bg":"yellow","lg":"black","cat":"W"},"W16-3P":{"n":"XX MILES (plaque)","sz":"24x12","img":"MUTCD_W16-3P.svg","bg":"yellow","lg":"black","cat":"W"},"W16-7P":{"n":"Diagonal Down Arrow (plaque)","sz":"24x12","img":"MUTCD_W16-7P.svg","bg":"yellow_green","lg":"black","cat":"W"},"W16-9P":{"n":"AHEAD (plaque)","sz":"24x12","img":"MUTCD_W16-9P.svg","bg":"yellow","lg":"black","cat":"W"},"W16-13P":{"n":"WHEN FLASHING (plaque)","sz":"24x12","img":"MUTCD_W16-13P.svg","bg":"yellow","lg":"black","cat":"W"},"M4-5":{"n":"TO (auxiliary)","sz":"21x9","img":"MUTCD_M4-5.svg","bg":"white","lg":"black","cat":"M"},"M4-6":{"n":"FROM (auxiliary)","sz":"21x9","img":"MUTCD_M4-6.svg","bg":"white","lg":"black","cat":"M"},"D6-1":{"n":"Recreational/Cultural Interest Area Guide Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"D"},"I-7":{"n":"Recreation Area / Park Symbol Plaque","sz":"24x24","img":null,"bg":"brown","lg":"white","cat":"I"},"NPS-PI-1":{"n":"Park Entrance / Identity Sign","sz":"varies","img":null,"bg":"brown","lg":"white_or_natural","cat":"NPS"},"NPS-PI-2":{"n":"Park Boundary Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-PI-3":{"n":"Facility Identification Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-MG-1":{"n":"Motorist Guidance Directional Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-MG-2":{"n":"Motorist Guidance Distance Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-MG-3":{"n":"Service Sign (NPS)","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-MG-4":{"n":"Trailhead / Road-Side Trail Identification","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-MG-5":{"n":"Campground Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-VIS-1":{"n":"Trailhead Information Sign (VIS)","sz":"varies","img":null,"bg":"varies","lg":"varies","cat":"NPS"},"NPS-VIS-2":{"n":"Wayside Exhibit (Interpretive Low-Profile)","sz":"36x24","img":null,"bg":"varies","lg":"varies","cat":"NPS"},"NPS-VIS-3":{"n":"Visitor Safety / Hazard Sign","sz":"varies","img":null,"bg":"yellow_or_brown","lg":"black_or_white","cat":"NPS"},"NPS-VIS-4":{"n":"Pedestrian Wayfinding Sign","sz":"varies","img":null,"bg":"brown","lg":"white","cat":"NPS"},"NPS-VIS-5":{"n":"Park Map Display","sz":"varies","img":null,"bg":"varies","lg":"varies","cat":"NPS"},"NPS-R-1":{"n":"DO NOT FEED WILDLIFE","sz":"12x18","img":null,"bg":"white","lg":"black/red","cat":"NPS"},"NPS-R-2":{"n":"STAY ON TRAIL","sz":"12x18","img":null,"bg":"white","lg":"black","cat":"NPS"},"NPS-W-1":{"n":"Wildlife Warning (Bear / Elk / Bison / etc.)","sz":"varies","img":null,"bg":"yellow","lg":"black","cat":"NPS"}};
+
+  // ── Settings (project-level; can come from state.settings.signWizard later) ─
+  const SWS = {
+    post_type_buttons:   ['UCHANNEL','WOOD_4X4','SQ_TUBE_PERF'],
+    height_buttons:      [5,6,7,8,9,10],
+    eop_buttons:         [2,4,6,8,10],
+    finish_buttons:      ['GALVANIZED','PAINTED','WEATHERING','RAW'],
+    color_buttons:       ['NA','BLACK','BROWN','GREEN'],
+    foundation_buttons:  ['DIRECT_PUSH','CONCRETE','BOLT_MOUNTED'],
+    breakaway_buttons:   ['NO','YIELDING','DRILLED','SLIP_BASE'],
+    sign_code_buttons:   ['R1-1','R1-2','R2-1','R3-1','W1-1','W3-1','W11-2','D3-1'],
+    sheeting_buttons:    ['HIP','DG3','EG'],
+    session_type:        'DAY',
+  };
+
+  // ── Label map ─────────────────────────────────────────────────────────────
+  const SWL = {
+    UCHANNEL:'U-channel',WOOD_4X4:'Wood 4×4',SQ_TUBE_PERF:'Sq tube',
+    GALVANIZED:'Galvanized',PAINTED:'Painted',WEATHERING:'Weathering',RAW:'Raw',
+    NA:'N/A',BLACK:'Black',BROWN:'Brown',GREEN:'Green',
+    DIRECT_PUSH:'Direct push',CONCRETE:'Concrete',BOLT_MOUNTED:'Bolt mount',
+    NO:'No',YIELDING:'Yielding',DRILLED:'Drilled',SLIP_BASE:'Slip base',
+    HIP:'HIP',DG3:'DG3',EG:'EG',
+    KEEP:'Keep',REPLACE_IN_KIND:'Replace in-kind',
+    REPLACE_UPGRADED:'Replace upgraded',RELOCATE:'Relocate',REMOVE:'Remove',
+    CONDITION:'Condition',SAFETY:'Safety',LOCATION:'Location',
+    COMPLIANCE:'Compliance',OTHER:'Other',
+    FADED:'Faded',BENT:'Bent',BROKEN:'Broken',DAMAGE:'Damage',
+    ONE_SIDED:'One-sided',TWO_SIDED:'Two-sided',
+  };
+  function lbl(v){ return SWL[v] || (SW_CAT[v] ? SW_CAT[v].n : v); }
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let swPin=null, swSec=null, swStep='P1', swPanelIdx=0, swLastData=null;
+  let swD={};  // collected data
+
+  function blankData(pin){
+    const a = pin?.attrs || {};
+    return {
+      display_name: a.display_name || pin?.id || '',
+      eop_offset_ft: a.eop_offset_ft ?? null,
+      post_type: a.post_type ?? null,
+      height_ft: a.height_ft ?? null,
+      finish: a.finish ?? null,
+      color: a.color ?? 'NA',
+      foundation_type: a.foundation_type ?? null,
+      foundation_diameter_in: a.foundation_diameter_in ?? null,
+      foundation_depth_in: a.foundation_depth_in ?? null,
+      breakaway_type: a.breakaway_type ?? null,
+      panel_count_n: a.panel_count_n ?? 0,
+      panel_count_e: a.panel_count_e ?? 0,
+      panel_count_s: a.panel_count_s ?? 0,
+      panel_count_w: a.panel_count_w ?? 0,
+      panel_count_other: a.panel_count_other ?? 0,
+      panels: a.panels ? JSON.parse(JSON.stringify(a.panels)) : [],
+      photos: {},
+      post_recommendation: a.post_recommendation ?? null,
+      post_reason_categories: a.post_reason_categories ?? [],
+      post_reason_notes: a.post_reason_notes ?? '',
+    };
+  }
+
+  // ── Open / Close ──────────────────────────────────────────────────────────
+  function openWizard(pin, sec){
+    swPin=pin; swSec=sec;
+    swStep='P1'; swPanelIdx=0;
+    swD = blankData(pin);
+    document.getElementById('sw-overlay').style.display='flex';
+    renderStep();
+  }
+  function closeWizard(){
+    document.getElementById('sw-overlay').style.display='none';
+  }
+  window._swOpen = openWizard;
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  function submitWizard(){
+    if(!swPin) return;
+    Object.assign(swPin.attrs, swD);
+    swPin.attrs._wizard_v=1;
+    swPin.attrs._wizard_at=new Date().toISOString();
+    swPin.status='confirmed';
+    swLastData = JSON.parse(JSON.stringify(swD));
+    if(typeof initOrUpdateMap==='function' && swSec) initOrUpdateMap(swSec);
+    if(typeof renderStrip==='function' && typeof stripCurrentSec!=='undefined' && stripCurrentSec===swSec) renderStrip();
+    swStep='P12'; renderStep();
+  }
+
+  // ── Core render dispatcher ────────────────────────────────────────────────
+  const STEPS={P1:renderP1,P2:renderP2,P3:renderP3,P4:renderP4,P5:renderP5,
+               P6:renderP6,P7:renderP7,P8:renderP8,P9:renderP9,
+               P10:renderP10,P11:renderP11,P12:renderP12};
+  function renderStep(){ (STEPS[swStep]||renderP1)(); }
+
+  function setH(html){ const e=document.getElementById('sw-header'); if(e) e.innerHTML=html; }
+  function setB(html){ const e=document.getElementById('sw-body'); if(e) e.innerHTML=html; }
+  function setF(html){ const e=document.getElementById('sw-footer'); if(e) e.innerHTML=html; }
+
+  function hdr(title,sub,step){
+    return `<div><div class="sw-sub">${sub||'Sign Post'}</div><div class="sw-title">${title}</div></div>
+            <div class="sw-step-badge">STEP ${step}/12</div>`;
+  }
+  function fg(label,content,opts={}){
+    const req=(!opts.optional && opts.required!==false)?'<span class="sw-req">●</span>':'';
+    const optlbl=opts.optional?'<span class="sw-optlabel">optional</span>':'';
+    const help=opts.help?`<div class="sw-help">${opts.help}</div>`:'';
+    const dim=opts.dimmed?' sw-dimmed':'';
+    return `<div class="sw-field-group${dim}">
+      <div class="sw-field-label">${label}${req}${optlbl}</div>
+      ${content}${help}</div>`;
+  }
+
+  // ButtonRow — single-select
+  function btnRow(options, value, setter, allowMore=false){
+    const id='btr'+Math.random().toString(36).slice(2,8);
+    const btns=options.map(o=>{
+      const v=typeof o==='object'?o.value:o;
+      const l=typeof o==='object'?o.label:lbl(String(o));
+      const act=String(value)===String(v);
+      return `<button class="sw-opt${act?' active':''}" data-btr="${id}" data-v="${v}">${l}</button>`;
+    }).join('');
+    const more=allowMore?`<button class="sw-opt sw-opt-more" disabled>More…</button>`:'';
+    setTimeout(()=>{
+      document.querySelectorAll(`[data-btr="${id}"]`).forEach(b=>{
+        b.onclick=()=>{ const v=b.dataset.v; setter(isNaN(v)?v:Number(v)); renderStep(); };
+      });
+    },0);
+    return `<div class="sw-btn-row">${btns}${more}</div>`;
+  }
+
+  // Stepper
+  function stepper(value,setter,min=0,max=6){
+    const id='stp'+Math.random().toString(36).slice(2,8);
+    const pos=(value||0)>0;
+    setTimeout(()=>{
+      const mm=document.querySelectorAll(`[data-stp="${id}"]`);
+      mm.forEach(b=>{ b.onclick=()=>{ setter(Math.max(min,Math.min(max,(value||0)+parseInt(b.dataset.d)))); renderStep(); }; });
+    },0);
+    return `<div class="sw-stepper">
+      <button class="sw-step-btn" data-stp="${id}" data-d="-1">−</button>
+      <div class="sw-step-val${pos?' positive':''}">${value||0}</div>
+      <button class="sw-step-btn" data-stp="${id}" data-d="+1">+</button>
+    </div>`;
+  }
+
+  // Rating buttons
+  function ratingBtns(value,setter,label){
+    const id='rat'+Math.random().toString(36).slice(2,8);
+    const COL={E:'#0e7490',G:'#16a34a',F:'#d97706',P:'#dc2626',X:'#000'};
+    const btns=['E','G','F','P','X'].map(r=>{
+      const act=value===r;
+      return `<button class="sw-rating-btn${act?' active':''}" data-rat="${id}" data-v="${r}"
+        style="background:${act?COL[r]:'#fff'};color:${act?'white':'#6b7280'};border-color:${act?COL[r]:'#d1d5db'}">${r}</button>`;
+    }).join('');
+    setTimeout(()=>{
+      document.querySelectorAll(`[data-rat="${id}"]`).forEach(b=>{
+        b.onclick=()=>{ setter(b.dataset.v===value?null:b.dataset.v); renderStep(); };
+      });
+    },0);
+    return `<div class="sw-rating-row"><div class="sw-rating-label">${label}</div><div class="sw-rating-btns">${btns}</div></div>`;
+  }
+
+  // Chip multi-select
+  function chipRow(options,values,setter,label=''){
+    const id='chp'+Math.random().toString(36).slice(2,8);
+    const btns=options.map(o=>{
+      const act=values.includes(o);
+      return `<button class="sw-chip${act?' active':''}" data-chp="${id}" data-v="${o}">${lbl(o)}</button>`;
+    }).join('');
+    setTimeout(()=>{
+      document.querySelectorAll(`[data-chp="${id}"]`).forEach(b=>{
+        b.onclick=()=>{
+          const v=b.dataset.v;
+          setter(values.includes(v)?values.filter(x=>x!==v):[...values,v]);
+          renderStep();
+        };
+      });
+    },0);
+    return `<div>${label?`<div class="sw-sub-label">${label}</div>`:''}
+      <div class="sw-chips">${btns}</div></div>`;
+  }
+
+  // Photo button (toggles taken state)
+  function photoBtn(taken,label,required,clickId){
+    const cls=taken?'sw-photo-btn taken':(required&&!taken?'sw-photo-btn required':'sw-photo-btn');
+    return `<button class="${cls}" id="${clickId}">
+      <span>${taken?'📷 ✓':'📷'}</span>
+      <span>${taken?label+' ✓':label}</span>
+      ${required&&!taken?'<span class="sw-photo-req">REQUIRED</span>':''}
+    </button>`;
+  }
+
+  // MUTCD image card
+  const SW_COLOR_MAP={white:'#fff',black:'#000',green:'#1a5c2e',yellow:'#ffd200',
+    red:'#c41e3a',blue:'#003f87',brown:'#4a3728',orange:'#e56a00',
+    fluorescent_yellow_green:'#c8e800',fluorescent_pink:'#ff69b4'};
+  function signCard(code){
+    if(!code) return '';
+    const e=SW_CAT[code]||{};
+    const name=e.n||code;
+    // Color-coded placeholder — works offline; no Wikimedia dependency
+    const bgC=SW_COLOR_MAP[e.bg]||'#e5e7eb';
+    const lgC=SW_COLOR_MAP[e.lg]||(e.bg==='white'||e.bg==='yellow'?'#111':'#fff');
+    const border=(e.bg==='white')?'border:1.5px solid #d1d5db;':'';
+    const imgHtml=`<div style="width:100%;height:100%;background:${bgC};${border}display:flex;`+
+      `align-items:center;justify-content:center;border-radius:4px;padding:3px;box-sizing:border-box">`+
+      `<div style="color:${lgC};font-size:8px;font-weight:800;text-align:center;line-height:1.2;`+
+      `word-break:break-all">${code}</div></div>`;
+    return `<div class="sw-sign-card">
+      <div class="sw-sign-thumb">${imgHtml}</div>
+      <div>
+        <div style="font-size:11px;color:#6b7280;font-weight:600;letter-spacing:.06em">${code}</div>
+        <div style="font-size:18px;font-weight:700;color:#111827;margin-top:2px">${name}</div>
+        ${e.sz?`<div style="font-size:12px;color:#9ca3af">${e.sz}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  // Wire footer buttons
+  function wireFooter(backFn,nextFn){
+    const bb=document.getElementById('sw-back');
+    const nb=document.getElementById('sw-next');
+    if(bb&&backFn) bb.onclick=backFn;
+    if(nb&&nextFn) nb.onclick=nextFn;
+  }
+
+  // ── Non-breakaway check ───────────────────────────────────────────────────
+  function isNonBreakaway(){
+    return (swD.post_type==='UCHANNEL'&&swD.foundation_type==='CONCRETE')
+        || swD.breakaway_type==='NO';
+  }
+
+  // ── Panel factory ─────────────────────────────────────────────────────────
+  function buildPanels(){
+    const dirs=[['N',swD.panel_count_n],['E',swD.panel_count_e],['S',swD.panel_count_s],
+                ['W',swD.panel_count_w],['OTHER',swD.panel_count_other]];
+    const panels=[];
+    for(const [dir,cnt] of dirs){
+      for(let i=0;i<(cnt||0);i++){
+        panels.push({
+          direction:dir,sign_code:null,sides:'ONE_SIDED',
+          panel_size_in:'',mounting_height_in:swD.height_ft?(swD.height_ft*12):null,
+          sheeting_type:null,
+          ratings_front:{i1:{},i2:{}},ratings_back:{i1:{},i2:{}},
+          recommendation:null,reason_categories:[],reason_notes:'',
+        });
+      }
+    }
+    return panels;
+  }
+
+  // ── Rollup suggestion ─────────────────────────────────────────────────────
+  function rollupSuggest(){
+    const p=swD.panels||[];
+    if(!p.length) return 'KEEP';
+    if(p.every(x=>x.recommendation==='REMOVE')) return 'REMOVE';
+    if(p.some(x=>x.recommendation==='RELOCATE')) return 'RELOCATE';
+    if(p.some(x=>['REPLACE_IN_KIND','REPLACE_UPGRADED'].includes(x.recommendation))) return 'REPLACE_IN_KIND';
+    return 'KEEP';
+  }
+
+  // ── Deviation flags for review ────────────────────────────────────────────
+  function buildFlags(){
+    const flags=[];
+    if(swD.post_type&&swD.post_type!=='UCHANNEL')
+      flags.push({type:'agency',text:`Post type ${lbl(swD.post_type)} ≠ U-channel (FHWA default)`});
+    if(swD.foundation_type&&swD.foundation_type!=='DIRECT_PUSH')
+      flags.push({type:'agency',text:`Foundation ${lbl(swD.foundation_type)} ≠ Direct push (FHWA default)`});
+    (swD.panels||[]).forEach((p,i)=>{
+      const f=p.ratings_front||{};
+      if(f.i1?.condition&&f.i2?.condition&&f.i1.condition!==f.i2.condition)
+        flags.push({type:'disagree',text:`Panel ${i+1} condition: I1=${f.i1.condition}, I2=${f.i2.condition}`});
+    });
+    return flags;
+  }
+
+  // ── P1: Asset Entry ───────────────────────────────────────────────────────
+  function renderP1(){
+    setH(hdr('New asset here','',1));
+    const coords=swPin?.geometry?.coordinates;
+    const latLng=coords?`${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}`:'GPS unavailable';
+    const projName=(typeof state!=='undefined'&&state?.projectMeta?.name)||'Current project';
+    const secId=swSec?.id||'';
+    setB(`
+      ${fg('GPS',`<div class="sw-gps-badge">✓ ${latLng}</div>`)}
+      ${fg('Name',`<input id="sw-name" class="sw-text-input" value="${(swD.display_name||'').replace(/"/g,'&quot;')}" placeholder="POST-001">`)}
+      ${fg('EOP Offset',btnRow(SWS.eop_buttons.map(n=>({value:n,label:`${n}'`})),swD.eop_offset_ft,v=>swD.eop_offset_ft=v),{optional:true,help:"Distance from edge of pavement (ft)."})}
+      ${fg('Project',`<div class="sw-info-box">${projName}${secId?' · '+secId:''}</div>`,{optional:true})}
+    `);
+    setF(`<button class="sw-btn sw-btn-cancel" id="sw-back">Cancel</button><button class="sw-btn sw-btn-pri" id="sw-next">Continue →</button>`);
+    const ni=document.getElementById('sw-name');
+    if(ni){ ni.oninput=e=>swD.display_name=e.target.value; ni.onchange=e=>swD.display_name=e.target.value; }
+    wireFooter(closeWizard,()=>{ swStep='P2'; renderStep(); });
+  }
+
+  // ── P2: Same as Last? ─────────────────────────────────────────────────────
+  function renderP2(){
+    setH(hdr('Same as last?','',2));
+    let prevHtml='<div class="sw-info-box" style="color:#9ca3af;font-style:italic">No previous asset on record.</div>';
+    if(swLastData){
+      const d=swLastData;
+      prevHtml=`<div class="sw-info-box">
+        <div style="font-size:11px;color:#15803d;font-weight:700;margin-bottom:4px">POST</div>
+        <div style="font-size:13px;font-weight:500">${lbl(d.post_type)||'—'} · ${d.height_ft?d.height_ft+"'":''} · ${lbl(d.finish)||''}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:2px">${lbl(d.foundation_type)||''} · ${lbl(d.breakaway_type)||''}</div>
+        <div style="font-size:11px;color:#15803d;font-weight:700;margin:8px 0 4px">PANELS</div>
+        ${(d.panels||[]).map((p,i)=>`<div style="font-size:12px">P${i+1} ${dirArrow(p.direction)}: <strong>${lbl(p.sign_code)||'?'}</strong> ${p.panel_size_in||''} ${lbl(p.sheeting_type)||''}</div>`).join('')}
+      </div>`;
+    }
+    const opts=[{v:'SAME',l:'Yes, same setup',s:'Copy everything, jump to review'},
+                {v:'SAME_POST',l:'Same post, different panels',s:'Copy post specs, enter new panels'},
+                {v:'DIFFERENT',l:'Different — start fresh',s:'Enter all details from scratch'}];
+    const curChoice=swD._sal_choice||null;
+    const optBtns=opts.map(o=>`
+      <button class="sw-sal-option${curChoice===o.v?' active':''}" id="sal_${o.v}">
+        ${o.l}<div class="sw-sal-sub">${o.s}</div>
+      </button>`).join('');
+    setB(`
+      ${fg('Last asset',prevHtml,{optional:true})}
+      ${fg('Choose action',`<div>${optBtns}</div>`)}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!curChoice?' disabled':''}" id="sw-next" ${!curChoice?'disabled':''}>Continue →</button>`);
+    opts.forEach(o=>{
+      const b=document.getElementById('sal_'+o.v);
+      if(b) b.onclick=()=>{ swD._sal_choice=(swD._sal_choice===o.v?null:o.v); renderStep(); };
+    });
+    wireFooter(()=>{ swStep='P1'; renderStep(); },()=>{
+      const c=swD._sal_choice;
+      if(!c) return;
+      if(c==='SAME'&&swLastData){
+        const ld=swLastData;
+        Object.assign(swD,{
+          post_type:ld.post_type,height_ft:ld.height_ft,finish:ld.finish,color:ld.color,
+          foundation_type:ld.foundation_type,breakaway_type:ld.breakaway_type,
+          panel_count_n:ld.panel_count_n,panel_count_e:ld.panel_count_e,
+          panel_count_s:ld.panel_count_s,panel_count_w:ld.panel_count_w,
+          panel_count_other:ld.panel_count_other,
+          panels:(ld.panels||[]).map(p=>({...p,
+            ratings_front:{i1:{},i2:{}},ratings_back:{i1:{},i2:{}},
+            recommendation:null,reason_categories:[],
+            front_photo:false,back_photo:false,
+          })),
+        });
+        swStep='P3';
+      } else if(c==='SAME_POST'&&swLastData){
+        const ld=swLastData;
+        Object.assign(swD,{
+          post_type:ld.post_type,height_ft:ld.height_ft,finish:ld.finish,
+          color:ld.color,foundation_type:ld.foundation_type,breakaway_type:ld.breakaway_type,
+        });
+        swStep='P3';
+      } else { swStep='P3'; }
+      renderStep();
+    });
+  }
+
+  // Direction arrow helper
+  function dirArrow(d){ return {N:'↑',E:'→',S:'↓',W:'←',OTHER:'↗'}[d]||'↗'; }
+
+  // ── P3: Post Details ──────────────────────────────────────────────────────
+  function renderP3(){
+    setH(hdr('Post details','Photo first, then specs',3));
+    const ph=swD.photos?.post||false;
+    const nonBW=isNonBreakaway();
+    const concreteExpand=swD.foundation_type==='CONCRETE'?`
+      <div class="sw-concrete-expand">
+        <div class="sw-concrete-hdr">CONCRETE — DIMENSIONS</div>
+        <div class="sw-inline-num">
+          <div class="sw-inline-num-field"><div>Footing dia</div>
+            <input id="sw-conc-d" type="number" class="sw-num-input" value="${swD.foundation_diameter_in||''}" placeholder="in">
+            &nbsp;<span style="color:#6b7280;font-size:12px">in</span>
+          </div>
+          <div class="sw-inline-num-field"><div>Depth</div>
+            <input id="sw-conc-dep" type="number" class="sw-num-input" value="${swD.foundation_depth_in||''}" placeholder="in">
+            &nbsp;<span style="color:#6b7280;font-size:12px">in</span>
+          </div>
+        </div>
+      </div>`:'';
+    const canNext=ph&&swD.post_type&&swD.height_ft&&swD.finish&&swD.foundation_type&&swD.breakaway_type;
+    setB(`
+      ${fg('Post photo (N / 0°)',photoBtn(ph,'Take post photo',true,'sw-pp'),{help:'Photo first — gates specs below. Counts as 0° direction photo.'})}
+      ${fg('Post type',btnRow(SWS.post_type_buttons,swD.post_type,v=>swD.post_type=v,true),{dimmed:!ph})}
+      ${fg('Height (ft)',btnRow(SWS.height_buttons.map(h=>({value:h,label:`${h}'`})),swD.height_ft,v=>swD.height_ft=v),{dimmed:!ph||!swD.post_type})}
+      ${fg('Finish',btnRow(SWS.finish_buttons,swD.finish,v=>swD.finish=v),{dimmed:!ph||!swD.height_ft})}
+      ${fg('Color',btnRow(SWS.color_buttons,swD.color,v=>swD.color=v),{optional:true,dimmed:!ph||!swD.finish})}
+      ${fg('Foundation',btnRow(SWS.foundation_buttons,swD.foundation_type,v=>{swD.foundation_type=v;},true)+concreteExpand,{dimmed:!ph||!swD.finish})}
+      ${fg('Breakaway',btnRow(SWS.breakaway_buttons,swD.breakaway_type,v=>swD.breakaway_type=v),{dimmed:!ph||!swD.foundation_type})}
+      ${nonBW?`<div class="sw-warn">
+        <span style="font-size:20px;flex-shrink:0">⚠</span>
+        <div><div class="sw-warn-title">NON-BREAKAWAY DETECTED</div>
+        <div class="sw-warn-body">Non-compliant within clear zone. Auto-flagged for QC review.</div></div>
+      </div>`:''}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!canNext?' disabled':''}" id="sw-next" ${!canNext?'disabled':''}>Confirm →</button>`);
+    const ppb=document.getElementById('sw-pp');
+    if(ppb) ppb.onclick=()=>{ swD.photos=swD.photos||{}; swD.photos.post=!swD.photos.post; renderStep(); };
+    const cd=document.getElementById('sw-conc-d');
+    if(cd){ cd.oninput=e=>swD.foundation_diameter_in=parseFloat(e.target.value)||null; }
+    const cdep=document.getElementById('sw-conc-dep');
+    if(cdep){ cdep.oninput=e=>swD.foundation_depth_in=parseFloat(e.target.value)||null; }
+    wireFooter(()=>{ swStep='P2'; renderStep(); },()=>{ swStep='P4'; renderStep(); });
+  }
+
+  // ── P4: Panel Count ───────────────────────────────────────────────────────
+  function renderP4(){
+    setH(hdr('Panels on this post','How many facing each direction?',4));
+    const total=(swD.panel_count_n||0)+(swD.panel_count_e||0)+(swD.panel_count_s||0)
+               +(swD.panel_count_w||0)+(swD.panel_count_other||0);
+    const dirs=[
+      {icon:'↑',label:'N (0°)',   key:'panel_count_n'},
+      {icon:'→',label:'E (90°)',  key:'panel_count_e'},
+      {icon:'↓',label:'S (180°)', key:'panel_count_s'},
+      {icon:'←',label:'W (270°)', key:'panel_count_w'},
+      {icon:'↗',label:'Other',    key:'panel_count_other'},
+    ];
+    const rows=dirs.map(d=>`
+      <div class="sw-dir-row">
+        <div class="sw-dir-icon">${d.icon}</div>
+        <div style="flex:1;font-size:14px;font-weight:500">${d.label}</div>
+        ${stepper(swD[d.key],v=>{swD[d.key]=v;})}
+      </div>`).join('');
+    setB(`
+      <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>
+      <div class="sw-total-badge">
+        <span class="sw-total-lbl">TOTAL PANELS</span>
+        <span class="sw-total-val">${total}</span>
+      </div>
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!total?' disabled':''}" id="sw-next" ${!total?'disabled':''}>Continue →</button>`);
+    wireFooter(()=>{ swStep='P3'; renderStep(); },()=>{
+      swD.panels=buildPanels(); swPanelIdx=0; swStep='P5'; renderStep();
+    });
+  }
+
+  // ── P5: Direction Photos ──────────────────────────────────────────────────
+  function renderP5(){
+    setH(hdr('Direction photos','One photo per direction',5));
+    const dirs=[];
+    if(swD.panel_count_n>0) dirs.push({key:'n',arrow:'↑',label:'N (0°)',autoSkip:!!swD.photos?.post});
+    if(swD.panel_count_e>0) dirs.push({key:'e',arrow:'→',label:'E (90°)'});
+    if(swD.panel_count_s>0) dirs.push({key:'s',arrow:'↓',label:'S (180°)'});
+    if(swD.panel_count_w>0) dirs.push({key:'w',arrow:'←',label:'W (270°)'});
+    if(swD.panel_count_other>0) dirs.push({key:'other',arrow:'↗',label:'Other'});
+    const allDone=dirs.every(d=>d.autoSkip||swD.photos?.['dir_'+d.key]);
+    const rows=dirs.map(d=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="sw-dir-icon">${d.arrow}</div>
+        <div style="width:72px;font-size:12px;color:#6b7280;font-weight:500">${d.label}</div>
+        <div style="flex:1">
+          ${d.autoSkip
+            ?`<div style="padding:10px 14px;background:#dcfce7;border:1.5px solid #22c55e;border-radius:8px;color:#15803d;font-size:13px;font-weight:500">✓ From post photo</div>`
+            :photoBtn(!!swD.photos?.['dir_'+d.key],'Take direction photo',true,'dp_'+d.key)}
+        </div>
+      </div>`).join('');
+    setB(`
+      <div class="sw-info-box" style="margin-bottom:14px;font-size:12px">
+        Walk around the post. One photo per direction showing all panels facing that way.
+      </div>
+      ${rows||'<div style="color:#9ca3af;font-style:italic">No directions with panels.</div>'}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!allDone?' disabled':''}" id="sw-next" ${!allDone?'disabled':''}>Continue →</button>`);
+    dirs.forEach(d=>{
+      const b=document.getElementById('dp_'+d.key);
+      if(b) b.onclick=()=>{ swD.photos=swD.photos||{}; swD.photos['dir_'+d.key]=!swD.photos['dir_'+d.key]; renderStep(); };
+    });
+    wireFooter(()=>{ swStep='P4'; renderStep(); },()=>{ swPanelIdx=0; swStep='P6'; renderStep(); });
+  }
+
+  // ── P6: Panel Basics (loop) ───────────────────────────────────────────────
+  function renderP6(){
+    const p=swD.panels[swPanelIdx];
+    if(!p){ swStep='P10'; renderStep(); return; }
+    const total=swD.panels.length;
+    setH(hdr(`Panel ${swPanelIdx+1} of ${total}`,`${dirArrow(p.direction)} ${p.direction} · Basics`,6));
+    const twoSided=p.sides==='TWO_SIDED';
+    const backPhotoOk=twoSided?!!p.back_photo:true;
+    const canNext=!!p.sign_code&&backPhotoOk;
+    setB(`
+      ${p.sign_code?signCard(p.sign_code):''}
+      ${fg('Two-sided?',`<button class="sw-opt${twoSided?' active':''}" id="sw-twosided">
+        ${twoSided?'✓ Two-sided':'Two-sided'}</button>`,{optional:true,
+        help:'Most signs are one-sided. Only tap if the back has a different sign.'})}
+      ${fg('Sign code',btnRow(SWS.sign_code_buttons.map(c=>({value:c,label:SW_CAT[c]?.n||c})),
+        p.sign_code,v=>{ p.sign_code=v; const sz=SW_CAT[v]?.sz||''; if(sz&&!p.panel_size_in)p.panel_size_in=sz; },true))}
+      ${fg('Size',`<input id="sw-psize" class="sw-text-input" value="${(p.panel_size_in||'').replace(/"/g,'&quot;')}" placeholder="e.g. 30×30">`,{dimmed:!p.sign_code})}
+      ${fg('Sheeting',btnRow(SWS.sheeting_buttons,p.sheeting_type,v=>p.sheeting_type=v),{optional:true,dimmed:!p.sign_code})}
+      ${twoSided?fg('Back sign code',btnRow(SWS.sign_code_buttons.map(c=>({value:c,label:SW_CAT[c]?.n||c})),
+        p.back_sign_code||null,v=>p.back_sign_code=v,true),{optional:true}):''}
+      ${fg('Panel photos',
+        photoBtn(!!p.front_photo,'Front photo (optional)',false,'sw-front-photo')+
+        '<div style="height:6px"></div>'+
+        photoBtn(!!p.back_photo,twoSided?'Back photo (required)':'Back photo (optional)',twoSided,'sw-back-photo'),
+        {optional:!twoSided,dimmed:!p.sign_code})}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!canNext?' disabled':''}" id="sw-next" ${!canNext?'disabled':''}>Continue →</button>`);
+    const tsb=document.getElementById('sw-twosided');
+    if(tsb) tsb.onclick=()=>{ p.sides=twoSided?'ONE_SIDED':'TWO_SIDED'; renderStep(); };
+    const ps=document.getElementById('sw-psize');
+    if(ps){ ps.oninput=e=>p.panel_size_in=e.target.value; }
+    const fp=document.getElementById('sw-front-photo');
+    if(fp) fp.onclick=()=>{ p.front_photo=!p.front_photo; renderStep(); };
+    const bp=document.getElementById('sw-back-photo');
+    if(bp) bp.onclick=()=>{ p.back_photo=!p.back_photo; renderStep(); };
+    wireFooter(()=>{
+      if(swPanelIdx===0){ swStep='P5'; renderStep(); }
+      else { swPanelIdx--; swStep='P9'; renderStep(); }
+    },()=>{ swStep='P7'; renderStep(); });
+  }
+
+  // ── Inspector rating block helper ─────────────────────────────────────────
+  function inspectorBlock(rObj,setter,label,emoji,active,sessionType){
+    const showReasons=['F','P','X'].includes(rObj.condition);
+    const otherSelected=(rObj.condition_reasons||[]).includes('OTHER');
+    const muted=!active;
+    return `<div class="sw-inspector-block${muted?' muted':''}">
+      <div class="sw-inspector-hdr">
+        <span style="font-size:14px">${emoji}</span>${label}
+        ${!active?'<span class="sw-muted-pill">not required this session</span>':''}
+      </div>
+      ${ratingBtns(rObj.condition,v=>{ rObj.condition=v; if(!['F','P','X'].includes(v)){rObj.condition_reasons=[];rObj.condition_reasons_other='';} setter(rObj); },'Condition')}
+      ${showReasons?`<div class="sw-reason-wrap">
+        <div class="sw-reason-hdr">WHY? (CHECK ALL)</div>
+        ${chipRow(['FADED','BENT','BROKEN','DAMAGE','OTHER'],rObj.condition_reasons||[],v=>{ rObj.condition_reasons=v; setter(rObj); })}
+        ${otherSelected?`<div class="sw-other-expand">
+          <div class="sw-other-hdr">OTHER — DESCRIBE <span class="sw-req">●</span></div>
+          <textarea class="sw-text-input" id="sw-other-text" rows="2" placeholder="Specify...">${rObj.condition_reasons_other||''}</textarea>
+        </div>`:''}
+      </div>`:''}
+      ${sessionType==='DAY'?ratingBtns(rObj.retro_day,v=>{ rObj.retro_day=v; setter(rObj); },'Retro day'):''}
+      ${sessionType==='NIGHT'?ratingBtns(rObj.retro_night,v=>{ rObj.retro_night=v; setter(rObj); },'Retro night'):''}
+    </div>`;
+  }
+
+  function wireOtherTexts(panel,face){
+    // Wire "other text" inputs — called after render
+    setTimeout(()=>{
+      ['i1','i2'].forEach(who=>{
+        const key=`sw-other-text`;  // only one per face visible at a time
+        const el=document.getElementById(key);
+        if(el) el.oninput=e=>{
+          const ratings=panel[face]||{i1:{},i2:{}};
+          const r=ratings[who]||{};
+          r.condition_reasons_other=e.target.value;
+          ratings[who]=r; panel[face]=ratings;
+        };
+      });
+    },0);
+  }
+
+  // ── P7: Front Ratings ─────────────────────────────────────────────────────
+  function renderP7(){
+    const p=swD.panels[swPanelIdx];
+    if(!p){ swStep='P10'; renderStep(); return; }
+    if(!p.ratings_front) p.ratings_front={i1:{},i2:{}};
+    setH(hdr(`Panel ${swPanelIdx+1} FRONT`,`${SW_CAT[p.sign_code]?.n||p.sign_code||'?'} · Ratings`,7));
+    setB(`
+      ${inspectorBlock(p.ratings_front.i1,v=>{p.ratings_front.i1=v;renderStep();},'INSPECTOR 1','☀️',SWS.session_type==='DAY',SWS.session_type)}
+      ${inspectorBlock(p.ratings_front.i2,v=>{p.ratings_front.i2=v;renderStep();},'INSPECTOR 2','🌙',SWS.session_type==='NIGHT',SWS.session_type)}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri" id="sw-next">Continue →</button>`);
+    wireFooter(()=>{ swStep='P6'; renderStep(); },()=>{
+      swStep=p.sides==='TWO_SIDED'?'P8':'P9'; renderStep();
+    });
+  }
+
+  // ── P8: Back Ratings ──────────────────────────────────────────────────────
+  function renderP8(){
+    const p=swD.panels[swPanelIdx];
+    if(!p){ swStep='P10'; renderStep(); return; }
+    if(!p.ratings_back) p.ratings_back={i1:{},i2:{}};
+    setH(hdr(`Panel ${swPanelIdx+1} BACK`,`${SW_CAT[p.sign_code]?.n||p.sign_code||'?'} · Ratings`,8));
+    setB(`
+      ${inspectorBlock(p.ratings_back.i1,v=>{p.ratings_back.i1=v;renderStep();},'INSPECTOR 1','☀️',SWS.session_type==='DAY',SWS.session_type)}
+      ${inspectorBlock(p.ratings_back.i2,v=>{p.ratings_back.i2=v;renderStep();},'INSPECTOR 2','🌙',SWS.session_type==='NIGHT',SWS.session_type)}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri" id="sw-next">Continue →</button>`);
+    wireFooter(()=>{ swStep='P7'; renderStep(); },()=>{ swStep='P9'; renderStep(); });
+  }
+
+  // ── P9: Panel Recommendation ──────────────────────────────────────────────
+  function renderP9(){
+    const p=swD.panels[swPanelIdx];
+    if(!p){ swStep='P10'; renderStep(); return; }
+    const total=swD.panels.length;
+    const showReason=p.recommendation&&p.recommendation!=='KEEP';
+    const otherSel=(p.reason_categories||[]).includes('OTHER');
+    const canNext=!!(p.recommendation&&
+      (!showReason||(p.reason_categories||[]).length>0)&&
+      (!otherSel||p.reason_notes?.trim()));
+    setH(hdr(`Panel ${swPanelIdx+1} of ${total}`,`${SW_CAT[p.sign_code]?.n||p.sign_code||'?'} · Recommendation`,9));
+    setB(`
+      ${fg('Recommendation',btnRow([
+        {value:'KEEP',label:'Keep'},{value:'REPLACE_IN_KIND',label:'Replace in-kind'},
+        {value:'REPLACE_UPGRADED',label:'Replace upgraded'},{value:'RELOCATE',label:'Relocate'},
+        {value:'REMOVE',label:'Remove'}],p.recommendation,v=>{p.recommendation=v;p.reason_categories=[];p.reason_notes='';}))}
+      ${showReason?fg('Reason — check all',chipRow(
+        ['CONDITION','SAFETY','LOCATION','COMPLIANCE','OTHER'],
+        p.reason_categories||[],v=>{ p.reason_categories=v; renderStep(); })):'' }
+      ${showReason?fg('Notes',`<textarea class="sw-text-input" id="sw-prec-notes" rows="2" placeholder="Optional notes...">${p.reason_notes||''}</textarea>`,{optional:!otherSel}):''}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!canNext?' disabled':''}" id="sw-next" ${!canNext?'disabled':''}>Continue →</button>`);
+    const nt=document.getElementById('sw-prec-notes');
+    if(nt) nt.oninput=e=>p.reason_notes=e.target.value;
+    wireFooter(()=>{ swStep=p.sides==='TWO_SIDED'?'P8':'P7'; renderStep(); },()=>{
+      if(swPanelIdx<total-1){ swPanelIdx++; swStep='P6'; }
+      else { swStep='P10'; }
+      renderStep();
+    });
+  }
+
+  // ── P10: Post Recommendation ──────────────────────────────────────────────
+  function renderP10(){
+    const suggested=rollupSuggest();
+    if(!swD.post_recommendation) swD.post_recommendation=suggested;
+    const showReason=swD.post_recommendation&&swD.post_recommendation!=='KEEP';
+    const otherSel=(swD.post_reason_categories||[]).includes('OTHER');
+    const canNext=!!(swD.post_recommendation&&
+      (!showReason||(swD.post_reason_categories||[]).length>0)&&
+      (!otherSel||swD.post_reason_notes?.trim()));
+    const replacePanels=(swD.panels||[]).filter(p=>['REPLACE_IN_KIND','REPLACE_UPGRADED'].includes(p.recommendation));
+    setH(hdr('Post recommendation','Roll-up & decide',10));
+    setB(`
+      <div class="sw-rollup">
+        <div class="sw-rollup-title">Suggested: ${lbl(suggested)}</div>
+        ${replacePanels.length
+          ?`<div style="color:#6b7280">${replacePanels.length} of ${swD.panels.length} panels need replacement</div>`
+          :`<div style="color:#6b7280">All ${swD.panels.length} panel(s) marked ${lbl(swD.panels[0]?.recommendation||'?')}</div>`}
+      </div>
+      ${fg('Post recommendation',btnRow([
+        {value:'KEEP',label:'Keep'},{value:'REPLACE_IN_KIND',label:'Replace in-kind'},
+        {value:'REPLACE_UPGRADED',label:'Replace upgraded'},{value:'RELOCATE',label:'Relocate'},
+        {value:'REMOVE',label:'Remove'}],swD.post_recommendation,v=>{
+          swD.post_recommendation=v;swD.post_reason_categories=[];swD.post_reason_notes='';}))}
+      ${showReason?fg('Reason — check all',chipRow(
+        ['CONDITION','SAFETY','LOCATION','COMPLIANCE','OTHER'],
+        swD.post_reason_categories||[],v=>{ swD.post_reason_categories=v; renderStep(); })):'' }
+      ${showReason?fg('Notes',`<textarea class="sw-text-input" id="sw-post-notes" rows="2" placeholder="Optional notes...">${swD.post_reason_notes||''}</textarea>`,{optional:!otherSel}):''}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!canNext?' disabled':''}" id="sw-next" ${!canNext?'disabled':''}>Continue →</button>`);
+    const nt=document.getElementById('sw-post-notes');
+    if(nt) nt.oninput=e=>swD.post_reason_notes=e.target.value;
+    const lastPanelIdx=(swD.panels.length-1);
+    wireFooter(()=>{ swPanelIdx=lastPanelIdx; swStep='P9'; renderStep(); },()=>{ swStep='P11'; renderStep(); });
+  }
+
+  // ── P11: Review ───────────────────────────────────────────────────────────
+  function renderP11(){
+    const flags=buildFlags();
+    const FC={
+      agency:{bg:'#fef3c7',border:'#f59e0b',text:'#d97706',lbl:'AGENCY'},
+      disagree:{bg:'#ede9fe',border:'#a855f7',text:'#7c3aed',lbl:'DISAGREE'},
+    };
+    const coords=swPin?.geometry?.coordinates;
+    const latLng=coords?`${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}`:'—';
+    setH(hdr(`Review — ${swD.display_name||swPin?.id||''}','Final check`,11));
+    setB(`
+      <div class="sw-review-section">
+        <div class="sw-review-label">📍 Location</div>
+        <div class="sw-review-card">GPS: ${latLng} · EOP: ${swD.eop_offset_ft!=null?swD.eop_offset_ft+"'":"—"}</div>
+      </div>
+      <div class="sw-review-section">
+        <div class="sw-review-label">Post</div>
+        <div class="sw-review-card">
+          ${lbl(swD.post_type)||'—'} · ${swD.height_ft?swD.height_ft+"'":''} · ${lbl(swD.finish)||''} ${swD.color&&swD.color!=='NA'?' · '+lbl(swD.color):''}<br>
+          ${lbl(swD.foundation_type)||''} · ${lbl(swD.breakaway_type)||''}
+        </div>
+      </div>
+      <div class="sw-review-section">
+        <div class="sw-review-label">Panels</div>
+        ${(swD.panels||[]).map((p,i)=>`<div class="sw-review-card">
+          <strong style="color:#15803d">P${i+1} ${dirArrow(p.direction)}:</strong>
+          ${lbl(p.sign_code)||'?'} ${p.panel_size_in||''} ${lbl(p.sheeting_type)||''}<br>
+          <span style="color:#6b7280">Cond: ${p.ratings_front?.i1?.condition||'?'}/${p.ratings_front?.i2?.condition||'?'}
+          · Rec: <strong style="color:#111">${lbl(p.recommendation)||'—'}</strong></span>
+        </div>`).join('')}
+      </div>
+      <div class="sw-review-section">
+        <div class="sw-review-label">Post recommendation</div>
+        <div class="sw-review-card" style="background:#dcfce7;border-color:#22c55e;color:#15803d;font-weight:700;font-size:14px">
+          ${lbl(swD.post_recommendation)||'—'}
+        </div>
+      </div>
+      ${flags.length?`<div class="sw-review-section">
+        <div class="sw-review-label">⚠ ${flags.length} flag${flags.length!==1?'s':''}</div>
+        ${flags.map(f=>{const c=FC[f.type]||FC.agency;
+          return `<div class="sw-flag-row" style="background:${c.bg};border:1px solid ${c.border}">
+            <span class="sw-flag-badge" style="color:${c.text};border:1px solid ${c.border}">${c.lbl}</span>
+            <span style="color:#111">${f.text}</span></div>`;}).join('')}
+      </div>`:''}
+    `);
+    setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri" id="sw-next">✓ Submit</button>`);
+    wireFooter(()=>{ swStep='P10'; renderStep(); },submitWizard);
+  }
+
+  // ── P12: Submitted ────────────────────────────────────────────────────────
+  function renderP12(){
+    setH(`<div class="sw-sub">SUBMITTED ✓</div><div class="sw-title">${swD.display_name||'Asset'}</div>`);
+    setB(`<div class="sw-submitted-wrap">
+      <div class="sw-submitted-circle">✓</div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:6px">Asset submitted</div>
+      <div style="font-size:13px;color:#6b7280">Saved · pin confirmed · data recorded</div>
+    </div>`);
+    setF(`<button class="sw-btn sw-btn-pri" id="sw-next" style="flex:1">Document next asset</button>`);
+    const nb=document.getElementById('sw-next');
+    if(nb) nb.onclick=closeWizard;
+  }
+
+  // ── Hook: intercept pt_sign opens ─────────────────────────────────────────
+  // Called after the main IIFE sets up openSignSheet / openPinSheet.
+  // We replace those globals to route pt_sign through the wizard.
+  const _origOpenPinSheet = typeof openPinSheet !== 'undefined' ? openPinSheet : null;
+  // openPinSheet is hoisted as a function declaration; we can override it:
+  window._swIntercept = function(pin, sec){
+    if(pin && pin.kind === 'pt_sign'){
+      openWizard(pin, sec);
+      return true;
+    }
+    return false;
+  };
+
+})();
+</script>
+
+  <!-- ============ SIGN WIZARD OVERLAY ============ -->
+  <div id="sw-overlay">
+    <div id="sw-modal">
+      <div id="sw-header" class="sw-header"></div>
+      <div id="sw-body"></div>
+      <div id="sw-footer" class="sw-footer"></div>
+    </div>
+  </div>
 
 </body>
 </html>
