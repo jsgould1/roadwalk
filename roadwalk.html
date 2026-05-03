@@ -1644,6 +1644,71 @@ a { color: inherit; text-decoration: none; }
 /* hide when collapsed */
 .alignment-strip.collapsed .strip-resize-handle { display: none; }
 
+/* ── Strip canvas widgets: badges, labels, nav buttons ────────────────────
+   These must live in BASE CSS (not inside a media query) so they render
+   correctly on all screen sizes including iPad / tablet (< 1100px). */
+
+/* In-strip labels: tiny chip rendered beside each pin/bar */
+.strip-pin-label,
+.strip-bar-label {
+  position: absolute;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  line-height: 1.1;
+  color: var(--ink-1);
+  background: rgba(251,250,246,0.92);
+  border: 1px solid var(--rule);
+  padding: 1px 3px;
+  border-radius: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Colored code-badge at bar features and culvert crossings */
+.strip-bar-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 14px;
+  padding: 0 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #fff;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.35);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 6;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+/* Hide native scrollbar inside the strip scroller */
+#strip-scroller::-webkit-scrollbar { display: none; }
+/* +250 / −250 ft nav buttons in the strip overlay */
+.strip-nav-btn {
+  background: rgba(0,0,0,0.35);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 28px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+  padding: 0;
+}
+.strip-nav-btn:hover { opacity: 1; }
+
 /* Strip internals on wide screens (≥1100px, non-phone-preview).
    Layout-position of the strip is now purely data-pos-driven (no forced top).
    These rules only add visual polish / header compactness at wide widths. */
@@ -1690,68 +1755,6 @@ a { color: inherit; text-decoration: none; }
     color: var(--ink-1);
     border-radius: 3px;
   }
-
-  /* In-strip labels: tiny chip rendered at the start of each pin/bar */
-  .strip-pin-label,
-  .strip-bar-label {
-    position: absolute;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    line-height: 1.1;
-    color: var(--ink-1);
-    background: rgba(251,250,246,0.92);
-    border: 1px solid var(--rule);
-    padding: 1px 3px;
-    border-radius: 2px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 5;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* Colored code-badge at the start of bar features and culvert crossings */
-  .strip-bar-badge {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 16px;
-    height: 14px;
-    padding: 0 3px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0;
-    color: #fff;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.35);
-    white-space: nowrap;
-    pointer-events: auto;
-    cursor: pointer;
-    z-index: 6;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
-  }
-  /* Hide native scrollbar inside the strip scroller */
-  #strip-scroller::-webkit-scrollbar { display: none; }
-
-  /* +250 / −250 ft nav buttons in the strip overlay */
-  .strip-nav-btn {
-    background: rgba(0,0,0,0.35);
-    border: none;
-    color: #fff;
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
-    font-size: 11px;
-    line-height: 28px;
-    text-align: center;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.15s;
-    padding: 0;
-  }
-  .strip-nav-btn:hover { opacity: 1; }
 
   /* Strip canvas geometry (slots, pins, pavement band, clickmark, ticks) is
      handled entirely by:
@@ -7280,15 +7283,18 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   // selections persist via state.stripLabels.
   // Default field per kind, chosen to match how field crews refer to assets.
   const STRIP_LABEL_DEFAULTS = {
-    sign:         'name',           // SHORTNAME-derived "name"
-    mile_marker:  'mile_label',
-    bridge:       'name',
-    bridge_line:  'name',
-    gate:         'name',
-    parking:      'loc_name',
-    culvert:      'material',
-    guardrail:    'barrier_material',
-    wall:         'wall_material',
+    // Keys must match the exact pin.kind values stored on features
+    pt_sign:              'name',
+    mile_marker:          'mile_label',
+    bridge:               'name',
+    bridge_line:          'name',
+    gate:                 'name',
+    parking:              'loc_name',
+    ln_culvert:           'material',
+    ln_box_culvert:       'material',
+    ln_guardrail:         'barrier_material',
+    ln_retaining_wall:    'wall_material',
+    ln_barrier:           'barrier_material',
   };
   state.stripLabels = state.stripLabels || {};
 
@@ -8131,30 +8137,42 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           .replace(/{side}/g,   pin.attrs?.side || '')
           .replace(/{kind}/g,   pin.kind || '');
       }
-      // Badge circle at bar start
+      // Badge circles: one at start, then every STRIP_WINDOW_FT so the chip is
+      // always visible regardless of scroll position on long features.
       if (blStart.show !== false) {
-        const badge = document.createElement('div');
-        badge.className = 'strip-bar-badge';
-        badge.textContent = resolveBarTpl(blStart.template);
-        badge.title = `${pin.id} · ${pin.kind}`;
-        badge.style.background = PIN_STYLE[pin.kind]?.color || '#444';
-        if (blStart.color) badge.style.color    = blStart.color;
-        if (blStart.size)  badge.style.fontSize = blStart.size + 'px';
-        badge.addEventListener('click', () => openPinSheet(pin, sec));
-        if (horiz) {
-          badge.style.left = `${axisPct(startSta)}%`;
-          badge.style.transform = 'translate(-50%, -50%)';
-          badge.style.top = pin.attrs.side === 'L'
-            ? `calc(50% - ${baseOffset + slotThick + roadHalf + 3 - halfThick}px)`
-            : `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
-        } else {
-          badge.style.top = `${axisPct(startSta)}%`;
-          badge.style.transform = 'translate(-50%, -50%)';
-          badge.style.left = pin.attrs.side === 'L'
-            ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
-            : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
+        const _badgeText = resolveBarTpl(blStart.template);
+        const _badgeBg   = PIN_STYLE[pin.kind]?.color || '#444';
+        const _badgeCrossH = pin.attrs.side === 'L'
+          ? `calc(50% - ${baseOffset + slotThick + roadHalf + 3 - halfThick}px)`
+          : `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
+        const _badgeCrossV = pin.attrs.side === 'L'
+          ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
+          : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
+        function makeBadgeAt(staPct) {
+          const b = document.createElement('div');
+          b.className = 'strip-bar-badge';
+          b.textContent = _badgeText;
+          b.title = `${pin.id} · ${pin.kind}`;
+          b.style.background = _badgeBg;
+          b.style.transform = 'translate(-50%, -50%)';
+          if (blStart.color) b.style.color    = blStart.color;
+          if (blStart.size)  b.style.fontSize = blStart.size + 'px';
+          b.addEventListener('click', () => openPinSheet(pin, sec));
+          if (horiz) { b.style.left = `${staPct}%`; b.style.top  = _badgeCrossH; }
+          else        { b.style.top  = `${staPct}%`; b.style.left = _badgeCrossV; }
+          inner.appendChild(b);
         }
-        inner.appendChild(badge);
+        // Always place one badge at the feature start
+        makeBadgeAt(axisPct(startSta));
+        // For features longer than one viewport window, add periodic badges so
+        // the chip stays visible as the user scrolls along the feature.
+        if (endSta - startSta > STRIP_WINDOW_FT) {
+          // Align repeat positions to round multiples of STRIP_WINDOW_FT
+          const firstRepeat = Math.ceil(startSta / STRIP_WINDOW_FT) * STRIP_WINDOW_FT;
+          for (let s = firstRepeat; s < endSta; s += STRIP_WINDOW_FT) {
+            if (s > startSta) makeBadgeAt(axisPct(s));  // skip if same as start
+          }
+        }
       }
       // Text labels at mid / end
       const barCrossL = `calc(50% - ${baseOffset + roadHalf + 3 + halfThick}px)`;
