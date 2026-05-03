@@ -1337,7 +1337,8 @@ a { color: inherit; text-decoration: none; }
    correctly when the user docks it to the top or bottom edge on a tablet/phone.
    The desktop @media block (later in source) wins at ≥1100px via cascade order. */
 
-/* Pavement band: centred horizontal road surface */
+/* Pavement band: centred road surface — geometry depends on dock orientation */
+/* Horizontal strip (top/bottom): road runs L→R; band is a horizontal stripe */
 .alignment-strip[data-pos="top"] .strip-pavement-band,
 .alignment-strip[data-pos="bottom"] .strip-pavement-band {
   position: absolute;
@@ -1351,6 +1352,23 @@ a { color: inherit; text-decoration: none; }
 }
 .alignment-strip[data-pos="top"] .strip-canvas.has-aerial .strip-pavement-band,
 .alignment-strip[data-pos="bottom"] .strip-canvas.has-aerial .strip-pavement-band {
+  background: transparent;
+  border: none;
+}
+/* Vertical strip (left/right): road runs T→B; band is a vertical stripe */
+.alignment-strip[data-pos="left"] .strip-pavement-band,
+.alignment-strip[data-pos="right"] .strip-pavement-band {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(50% - 25px);
+  width: 50px;
+  background: #d8d8d8;
+  border-left: 1px solid #b8b8b8;
+  border-right: 1px solid #b8b8b8;
+  z-index: 1;
+}
+.alignment-strip[data-pos="left"] .strip-canvas.has-aerial .strip-pavement-band,
+.alignment-strip[data-pos="right"] .strip-canvas.has-aerial .strip-pavement-band {
   background: transparent;
   border: none;
 }
@@ -1580,47 +1598,24 @@ a { color: inherit; text-decoration: none; }
   /* Floating controls are wrapped as Leaflet controls (bound to the map's
      corners), so no per-breakpoint repositioning is needed. */
 
-  /* === HORIZONTAL STRIP INTERNALS === */
-  /* Centerline runs horizontally through mid-height of the canvas */
-  body:not(.phone-preview) .strip-centerline {
-    top: 50%; left: 20px; right: 20px;
-    bottom: auto;
-    width: auto; height: 2px;
-    transform: translateY(-50%);
-  }
-  /* 50 px pavement band centered on centerline (no aerial) — flat light gray */
-  body:not(.phone-preview) .strip-pavement-band {
-    position: absolute;
-    left: 20px; right: 20px;
-    top: calc(50% - 25px);
-    height: 50px;
-    background: #d8d8d8;
-    border-top: 1px solid #b8b8b8;
-    border-bottom: 1px solid #b8b8b8;
-    z-index: 1;
-  }
-  /* Hide the flat gray pavement band when an aerial is layered behind */
-  body:not(.phone-preview) .strip-canvas.has-aerial .strip-pavement-band {
-    background: transparent;
-    border: none;
-  }
-  body:not(.phone-preview) .strip-canvas.has-aerial .strip-pavement-band::before,
-  body:not(.phone-preview) .strip-canvas.has-aerial .strip-pavement-band::after {
-    display: none;
-  }
-  /* Aerial layer: unrolled rectified imagery sits behind the strip overlays.
-     Width and left are set per-render so the visible 500' window aligns. */
+  /* === HORIZONTAL STRIP INTERNALS ===
+     NOTE: All geometry for horiz mode (top/bottom docked) is handled by:
+       a) data-pos="top/bottom" CSS rules earlier in this file, and
+       b) inline style.cssText set in renderStrip() which always wins.
+     None of those layout rules belong here — putting them here with
+     body:not(.phone-preview) scope gives them higher specificity than the
+     base CSS and they clobber the vertical (left/right) layout on desktop.
+     Only UI-widget rules (aerial picker, labels panel, guide btn) live here. */
+
+  /* Aerial layer: unrolled rectified imagery — geometry set inline per-render */
   body:not(.phone-preview) .strip-aerial {
     position: absolute;
-    top: calc(50% - 50px);
-    height: 100px;
     pointer-events: none;
     z-index: 0;
     overflow: hidden;
   }
   body:not(.phone-preview) .strip-aerial img {
     display: block;
-    height: 100%;
     image-rendering: -webkit-optimize-contrast;
   }
   /* Aerial source selector lives next to the collapse button */
@@ -1786,139 +1781,13 @@ a { color: inherit; text-decoration: none; }
   }
   .strip-nav-btn:hover { opacity: 1; }
 
-  /* (Previously drew two faint horizontal lines inside the pavement band as
-     suggestive lane edges — removed per design feedback. The road is now a
-     single flat band when aerial is off.) */
-
-  /* Orange vertical click-mark at the click STA */
-  body:not(.phone-preview) .strip-clickmark {
-    top: 8px; bottom: 8px; left: 50%;
-    right: auto;
-    width: 2px; height: auto;
-    transform: translateX(-50%);
-    z-index: 5;
-  }
-  body:not(.phone-preview) .strip-clickmark::after {
-    top: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  /* Ticks: + at 50 ft with label, | at 25 ft without */
-  body:not(.phone-preview) .strip-tick {
-    top: 8px; bottom: 8px;
-    left: 0; right: auto;
-    width: 0; height: auto;
-    border-top: 0;
-    border-left: 1px dashed var(--ink-mute);
-  }
-  body:not(.phone-preview) .strip-tick.major {
-    border-left: 1px solid var(--ink-3);
-  }
-  /* STA label rides ON the road centerline (over the pavement band).
-     Container is 0-wide at the anchor X so the inner spans can pin the
-     "+" glyph exactly on the tick column and let "55" / "00" trail off
-     to either side. This way the + is the station's true 50' location. */
-  body:not(.phone-preview) .strip-tick-label {
-    top: 50%; bottom: auto; left: 0;
-    transform: translateY(-50%);
-    width: 0; height: 0;
-    overflow: visible;
-    z-index: 4;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--ink-1);
-  }
-  body:not(.phone-preview) .strip-tick-label .t-plus {
-    position: absolute;
-    left: 0; top: 0;
-    transform: translate(-50%, -50%);
-  }
-  body:not(.phone-preview) .strip-tick-label .t-pre {
-    position: absolute;
-    right: 4px; top: 0;
-    transform: translateY(-50%);
-    white-space: nowrap;
-  }
-  body:not(.phone-preview) .strip-tick-label .t-post {
-    position: absolute;
-    left: 4px; top: 0;
-    transform: translateY(-50%);
-    white-space: nowrap;
-  }
-  /* The "+" glyph from the old major-mark element is redundant now. */
-  body:not(.phone-preview) .strip-major-mark { display: none; }
-
-  /* Ribbon slots: horizontal bands, not vertical strips.
-     L-side = ABOVE road band. R-side = BELOW road band. */
-  body:not(.phone-preview) .strip-slot {
-    left: 20px; right: 20px;
-    width: auto;
-    height: auto;
-    border-left: 0;
-    border-right: 0;
-  }
-  /* Left-side slots, from road surface (closest) outward/upward */
-  body:not(.phone-preview) .strip-slot.side-L[data-slot="curb"]      { top: calc(50% - 30px); height: 3px; background: #6B7079; }
-  body:not(.phone-preview) .strip-slot.side-L[data-slot="sidewalk"]  { top: calc(50% - 38px); height: 6px; background: var(--paper-3); }
-  body:not(.phone-preview) .strip-slot.side-L[data-slot="guardrail"] { top: calc(50% - 48px); height: 5px; background: repeating-linear-gradient(90deg, #6B7079 0 7px, transparent 7px 12px); }
-  body:not(.phone-preview) .strip-slot.side-L[data-slot="swale"]     { top: calc(50% - 59px); height: 6px; background: var(--paper-2); border-top: 1px dotted #B0A998; border-bottom: 1px dotted #B0A998; }
-  body:not(.phone-preview) .strip-slot.side-L[data-slot="fence"]     { top: calc(50% - 69px); height: 3px; background: repeating-linear-gradient(90deg, #B0A998 0 5px, transparent 5px 11px); }
-  /* Right-side slots, mirrored below */
-  body:not(.phone-preview) .strip-slot.side-R[data-slot="curb"]      { top: calc(50% + 27px); height: 3px; background: #6B7079; }
-  body:not(.phone-preview) .strip-slot.side-R[data-slot="sidewalk"]  { top: calc(50% + 32px); height: 6px; background: var(--paper-3); }
-  body:not(.phone-preview) .strip-slot.side-R[data-slot="guardrail"] { top: calc(50% + 43px); height: 5px; background: repeating-linear-gradient(90deg, #6B7079 0 7px, transparent 7px 12px); }
-  body:not(.phone-preview) .strip-slot.side-R[data-slot="swale"]     { top: calc(50% + 52px); height: 6px; background: var(--paper-2); border-top: 1px dotted #B0A998; border-bottom: 1px dotted #B0A998; }
-  body:not(.phone-preview) .strip-slot.side-R[data-slot="fence"]     { top: calc(50% + 66px); height: 3px; background: repeating-linear-gradient(90deg, #B0A998 0 5px, transparent 5px 11px); }
-
-  /* Feature bars in slots */
-  body:not(.phone-preview) .strip-feature-bar {
-    height: auto;
-    width: auto;
-    z-index: 2;
-  }
-
-  /* Pins: L = above the road band, R = below. STA determines horizontal position. */
-  body:not(.phone-preview) .strip-pin {
-    transform: translateX(-50%);
-    right: auto;
-    margin-left: 0;
-    margin-right: 0;
-  }
-  /* Sign track — the line on which Si circles and Mt triangles ride.
-     Sits clearly outside (further from road than) the fence ribbon (-69 / +66). */
-  body:not(.phone-preview) .strip-pin.side-L {
-    top: calc(50% - 100px);
-    bottom: auto;
-  }
-  body:not(.phone-preview) .strip-pin.side-R {
-    top: calc(50% + 92px);
-    bottom: auto;
-  }
-  body:not(.phone-preview) .strip-pin.side-C {
-    top: calc(50% - 8px);
-  }
-  /* Faint guideline along the sign track on each side, so circles and
-     triangles read as sitting on a shared rail rather than floating. */
-  body:not(.phone-preview) .strip-canvas::before,
-  body:not(.phone-preview) .strip-canvas::after {
-    content: '';
-    position: absolute;
-    left: 20px; right: 20px;
-    height: 0;
-    border-top: 1px dashed rgba(0,0,0,0.18);
-    pointer-events: none;
-    z-index: 1;
-  }
-  body:not(.phone-preview) .strip-canvas::before { top: calc(50% - 100px); }
-  body:not(.phone-preview) .strip-canvas::after  { top: calc(50% + 92px); }
-  body:not(.phone-preview) .strip-pin:hover {
-    z-index: 10;
-    transform: translateX(-50%) scale(1.18);
-  }
-  body:not(.phone-preview) .strip-pin.side-C:hover {
-    transform: translate(-50%, -50%) scale(1.18);
-  }
+  /* Strip canvas geometry (slots, pins, pavement band, clickmark, ticks) is
+     handled entirely by:
+       – base CSS (vertical / left/right dock mode)
+       – data-pos="top/bottom" CSS (horizontal dock mode, mobile)
+       – renderStrip() inline style.cssText (horizontal dock mode, all screens)
+     No layout overrides belong here. Horiz-mode inline styles always win;
+     vertical-mode base CSS wins when no inline style is set. */
 }
 
 /* Ribbon slot scaffold inside the strip.
