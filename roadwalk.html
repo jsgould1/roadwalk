@@ -3821,6 +3821,22 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
 .sg-hover-chip:hover { background: var(--hover); }
 .sg-hover-chip.active { background: #dcfce7; border-color: #22c55e; color: #15803d; }
 .sg-hover-chip input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+/* Vertex label table */
+.sg-vertex-hdr, .sg-vertex-row {
+  display: grid;
+  grid-template-columns: 60px 48px 1fr 32px 44px;
+  gap: 6px; align-items: center;
+  padding: 4px 4px;
+  border-bottom: 1px solid var(--rule); }
+.sg-vertex-hdr {
+  font-size: 9px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-3); padding-bottom: 6px; }
+.sg-vertex-row:hover { background: var(--hover); }
+.sg-vx-name { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.sg-vx-tpl {
+  width: 100%; padding: 4px 6px; font-size: 11px;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; color: var(--ink); }
+.sg-vx-tpl::placeholder { color: var(--ink-mute); font-style: italic; }
 /* Style guide header button */
 .header-styleguide-btn {
   width: 32px; height: 32px; margin-left: 4px;
@@ -8053,6 +8069,12 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       ln_swel: 'line', ln_parking: 'line', ln_hatching: 'line', ln_mark_other: 'line',
       ln_loops: 'line', ln_misc_other: 'line', user_line: 'line',
     };
+    // Numeric slot levels for default positioning (each level = 5px from road edge)
+    const _KIND_SLOT_LV = {
+      ln_guardrail:3, ln_retaining_wall:3, ln_barrier:3,
+      ln_curb:1, ln_cg:1, ln_sidewalk:2,
+      ln_swale:5, ln_drain_other:5, ln_fence:6,
+    };
     const isCulvertKind = k => k === 'ln_culvert' || k === 'ln_box_culvert';
     const trackPins = (sec.pins || []).filter(p =>
       KIND_TO_SLOT[p.kind] && !isCulvertKind(p.kind)
@@ -8089,9 +8111,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         bar.style.background = _barColor;
       }
       if (pin.attrs.length_source === 'estimated_pending_ocr') bar.classList.add('est-length');
-      const slotForKind = state.settings?.styleOverrides?.[pin.kind]?.slot || KIND_TO_SLOT[pin.kind] || 'line';
-      const baseOffset = { fence: 32, swale: 24, guardrail: 16, sidewalk: 8, curb: 2, line: 0 }[slotForKind];
-      const slotThick  = { fence:  4, swale:  6, guardrail:  5, sidewalk: 6, curb: 4, line: 4 }[slotForKind];
+      const slotLevel  = state.settings?.styleOverrides?.[pin.kind]?.slotLevel
+                         ?? _KIND_SLOT_LV[pin.kind] ?? 0;
+      const baseOffset = slotLevel * 5;
+      const slotThick  = 4;
       const roadHalf = 20; // half of 40px pavement band
       if (horiz) {
         bar.style.left  = `${p1}%`; bar.style.width = `${p2 - p1}%`;
@@ -8108,15 +8131,32 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       bar.style.pointerEvents = 'auto'; bar.style.cursor = 'pointer';
       bar.addEventListener('click', () => openPinSheet(pin, sec));
       inner.appendChild(bar);
-      // Kind badge at bar start — both horizontal (desktop/landscape) and vertical (portrait)
-      {
-        const code  = PIN_STYLE[pin.kind]?.code || pin.kind.slice(0, 2).toUpperCase();
-        const color = PIN_STYLE[pin.kind]?.color || '#444';
-        const halfThick = Math.floor(slotThick / 2);
+      // ── Vertex labels: start badge, mid text, end text ─────────────────────
+      const _BL      = state.settings?.labelSettings?.barLabels || {};
+      const blStart  = Object.assign({ show: true,  template: '{code}',   color: '#ffffff', size: 10 }, _BL.start);
+      const blMid    = Object.assign({ show: true,  template: '{id}',     color: '#ffffff', size: 10 }, _BL.mid);
+      const blEnd    = Object.assign({ show: true,  template: '{length}', color: '#ffffff', size: 10 }, _BL.end);
+      const halfThick = Math.floor(slotThick / 2);
+      function resolveBarTpl(tpl) {
+        if (!tpl) return '';
+        const _c = PIN_STYLE[pin.kind]?.code || pin.kind.slice(0,2).toUpperCase();
+        return tpl
+          .replace(/{code}/g,   _c)
+          .replace(/{id}/g,     pin.id || '')
+          .replace(/{length}/g, pin.attrs?.length_ft ? `${Math.round(pin.attrs.length_ft)}'` : '')
+          .replace(/{sta}/g,    pin.sta_ft != null ? `${Math.round(pin.sta_ft)}` : '')
+          .replace(/{side}/g,   pin.attrs?.side || '')
+          .replace(/{kind}/g,   pin.kind || '');
+      }
+      // Badge circle at bar start
+      if (blStart.show !== false) {
         const badge = document.createElement('div');
         badge.className = 'strip-bar-badge';
-        badge.textContent = code; badge.title = `${pin.id} · ${pin.kind}`;
-        badge.style.background = color;
+        badge.textContent = resolveBarTpl(blStart.template);
+        badge.title = `${pin.id} · ${pin.kind}`;
+        badge.style.background = PIN_STYLE[pin.kind]?.color || '#444';
+        if (blStart.color) badge.style.color    = blStart.color;
+        if (blStart.size)  badge.style.fontSize = blStart.size + 'px';
         badge.addEventListener('click', () => openPinSheet(pin, sec));
         if (horiz) {
           badge.style.left = `${axisPct(startSta)}%`;
@@ -8133,26 +8173,18 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         }
         inner.appendChild(badge);
       }
-      // ── Bar labels: ID at midpoint, length at endpoint (default ON) ──────────
-      const lflags = pin.attrs?.labels || {};
-      const barMidPct = axisPct((startSta + endSta) / 2);
-      const barEndPct = axisPct(endSta);
-      // Labels sit at the bar's cross-track centre (same line as the bar).
-      // Compute the bar's centre in the cross-track axis:
-      //   horiz L: calc(50% - (baseOffset + roadHalf + 3 + halfThick)px)
-      //   horiz R: calc(50% + (baseOffset + roadHalf - 1 + halfThick)px)
-      //   vert  L: right:calc(50% + (roadHalf + baseOffset)px)  [label extends away from road]
-      //   vert  R: left: calc(50% + (roadHalf + baseOffset)px)
-      const halfThick = Math.floor(slotThick / 2);
+      // Text labels at mid / end
       const barCrossL = `calc(50% - ${baseOffset + roadHalf + 3 + halfThick}px)`;
       const barCrossR = `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
-      function makeBarLabel(axPct, text, title) {
+      function makeBarLabel(axPct, text, title, color, size) {
         const lab = document.createElement('div');
         lab.className = 'strip-bar-label';
         lab.textContent = text; lab.title = title;
+        if (color) lab.style.color    = color;
+        if (size)  lab.style.fontSize = size + 'px';
         if (horiz) {
           lab.style.left      = `${axPct}%`;
-          lab.style.transform = 'translate(-50%, -50%)'; // centre on the bar
+          lab.style.transform = 'translate(-50%, -50%)';
           lab.style.top       = pin.attrs.side === 'L' ? barCrossL : barCrossR;
         } else {
           lab.style.top       = `${axPct}%`;
@@ -8162,10 +8194,16 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         }
         return lab;
       }
-      if (lflags.id !== false)
-        inner.appendChild(makeBarLabel(barMidPct, pin.id, pin.id));
-      if (lflags.length !== false && pin.attrs?.length_ft)
-        inner.appendChild(makeBarLabel(barEndPct, `${Math.round(pin.attrs.length_ft)}'`, `${pin.id} length`));
+      if (blMid.show !== false && blMid.template) {
+        const text = resolveBarTpl(blMid.template);
+        if (text) inner.appendChild(makeBarLabel(
+          axisPct((startSta + endSta) / 2), text, pin.id, blMid.color, blMid.size));
+      }
+      if (blEnd.show !== false && blEnd.template) {
+        const text = resolveBarTpl(blEnd.template);
+        if (text) inner.appendChild(makeBarLabel(
+          axisPct(endSta), text, `${pin.id} end`, blEnd.color, blEnd.size));
+      }
     }
 
     // ── Culvert crossing symbols ──────────────────────────────────────────────
@@ -13030,14 +13068,19 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   document.addEventListener('DOMContentLoaded', () => {
     if (window._RW) window._RW.LINE_STYLE_MAP = LINE_STYLE_MAP;
   }, { once: true });
-  const SLOT_OPTS = [
-    { v: 'line',      l: 'Road edge' },
-    { v: 'curb',      l: 'Curb' },
-    { v: 'sidewalk',  l: 'Sidewalk' },
-    { v: 'guardrail', l: 'Guardrail' },
-    { v: 'swale',     l: 'Swale' },
-    { v: 'fence',     l: 'Fence (outer)' },
-  ];
+  // Numeric slot levels: each unit = 5px from road edge. Negative = inside pavement.
+  const SLOT_OPTS = [];
+  for (let lv = -5; lv <= 9; lv++) {
+    const px = lv * 5;
+    const note = lv === 0 ? ' — road edge' : lv < 0 ? ` — ${Math.abs(px)}px inside` : ` — +${px}px outside`;
+    SLOT_OPTS.push({ v: lv, l: `${lv > 0 ? '+' : ''}${lv}${note}` });
+  }
+  // Default numeric slot levels for known kinds
+  const KIND_SLOT_DEFAULT_LEVEL = {
+    ln_guardrail:3, ln_retaining_wall:3, ln_barrier:3,
+    ln_curb:1, ln_cg:1, ln_sidewalk:2,
+    ln_swale:5, ln_drain_other:5, ln_fence:6,
+  };
   const HF_FIELDS = [
     { key: 'id',         label: 'Feature ID' },
     { key: 'kind',       label: 'Feature type' },
@@ -13054,8 +13097,18 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     if (!st) return;
     if (!st.settings.styleOverrides) st.settings.styleOverrides = {};
     if (!st.settings.labelSettings)  st.settings.labelSettings = {
-      badgeShow: true, badgeColor: '#ffffff', badgeSize: 10,
+      barLabels: {
+        start: { show: true,  template: '{code}',   color: '#ffffff', size: 10 },
+        mid:   { show: true,  template: '{id}',     color: '#ffffff', size: 10 },
+        end:   { show: true,  template: '{length}', color: '#ffffff', size: 10 },
+      },
       mapLabelShow: true, staTickShow: true,
+    };
+    // Migrate or init barLabels if labelSettings exists but barLabels doesn't
+    if (!st.settings.labelSettings.barLabels) st.settings.labelSettings.barLabels = {
+      start: { show: true,  template: '{code}',   color: '#ffffff', size: 10 },
+      mid:   { show: true,  template: '{id}',     color: '#ffffff', size: 10 },
+      end:   { show: true,  template: '{length}', color: '#ffffff', size: 10 },
     };
     if (!st.settings.hoverFields) st.settings.hoverFields = {
       id: true, kind: true, sta: true, length_ft: true,
@@ -13067,7 +13120,45 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     return ('sg_' + kind + '_' + field).replace(/[^a-z0-9_]/gi, '_');
   }
 
+  // ── LocalStorage persistence ──────────────────────────────────────────────
+  function saveToLocalStorage() {
+    try {
+      const st = window._RW?.state;
+      if (!st) return false;
+      ensureSettings();
+      const payload = {
+        styleOverrides: st.settings.styleOverrides,
+        labelSettings:  st.settings.labelSettings,
+        hoverFields:    st.settings.hoverFields,
+      };
+      localStorage.setItem('rw_style_settings', JSON.stringify(payload));
+      return true;
+    } catch(e) {
+      console.warn('rw_style_settings save failed:', e);
+      return false;
+    }
+  }
+
+  // Auto-load persisted style settings on startup
+  ;(function loadPersistedStyle() {
+    try {
+      const saved = localStorage.getItem('rw_style_settings');
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      const st = window._RW?.state;
+      if (!st) return;
+      if (parsed.styleOverrides) st.settings.styleOverrides = parsed.styleOverrides;
+      if (parsed.labelSettings)  st.settings.labelSettings  = parsed.labelSettings;
+      if (parsed.hoverFields)    st.settings.hoverFields     = parsed.hoverFields;
+      applyStyleOverrides(); // applies overrides to PIN_STYLE + calls sgApplyLabels
+      console.log('[RoadWalk] Style settings loaded from localStorage');
+    } catch(e) {
+      console.warn('rw_style_settings load failed:', e);
+    }
+  })();
+
   // Apply label CSS overrides via injected <style> tag
+  // Badge color/size are now inline per-bar; only map-label and sta-tick need global CSS.
   window.sgApplyLabels = function() {
     const rwState = window._RW?.state;
     if (!rwState) return;
@@ -13076,11 +13167,8 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     let st = document.getElementById('sg-dynamic-styles');
     if (!st) { st = document.createElement('style'); st.id = 'sg-dynamic-styles'; document.head.appendChild(st); }
     const r = [];
-    if (!LS.badgeShow)     r.push('.strip-bar-badge { display: none !important; }');
-    if (LS.badgeColor)     r.push(`.strip-bar-badge { color: ${LS.badgeColor} !important; }`);
-    if (LS.badgeSize)      r.push(`.strip-bar-badge { font-size: ${LS.badgeSize}px !important; }`);
-    if (!LS.staTickShow)   r.push('.strip-sta-tick-label { display: none !important; }');
-    if (!LS.mapLabelShow)  r.push('.rw-pin-marker .pin-code { display: none !important; }');
+    if (LS.staTickShow === false)  r.push('.strip-sta-tick-label { display: none !important; }');
+    if (LS.mapLabelShow === false) r.push('.rw-pin-marker .pin-code { display: none !important; }');
     st.textContent = r.join('\n');
   };
 
@@ -13094,7 +13182,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     Object.entries(SO).forEach(([k, ov]) => {
       if (rwPS[k]) Object.assign(rwPS[k], ov);
     });
-    window.sgApplyLabels();
+    window.sgApplyLabels?.();
     window._RW?.rerender();
   }
 
@@ -13125,7 +13213,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       if (!cats.length) return;
       const cls = geom === 'line' ? 'sg-ln' : geom === 'polygon' ? 'sg-pg' : 'sg-pt';
       const colHdrs = geom === 'line'
-        ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span><span>Line Style</span><span>SLD Slot</span>'
+        ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span><span>Line Style</span><span>Level</span>'
         : geom === 'polygon'
         ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span>'
         : '<span>Color</span><span>Code</span><span>Name</span>';
@@ -13140,7 +13228,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           const nm  = sty.label != null ? sty.label : (item.label || k);
           const wt  = sty.weight != null ? sty.weight : (item.weight || 4);
           const lsv = SO[k]?.lineStyle ?? '';   // lineStyle key
-          const slt = SO[k]?.slot || SG_DEFAULT_SLOT[k] || 'line';
+          const slt = SO[k]?.slotLevel ?? KIND_SLOT_DEFAULT_LEVEL[k] ?? 0;
           const colorBorder = (col.toLowerCase() === '#ffffff' || col.toLowerCase() === '#f5f1ea') ? 'border-color:#d1d5db' : '';
 
           let cells = `
@@ -13156,7 +13244,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
             cells += `<select class="sg-select" id="${rowId(k,'ls')}">
               ${LINE_STYLES.map(o => `<option value="${o.v}"${o.v === lsv ? ' selected' : ''}>${o.l}</option>`).join('')}
             </select>
-            <select class="sg-select" id="${rowId(k,'slot')}">
+            <select class="sg-select" id="${rowId(k,'level')}">
               ${SLOT_OPTS.map(o => `<option value="${o.v}"${o.v === slt ? ' selected' : ''}>${o.l}</option>`).join('')}
             </select>`;
           }
@@ -13164,48 +13252,75 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         });
       });
     });
-    s1 += `<div>
+    s1 += `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
       <button class="sg-apply-btn" id="sg-apply-btn">Apply &amp; Re-render</button>
-      <span id="sg-apply-status" style="margin-left:10px;font-size:11px;color:var(--ink-3)"></span>
+      <button class="sg-apply-btn" id="sg-save-btn" style="background:var(--blue);color:#fff">&#128190; Save as Default</button>
+      <button class="sg-apply-btn" id="sg-reset-btn" style="background:#dc2626;color:#fff">Reset</button>
+      <span id="sg-apply-status" style="font-size:11px;color:var(--ink-3)"></span>
     </div></div>`;
 
     // ── Section 2: Labels ──────────────────────────────────────────────────
-    let s2 = `<div class="sg-section"><div class="sg-section-title">Labels</div>`;
-    const LBL_ROWS = [
-      { key:'badgeShow',    type:'toggle', label:'SLD badge labels',
-        help:'Feature code badge shown on bars and pin circles in the strip log.' },
-      { key:'badgeColor',   type:'color',  label:'Badge text color' },
-      { key:'badgeSize',    type:'number', label:'Badge font size', min:6, max:18, unit:'px' },
-      { key:'mapLabelShow', type:'toggle', label:'Map pin code labels',
-        help:'Two-letter code overlay on Leaflet map pin markers.' },
-      { key:'staTickShow',  type:'toggle', label:'Station tick labels',
-        help:'STA labels along strip log edges.' },
-    ];
-    LBL_ROWS.forEach(f => {
-      const helpSpan = f.help ? `<br><span style="font-size:10px;color:var(--ink-3)">${f.help}</span>` : '';
-      if (f.type === 'toggle') {
-        s2 += `<div class="sg-label-row">
-          <span class="sg-label-name">${f.label}${helpSpan}</span>
-          <label class="sg-toggle-lbl">
-            <input type="checkbox" id="sgl_${f.key}"${LS[f.key] !== false ? ' checked' : ''}> On
-          </label></div>`;
-      } else if (f.type === 'color') {
-        const v = LS[f.key] || '#ffffff';
-        s2 += `<div class="sg-label-row">
-          <span class="sg-label-name">${f.label}</span>
-          <div class="sg-color-sml" style="background:${v};border:1.5px solid #d1d5db">
-            <input type="color" id="sgl_${f.key}" value="${v}"></div>
-        </div>`;
-      } else if (f.type === 'number') {
-        s2 += `<div class="sg-label-row">
-          <span class="sg-label-name">${f.label}</span>
-          <input type="number" class="sg-sz-input" id="sgl_${f.key}"
-            value="${LS[f.key] || 10}" min="${f.min}" max="${f.max}">
-          <span style="font-size:11px;color:var(--ink-3)">${f.unit || ''}</span>
-        </div>`;
-      }
+    const _vxDefs = {
+      start: { show: true,  template: '{code}',   color: '#ffffff', size: 10 },
+      mid:   { show: true,  template: '{id}',     color: '#ffffff', size: 10 },
+      end:   { show: true,  template: '{length}', color: '#ffffff', size: 10 },
+    };
+    const BLab = LS.barLabels || {};
+    function vxVal(vx, key) {
+      return BLab[vx]?.[key] !== undefined ? BLab[vx][key] : _vxDefs[vx][key];
+    }
+    let s2 = `<div class="sg-section"><div class="sg-section-title">SLD Bar Labels</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px">
+        Available tokens:
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{code}</code>
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{id}</code>
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{length}</code>
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{sta}</code>
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{side}</code>
+        <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{kind}</code>
+        &nbsp;— combine freely, e.g. <code style="background:var(--paper-2);padding:1px 4px;border-radius:3px">{code} {length}</code>
+      </div>
+      <div class="sg-vertex-hdr">
+        <span>Position</span><span>On</span><span>Template</span><span>Color</span><span>px</span>
+      </div>`;
+    [
+      { vx: 'start', label: 'Start' },
+      { vx: 'mid',   label: 'Mid'   },
+      { vx: 'end',   label: 'End'   },
+    ].forEach(({ vx, label }) => {
+      const show  = vxVal(vx, 'show');
+      const tpl   = vxVal(vx, 'template');
+      const color = vxVal(vx, 'color') || '#ffffff';
+      const size  = vxVal(vx, 'size')  || 10;
+      s2 += `<div class="sg-vertex-row">
+        <span class="sg-vx-name">${label}</span>
+        <label class="sg-toggle-lbl">
+          <input type="checkbox" id="sgl_${vx}_show"${show !== false ? ' checked' : ''}> On
+        </label>
+        <input type="text" class="sg-vx-tpl" id="sgl_${vx}_tpl"
+          value="${tpl.replace(/"/g,'&quot;')}"
+          placeholder="{code} {id} {length}…">
+        <div class="sg-color-sml" style="background:${color};border:1.5px solid #d1d5db">
+          <input type="color" id="sgl_${vx}_color" value="${color}"></div>
+        <input type="number" class="sg-sz-input" id="sgl_${vx}_size"
+          value="${size}" min="6" max="20">
+      </div>`;
     });
-    s2 += `</div>`;
+    s2 += `<div class="sg-label-row" style="margin-top:14px">
+      <span class="sg-label-name">Map pin code labels
+        <br><span style="font-size:10px;color:var(--ink-3)">Two-letter code overlay on Leaflet map markers</span>
+      </span>
+      <label class="sg-toggle-lbl">
+        <input type="checkbox" id="sgl_mapLabelShow"${LS.mapLabelShow !== false ? ' checked' : ''}> On
+      </label></div>
+    <div class="sg-label-row">
+      <span class="sg-label-name">Station tick labels
+        <br><span style="font-size:10px;color:var(--ink-3)">STA labels along strip log edges</span>
+      </span>
+      <label class="sg-toggle-lbl">
+        <input type="checkbox" id="sgl_staTickShow"${LS.staTickShow !== false ? ' checked' : ''}> On
+      </label></div>
+    </div>`;
 
     // ── Section 3: Hover Info Fields ───────────────────────────────────────
     let s3 = `<div class="sg-section"><div class="sg-section-title">Hover Info Fields</div>
@@ -13249,37 +13364,68 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         if (geom === 'line') {
           const lsEl = document.getElementById(rowId(k, 'ls'));
           if (lsEl) lsEl.onchange = e => { ov().lineStyle = e.target.value; };
-          const slotEl = document.getElementById(rowId(k, 'slot'));
-          if (slotEl) slotEl.onchange = e => { ov().slot = e.target.value; };
+          const slotEl = document.getElementById(rowId(k, 'level'));
+          if (slotEl) slotEl.onchange = e => { ov().slotLevel = parseInt(e.target.value); };
         }
       });
     });
 
-    // ── Apply button ───────────────────────────────────────────────────────
+    // ── Apply / Save / Reset buttons ───────────────────────────────────────
     const applyBtn = document.getElementById('sg-apply-btn');
     if (applyBtn) applyBtn.onclick = () => {
       applyStyleOverrides();
       const stEl = document.getElementById('sg-apply-status');
       if (stEl) { stEl.textContent = 'Applied!'; setTimeout(() => { stEl.textContent = ''; }, 2000); }
     };
+    const saveBtn = document.getElementById('sg-save-btn');
+    if (saveBtn) saveBtn.onclick = () => {
+      applyStyleOverrides();
+      const ok = saveToLocalStorage();
+      const stEl = document.getElementById('sg-apply-status');
+      if (stEl) { stEl.textContent = ok ? 'Saved as default!' : 'Save failed'; setTimeout(() => { stEl.textContent = ''; }, 2500); }
+    };
+    const resetBtn = document.getElementById('sg-reset-btn');
+    if (resetBtn) resetBtn.onclick = () => {
+      if (!confirm('Reset all style settings to built-in defaults? This cannot be undone.')) return;
+      localStorage.removeItem('rw_style_settings');
+      const st = window._RW?.state;
+      if (st) {
+        st.settings.styleOverrides = {};
+        st.settings.labelSettings  = null;
+        st.settings.hoverFields    = null;
+        ensureSettings();
+      }
+      window.renderStyleGuide();
+      applyStyleOverrides();
+      const stEl = document.getElementById('sg-apply-status');
+      if (stEl) { stEl.textContent = 'Reset to defaults!'; setTimeout(() => { stEl.textContent = ''; }, 2500); }
+    };
 
     // ── Label setting events ───────────────────────────────────────────────
-    LBL_ROWS.forEach(f => {
-      const el = document.getElementById('sgl_' + f.key);
-      if (!el) return;
-      if (f.type === 'toggle') {
-        el.onchange = e => { LS[f.key] = e.target.checked; window.sgApplyLabels(); };
-      } else if (f.type === 'color') {
-        el.oninput = e => {
-          LS[f.key] = e.target.value;
-          const sml = el.closest('.sg-color-sml');
-          if (sml) sml.style.background = e.target.value;
-          window.sgApplyLabels();
-        };
-      } else {
-        el.oninput = e => { LS[f.key] = parseFloat(e.target.value) || 10; window.sgApplyLabels(); };
+    ['start', 'mid', 'end'].forEach(vx => {
+      function vxBL() {
+        if (!LS.barLabels)      LS.barLabels      = {};
+        if (!LS.barLabels[vx])  LS.barLabels[vx]  = {};
+        return LS.barLabels[vx];
       }
+      const showEl  = document.getElementById(`sgl_${vx}_show`);
+      const tplEl   = document.getElementById(`sgl_${vx}_tpl`);
+      const colorEl = document.getElementById(`sgl_${vx}_color`);
+      const sizeEl  = document.getElementById(`sgl_${vx}_size`);
+      if (showEl)  showEl.onchange  = e => { vxBL().show     = e.target.checked; window._RW?.rerender(); };
+      if (tplEl)   tplEl.oninput    = e => { vxBL().template = e.target.value;   window._RW?.rerender(); };
+      if (colorEl) colorEl.oninput  = e => {
+        vxBL().color = e.target.value;
+        const sml = colorEl.closest('.sg-color-sml');
+        if (sml) sml.style.background = e.target.value;
+        window._RW?.rerender();
+      };
+      if (sizeEl)  sizeEl.oninput   = e => { vxBL().size = parseFloat(e.target.value) || 10; window._RW?.rerender(); };
     });
+    const mapLblEl = document.getElementById('sgl_mapLabelShow');
+    if (mapLblEl) mapLblEl.onchange = e => { LS.mapLabelShow = e.target.checked; window.sgApplyLabels(); };
+    const staLblEl = document.getElementById('sgl_staTickShow');
+    if (staLblEl) staLblEl.onchange = e => { LS.staTickShow = e.target.checked; window.sgApplyLabels(); };
 
     // ── Hover field toggle events ──────────────────────────────────────────
     document.querySelectorAll('[data-hf]').forEach(cb => {
