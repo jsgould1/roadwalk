@@ -7487,23 +7487,26 @@ a { color: inherit; text-decoration: none; }
       } else {
         aerialPicker.style.display = 'none';
       }
-      // Pavement band scrolls with content — span full inner at 50% cross-axis
+    } else {
+      aerialPicker.style.display = 'none';
+    }
+
+    // ── Pavement band (always rendered regardless of orientation) ─────────────
+    {
       const pav = document.createElement('div');
       pav.className = 'strip-pavement-band';
       if (horiz) {
-        // Horizontal strip: road runs L→R; band is a full-width horizontal stripe
+        // Horizontal: road runs L→R; 40px-tall horizontal stripe centred at 50%
         pav.style.cssText =
-          'position:absolute;left:0;right:0;top:calc(50% - 25px);height:50px;' +
+          'position:absolute;left:0;right:0;top:calc(50% - 20px);height:40px;' +
           'background:#d8d8d8;border-top:1px solid #b8b8b8;border-bottom:1px solid #b8b8b8;z-index:1;';
       } else {
-        // Vertical strip: road runs T→B; band is a full-height vertical stripe
+        // Vertical: road runs T→B; 40px-wide vertical stripe centred at 50%
         pav.style.cssText =
-          'position:absolute;top:0;bottom:0;left:calc(50% - 25px);width:50px;' +
+          'position:absolute;top:0;bottom:0;left:calc(50% - 20px);width:40px;' +
           'background:#d8d8d8;border-left:1px solid #b8b8b8;border-right:1px solid #b8b8b8;z-index:1;';
       }
       inner.appendChild(pav);
-    } else {
-      aerialPicker.style.display = 'none';
     }
 
     // ── Feature bars ─────────────────────────────────────────────────────────
@@ -7546,14 +7549,17 @@ a { color: inherit; text-decoration: none; }
       const slotForKind = KIND_TO_SLOT[pin.kind] || 'line';
       const baseOffset = { fence: 32, swale: 24, guardrail: 16, sidewalk: 8, curb: 2, line: 0 }[slotForKind];
       const slotThick  = { fence:  4, swale:  6, guardrail:  5, sidewalk: 6, curb: 4, line: 4 }[slotForKind];
+      const roadHalf = 20; // half of 40px pavement band
       if (horiz) {
         bar.style.left  = `${p1}%`; bar.style.width = `${p2 - p1}%`;
-        if (pin.attrs.side === 'L') { bar.style.top = `calc(50% - ${baseOffset + slotThick + 28}px)`; bar.style.height = `${slotThick}px`; }
-        else                        { bar.style.top = `calc(50% + ${baseOffset + 24}px)`;              bar.style.height = `${slotThick}px`; }
+        // 23 = roadHalf(20) + 3px margin from band edge
+        if (pin.attrs.side === 'L') { bar.style.top = `calc(50% - ${baseOffset + slotThick + roadHalf + 3}px)`; bar.style.height = `${slotThick}px`; }
+        else                        { bar.style.top = `calc(50% + ${baseOffset + roadHalf - 1}px)`;              bar.style.height = `${slotThick}px`; }
       } else {
         bar.style.top = `${p1}%`; bar.style.height = `${p2 - p1}%`;
-        if (pin.attrs.side === 'L') { bar.style.right = `calc(50% + ${baseOffset}px)`; bar.style.width = `${slotThick}px`; }
-        else                        { bar.style.left  = `calc(50% + ${baseOffset}px)`; bar.style.width = `${slotThick}px`; }
+        // roadHalf offsets bars so baseOffset=0 (line) sits at the road edge
+        if (pin.attrs.side === 'L') { bar.style.right = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
+        else                        { bar.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
       }
       bar.title = `${pin.id} · ${pin.kind} · ${pin.attrs.length_ft || '?'} ft ${pin.attrs.length_source === 'estimated_pending_ocr' ? '(est)' : ''}`;
       bar.style.pointerEvents = 'auto'; bar.style.cursor = 'pointer';
@@ -7573,14 +7579,14 @@ a { color: inherit; text-decoration: none; }
           badge.style.left = `${axisPct(startSta)}%`;
           badge.style.transform = 'translate(-50%, -50%)';
           badge.style.top = pin.attrs.side === 'L'
-            ? `calc(50% - ${baseOffset + slotThick + 28 - halfThick}px)`
-            : `calc(50% + ${baseOffset + 24 + halfThick}px)`;
+            ? `calc(50% - ${baseOffset + slotThick + roadHalf + 3 - halfThick}px)`
+            : `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
         } else {
           badge.style.top = `${axisPct(startSta)}%`;
           badge.style.transform = 'translate(-50%, -50%)';
           badge.style.left = pin.attrs.side === 'L'
-            ? `calc(50% - ${baseOffset + slotThick + halfThick}px)`
-            : `calc(50% + ${baseOffset + halfThick}px)`;
+            ? `calc(50% - ${roadHalf + baseOffset + slotThick + halfThick}px)`
+            : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
         }
         inner.appendChild(badge);
       }
@@ -7588,8 +7594,9 @@ a { color: inherit; text-decoration: none; }
       const lflags = pin.attrs?.labels || {};
       const barMidPct = axisPct((startSta + endSta) / 2);
       const barEndPct = axisPct(endSta);
-      // Cross-track offset — label sits just outside the bar on the road side
-      const labelOffset = baseOffset + slotThick + 30;
+      // Cross-track offset — label sits beyond the bar, road-side outward
+      // roadHalf puts us at the band edge; baseOffset+slotThick+10 clears the bar
+      const labelOffset = roadHalf + baseOffset + slotThick + 10;
       if (lflags.id !== false) {
         const idLab = document.createElement('div');
         idLab.className = 'strip-bar-label';
