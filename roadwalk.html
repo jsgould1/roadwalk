@@ -7594,47 +7594,35 @@ a { color: inherit; text-decoration: none; }
       const lflags = pin.attrs?.labels || {};
       const barMidPct = axisPct((startSta + endSta) / 2);
       const barEndPct = axisPct(endSta);
-      // Cross-track offset — label sits beyond the bar, road-side outward
-      // roadHalf puts us at the band edge; baseOffset+slotThick+10 clears the bar
-      const labelOffset = roadHalf + baseOffset + slotThick + 10;
-      if (lflags.id !== false) {
-        const idLab = document.createElement('div');
-        idLab.className = 'strip-bar-label';
-        idLab.textContent = pin.id;
-        idLab.title = pin.id;
+      // Labels sit at the bar's cross-track centre (same line as the bar).
+      // Compute the bar's centre in the cross-track axis:
+      //   horiz L: calc(50% - (baseOffset + roadHalf + 3 + halfThick)px)
+      //   horiz R: calc(50% + (baseOffset + roadHalf - 1 + halfThick)px)
+      //   vert  L: right:calc(50% + (roadHalf + baseOffset)px)  [label extends away from road]
+      //   vert  R: left: calc(50% + (roadHalf + baseOffset)px)
+      const halfThick = Math.floor(slotThick / 2);
+      const barCrossL = `calc(50% - ${baseOffset + roadHalf + 3 + halfThick}px)`;
+      const barCrossR = `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
+      function makeBarLabel(axPct, text, title) {
+        const lab = document.createElement('div');
+        lab.className = 'strip-bar-label';
+        lab.textContent = text; lab.title = title;
         if (horiz) {
-          idLab.style.left      = `${barMidPct}%`;
-          idLab.style.transform = 'translateX(-50%)';
-          idLab.style.top       = pin.attrs.side === 'L'
-            ? `calc(50% - ${labelOffset + 14}px)`
-            : `calc(50% + ${labelOffset - 14}px)`;
+          lab.style.left      = `${axPct}%`;
+          lab.style.transform = 'translate(-50%, -50%)'; // centre on the bar
+          lab.style.top       = pin.attrs.side === 'L' ? barCrossL : barCrossR;
         } else {
-          idLab.style.top       = `${barMidPct}%`;
-          idLab.style.transform = 'translateY(-50%)';
-          if (pin.attrs.side === 'L') idLab.style.right = `calc(50% + ${labelOffset}px)`;
-          else                        idLab.style.left  = `calc(50% + ${labelOffset}px)`;
+          lab.style.top       = `${axPct}%`;
+          lab.style.transform = 'translateY(-50%)';
+          if (pin.attrs.side === 'L') lab.style.right = `calc(50% + ${roadHalf + baseOffset}px)`;
+          else                        lab.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`;
         }
-        inner.appendChild(idLab);
+        return lab;
       }
-      if (lflags.length !== false && pin.attrs?.length_ft) {
-        const lenLab = document.createElement('div');
-        lenLab.className = 'strip-bar-label';
-        lenLab.textContent = `${Math.round(pin.attrs.length_ft)}'`;
-        lenLab.title = `${pin.id} length`;
-        if (horiz) {
-          lenLab.style.left      = `${barEndPct}%`;
-          lenLab.style.transform = 'translateX(-50%)';
-          lenLab.style.top       = pin.attrs.side === 'L'
-            ? `calc(50% - ${labelOffset + 14}px)`
-            : `calc(50% + ${labelOffset - 14}px)`;
-        } else {
-          lenLab.style.top       = `${barEndPct}%`;
-          lenLab.style.transform = 'translateY(-50%)';
-          if (pin.attrs.side === 'L') lenLab.style.right = `calc(50% + ${labelOffset}px)`;
-          else                        lenLab.style.left  = `calc(50% + ${labelOffset}px)`;
-        }
-        inner.appendChild(lenLab);
-      }
+      if (lflags.id !== false)
+        inner.appendChild(makeBarLabel(barMidPct, pin.id, pin.id));
+      if (lflags.length !== false && pin.attrs?.length_ft)
+        inner.appendChild(makeBarLabel(barEndPct, `${Math.round(pin.attrs.length_ft)}'`, `${pin.id} length`));
     }
 
     // ── Culvert crossing symbols ──────────────────────────────────────────────
@@ -7763,11 +7751,14 @@ a { color: inherit; text-decoration: none; }
           `<span class="t-plus" style="position:absolute;left:0;top:0;transform:translate(-50%,-50%);">+</span>` +
           `<span class="t-post" style="position:absolute;left:4px;top:0;transform:translateY(-50%);white-space:nowrap;">${String(remainder).padStart(2, '0')}</span>`;
       } else {
-        lbl.style.top = `${pct}%`;   // vertical mode: label rides the left edge
+        // Vertical mode: anchor at left:50% (centre of the 40px road band),
+        // top:pct% for station position. Use same zero-size anchor + absolute
+        // spans trick as horiz so the + glyph sits exactly at the station tick.
+        lbl.style.cssText = `top:${pct}%;left:50%;width:0;height:0;overflow:visible;z-index:4;`;
         lbl.innerHTML =
-          `<span class="t-pre">${stations}</span>` +
-          `<span class="t-plus">+</span>` +
-          `<span class="t-post">${String(remainder).padStart(2, '0')}</span>`;
+          `<span class="t-pre" style="position:absolute;right:4px;top:0;transform:translateY(-50%);white-space:nowrap;">${stations}</span>` +
+          `<span class="t-plus" style="position:absolute;left:0;top:0;transform:translate(-50%,-50%);">+</span>` +
+          `<span class="t-post" style="position:absolute;left:4px;top:0;transform:translateY(-50%);white-space:nowrap;">${String(remainder).padStart(2, '0')}</span>`;
       }
       ticks.appendChild(lbl);
     }
