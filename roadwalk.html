@@ -655,6 +655,22 @@ a { color: inherit; text-decoration: none; }
 /* Crosshair cursor when hovering the alignment polyline (desktop) */
 .leaflet-container .rw-alignment-path { cursor: crosshair; }
 
+/* GPS "you are here" dot on the straight-line diagram.
+   Sits at the projected station on the inner (scrollable) div so it moves
+   with the content and lands at the correct position along the section. */
+#strip-gps-dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #4285F4;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.35), 0 1px 4px rgba(0,0,0,0.25);
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+
 /* Floating STA readout — follows cursor/finger along the alignment polyline */
 .leaflet-tooltip.rw-sta-tooltip {
   font-family: 'IBM Plex Mono', monospace;
@@ -4265,6 +4281,9 @@ a { color: inherit; text-decoration: none; }
     },
     map: null,
     mapLayers: { alignment: null, features: null, me: null },
+    // Live GPS — updated by watchPosition, drives the blue dot on map + strip
+    gpsPos: null,   // { lat, lng, accuracy } or null before first fix
+    gpsDot: null,   // L.circleMarker instance (created once, reused)
     // kickoff working draft
     draftKickoff: null,      // { sectionId, type, answers: {} }
     // settings
@@ -4630,6 +4649,29 @@ a { color: inherit; text-decoration: none; }
 
       // Basemap — obey the current settings choice (defaults to Nearmap for testing)
       setBasemap(state.settings.basemap || 'nearmap');
+
+      // Blue "you are here" dot — created once, shown when we have a GPS fix.
+      // Sits in markerPane so it's above tiles but below pins.
+      if (!state.gpsDot) {
+        state.gpsDot = L.circleMarker([0, 0], {
+          radius: 8,
+          color: '#fff',
+          weight: 2.5,
+          fillColor: '#4285F4',
+          fillOpacity: 0.92,
+          interactive: false,
+          pane: 'markerPane',
+        });
+        // If we already have a fix from a previous map interaction, show it now
+        if (state.gpsPos) {
+          state.gpsDot.setLatLng([state.gpsPos.lat, state.gpsPos.lng]);
+          state.gpsDot.addTo(state.map);
+        }
+      } else if (!state.map.hasLayer(state.gpsDot) && state.gpsPos) {
+        // Map was re-used — re-add dot if we have a fix
+        state.gpsDot.addTo(state.map);
+      }
+
       // Wire relocate-mode map click handler (idempotent)
       if (window._wireRelocateOnMap) window._wireRelocateOnMap();
       if (window._wireDrawingOnMap) window._wireDrawingOnMap();
@@ -7496,6 +7538,21 @@ a { color: inherit; text-decoration: none; }
       }
     }
 
+    // ── GPS "you are here" dot (inner — scrolls with content) ───────────────
+    if (state.gpsPos && sec.alignment) {
+      const [gpsSta, gpsDist] = projectOntoAlignment(
+        { lat: state.gpsPos.lat, lng: state.gpsPos.lng },
+        sec.alignment
+      );
+      if (gpsDist <= 500) {
+        const gpsDotEl = document.createElement('div');
+        gpsDotEl.id = 'strip-gps-dot';
+        gpsDotEl.style[axisKey]                  = `${axisPct(gpsSta)}%`;
+        gpsDotEl.style[horiz ? 'top' : 'left']   = '50%';
+        inner.appendChild(gpsDotEl);
+      }
+    }
+
     // ── +250 / −250 ft navigation buttons (direct canvas children — z-index:6,
     //    above both inner content and the overlay, always viewport-fixed) ────────
     [
@@ -10220,6 +10277,71 @@ a { color: inherit; text-decoration: none; }
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
       );
     });
+  }
+
+  // --- Live GPS dot (map + strip) ----------------------------------------
+  // watchPosition fires continuously as the device moves.  On each fix we:
+  //   • update state.gpsPos
+  //   • move the blue circleMarker on the Leaflet map
+  //   • call _updateStripGpsDot() to reposition the strip dot without a
+  //     full re-render (cheap: just update one element's CSS)
+
+  function _updateStripGpsDot() {
+    if (!state.gpsPos) return;
+    const sec    = stripCurrentSec;
+    const canvas = $('#strip-canvas');
+    const inner  = $('#strip-inner');
+    if (!sec || !sec.alignment || !canvas || !inner) return;
+
+    const totalFt = parseFloat(canvas.dataset.totalFt) || 0;
+    if (!totalFt) return;
+
+    const [gpsSta, gpsDist] = projectOntoAlignment(
+      { lat: state.gpsPos.lat, lng: state.gpsPos.lng },
+      sec.alignment
+    );
+
+    // Only show when we're within a reasonable cross-track distance (500 ft)
+    let dot = $('#strip-gps-dot');
+    if (gpsDist > 500) {
+      if (dot) dot.remove();
+      return;
+    }
+
+    const horiz  = typeof isDesktopMode === 'function' && isDesktopMode();
+    const pct    = (gpsSta / totalFt) * 100;
+    const axisKey      = horiz ? 'left' : 'top';
+    const crossAxisKey = horiz ? 'top'  : 'left';
+
+    if (!dot) {
+      dot = document.createElement('div');
+      dot.id = 'strip-gps-dot';
+      inner.appendChild(dot);
+    }
+    dot.style[axisKey]      = `${pct}%`;
+    dot.style[crossAxisKey] = '50%';
+  }
+
+  if (navigator.geolocation && !window._rwGpsWatchId) {
+    window._rwGpsWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        state.gpsPos = { lat, lng, accuracy };
+
+        // Update Leaflet map dot
+        if (state.gpsDot) {
+          state.gpsDot.setLatLng([lat, lng]);
+          if (state.map && !state.map.hasLayer(state.gpsDot)) {
+            state.gpsDot.addTo(state.map);
+          }
+        }
+
+        // Update strip dot (lightweight reposition)
+        _updateStripGpsDot();
+      },
+      () => {},   // silent on permission-denied / timeout
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
   }
 
   // --- Rotate map (leaflet-rotate) ---------------------------------------
