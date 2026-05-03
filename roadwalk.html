@@ -6081,7 +6081,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
             }
           }
         }
-        html = `<div style="
+        html = `<div class="rw-pin-code" style="
           background: ${circleBg};
           color: ${circleColor};
           font-family: 'IBM Plex Mono', monospace;
@@ -6100,7 +6100,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         iconSize   = [18, 18];
         iconAnchor = [9, 9];
       } else if (style.shape === 'triangle') {
-        html = `<div style="
+        html = `<div class="rw-pin-code" style="
           background: ${style.color};
           color: #F5F1EA;
           font-family: 'IBM Plex Mono', monospace;
@@ -6116,7 +6116,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
         iconSize   = [22, 20];
         iconAnchor = [11, 18];          /* anchor near the triangle's base */
       } else {
-        html = `<div style="
+        html = `<div class="rw-pin-code" style="
           background: ${style.color};
           color: #F5F1EA;
           font-family: 'IBM Plex Mono', monospace;
@@ -8168,7 +8168,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           badge.style.top = `${axisPct(startSta)}%`;
           badge.style.transform = 'translate(-50%, -50%)';
           badge.style.left = pin.attrs.side === 'L'
-            ? `calc(50% - ${roadHalf + baseOffset + slotThick + halfThick}px)`
+            ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
             : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
         }
         inner.appendChild(badge);
@@ -8188,9 +8188,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           lab.style.top       = pin.attrs.side === 'L' ? barCrossL : barCrossR;
         } else {
           lab.style.top       = `${axPct}%`;
-          lab.style.transform = 'translateY(-50%) rotate(90deg)';
-          if (pin.attrs.side === 'L') lab.style.right = `calc(50% + ${roadHalf + baseOffset}px)`;
-          else                        lab.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`;
+          lab.style.transform = 'translate(-50%, -50%)';
+          lab.style.left = pin.attrs.side === 'L'
+            ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
+            : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
         }
         return lab;
       }
@@ -13110,6 +13111,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       mid:   { show: true,  template: '{id}',     color: '#ffffff', size: 10 },
       end:   { show: true,  template: '{length}', color: '#ffffff', size: 10 },
     };
+    // Map pin label controls
+    if (!st.settings.labelSettings.mapLabel) st.settings.labelSettings.mapLabel = {
+      show: true, color: null, size: null,
+    };
     if (!st.settings.hoverFields) st.settings.hoverFields = {
       id: true, kind: true, sta: true, length_ft: true,
       area_sq_ft: true, side: true, condition: true, status: false,
@@ -13158,7 +13163,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   })();
 
   // Apply label CSS overrides via injected <style> tag
-  // Badge color/size are now inline per-bar; only map-label and sta-tick need global CSS.
+  // SLD bar badge color/size are inline per-bar; only map-label and sta-tick need global CSS.
   window.sgApplyLabels = function() {
     const rwState = window._RW?.state;
     if (!rwState) return;
@@ -13167,8 +13172,13 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     let st = document.getElementById('sg-dynamic-styles');
     if (!st) { st = document.createElement('style'); st.id = 'sg-dynamic-styles'; document.head.appendChild(st); }
     const r = [];
-    if (LS.staTickShow === false)  r.push('.strip-sta-tick-label { display: none !important; }');
-    if (LS.mapLabelShow === false) r.push('.rw-pin-marker .pin-code { display: none !important; }');
+    // SLD station ticks
+    if (LS.staTickShow === false) r.push('.strip-sta-tick-label { display: none !important; }');
+    // Leaflet map pin code labels (.rw-pin-code added to all pin icon divs)
+    const ML = LS.mapLabel || {};
+    if (ML.show === false) r.push('.rw-pin-code { display: none !important; }');
+    if (ML.color)          r.push(`.rw-pin-code { color: ${ML.color} !important; }`);
+    if (ML.size)           r.push(`.rw-pin-code { font-size: ${ML.size}px !important; }`);
     st.textContent = r.join('\n');
   };
 
@@ -13307,19 +13317,48 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       </div>`;
     });
     s2 += `<div class="sg-label-row" style="margin-top:14px">
-      <span class="sg-label-name">Map pin code labels
-        <br><span style="font-size:10px;color:var(--ink-3)">Two-letter code overlay on Leaflet map markers</span>
-      </span>
-      <label class="sg-toggle-lbl">
-        <input type="checkbox" id="sgl_mapLabelShow"${LS.mapLabelShow !== false ? ' checked' : ''}> On
-      </label></div>
-    <div class="sg-label-row">
       <span class="sg-label-name">Station tick labels
         <br><span style="font-size:10px;color:var(--ink-3)">STA labels along strip log edges</span>
       </span>
       <label class="sg-toggle-lbl">
         <input type="checkbox" id="sgl_staTickShow"${LS.staTickShow !== false ? ' checked' : ''}> On
       </label></div>
+    </div>`;
+
+    // ── Section 3: Map Pin Labels ──────────────────────────────────────────
+    const ML = LS.mapLabel || {};
+    const mlShow  = ML.show !== false;
+    const mlColor = ML.color || '';
+    const mlSize  = ML.size  || '';
+    let s3map = `<div class="sg-section"><div class="sg-section-title">Map Pin Labels</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px">
+        Two-letter code labels shown on Leaflet map pin markers.</div>
+      <div class="sg-label-row">
+        <span class="sg-label-name">Show labels</span>
+        <label class="sg-toggle-lbl">
+          <input type="checkbox" id="sgl_mapLabelShow"${mlShow ? ' checked' : ''}> On
+        </label>
+      </div>
+      <div class="sg-label-row">
+        <span class="sg-label-name">Text color
+          <br><span style="font-size:10px;color:var(--ink-3)">Override the label text color (leave blank for per-feature default)</span>
+        </span>
+        <div class="sg-color-sml" style="background:${mlColor||'#ffffff'};border:1.5px solid #d1d5db">
+          <input type="color" id="sgl_mapLabelColor" value="${mlColor||'#ffffff'}">
+        </div>
+        <label class="sg-toggle-lbl" style="margin-left:6px">
+          <input type="checkbox" id="sgl_mapLabelColorOn"${mlColor ? ' checked' : ''}> Use
+        </label>
+      </div>
+      <div class="sg-label-row">
+        <span class="sg-label-name">Font size</span>
+        <input type="number" class="sg-sz-input" id="sgl_mapLabelSize"
+          value="${mlSize||8}" min="6" max="16">
+        <span style="font-size:11px;color:var(--ink-3);margin-left:4px">px</span>
+        <label class="sg-toggle-lbl" style="margin-left:6px">
+          <input type="checkbox" id="sgl_mapLabelSizeOn"${mlSize ? ' checked' : ''}> Use
+        </label>
+      </div>
     </div>`;
 
     // ── Section 3: Hover Info Fields ───────────────────────────────────────
@@ -13335,7 +13374,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
     });
     s3 += `</div></div>`;
 
-    body.innerHTML = s1 + s2 + s3;
+    body.innerHTML = s1 + s2 + s3map + s3;
 
     // ── Wire feature style rows ────────────────────────────────────────────
     FEATURE_CATALOG.forEach(cat => {
@@ -13422,10 +13461,34 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       };
       if (sizeEl)  sizeEl.oninput   = e => { vxBL().size = parseFloat(e.target.value) || 10; window._RW?.rerender(); };
     });
-    const mapLblEl = document.getElementById('sgl_mapLabelShow');
-    if (mapLblEl) mapLblEl.onchange = e => { LS.mapLabelShow = e.target.checked; window.sgApplyLabels(); };
     const staLblEl = document.getElementById('sgl_staTickShow');
     if (staLblEl) staLblEl.onchange = e => { LS.staTickShow = e.target.checked; window.sgApplyLabels(); };
+
+    // ── Map pin label events ───────────────────────────────────────────────
+    function mapLbl() { if (!LS.mapLabel) LS.mapLabel = {}; return LS.mapLabel; }
+    const mapShowEl = document.getElementById('sgl_mapLabelShow');
+    if (mapShowEl) mapShowEl.onchange = e => { mapLbl().show = e.target.checked; window.sgApplyLabels(); };
+
+    const mapColorEl    = document.getElementById('sgl_mapLabelColor');
+    const mapColorOnEl  = document.getElementById('sgl_mapLabelColorOn');
+    const mapSizeEl     = document.getElementById('sgl_mapLabelSize');
+    const mapSizeOnEl   = document.getElementById('sgl_mapLabelSizeOn');
+
+    function updateMapColor() {
+      const on = mapColorOnEl?.checked;
+      mapLbl().color = on ? (mapColorEl?.value || null) : null;
+      window.sgApplyLabels();
+    }
+    if (mapColorEl)   mapColorEl.oninput  = e => { const sml = e.target.closest('.sg-color-sml'); if (sml) sml.style.background = e.target.value; updateMapColor(); };
+    if (mapColorOnEl) mapColorOnEl.onchange = () => updateMapColor();
+
+    function updateMapSize() {
+      const on = mapSizeOnEl?.checked;
+      mapLbl().size = on ? (parseFloat(mapSizeEl?.value) || null) : null;
+      window.sgApplyLabels();
+    }
+    if (mapSizeEl)   mapSizeEl.oninput    = () => updateMapSize();
+    if (mapSizeOnEl) mapSizeOnEl.onchange = () => updateMapSize();
 
     // ── Hover field toggle events ──────────────────────────────────────────
     document.querySelectorAll('[data-hf]').forEach(cb => {
