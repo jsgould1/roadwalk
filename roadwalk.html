@@ -3753,7 +3753,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   display: grid; gap: 6px; padding: 0 4px 4px;
   font-size: 9px; letter-spacing: .07em; text-transform: uppercase;
   color: var(--ink-3); font-weight: 700; border-bottom: 1px solid var(--rule); }
-.sg-col-hdr.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 100px; }
+.sg-col-hdr.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 80px 66px; }
 .sg-col-hdr.sg-pt { grid-template-columns: 28px 54px 1fr; }
 .sg-col-hdr.sg-pg { grid-template-columns: 28px 54px 1fr 44px; }
 /* Feature rows */
@@ -3761,7 +3761,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   display: grid; gap: 6px; align-items: center; padding: 4px 4px;
   border-bottom: 1px solid var(--rule); }
 .sg-row:hover { background: var(--hover); }
-.sg-row.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 100px; }
+.sg-row.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 80px 66px; }
 .sg-row.sg-pt { grid-template-columns: 28px 54px 1fr; }
 .sg-row.sg-pg { grid-template-columns: 28px 54px 1fr 44px; }
 /* Color swatch */
@@ -8075,10 +8075,26 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       ln_curb:1, ln_cg:1, ln_sidewalk:2,
       ln_swale:5, ln_drain_other:5, ln_fence:6,
     };
+    // Default render mode (inline = parallel bar, cross = perpendicular marker)
+    const _DEFAULT_RENDER_AS = {
+      ln_pvmt_change:'cross', pavement_change:'cross',
+      ln_stop_bar:'cross', ln_crosswalk:'cross',
+    };
+    const kindRenderAs = k =>
+      state.settings?.styleOverrides?.[k]?.renderAs || _DEFAULT_RENDER_AS[k] || 'inline';
+
     const isCulvertKind = k => k === 'ln_culvert' || k === 'ln_box_culvert';
+    // Inline bars: parallel to road, need attrs.side
     const trackPins = (sec.pins || []).filter(p =>
       KIND_TO_SLOT[p.kind] && !isCulvertKind(p.kind)
       && p.geometry && p.geometry.type === 'LineString' && p.attrs && p.attrs.side
+      && kindRenderAs(p.kind) === 'inline'
+    );
+    // Cross markers: perpendicular to road (pavement change, stop bar, etc.)
+    const crossPins = (sec.pins || []).filter(p =>
+      KIND_TO_SLOT[p.kind] && !isCulvertKind(p.kind)
+      && p.geometry && p.geometry.type === 'LineString' && p.attrs
+      && kindRenderAs(p.kind) === 'cross'
     );
 
     // (Slot scaffolds removed — full-section guide lines looked phantom/confusing;
@@ -8259,6 +8275,75 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       badge.addEventListener('click', () => openPinSheet(pin, sec));
       if (horiz) { badge.style.left = `${pSta}%`; badge.style.top = '50%'; }
       else        { badge.style.top  = `${pSta}%`; badge.style.left = '50%'; }
+      inner.appendChild(badge);
+    }
+
+    // ── Cross markers (perpendicular to road: pvmt change, stop bar, etc.) ─────
+    for (const pin of crossPins) {
+      // Determine station (use stored or compute from geometry midpoint)
+      let startSta = pin.sta_ft;
+      if (startSta == null) {
+        try {
+          const coords = pin.geometry.coordinates;
+          const mid = Array.isArray(coords[0]) ? coords[Math.floor(coords.length / 2)] : coords;
+          const [mLng, mLat] = mid;
+          [startSta] = projectOntoAlignment({ lat: mLat, lng: mLng }, sec.alignment);
+          pin.sta_ft = startSta;
+          if (pin.sta == null) pin.sta = fmtSta(startSta);
+        } catch (_) { /* off-section geometry */ }
+      }
+      if (startSta == null) continue;
+      const pSta     = axisPct(startSta);
+      const _xColor  = PIN_STYLE[pin.kind]?.color || '#444';
+      const _xLsKey  = PIN_STYLE[pin.kind]?.lineStyle || '';
+      const _xPat    = window._RW?.LINE_STYLE_MAP?.[_xLsKey];
+      const _xWt     = Math.max(PIN_STYLE[pin.kind]?.weight || 3, 2);
+      const roadHalf = 20; // half of 40px pavement band
+
+      // Span half the pavement width from the centerline toward the feature's side;
+      // features with no side span the full band.
+      const side = pin.attrs?.side;
+      // cross-track span = 20px for sided features, 40px for full-road
+      const span = side ? roadHalf : roadHalf * 2;
+
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.background = _xColor;
+      if (_xPat?.sld)   el.style.backgroundImage = _xPat.sld.replace(/{c}/g, 'rgba(255,255,255,0.65)');
+      if (pin.attrs.length_source === 'estimated_pending_ocr') el.classList.add('est-length');
+      el.title = `${pin.id} · ${pin.kind}`;
+      el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+      el.addEventListener('click', () => openPinSheet(pin, sec));
+
+      if (horiz) {
+        // Along-road axis = left; cross-road axis = top
+        el.style.left   = `calc(${pSta}% - ${_xWt / 2}px)`;
+        el.style.width  = `${_xWt}px`;
+        if (side === 'R') { el.style.top = '50%';                      el.style.height = `${span}px`; }
+        else if (side === 'L') { el.style.top = `calc(50% - ${span}px)`; el.style.height = `${span}px`; }
+        else              { el.style.top = `calc(50% - ${span / 2}px)`; el.style.height = `${span}px`; }
+      } else {
+        // Along-road axis = top; cross-road axis = left
+        el.style.top    = `calc(${pSta}% - ${_xWt / 2}px)`;
+        el.style.height = `${_xWt}px`;
+        if (side === 'R') { el.style.left = '50%';                       el.style.width = `${span}px`; }
+        else if (side === 'L') { el.style.left = `calc(50% - ${span}px)`; el.style.width = `${span}px`; }
+        else              { el.style.left = `calc(50% - ${span / 2}px)`; el.style.width = `${span}px`; }
+      }
+      inner.appendChild(el);
+
+      // Badge at midpoint of the marker
+      const badge = document.createElement('div');
+      badge.className = 'strip-bar-badge';
+      badge.textContent = PIN_STYLE[pin.kind]?.code || pin.kind.slice(0,2).toUpperCase();
+      badge.title = `${pin.id} · ${pin.kind}`;
+      badge.style.background = _xColor;
+      badge.style.transform = 'translate(-50%, -50%)';
+      badge.addEventListener('click', () => openPinSheet(pin, sec));
+      const badgeCross = side === 'R' ? `calc(50% + ${span / 2}px)`
+                       : side === 'L' ? `calc(50% - ${span / 2}px)` : '50%';
+      if (horiz) { badge.style.left = `${pSta}%`; badge.style.top  = badgeCross; }
+      else        { badge.style.top  = `${pSta}%`; badge.style.left = badgeCross; }
       inner.appendChild(badge);
     }
 
@@ -13024,7 +13109,13 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
 (function() {
   'use strict';
 
-  // Default slot map (mirrors KIND_TO_SLOT in renderStrip)
+  // Default render mode per kind (mirrors _DEFAULT_RENDER_AS in renderStrip)
+  const SG_DEFAULT_RENDER_AS = {
+    ln_pvmt_change:'cross', pavement_change:'cross',
+    ln_stop_bar:'cross', ln_crosswalk:'cross',
+  };
+
+  // Default slot map (mirrors KIND_TO_SLOT in renderStrip) — kept for reference
   const SG_DEFAULT_SLOT = {
     ln_guardrail:'guardrail', ln_retaining_wall:'guardrail', ln_barrier:'guardrail',
     ln_curb:'curb', ln_cg:'curb',
@@ -13223,7 +13314,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
       if (!cats.length) return;
       const cls = geom === 'line' ? 'sg-ln' : geom === 'polygon' ? 'sg-pg' : 'sg-pt';
       const colHdrs = geom === 'line'
-        ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span><span>Line Style</span><span>Level</span>'
+        ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span><span>Line Style</span><span>Level</span><span>Render</span>'
         : geom === 'polygon'
         ? '<span>Color</span><span>Code</span><span>Name</span><span>Wt</span>'
         : '<span>Color</span><span>Code</span><span>Name</span>';
@@ -13239,6 +13330,7 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           const wt  = sty.weight != null ? sty.weight : (item.weight || 4);
           const lsv = SO[k]?.lineStyle ?? '';   // lineStyle key
           const slt = SO[k]?.slotLevel ?? KIND_SLOT_DEFAULT_LEVEL[k] ?? 0;
+          const rdr = SO[k]?.renderAs ?? SG_DEFAULT_RENDER_AS[k] ?? 'inline';
           const colorBorder = (col.toLowerCase() === '#ffffff' || col.toLowerCase() === '#f5f1ea') ? 'border-color:#d1d5db' : '';
 
           let cells = `
@@ -13256,6 +13348,10 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
             </select>
             <select class="sg-select" id="${rowId(k,'level')}">
               ${SLOT_OPTS.map(o => `<option value="${o.v}"${o.v === slt ? ' selected' : ''}>${o.l}</option>`).join('')}
+            </select>
+            <select class="sg-select" id="${rowId(k,'render')}">
+              <option value="inline"${rdr === 'inline' ? ' selected' : ''}>Inline ━</option>
+              <option value="cross"${rdr === 'cross'  ? ' selected' : ''}>Cross ┃</option>
             </select>`;
           }
           s1 += `<div class="sg-row ${cls}" data-kind="${k}">${cells}</div>`;
@@ -13405,6 +13501,8 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
           if (lsEl) lsEl.onchange = e => { ov().lineStyle = e.target.value; };
           const slotEl = document.getElementById(rowId(k, 'level'));
           if (slotEl) slotEl.onchange = e => { ov().slotLevel = parseInt(e.target.value); };
+          const renderEl = document.getElementById(rowId(k, 'render'));
+          if (renderEl) renderEl.onchange = e => { ov().renderAs = e.target.value; };
         }
       });
     });
