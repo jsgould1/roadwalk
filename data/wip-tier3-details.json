@@ -1,5 +1,4 @@
 {
-  "_copyright": "NOTICE: This is copyrighted material. It is not to be reused, redistributed, or used in training datasets without explicit permission from the author.",
   "source": "GRSM_WIPReport.pdf",
   "extraction_method": "fitz text-layer (no OCR)",
   "target_routes": [
@@ -20,6 +19,10 @@
       "side": "R",
       "length_ft": 306.0,
       "inspection_date": "6/18/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 31
     },
     "0010N-0.908-R": {
@@ -29,6 +32,10 @@
       "side": "R",
       "length_ft": 284.0,
       "inspection_date": "6/11/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 31
     },
     "0010N-1.128-R": {
@@ -36,8 +43,12 @@
       "route": "0010N",
       "mp": 1.128,
       "side": "R",
-      "length_ft": 235.0,
+      "length_ft": 38.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 31
     },
     "0010N-1.129-L": {
@@ -45,8 +56,12 @@
       "route": "0010N",
       "mp": 1.129,
       "side": "L",
-      "length_ft": 170.0,
+      "length_ft": 48.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 31
     },
     "0010N-1.148-R": {
@@ -56,6 +71,10 @@
       "side": "R",
       "length_ft": 540.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 31
     },
     "0010N-2.158-R": {
@@ -63,8 +82,12 @@
       "route": "0010N",
       "mp": 2.158,
       "side": "R",
-      "length_ft": 53.0,
+      "length_ft": 20.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 32
     },
     "0010N-2.160-L": {
@@ -72,8 +95,12 @@
       "route": "0010N",
       "mp": 2.16,
       "side": "L",
-      "length_ft": 43.0,
+      "length_ft": 16.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 32
     },
     "0010N-2.415-R": {
@@ -81,8 +108,12 @@
       "route": "0010N",
       "mp": 2.415,
       "side": "R",
-      "length_ft": 248.0,
+      "length_ft": 52.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 32
     },
     "0010N-2.416-L": {
@@ -90,8 +121,12 @@
       "route": "0010N",
       "mp": 2.416,
       "side": "L",
-      "length_ft": 342.0,
+      "length_ft": 58.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 32
     },
     "0010N-3.327-L": {
@@ -99,8 +134,12 @@
       "route": "0010N",
       "mp": 3.327,
       "side": "L",
-      "length_ft": 250.0,
+      "length_ft": 37.0,
       "inspection_date": "6/26/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$500.00",
       "_source_page": 32
     },
     "0010N-3.327-R": {
@@ -108,8 +147,12 @@
       "route": "0010N",
       "mp": 3.327,
       "side": "R",
-      "length_ft": 165.0,
+      "length_ft": 41.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 33
     },
     "0010N-3.354-R": {
@@ -117,8 +160,12 @@
       "route": "0010N",
       "mp": 3.354,
       "side": "R",
-      "length_ft": 165.0,
+      "length_ft": 41.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 33
     },
     "0010N-3.576-R": {
@@ -126,8 +173,12 @@
       "route": "0010N",
       "mp": 3.576,
       "side": "R",
-      "length_ft": 23.0,
+      "length_ft": 17.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 33
     },
     "0010N-3.577-L": {
@@ -135,8 +186,12 @@
       "route": "0010N",
       "mp": 3.577,
       "side": "L",
-      "length_ft": 57.0,
+      "length_ft": 15.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 33
     },
     "0010N-3.947-L": {
@@ -144,8 +199,12 @@
       "route": "0010N",
       "mp": 3.947,
       "side": "L",
-      "length_ft": 138.0,
+      "length_ft": 26.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 49,
+      "repair_cost": "$44,400.00",
       "_source_page": 33
     },
     "0010N-3.947-R": {
@@ -153,8 +212,12 @@
       "route": "0010N",
       "mp": 3.947,
       "side": "R",
-      "length_ft": 46.0,
+      "length_ft": 18.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 34
     },
     "0010N-4.425-L": {
@@ -162,8 +225,12 @@
       "route": "0010N",
       "mp": 4.425,
       "side": "L",
-      "length_ft": 133.0,
+      "length_ft": 30.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 34
     },
     "0010N-4.425-R": {
@@ -171,8 +238,12 @@
       "route": "0010N",
       "mp": 4.425,
       "side": "R",
-      "length_ft": 150.0,
+      "length_ft": 30.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 34
     },
     "0010N-4.813-L": {
@@ -180,8 +251,12 @@
       "route": "0010N",
       "mp": 4.813,
       "side": "L",
-      "length_ft": 18.0,
+      "length_ft": 11.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 34
     },
     "0010N-4.813-R": {
@@ -189,8 +264,12 @@
       "route": "0010N",
       "mp": 4.813,
       "side": "R",
-      "length_ft": 41.0,
+      "length_ft": 13.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 34
     },
     "0010N-5.391-R": {
@@ -198,8 +277,12 @@
       "route": "0010N",
       "mp": 5.391,
       "side": "R",
-      "length_ft": 114.0,
+      "length_ft": 32.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 35
     },
     "0010N-5.392-L": {
@@ -207,8 +290,12 @@
       "route": "0010N",
       "mp": 5.392,
       "side": "L",
-      "length_ft": 157.0,
+      "length_ft": 32.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 35
     },
     "0010N-5.960-L": {
@@ -216,8 +303,12 @@
       "route": "0010N",
       "mp": 5.96,
       "side": "L",
-      "length_ft": 657.0,
+      "length_ft": 167.0,
       "inspection_date": "6/12/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 35
     },
     "0010N-6.205-L": {
@@ -227,6 +318,10 @@
       "side": "L",
       "length_ft": 220.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 35
     },
     "0010N-6.230-R": {
@@ -234,8 +329,12 @@
       "route": "0010N",
       "mp": 6.23,
       "side": "R",
-      "length_ft": 77.0,
+      "length_ft": 18.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 35
     },
     "0010N-6.273-L": {
@@ -243,8 +342,12 @@
       "route": "0010N",
       "mp": 6.273,
       "side": "L",
-      "length_ft": 20.0,
+      "length_ft": 11.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 36
     },
     "0010N-6.274-R": {
@@ -252,8 +355,12 @@
       "route": "0010N",
       "mp": 6.274,
       "side": "R",
-      "length_ft": 31.0,
+      "length_ft": 13.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 36
     },
     "0010N-6.832-L": {
@@ -261,8 +368,12 @@
       "route": "0010N",
       "mp": 6.832,
       "side": "L",
-      "length_ft": 28.0,
+      "length_ft": 12.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 36
     },
     "0010N-6.833-R": {
@@ -270,8 +381,12 @@
       "route": "0010N",
       "mp": 6.833,
       "side": "R",
-      "length_ft": 26.0,
+      "length_ft": 13.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 72,
+      "repair_cost": "$880.00",
       "_source_page": 36
     },
     "0010N-6.921-L": {
@@ -279,8 +394,12 @@
       "route": "0010N",
       "mp": 6.921,
       "side": "L",
-      "length_ft": 26.0,
+      "length_ft": 10.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 36
     },
     "0010N-6.921-R": {
@@ -288,8 +407,12 @@
       "route": "0010N",
       "mp": 6.921,
       "side": "R",
-      "length_ft": 44.0,
+      "length_ft": 9.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 37
     },
     "0010N-7.040-R": {
@@ -299,6 +422,10 @@
       "side": "R",
       "length_ft": 105.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 81,
+      "repair_cost": "$0.00",
       "_source_page": 37
     },
     "0010N-7.130-R": {
@@ -308,6 +435,10 @@
       "side": "R",
       "length_ft": 90.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 52,
+      "repair_cost": "$232,500.00",
       "_source_page": 37
     },
     "0010N-7.741-R": {
@@ -315,8 +446,12 @@
       "route": "0010N",
       "mp": 7.741,
       "side": "R",
-      "length_ft": 58.0,
+      "length_ft": 19.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 59,
+      "repair_cost": "$18,600.00",
       "_source_page": 37
     },
     "0010N-7.852-R": {
@@ -324,8 +459,12 @@
       "route": "0010N",
       "mp": 7.852,
       "side": "R",
-      "length_ft": 48.0,
+      "length_ft": 13.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$32,425.00",
       "_source_page": 37
     },
     "0010N-8.039-L": {
@@ -333,8 +472,12 @@
       "route": "0010N",
       "mp": 8.039,
       "side": "L",
-      "length_ft": 29.0,
+      "length_ft": 9.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 86,
+      "repair_cost": "$880.00",
       "_source_page": 38
     },
     "0010N-8.220-R": {
@@ -342,8 +485,12 @@
       "route": "0010N",
       "mp": 8.22,
       "side": "R",
-      "length_ft": 45.0,
+      "length_ft": 9.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 38
     },
     "0010N-8.267-R": {
@@ -351,8 +498,12 @@
       "route": "0010N",
       "mp": 8.267,
       "side": "R",
-      "length_ft": 420.0,
+      "length_ft": 73.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 38
     },
     "0010N-8.275-L": {
@@ -360,8 +511,12 @@
       "route": "0010N",
       "mp": 8.275,
       "side": "L",
-      "length_ft": 44.0,
+      "length_ft": 12.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 38
     },
     "0010N-8.345-L": {
@@ -369,8 +524,12 @@
       "route": "0010N",
       "mp": 8.345,
       "side": "L",
-      "length_ft": 51.0,
+      "length_ft": 16.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 38
     },
     "0010N-8.345-R": {
@@ -378,8 +537,12 @@
       "route": "0010N",
       "mp": 8.345,
       "side": "R",
-      "length_ft": 83.0,
+      "length_ft": 17.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 89,
+      "repair_cost": "$0.00",
       "_source_page": 39
     },
     "0010N-8.392-R": {
@@ -389,6 +552,10 @@
       "side": "R",
       "length_ft": 100.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 77,
+      "repair_cost": "$0.00",
       "_source_page": 39
     },
     "0010N-8.407-L": {
@@ -396,8 +563,12 @@
       "route": "0010N",
       "mp": 8.407,
       "side": "L",
-      "length_ft": 44.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 90,
+      "repair_cost": "$0.00",
       "_source_page": 39
     },
     "0010N-8.412-R": {
@@ -405,8 +576,12 @@
       "route": "0010N",
       "mp": 8.412,
       "side": "R",
-      "length_ft": 385.0,
+      "length_ft": 35.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 60,
+      "repair_cost": "$23,740.00",
       "_source_page": 39
     },
     "0010N-8.427-R": {
@@ -416,6 +591,10 @@
       "side": "R",
       "length_ft": 170.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 84,
+      "repair_cost": "$0.00",
       "_source_page": 39
     },
     "0010N-9.203-R": {
@@ -425,6 +604,10 @@
       "side": "R",
       "length_ft": 152.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 72,
+      "repair_cost": "$43,420.00",
       "_source_page": 40
     },
     "0010N-9.243-R": {
@@ -434,6 +617,10 @@
       "side": "R",
       "length_ft": 110.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 73,
+      "repair_cost": "$30,660.00",
       "_source_page": 40
     },
     "0010N-9.290-R": {
@@ -443,6 +630,10 @@
       "side": "R",
       "length_ft": 134.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 63,
+      "repair_cost": "$62,010.00",
       "_source_page": 40
     },
     "0010N-9.297-R": {
@@ -450,8 +641,12 @@
       "route": "0010N",
       "mp": 9.297,
       "side": "R",
-      "length_ft": 36.0,
+      "length_ft": 15.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 40
     },
     "0010N-9.334-R": {
@@ -461,6 +656,10 @@
       "side": "R",
       "length_ft": 400.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$5,775.00",
       "_source_page": 40
     },
     "0010N-9.431-R": {
@@ -468,8 +667,12 @@
       "route": "0010N",
       "mp": 9.431,
       "side": "R",
-      "length_ft": 460.0,
+      "length_ft": 75.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 73,
+      "repair_cost": "$0.00",
       "_source_page": 41
     },
     "0010N-9.447-R": {
@@ -479,6 +682,10 @@
       "side": "R",
       "length_ft": 170.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 76,
+      "repair_cost": "$0.00",
       "_source_page": 41
     },
     "0010N-9.473-R": {
@@ -486,8 +693,12 @@
       "route": "0010N",
       "mp": 9.473,
       "side": "R",
-      "length_ft": 334.0,
+      "length_ft": 81.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 41
     },
     "0010N-9.494-L": {
@@ -495,8 +706,12 @@
       "route": "0010N",
       "mp": 9.494,
       "side": "L",
-      "length_ft": 140.0,
+      "length_ft": 23.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 75,
+      "repair_cost": "$4,010.00",
       "_source_page": 41
     },
     "0010N-9.580-R": {
@@ -504,8 +719,12 @@
       "route": "0010N",
       "mp": 9.58,
       "side": "R",
-      "length_ft": 67.0,
+      "length_ft": 16.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 75,
+      "repair_cost": "$2,380.00",
       "_source_page": 41
     },
     "0010N-9.600-R": {
@@ -515,6 +734,10 @@
       "side": "R",
       "length_ft": 135.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 77,
+      "repair_cost": "$0.00",
       "_source_page": 42
     },
     "0010N-9.790-L": {
@@ -522,8 +745,12 @@
       "route": "0010N",
       "mp": 9.79,
       "side": "L",
-      "length_ft": 488.0,
+      "length_ft": 75.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 86,
+      "repair_cost": "$1,560.00",
       "_source_page": 42
     },
     "0010N-9.798-L": {
@@ -533,6 +760,10 @@
       "side": "L",
       "length_ft": 280.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 84,
+      "repair_cost": "$0.00",
       "_source_page": 42
     },
     "0010N-9.982-L": {
@@ -542,6 +773,10 @@
       "side": "L",
       "length_ft": 320.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 76,
+      "repair_cost": "$0.00",
       "_source_page": 42
     },
     "0010N-9.996-R": {
@@ -549,8 +784,12 @@
       "route": "0010N",
       "mp": 9.996,
       "side": "R",
-      "length_ft": 155.0,
+      "length_ft": 15.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 72,
+      "repair_cost": "$4,700.00",
       "_source_page": 42
     },
     "0010N-10.099-L": {
@@ -558,8 +797,12 @@
       "route": "0010N",
       "mp": 10.099,
       "side": "L",
-      "length_ft": 68.0,
+      "length_ft": 20.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 78,
+      "repair_cost": "$0.00",
       "_source_page": 43
     },
     "0010N-10.100-R": {
@@ -567,8 +810,12 @@
       "route": "0010N",
       "mp": 10.1,
       "side": "R",
-      "length_ft": 78.0,
+      "length_ft": 16.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 43
     },
     "0010N-10.587-L": {
@@ -576,8 +823,12 @@
       "route": "0010N",
       "mp": 10.587,
       "side": "L",
-      "length_ft": 45.0,
+      "length_ft": 15.0,
       "inspection_date": "6/13/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 43
     },
     "0010N-10.589-R": {
@@ -585,8 +836,12 @@
       "route": "0010N",
       "mp": 10.589,
       "side": "R",
-      "length_ft": 31.0,
+      "length_ft": 13.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$500.00",
       "_source_page": 43
     },
     "0010N-10.760-R": {
@@ -594,8 +849,12 @@
       "route": "0010N",
       "mp": 10.76,
       "side": "R",
-      "length_ft": 31.0,
+      "length_ft": 13.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 78,
+      "repair_cost": "$880.00",
       "_source_page": 43
     },
     "0010N-10.779-L": {
@@ -603,8 +862,12 @@
       "route": "0010N",
       "mp": 10.779,
       "side": "L",
-      "length_ft": 825.0,
+      "length_ft": 96.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 44
     },
     "0010N-10.797-L": {
@@ -612,8 +875,12 @@
       "route": "0010N",
       "mp": 10.797,
       "side": "L",
-      "length_ft": 896.0,
+      "length_ft": 100.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 44
     },
     "0010N-10.867-L": {
@@ -623,6 +890,10 @@
       "side": "L",
       "length_ft": 85.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 44
     },
     "0010N-10.883-L": {
@@ -630,8 +901,12 @@
       "route": "0010N",
       "mp": 10.883,
       "side": "L",
-      "length_ft": 102.0,
+      "length_ft": 22.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 44
     },
     "0010N-10.884-R": {
@@ -639,8 +914,12 @@
       "route": "0010N",
       "mp": 10.884,
       "side": "R",
-      "length_ft": 101.0,
+      "length_ft": 23.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 44
     },
     "0010N-11.049-L": {
@@ -648,8 +927,12 @@
       "route": "0010N",
       "mp": 11.049,
       "side": "L",
-      "length_ft": 38.0,
+      "length_ft": 14.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 45
     },
     "0010N-11.049-R": {
@@ -657,8 +940,12 @@
       "route": "0010N",
       "mp": 11.049,
       "side": "R",
-      "length_ft": 36.0,
+      "length_ft": 14.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 45
     },
     "0010N-11.100-L": {
@@ -668,6 +955,10 @@
       "side": "L",
       "length_ft": 150.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 45
     },
     "0010N-11.200-L": {
@@ -675,8 +966,12 @@
       "route": "0010N",
       "mp": 11.2,
       "side": "L",
-      "length_ft": 740.0,
+      "length_ft": 185.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 45
     },
     "0010N-11.235-R": {
@@ -684,8 +979,12 @@
       "route": "0010N",
       "mp": 11.235,
       "side": "R",
-      "length_ft": 59.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 45
     },
     "0010N-11.304-L": {
@@ -693,8 +992,12 @@
       "route": "0010N",
       "mp": 11.304,
       "side": "L",
-      "length_ft": 134.0,
+      "length_ft": 21.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 37,
+      "repair_cost": "$52,500.00",
       "_source_page": 46
     },
     "0010N-11.657-L": {
@@ -704,6 +1007,10 @@
       "side": "L",
       "length_ft": 455.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 46
     },
     "0010N-11.763-R": {
@@ -711,8 +1018,12 @@
       "route": "0010N",
       "mp": 11.763,
       "side": "R",
-      "length_ft": 55.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 46
     },
     "0010N-11.852-R": {
@@ -720,8 +1031,12 @@
       "route": "0010N",
       "mp": 11.852,
       "side": "R",
-      "length_ft": 60.0,
+      "length_ft": 21.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$0.00",
       "_source_page": 46
     },
     "0010N-11.917-L": {
@@ -731,6 +1046,10 @@
       "side": "L",
       "length_ft": 135.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 46
     },
     "0010N-11.960-L": {
@@ -738,8 +1057,12 @@
       "route": "0010N",
       "mp": 11.96,
       "side": "L",
-      "length_ft": 137.0,
+      "length_ft": 23.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 47
     },
     "0010N-11.960-R": {
@@ -747,8 +1070,12 @@
       "route": "0010N",
       "mp": 11.96,
       "side": "R",
-      "length_ft": 83.0,
+      "length_ft": 21.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 61,
+      "repair_cost": "$10,400.00",
       "_source_page": 47
     },
     "0010N-12.305-L": {
@@ -756,8 +1083,12 @@
       "route": "0010N",
       "mp": 12.305,
       "side": "L",
-      "length_ft": 41.0,
+      "length_ft": 12.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 47
     },
     "0010N-12.404-R": {
@@ -765,8 +1096,12 @@
       "route": "0010N",
       "mp": 12.404,
       "side": "R",
-      "length_ft": 568.0,
+      "length_ft": 110.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 70,
+      "repair_cost": "$13,460.00",
       "_source_page": 47
     },
     "0010N-12.556-R": {
@@ -774,8 +1109,12 @@
       "route": "0010N",
       "mp": 12.556,
       "side": "R",
-      "length_ft": 110.0,
+      "length_ft": 16.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 47
     },
     "0010N-12.615-R": {
@@ -783,8 +1122,12 @@
       "route": "0010N",
       "mp": 12.615,
       "side": "R",
-      "length_ft": 53.0,
+      "length_ft": 10.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 56,
+      "repair_cost": "$11,600.00",
       "_source_page": 48
     },
     "0010N-12.660-R": {
@@ -794,6 +1137,10 @@
       "side": "R",
       "length_ft": 340.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 77,
+      "repair_cost": "$5,560.00",
       "_source_page": 48
     },
     "0010N-12.746-L": {
@@ -801,8 +1148,12 @@
       "route": "0010N",
       "mp": 12.746,
       "side": "L",
-      "length_ft": 50.0,
+      "length_ft": 15.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 90,
+      "repair_cost": "$0.00",
       "_source_page": 48
     },
     "0010N-12.746-R": {
@@ -810,8 +1161,12 @@
       "route": "0010N",
       "mp": 12.746,
       "side": "R",
-      "length_ft": 64.0,
+      "length_ft": 16.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 92,
+      "repair_cost": "$0.00",
       "_source_page": 48
     },
     "0010N-12.793-L": {
@@ -819,8 +1174,12 @@
       "route": "0010N",
       "mp": 12.793,
       "side": "L",
-      "length_ft": 62.0,
+      "length_ft": 15.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 48
     },
     "0010N-12.798-R": {
@@ -828,8 +1187,12 @@
       "route": "0010N",
       "mp": 12.798,
       "side": "R",
-      "length_ft": 45.0,
+      "length_ft": 15.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 49
     },
     "0010N-12.865-R": {
@@ -837,8 +1200,12 @@
       "route": "0010N",
       "mp": 12.865,
       "side": "R",
-      "length_ft": 96.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 49
     },
     "0010N-12.867-L": {
@@ -846,8 +1213,12 @@
       "route": "0010N",
       "mp": 12.867,
       "side": "L",
-      "length_ft": 65.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$1,720.00",
       "_source_page": 49
     },
     "0010N-13.080-L": {
@@ -855,8 +1226,12 @@
       "route": "0010N",
       "mp": 13.08,
       "side": "L",
-      "length_ft": 51.0,
+      "length_ft": 18.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 49
     },
     "0010N-13.244-R": {
@@ -866,6 +1241,10 @@
       "side": "R",
       "length_ft": 230.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 49
     },
     "0010N-13.316-R": {
@@ -875,6 +1254,10 @@
       "side": "R",
       "length_ft": 185.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 50
     },
     "0010N-13.356-R": {
@@ -882,8 +1265,12 @@
       "route": "0010N",
       "mp": 13.356,
       "side": "R",
-      "length_ft": 785.0,
+      "length_ft": 107.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 50
     },
     "0010N-13.389-L": {
@@ -893,6 +1280,10 @@
       "side": "L",
       "length_ft": 340.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 72,
+      "repair_cost": "$7,389.00",
       "_source_page": 50
     },
     "0010N-13.392-L": {
@@ -900,8 +1291,12 @@
       "route": "0010N",
       "mp": 13.392,
       "side": "L",
-      "length_ft": 30.0,
+      "length_ft": 10.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 78,
+      "repair_cost": "$0.00",
       "_source_page": 50
     },
     "0010N-13.467-R": {
@@ -909,8 +1304,12 @@
       "route": "0010N",
       "mp": 13.467,
       "side": "R",
-      "length_ft": 540.0,
+      "length_ft": 120.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 50
     },
     "0010N-13.807-R": {
@@ -918,8 +1317,12 @@
       "route": "0010N",
       "mp": 13.807,
       "side": "R",
-      "length_ft": 63.0,
+      "length_ft": 14.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 51
     },
     "0010N-13.842-R": {
@@ -927,8 +1330,12 @@
       "route": "0010N",
       "mp": 13.842,
       "side": "R",
-      "length_ft": 60.0,
+      "length_ft": 12.0,
       "inspection_date": "6/22/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 92,
+      "repair_cost": "$0.00",
       "_source_page": 51
     },
     "0010N-13.847-R": {
@@ -938,6 +1345,10 @@
       "side": "R",
       "length_ft": 160.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 78,
+      "repair_cost": "$0.00",
       "_source_page": 51
     },
     "0010N-13.895-R": {
@@ -945,8 +1356,12 @@
       "route": "0010N",
       "mp": 13.895,
       "side": "R",
-      "length_ft": 72.0,
+      "length_ft": 15.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$225.00",
       "_source_page": 51
     },
     "0010N-13.975-R": {
@@ -954,8 +1369,12 @@
       "route": "0010N",
       "mp": 13.975,
       "side": "R",
-      "length_ft": 58.0,
+      "length_ft": 14.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 94,
+      "repair_cost": "$0.00",
       "_source_page": 51
     },
     "0010N-13.980-R": {
@@ -965,6 +1384,10 @@
       "side": "R",
       "length_ft": 100.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 69,
+      "repair_cost": "$2,193.00",
       "_source_page": 52
     },
     "0010N-14.005-R": {
@@ -972,8 +1395,12 @@
       "route": "0010N",
       "mp": 14.005,
       "side": "R",
-      "length_ft": 138.0,
+      "length_ft": 38.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 98,
+      "repair_cost": "$0.00",
       "_source_page": 52
     },
     "0010N-14.223-R": {
@@ -981,8 +1408,12 @@
       "route": "0010N",
       "mp": 14.223,
       "side": "R",
-      "length_ft": 320.0,
+      "length_ft": 71.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 82,
+      "repair_cost": "$0.00",
       "_source_page": 52
     },
     "0010N-14.224-R": {
@@ -990,8 +1421,12 @@
       "route": "0010N",
       "mp": 14.224,
       "side": "R",
-      "length_ft": 375.0,
+      "length_ft": 75.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$1,080.00",
       "_source_page": 52
     },
     "0010N-14.231-R": {
@@ -1001,6 +1436,10 @@
       "side": "R",
       "length_ft": 241.0,
       "inspection_date": "6/14/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 66,
+      "repair_cost": "$82,400.00",
       "_source_page": 52
     },
     "0010N-14.312-R": {
@@ -1010,6 +1449,10 @@
       "side": "R",
       "length_ft": 440.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 82,
+      "repair_cost": "$1,760.00",
       "_source_page": 53
     },
     "0010N-14.424-R": {
@@ -1019,6 +1462,10 @@
       "side": "R",
       "length_ft": 150.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 84,
+      "repair_cost": "$0.00",
       "_source_page": 53
     },
     "0010N-14.624-R": {
@@ -1028,6 +1475,10 @@
       "side": "R",
       "length_ft": 177.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 84,
+      "repair_cost": "$0.00",
       "_source_page": 53
     },
     "0010N-14.780-R": {
@@ -1037,6 +1488,10 @@
       "side": "R",
       "length_ft": 130.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 81,
+      "repair_cost": "$4,190.00",
       "_source_page": 53
     },
     "0010N-14.857-L": {
@@ -1046,6 +1501,10 @@
       "side": "L",
       "length_ft": 180.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 53
     },
     "0010S-15.056-R": {
@@ -1055,6 +1514,10 @@
       "side": "R",
       "length_ft": 900.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 55
     },
     "0010S-20.035-L": {
@@ -1062,8 +1525,12 @@
       "route": "0010S",
       "mp": 20.035,
       "side": "L",
-      "length_ft": 171.0,
+      "length_ft": 30.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 55
     },
     "0010S-20.045-R": {
@@ -1071,8 +1538,12 @@
       "route": "0010S",
       "mp": 20.045,
       "side": "R",
-      "length_ft": 141.0,
+      "length_ft": 30.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 55
     },
     "0010S-20.057-L": {
@@ -1080,8 +1551,12 @@
       "route": "0010S",
       "mp": 20.057,
       "side": "L",
-      "length_ft": 52.0,
+      "length_ft": 14.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 81,
+      "repair_cost": "$786.00",
       "_source_page": 55
     },
     "0010S-20.057-R": {
@@ -1089,8 +1564,12 @@
       "route": "0010S",
       "mp": 20.057,
       "side": "R",
-      "length_ft": 71.0,
+      "length_ft": 18.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 75,
+      "repair_cost": "$2,867.00",
       "_source_page": 55
     },
     "0010S-20.258-R": {
@@ -1098,8 +1577,12 @@
       "route": "0010S",
       "mp": 20.258,
       "side": "R",
-      "length_ft": 185.0,
+      "length_ft": 36.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 68,
+      "repair_cost": "$13,875.00",
       "_source_page": 56
     },
     "0010S-20.260-L": {
@@ -1107,8 +1590,12 @@
       "route": "0010S",
       "mp": 20.26,
       "side": "L",
-      "length_ft": 231.0,
+      "length_ft": 36.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 95,
+      "repair_cost": "$0.00",
       "_source_page": 56
     },
     "0010S-20.388-R": {
@@ -1116,8 +1603,12 @@
       "route": "0010S",
       "mp": 20.388,
       "side": "R",
-      "length_ft": 56.0,
+      "length_ft": 15.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$305.00",
       "_source_page": 56
     },
     "0010S-20.832-R": {
@@ -1125,8 +1616,12 @@
       "route": "0010S",
       "mp": 20.832,
       "side": "R",
-      "length_ft": 50.0,
+      "length_ft": 22.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 91,
+      "repair_cost": "$0.00",
       "_source_page": 56
     },
     "0010S-20.988-R": {
@@ -1134,8 +1629,12 @@
       "route": "0010S",
       "mp": 20.988,
       "side": "R",
-      "length_ft": 34.0,
+      "length_ft": 12.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$0.00",
       "_source_page": 56
     },
     "0010S-21.015-R": {
@@ -1143,8 +1642,12 @@
       "route": "0010S",
       "mp": 21.015,
       "side": "R",
-      "length_ft": 36.0,
+      "length_ft": 16.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$220.00",
       "_source_page": 57
     },
     "0010S-21.071-R": {
@@ -1152,8 +1655,12 @@
       "route": "0010S",
       "mp": 21.071,
       "side": "R",
-      "length_ft": 74.0,
+      "length_ft": 25.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$330.00",
       "_source_page": 57
     },
     "0010S-21.256-R": {
@@ -1161,8 +1668,12 @@
       "route": "0010S",
       "mp": 21.256,
       "side": "R",
-      "length_ft": 61.0,
+      "length_ft": 21.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 57
     },
     "0010S-21.258-L": {
@@ -1170,8 +1681,12 @@
       "route": "0010S",
       "mp": 21.258,
       "side": "L",
-      "length_ft": 27.0,
+      "length_ft": 13.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 57
     },
     "0010S-21.290-L": {
@@ -1179,8 +1694,12 @@
       "route": "0010S",
       "mp": 21.29,
       "side": "L",
-      "length_ft": 95.0,
+      "length_ft": 18.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 93,
+      "repair_cost": "$0.00",
       "_source_page": 57
     },
     "0010S-21.380-L": {
@@ -1188,8 +1707,12 @@
       "route": "0010S",
       "mp": 21.38,
       "side": "L",
-      "length_ft": 45.0,
+      "length_ft": 16.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 58
     },
     "0010S-21.380-R": {
@@ -1197,8 +1720,12 @@
       "route": "0010S",
       "mp": 21.38,
       "side": "R",
-      "length_ft": 74.0,
+      "length_ft": 18.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 81,
+      "repair_cost": "$3,308.00",
       "_source_page": 58
     },
     "0010S-21.852-L": {
@@ -1206,8 +1733,12 @@
       "route": "0010S",
       "mp": 21.852,
       "side": "L",
-      "length_ft": 123.0,
+      "length_ft": 28.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 58
     },
     "0010S-21.852-R": {
@@ -1215,8 +1746,12 @@
       "route": "0010S",
       "mp": 21.852,
       "side": "R",
-      "length_ft": 136.0,
+      "length_ft": 25.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 65,
+      "repair_cost": "$14,033.00",
       "_source_page": 58
     },
     "0010S-22.291-R": {
@@ -1224,8 +1759,12 @@
       "route": "0010S",
       "mp": 22.291,
       "side": "R",
-      "length_ft": 94.0,
+      "length_ft": 20.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 98,
+      "repair_cost": "$0.00",
       "_source_page": 58
     },
     "0010S-22.758-L": {
@@ -1233,8 +1772,12 @@
       "route": "0010S",
       "mp": 22.758,
       "side": "L",
-      "length_ft": 57.0,
+      "length_ft": 17.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 76,
+      "repair_cost": "$1,287.00",
       "_source_page": 59
     },
     "0010S-22.758-R": {
@@ -1242,8 +1785,12 @@
       "route": "0010S",
       "mp": 22.758,
       "side": "R",
-      "length_ft": 89.0,
+      "length_ft": 26.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$813.00",
       "_source_page": 59
     },
     "0010S-23.313-R": {
@@ -1251,8 +1798,12 @@
       "route": "0010S",
       "mp": 23.313,
       "side": "R",
-      "length_ft": 150.0,
+      "length_ft": 30.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 69,
+      "repair_cost": "$11,435.00",
       "_source_page": 59
     },
     "0010S-23.315-L": {
@@ -1260,8 +1811,12 @@
       "route": "0010S",
       "mp": 23.315,
       "side": "L",
-      "length_ft": 137.0,
+      "length_ft": 30.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$1,631.00",
       "_source_page": 59
     },
     "0010S-24.112-L": {
@@ -1269,8 +1824,12 @@
       "route": "0010S",
       "mp": 24.112,
       "side": "L",
-      "length_ft": 32.0,
+      "length_ft": 13.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 81,
+      "repair_cost": "$2,378.00",
       "_source_page": 59
     },
     "0010S-24.169-L": {
@@ -1278,8 +1837,12 @@
       "route": "0010S",
       "mp": 24.169,
       "side": "L",
-      "length_ft": 240.0,
+      "length_ft": 40.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Dry Stone",
+      "wall_function": "Fill Wall",
+      "rating": 54,
+      "repair_cost": "$206,880.00",
       "_source_page": 60
     },
     "0010S-24.329-L": {
@@ -1289,6 +1852,10 @@
       "side": "L",
       "length_ft": 206.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$530.00",
       "_source_page": 60
     },
     "0010S-25.768-L": {
@@ -1298,6 +1865,10 @@
       "side": "L",
       "length_ft": 588.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 76,
+      "repair_cost": "$7,419.00",
       "_source_page": 60
     },
     "0010S-27.687-L": {
@@ -1305,8 +1876,12 @@
       "route": "0010S",
       "mp": 27.687,
       "side": "L",
-      "length_ft": 350.0,
+      "length_ft": 50.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 60
     },
     "0010S-27.687-R": {
@@ -1314,8 +1889,12 @@
       "route": "0010S",
       "mp": 27.687,
       "side": "R",
-      "length_ft": 352.0,
+      "length_ft": 52.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 60
     },
     "0010S-28.175-L": {
@@ -1325,6 +1904,10 @@
       "side": "L",
       "length_ft": 315.0,
       "inspection_date": "6/15/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 78,
+      "repair_cost": "$35,955.00",
       "_source_page": 61
     },
     "0010S-29.851-R": {
@@ -1332,8 +1915,12 @@
       "route": "0010S",
       "mp": 29.851,
       "side": "R",
-      "length_ft": 64.0,
+      "length_ft": 21.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 61
     },
     "0010S-29.852-L": {
@@ -1341,8 +1928,12 @@
       "route": "0010S",
       "mp": 29.852,
       "side": "L",
-      "length_ft": 63.0,
+      "length_ft": 16.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 88,
+      "repair_cost": "$0.00",
       "_source_page": 61
     },
     "0010S-29.922-L": {
@@ -1350,8 +1941,12 @@
       "route": "0010S",
       "mp": 29.922,
       "side": "L",
-      "length_ft": 266.0,
+      "length_ft": 60.0,
       "inspection_date": "6/16/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Fill Wall",
+      "rating": 80,
+      "repair_cost": "$640.00",
       "_source_page": 61
     },
     "0012ZZ-0.195-L": {
@@ -1359,8 +1954,12 @@
       "route": "0012ZZ",
       "mp": 0.195,
       "side": "L",
-      "length_ft": 222.0,
+      "length_ft": 35.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 57,
+      "repair_cost": "$86,260.00",
       "_source_page": 62
     },
     "0012ZZ-0.201-R": {
@@ -1368,8 +1967,12 @@
       "route": "0012ZZ",
       "mp": 0.201,
       "side": "R",
-      "length_ft": 114.0,
+      "length_ft": 28.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 67,
+      "repair_cost": "$14,756.00",
       "_source_page": 62
     },
     "0012ZZ-0.346-R": {
@@ -1377,8 +1980,12 @@
       "route": "0012ZZ",
       "mp": 0.346,
       "side": "R",
-      "length_ft": 188.0,
+      "length_ft": 33.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$0.00",
       "_source_page": 62
     },
     "0012ZZ-0.357-L": {
@@ -1386,8 +1993,12 @@
       "route": "0012ZZ",
       "mp": 0.357,
       "side": "L",
-      "length_ft": 187.0,
+      "length_ft": 40.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$330.00",
       "_source_page": 62
     },
     "0012ZZ-0.553-R": {
@@ -1395,8 +2006,12 @@
       "route": "0012ZZ",
       "mp": 0.553,
       "side": "R",
-      "length_ft": 116.0,
+      "length_ft": 25.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 83,
+      "repair_cost": "$375.00",
       "_source_page": 62
     },
     "0012ZZ-0.674-R": {
@@ -1404,8 +2019,12 @@
       "route": "0012ZZ",
       "mp": 0.674,
       "side": "R",
-      "length_ft": 269.0,
+      "length_ft": 28.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$6,267.00",
       "_source_page": 63
     },
     "0012ZZ-0.846-R": {
@@ -1413,8 +2032,12 @@
       "route": "0012ZZ",
       "mp": 0.846,
       "side": "R",
-      "length_ft": 35.0,
+      "length_ft": 17.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 85,
+      "repair_cost": "$781.00",
       "_source_page": 63
     },
     "0012ZZ-1.027-R": {
@@ -1422,8 +2045,12 @@
       "route": "0012ZZ",
       "mp": 1.027,
       "side": "R",
-      "length_ft": 140.0,
+      "length_ft": 24.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 76,
+      "repair_cost": "$1,795.00",
       "_source_page": 63
     },
     "0012ZZ-1.144-R": {
@@ -1431,8 +2058,12 @@
       "route": "0012ZZ",
       "mp": 1.144,
       "side": "R",
-      "length_ft": 77.0,
+      "length_ft": 20.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 76,
+      "repair_cost": "$1,664.00",
       "_source_page": 63
     },
     "0012ZZ-2.138-L": {
@@ -1442,6 +2073,10 @@
       "side": "L",
       "length_ft": 547.0,
       "inspection_date": "6/20/2007",
+      "type": "Crib Concrete",
+      "wall_function": "Fill Wall",
+      "rating": 83,
+      "repair_cost": "$1,555.00",
       "_source_page": 63
     },
     "0012ZZ-2.301-L": {
@@ -1451,6 +2086,10 @@
       "side": "L",
       "length_ft": 310.0,
       "inspection_date": "6/20/2007",
+      "type": "Crib Concrete",
+      "wall_function": "Fill Wall",
+      "rating": 97,
+      "repair_cost": "$1,850.00",
       "_source_page": 64
     },
     "0012ZZ-2.635-R": {
@@ -1460,6 +2099,10 @@
       "side": "R",
       "length_ft": 690.0,
       "inspection_date": "6/20/2007",
+      "type": "Crib Concrete",
+      "wall_function": "Cut Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 64
     },
     "0012ZZ-3.196-R": {
@@ -1467,8 +2110,12 @@
       "route": "0012ZZ",
       "mp": 3.196,
       "side": "R",
-      "length_ft": 38.0,
+      "length_ft": 16.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 87,
+      "repair_cost": "$0.00",
       "_source_page": 64
     },
     "0012ZZ-3.414-R": {
@@ -1476,8 +2123,12 @@
       "route": "0012ZZ",
       "mp": 3.414,
       "side": "R",
-      "length_ft": 222.0,
+      "length_ft": 48.0,
       "inspection_date": "6/20/2007",
+      "type": "Gravity Mortared Stone",
+      "wall_function": "Head Wall",
+      "rating": 80,
+      "repair_cost": "$1,320.00",
       "_source_page": 64
     },
     "0010N-14.917-R": {

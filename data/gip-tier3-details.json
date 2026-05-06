@@ -1,5 +1,4 @@
 {
-  "_copyright": "NOTICE: This is copyrighted material. It is not to be reused, redistributed, or used in training datasets without explicit permission from the author.",
   "source": "GRSM_GIPReport_reduced.pdf",
   "extraction_method": "fitz text-layer (no OCR)",
   "target_routes": [

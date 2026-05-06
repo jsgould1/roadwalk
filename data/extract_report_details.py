@@ -74,8 +74,24 @@ def get_words(page):
     return page.get_text('words')
 
 
-def extract_summary_table(words):
-    """Return list of {asset_id, length_ft, inspection_date} for a multi-asset table page."""
+def extract_summary_table(words, report_kind='gip'):
+    """Return list of asset dicts for a multi-asset table page.
+
+    GIP layout (guardrails):
+      Col 1: asset_id + inspection_date below it (x≈45–120)
+      Col 2: Length ft — leftmost integer to right of id column (x≈155–200)
+      Col 3: Barrier Type — all-caps words (x≈230–340)
+      Col 4+: Begin/End treatments, repair cost
+
+    WIP layout (retaining walls):
+      Col 1: asset_id + inspection_date below it (x≈45–120)
+      Col 2: Wall Area sq ft  — integer at x≈167–195  (NOT length — ignored)
+      Col 3: Wall Length ft   — integer at x≈215–260  (this is the length we want)
+      Col 4: Wall Type        — Title-Case words  x≈280–390  ("Gravity - Mortared Stone")
+      Col 5: Wall Function    — Title-Case words  x≈410–465  ("Head Wall")
+      Col 6: Overall Rating   — integer 0–100     x≈470–515
+      Col 7: Repair Cost      — $NNN token        x≈515–570
+    """
     # Find asset-id words
     id_boxes = []
     for w in words:
@@ -106,49 +122,68 @@ def extract_summary_table(words):
     else:
         row_h = 47
 
-    # For each id row, find the length and date
+    # Layout-specific column config
+    if report_kind == 'wip':
+        # WIP: Wall Length is in a bounded column, NOT the leftmost integer after the id
+        LENGTH_X_MIN, LENGTH_X_MAX = 210, 265
+        TYPE_X_MIN,   TYPE_X_MAX   = 280, 395
+        TYPE_RE = re.compile(r'^([A-Za-z][A-Za-z\-/]*|-+)$')
+        FUNC_X_MIN,   FUNC_X_MAX   = 410, 468
+        RATING_X_MIN, RATING_X_MAX = 470, 518
+        COST_X_MIN,   COST_X_MAX   = 515, 575
+    else:
+        # GIP: length is the leftmost integer right of the id column
+        LENGTH_X_MIN, LENGTH_X_MAX = None, None   # sentinel → use leftmost logic
+        TYPE_X_MIN,   TYPE_X_MAX   = 230, 340
+        TYPE_RE = re.compile(r'^[A-Z][A-Z\-/]*$')
+
+    # For each id row, extract available fields
     rows = []
     for b in id_boxes:
         row_y_top = b['cy'] - 3
         row_y_bot = b['cy'] + row_h - 3
-        # Length: pure-integer word, x > id's right edge, y close to id's cy
-        length = None
-        date   = None
+
+        # --- Inspection date (same x-band as id, slightly below it) ---
+        date = None
         for w in words:
             x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
             cy = (y0+y1)/2
             if not (row_y_top - 5 <= cy <= row_y_bot):
                 continue
-            if x0 <= b['x1']:
-                # Within the same column or to the left
-                if DATE_RE.match(t) and abs(cy - b['cy']) < row_h:
-                    # Inspection date sits in same x-band as asset_id, slightly below
-                    if cy > b['cy'] + 5:
-                        date = t
-                continue
-            if INT_RE.match(t) and length is None:
-                length = float(t)
-                # Length is the leftmost integer to the right of the id
-                # We accept the first one we see (since words come in y,x order roughly,
-                # but to be safe, sort all candidates by x and pick leftmost)
-        # Re-scan more carefully for length: leftmost integer in row band, x > id.x1
-        cands = []
-        for w in words:
-            x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
-            cy = (y0+y1)/2
-            if row_y_top - 5 <= cy <= row_y_bot - 8 and x0 > b['x1'] and INT_RE.match(t):
-                cands.append((x0, t))
-        cands.sort()
-        length = float(cands[0][1]) if cands else None
+            if x0 <= b['x1'] and DATE_RE.match(t) and cy > b['cy'] + 5:
+                date = t
+                break
 
-        # Type: stacked words in the "Barrier/Wall Type" column (header is at
-        # x≈270 in the page samples we measured). Tightly clamp the x-band so
-        # we don't pick up the End-Treatment columns (which start around 371
-        # with text like "SBT/LOG FLARED" / "NONE"). Type entries are all
-        # uppercase, often hyphenated (STEEL-BACKED, MASONRY, etc.).
-        # Type words measured at x≈241-287; the "Begin Treatment" column
-        # starts at x≈346 (SBT/LOG, NONE). 340 is a safe boundary.
-        TYPE_X_MIN, TYPE_X_MAX = 230, 340
+        # --- Length ---
+        length = None
+        if report_kind == 'wip':
+            # Pick integer from the bounded Wall-Length column
+            cands = []
+            for w in words:
+                x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
+                cy = (y0+y1)/2
+                if (row_y_top - 5 <= cy <= row_y_bot - 8
+                        and LENGTH_X_MIN <= x0 <= LENGTH_X_MAX
+                        and INT_RE.match(t)):
+                    cands.append((x0, t))
+            cands.sort()
+            length = float(cands[0][1]) if cands else None
+        else:
+            # GIP: leftmost integer to the right of the id column
+            cands = []
+            for w in words:
+                x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
+                cy = (y0+y1)/2
+                if (row_y_top - 5 <= cy <= row_y_bot - 8
+                        and x0 > b['x1']
+                        and INT_RE.match(t)):
+                    cands.append((x0, t))
+            cands.sort()
+            length = float(cands[0][1]) if cands else None
+
+        # --- Type ---
+        # GIP: all-caps words (STEEL-BACKED / TIMBER WITHOUT / BLOCKOUT)
+        # WIP: Title-Case words joined with spaces ("Gravity - Mortared Stone")
         type_words = []
         for w in words:
             x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
@@ -157,18 +192,60 @@ def extract_summary_table(words):
                 continue
             if not (TYPE_X_MIN <= x0 < TYPE_X_MAX):
                 continue
-            if re.match(r'^[A-Z][A-Z\-/]*$', t) and len(t) > 1:
+            if TYPE_RE.match(t) and len(t) > 1:
                 type_words.append((x0, cy, t))
-        type_words.sort(key=lambda w: (w[1], w[0]))
+        type_words.sort(key=lambda ww: (ww[1], ww[0]))
         type_text = ' '.join(t for _, _, t in type_words) if type_words else None
+        # Strip any leading/trailing lone hyphens left by WIP separator tokens
+        if type_text:
+            type_text = type_text.strip('- ').strip()
+            if not type_text:
+                type_text = None
+
+        # --- WIP-only extra columns ---
+        wall_function  = None
+        overall_rating = None
+        repair_cost    = None
+        if report_kind == 'wip':
+            # Wall Function
+            func_words = []
+            for w in words:
+                x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
+                cy = (y0+y1)/2
+                if (row_y_top - 5 <= cy <= row_y_bot
+                        and FUNC_X_MIN <= x0 <= FUNC_X_MAX
+                        and re.match(r'^[A-Za-z]', t)):
+                    func_words.append((x0, cy, t))
+            func_words.sort(key=lambda ww: (ww[1], ww[0]))
+            wall_function = ' '.join(t for _, _, t in func_words) if func_words else None
+
+            # Overall Rating (integer 0–100)
+            for w in words:
+                x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
+                cy = (y0+y1)/2
+                if (row_y_top - 5 <= cy <= row_y_bot - 8
+                        and RATING_X_MIN <= x0 <= RATING_X_MAX
+                        and INT_RE.match(t)):
+                    overall_rating = int(t)
+                    break
+
+            # Repair Cost
+            for w in words:
+                x0, y0, x1, y1, t = w[0], w[1], w[2], w[3], w[4]
+                cy = (y0+y1)/2
+                if (row_y_top - 5 <= cy <= row_y_bot - 8
+                        and COST_X_MIN <= x0 <= COST_X_MAX
+                        and COST_RE.match(t)):
+                    repair_cost = t
+                    break
 
         row = {'asset_id': b['aid'], 'route': b['route'], 'mp': b['mp'], 'side': b['side']}
-        if length is not None:
-            row['length_ft'] = length
-        if date:
-            row['inspection_date'] = date
-        if type_text:
-            row['type'] = type_text
+        if length is not None:          row['length_ft']    = length
+        if date:                        row['inspection_date'] = date
+        if type_text:                   row['type']         = type_text
+        if wall_function:               row['wall_function']= wall_function
+        if overall_rating is not None:  row['rating']       = overall_rating
+        if repair_cost:                 row['repair_cost']  = repair_cost
         rows.append(row)
     return rows
 
@@ -284,7 +361,7 @@ def extract_detail_page(words, page_text):
     return fields
 
 
-def extract_pdf(pdf_path, source_label):
+def extract_pdf(pdf_path, source_label, report_kind='gip'):
     """Run extraction across a PDF, returning the merged asset dict."""
     doc = fitz.open(pdf_path)
     per_asset = {}
@@ -295,7 +372,7 @@ def extract_pdf(pdf_path, source_label):
         if not words: continue
         text = page.get_text()
         # Summary-table extraction first
-        rows = extract_summary_table(words)
+        rows = extract_summary_table(words, report_kind=report_kind)
         if rows:
             pages_summary += 1
             for row in rows:
@@ -352,7 +429,7 @@ def main():
 
     print()
     print('=== Extracting WIP wall details ===')
-    wip = extract_pdf(os.path.join(NPS, 'GRSM_WIPReport.pdf'), 'WIP')
+    wip = extract_pdf(os.path.join(NPS, 'GRSM_WIPReport.pdf'), 'WIP', report_kind='wip')
     print(f"  total assets: {wip['total_assets']}")
     print(f"  with length:  {wip['assets_with_length']}")
     print(f"  summary pages: {wip['pages_summary_table']}, detail pages: {wip['pages_detail']}, skipped: {wip['pages_skipped']}")
