@@ -18079,20 +18079,12 @@ body.mobile-mode #app {
 
   /** Load all IDB inspection records once, cache them */
   function _loadIdbCache() {
-    return window.RWIdb.then(function (db) {
-      var tx    = db.transaction('inspections', 'readonly');
-      var store = tx.objectStore('inspections');
-      var req   = store.getAll();
-      return new Promise(function (resolve, reject) {
-        req.onsuccess = function () {
-          _dataState.idbCache = {};
-          (req.result || []).forEach(function (rec) {
-            if (rec && rec.pin_id) _dataState.idbCache[rec.pin_id] = rec;
-          });
-          resolve(_dataState.idbCache);
-        };
-        req.onerror = reject;
+    return window.RWIdb.getAll('inspections').then(function (records) {
+      _dataState.idbCache = {};
+      (records || []).forEach(function (rec) {
+        if (rec && rec.pin_id) _dataState.idbCache[rec.pin_id] = rec;
       });
+      return _dataState.idbCache;
     });
   }
 
@@ -18730,25 +18722,20 @@ body.mobile-mode #app {
       saved_at: new Date().toISOString(),
     };
 
-    window.RWIdb.then(function (db) {
-      var tx    = db.transaction('inspections', 'readwrite');
-      var store = tx.objectStore('inspections');
-      store.put(record, pin.id).onsuccess = function () {
-        // Update cache
-        _dataState.idbCache[pin.id] = record;
-        _dataState.dirty = false;
-        if (flash) {
-          flash.textContent = '✓ Saved';
-          setTimeout(function () { if (flash) flash.textContent = ''; }, 2000);
-        }
-        if (saveBtn) saveBtn.disabled = false;
-        // Re-render the list badge counts
-        _updateTypeBadges();
-      };
-      tx.onerror = function () {
-        if (flash) flash.textContent = '⚠ Error';
-        if (saveBtn) saveBtn.disabled = false;
-      };
+    window.RWIdb.put('inspections', record).then(function () {
+      // Update cache
+      _dataState.idbCache[pin.id] = record;
+      _dataState.dirty = false;
+      if (flash) {
+        flash.textContent = '✓ Saved';
+        setTimeout(function () { if (flash) flash.textContent = ''; }, 2000);
+      }
+      if (saveBtn) saveBtn.disabled = false;
+      // Re-render the list badge counts
+      _updateTypeBadges();
+    }).catch(function () {
+      if (flash) flash.textContent = '⚠ Error';
+      if (saveBtn) saveBtn.disabled = false;
     });
   }
 
