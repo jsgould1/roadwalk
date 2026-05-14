@@ -3966,6 +3966,21 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   border: 1px solid var(--rule); border-radius: 3px;
   padding: 5px 6px; width: 46px; text-align: center; }
 
+/* 2-letter Code input (CV, SI, GR, etc.) */
+.fs-code-input {
+  font: 700 12px/1 'IBM Plex Mono', monospace;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--rule); border-radius: 3px;
+  padding: 5px 4px; width: 42px; text-align: center;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.fs-code-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(10,42,93,0.12);
+}
+
 /* SLD offset slider */
 .fs-offset-cell { display: flex; align-items: center; gap: 7px; }
 .fs-offset-val {
@@ -17342,10 +17357,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // ── Feature definitions — Phase 1: bundle line kinds ──────────────────────
   // Phase 2 will add point kinds and the quick-action description-type table.
   const FS_LINE_FEATURES = [
-    { kind: 'guardrail', label: 'Guardrails',      defColor: '#E8A838', defLT: 'guardrail',      defWt: 6, defOff: 3 },
-    { kind: 'wall',      label: 'Retaining Walls', defColor: '#7B3F9E', defLT: 'retaining_wall', defWt: 5, defOff: 5 },
-    { kind: 'culvert',   label: 'Culverts',        defColor: '#0B3D66', defLT: 'dashed',         defWt: 4, defOff: 2 },
-    { kind: 'misc_line', label: 'Misc Lines',      defColor: '#8A5A2B', defLT: 'solid',          defWt: 3, defOff: 0 },
+    { kind: 'guardrail', label: 'Guardrails',      defColor: '#E8A838', defLT: 'guardrail',      defWt: 6, defOff: 3, defCode: 'GR' },
+    { kind: 'wall',      label: 'Retaining Walls', defColor: '#7B3F9E', defLT: 'retaining_wall', defWt: 5, defOff: 5, defCode: 'RW' },
+    { kind: 'culvert',   label: 'Culverts',        defColor: '#0B3D66', defLT: 'dashed',         defWt: 4, defOff: 2, defCode: 'CV' },
+    { kind: 'misc_line', label: 'Misc Lines',      defColor: '#8A5A2B', defLT: 'solid',          defWt: 3, defOff: 0, defCode: 'ML' },
   ];
 
   // ── Storage: featureStyles lives inside rw_v1 (same key as layersVis) ──────
@@ -17370,6 +17385,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       lineType: saved.lineType !== undefined ? saved.lineType : (def.defLT    || 'solid'),
       weight:   saved.weight   !== undefined ? saved.weight   : (def.defWt    || 4),
       offset:   saved.offset   !== undefined ? saved.offset   : (def.defOff   || 0),
+      code:     saved.code     !== undefined ? saved.code     : (def.defCode  || 'XX'),
     };
   }
 
@@ -17381,6 +17397,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       PS[kind].color     = s.color;
       PS[kind].weight    = s.weight;
       PS[kind].lineStyle = s.lineType;
+      if (s.code) PS[kind].code = s.code;
       var lt = LINE_TYPE_MAP[s.lineType];
       PS[kind].dashArray = lt ? lt.da : null;
     }
@@ -17428,43 +17445,44 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   var FS_POINT_FEATURES = [
     // ── Misc ─────────────────────────────────────────────────────────────────
-    { kind: 'pt_sign',        label: 'Sign',        defColor: '#C85A2B', defGlyph: '⬛', defSize: 22, group: 'Misc',      defSldPos: 'offroad' },
-    { kind: 'pt_swing_gate',  label: 'Swing Gate',  defColor: '#C85A2B', defGlyph: '⊞', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
-    { kind: 'pt_man_gate',    label: 'Man Gate',    defColor: '#C85A2B', defGlyph: '⊟', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
-    { kind: 'pt_monument',    label: 'Monument',    defColor: '#0B3D66', defGlyph: '▲', defSize: 22, group: 'Misc',      defSldPos: 'road'    },
-    { kind: 'pt_light_pole',  label: 'Light Pole',  defColor: '#C85A2B', defGlyph: '✦', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
-    { kind: 'pt_guy_wire',    label: 'Guy Wire',    defColor: '#C85A2B', defGlyph: '✕', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
-    { kind: 'pt_delineator',  label: 'Delineator',  defColor: '#C85A2B', defGlyph: '◆', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
-    { kind: 'pt_mailbox',     label: 'Mailbox',     defColor: '#C85A2B', defGlyph: '▪', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
-    { kind: 'pt_flagpole',    label: 'Flagpole',    defColor: '#C85A2B', defGlyph: '🚩', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
-    { kind: 'pt_ada_ramp',    label: 'ADA Ramp',    defColor: '#C85A2B', defGlyph: '♿', defSize: 20, group: 'Misc',      defSldPos: 'road'    },
+    { kind: 'pt_sign',        label: 'Sign',        defColor: '#C85A2B', defGlyph: '⬛', defSize: 22, group: 'Misc',      defSldPos: 'offroad', defCode: 'SI' },
+    { kind: 'pt_swing_gate',  label: 'Swing Gate',  defColor: '#C85A2B', defGlyph: '⊞', defSize: 20, group: 'Misc',      defSldPos: 'edge',    defCode: 'SG' },
+    { kind: 'pt_man_gate',    label: 'Man Gate',    defColor: '#C85A2B', defGlyph: '⊟', defSize: 20, group: 'Misc',      defSldPos: 'edge',    defCode: 'MG' },
+    { kind: 'pt_monument',    label: 'Monument',    defColor: '#0B3D66', defGlyph: '▲', defSize: 22, group: 'Misc',      defSldPos: 'road',    defCode: 'MT' },
+    { kind: 'pt_light_pole',  label: 'Light Pole',  defColor: '#C85A2B', defGlyph: '✦', defSize: 20, group: 'Misc',      defSldPos: 'offroad', defCode: 'LP' },
+    { kind: 'pt_guy_wire',    label: 'Guy Wire',    defColor: '#C85A2B', defGlyph: '✕', defSize: 20, group: 'Misc',      defSldPos: 'offroad', defCode: 'GW' },
+    { kind: 'pt_delineator',  label: 'Delineator',  defColor: '#C85A2B', defGlyph: '◆', defSize: 20, group: 'Misc',      defSldPos: 'edge',    defCode: 'DL' },
+    { kind: 'pt_mailbox',     label: 'Mailbox',     defColor: '#C85A2B', defGlyph: '▪', defSize: 20, group: 'Misc',      defSldPos: 'offroad', defCode: 'MB' },
+    { kind: 'pt_flagpole',    label: 'Flagpole',    defColor: '#C85A2B', defGlyph: '🚩', defSize: 20, group: 'Misc',      defSldPos: 'offroad', defCode: 'FP' },
+    { kind: 'pt_ada_ramp',    label: 'ADA Ramp',    defColor: '#C85A2B', defGlyph: '♿', defSize: 20, group: 'Misc',      defSldPos: 'road',    defCode: 'AD' },
     // ── Utilities ────────────────────────────────────────────────────────────
-    { kind: 'pt_cb',          label: 'CB',          defColor: '#0B3D66', defGlyph: '⊕', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_di',          label: 'DI',          defColor: '#0B3D66', defGlyph: '◎', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_dmh',         label: 'DMH',         defColor: '#0B3D66', defGlyph: '⊗', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_smh',         label: 'SMH',         defColor: '#0B3D66', defGlyph: '⊙', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_emh',         label: 'EMH',         defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_pb',          label: 'PB',          defColor: '#0B3D66', defGlyph: '⬡', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_gg',          label: 'GG',          defColor: '#0B3D66', defGlyph: '◈', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_wg',          label: 'WG',          defColor: '#0B3D66', defGlyph: '◉', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
-    { kind: 'pt_hyd',         label: 'HYD',         defColor: '#CC3333', defGlyph: '✚', defSize: 20, group: 'Utilities', defSldPos: 'offroad' },
-    { kind: 'pt_transformer', label: 'Transformer', defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'offroad' },
+    { kind: 'pt_cb',          label: 'CB',          defColor: '#0B3D66', defGlyph: '⊕', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'CB' },
+    { kind: 'pt_di',          label: 'DI',          defColor: '#0B3D66', defGlyph: '◎', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'DI' },
+    { kind: 'pt_dmh',         label: 'DMH',         defColor: '#0B3D66', defGlyph: '⊗', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'DM' },
+    { kind: 'pt_smh',         label: 'SMH',         defColor: '#0B3D66', defGlyph: '⊙', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'SM' },
+    { kind: 'pt_emh',         label: 'EMH',         defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'EM' },
+    { kind: 'pt_pb',          label: 'PB',          defColor: '#0B3D66', defGlyph: '⬡', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'PB' },
+    { kind: 'pt_gg',          label: 'GG',          defColor: '#0B3D66', defGlyph: '◈', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'GG' },
+    { kind: 'pt_wg',          label: 'WG',          defColor: '#0B3D66', defGlyph: '◉', defSize: 20, group: 'Utilities', defSldPos: 'edge',    defCode: 'WG' },
+    { kind: 'pt_hyd',         label: 'HYD',         defColor: '#CC3333', defGlyph: '✚', defSize: 20, group: 'Utilities', defSldPos: 'offroad', defCode: 'HY' },
+    { kind: 'pt_transformer', label: 'Transformer', defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'offroad', defCode: 'TX' },
     // ── Markings ─────────────────────────────────────────────────────────────
-    { kind: 'pt_hc_marking',  label: 'HC Marking',  defColor: '#D4A943', defGlyph: '♿', defSize: 20, group: 'Markings', defSldPos: 'road'    },
-    { kind: 'pt_arrow',       label: 'Arrow',       defColor: '#D4A943', defGlyph: '➡', defSize: 20, group: 'Markings', defSldPos: 'road'    },
-    { kind: 'pt_fire_lane',   label: 'Fire Lane',   defColor: '#D4A943', defGlyph: '⛔', defSize: 20, group: 'Markings', defSldPos: 'road'    },
-    { kind: 'pt_text',        label: 'TEXT',        defColor: '#D4A943', defGlyph: '▪', defSize: 20, group: 'Markings', defSldPos: 'road'    },
+    { kind: 'pt_hc_marking',  label: 'HC Marking',  defColor: '#D4A943', defGlyph: '♿', defSize: 20, group: 'Markings', defSldPos: 'road',    defCode: 'HC' },
+    { kind: 'pt_arrow',       label: 'Arrow',       defColor: '#D4A943', defGlyph: '➡', defSize: 20, group: 'Markings', defSldPos: 'road',    defCode: 'AR' },
+    { kind: 'pt_fire_lane',   label: 'Fire Lane',   defColor: '#D4A943', defGlyph: '⛔', defSize: 20, group: 'Markings', defSldPos: 'road',    defCode: 'FL' },
+    { kind: 'pt_text',        label: 'TEXT',        defColor: '#D4A943', defGlyph: '▪', defSize: 20, group: 'Markings', defSldPos: 'road',    defCode: 'TX' },
   ];
 
   function ptGet(kind) {
     var f    = FS_POINT_FEATURES.find(function (x) { return x.kind === kind; });
-    if (!f) return { color: '#888888', glyph: '●', size: 20, sldPos: 'road' };
+    if (!f) return { color: '#888888', glyph: '●', size: 20, sldPos: 'road', code: 'XX' };
     var saved = fsLoadAll()[kind] || {};
     return {
       color:  saved.color  !== undefined ? saved.color  : f.defColor,
       glyph:  saved.glyph  !== undefined ? saved.glyph  : f.defGlyph,
       size:   saved.size   !== undefined ? saved.size   : f.defSize,
       sldPos: saved.sldPos !== undefined ? saved.sldPos : f.defSldPos,
+      code:   saved.code   !== undefined ? saved.code   : (f.defCode || 'XX'),
     };
   }
 
@@ -17476,6 +17494,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       rw.PIN_STYLE[kind].glyph  = s.glyph;
       rw.PIN_STYLE[kind].size   = s.size;
       rw.PIN_STYLE[kind].sldPos = s.sldPos;
+      if (s.code) rw.PIN_STYLE[kind].code = s.code;
     }
     if (typeof rw.refreshPicker === 'function') rw.refreshPicker();
     if (typeof rw.rerender === 'function') rw.rerender();
@@ -17676,6 +17695,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<td><span class="fs-kind-label">' + f.label + '</span></td>',
         '<td><div class="fs-swatch" id="fs-sw-' + f.kind + '" style="background:' + s.color + '" title="' + s.color + '">',
         '<input type="hidden" id="fs-color-' + f.kind + '" value="' + s.color + '"></div></td>',
+        '<td><input type="text" class="fs-code-input" id="fs-cd-' + f.kind + '" value="' + (s.code || '') + '" maxlength="2" spellcheck="false" autocomplete="off"></td>',
         '<td><select class="fs-lt-select" id="fs-lt-' + f.kind + '">' + sel + '</select></td>',
         '<td><input type="number" class="fs-num" id="fs-wt-' + f.kind + '" value="' + s.weight + '" min="1" max="12" step="1"></td>',
         '<td><div class="fs-offset-cell">',
@@ -17694,7 +17714,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var groupHdr = '';
       if (f.group !== prevGroup) {
         prevGroup = f.group;
-        groupHdr = '<tr class="fs-group-hdr"><td colspan="6">' + f.group + '</td></tr>';
+        groupHdr = '<tr class="fs-group-hdr"><td colspan="7">' + f.group + '</td></tr>';
       }
       var sp = s.sldPos || 'road';
       var sldSel = '<select class="fs-sldpos-sel" id="fs-sp-' + f.kind + '">' +
@@ -17707,6 +17727,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<td><span class="fs-kind-label">' + f.label + '</span></td>',
         '<td><div class="fs-swatch" id="fs-sw-' + f.kind + '" style="background:' + s.color + '" title="' + s.color + '">',
         '<input type="hidden" id="fs-color-' + f.kind + '" value="' + s.color + '"></div></td>',
+        '<td><input type="text" class="fs-code-input" id="fs-cd-' + f.kind + '" value="' + (s.code || '') + '" maxlength="2" spellcheck="false" autocomplete="off"></td>',
         '<td><button class="fs-glyph-trigger" id="fs-gt-' + f.kind + '" title="Click to pick symbol">' + (s.glyph || '●') + '</button></td>',
         '<td><input type="number" class="fs-pt-size" id="fs-sz-' + f.kind + '" value="' + s.size + '" min="12" max="30" step="1"></td>',
         '<td>' + sldSel + '</td>',
@@ -17720,13 +17741,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       '<div class="sg-section-title">Line Feature Styles</div>' +
       '<p class="sg-section-note">Changes apply live to the map, SLD, and layer toggle dots.</p>' +
       '<table class="fs-table"><thead><tr class="fs-thead">' +
-      '<th>Feature</th><th>Color</th><th>Line Type</th><th>Wt</th><th style="min-width:140px">SLD Offset</th><th>Preview</th>' +
+      '<th>Feature</th><th>Color</th><th title="2-letter abbreviation shown on map badge + ID prefix">Code</th><th>Line Type</th><th>Wt</th><th style="min-width:140px">SLD Offset</th><th>Preview</th>' +
       '</tr></thead><tbody>' + lineRows + '</tbody></table></div>' +
       '<div class="sg-section">' +
       '<div class="sg-section-title">Point Feature Styles</div>' +
       '<p class="sg-section-note">Click the symbol cell to open the glyph picker. Changes apply live to map pins.</p>' +
       '<table class="fs-table"><thead><tr class="fs-thead">' +
-      '<th>Feature</th><th>Color</th><th>Symbol</th><th>Size</th><th>SLD Pos</th><th>Preview</th>' +
+      '<th>Feature</th><th>Color</th><th title="2-letter abbreviation shown on map badge + ID prefix">Code</th><th>Symbol</th><th>Size</th><th>SLD Pos</th><th>Preview</th>' +
       '</tr></thead><tbody>' + ptRows + '</tbody></table></div>';
 
     // ── Wire line controls ───────────────────────────────────────────────────
@@ -17737,6 +17758,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           lineType: document.getElementById('fs-lt-'    + f.kind)?.value ?? lineStyles[f.kind].lineType,
           weight:   parseFloat(document.getElementById('fs-wt-' + f.kind)?.value) || lineStyles[f.kind].weight,
           offset:   parseInt(  document.getElementById('fs-sl-' + f.kind)?.value, 10),
+          code:    (document.getElementById('fs-cd-' + f.kind)?.value || lineStyles[f.kind].code || '').toUpperCase().slice(0, 2),
         };
       }
       function commit() {
@@ -17757,6 +17779,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         e.stopPropagation();
         _fcpOpen(swEl, colorEl);
       });
+      var cdEl = document.getElementById('fs-cd-' + f.kind);
+      if (cdEl) {
+        cdEl.addEventListener('input', function (e) {
+          // Force uppercase, max 2 chars, A-Z only
+          var v = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+          if (v !== e.target.value) e.target.value = v;
+          commit();
+        });
+      }
       var ltEl = document.getElementById('fs-lt-' + f.kind);
       if (ltEl) ltEl.onchange = commit;
       var wtEl = document.getElementById('fs-wt-' + f.kind);
@@ -17802,6 +17833,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         ptStyles[f.kind].sldPos = e.target.value;
         commitPt();
       };
+
+      var cdEl = document.getElementById('fs-cd-' + f.kind);
+      if (cdEl) {
+        cdEl.addEventListener('input', function (e) {
+          var v = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+          if (v !== e.target.value) e.target.value = v;
+          ptStyles[f.kind].code = v;
+          commitPt();
+        });
+      }
 
       var triggerEl = document.getElementById('fs-gt-' + f.kind);
       if (triggerEl) triggerEl.addEventListener('click', function () {
