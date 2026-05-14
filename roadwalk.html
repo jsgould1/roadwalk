@@ -3932,107 +3932,74 @@ textarea.sw-text-input { resize:vertical; min-height:52px; }
   letter-spacing:.05em; margin-bottom:6px; }
 
 
-/* ── Style Guide & Labels panel ─────────────────────────────────────────── */
+/* ── Feature Style Guide panel ──────────────────────────────────────────────── */
 .view-styleguide { overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--paper); }
-.sg-body { padding: 16px 20px 48px; max-width: 900px; margin: 0 auto; }
-.sg-section { margin-bottom: 28px; }
+.sg-body { padding: 16px 20px 60px; max-width: 860px; margin: 0 auto; }
+.sg-section { margin-bottom: 32px; }
 .sg-section-title {
-  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-  font-weight: 700; color: #15803d; padding-bottom: 8px;
-  border-bottom: 2px solid #15803d; margin-bottom: 12px; }
-.sg-geom-hdr {
-  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
-  font-weight: 700; color: var(--ink-3); margin: 14px 0 5px; }
-/* Column headers */
-.sg-col-hdr {
-  display: grid; gap: 6px; padding: 0 4px 4px;
-  font-size: 9px; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--ink-3); font-weight: 700; border-bottom: 1px solid var(--rule); }
-.sg-col-hdr.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 80px 66px; }
-.sg-col-hdr.sg-pt { grid-template-columns: 28px 54px 1fr; }
-.sg-col-hdr.sg-pg { grid-template-columns: 28px 54px 1fr 44px; }
-/* Feature rows */
-.sg-row {
-  display: grid; gap: 6px; align-items: center; padding: 4px 4px;
-  border-bottom: 1px solid var(--rule); }
-.sg-row:hover { background: var(--hover); }
-.sg-row.sg-ln { grid-template-columns: 28px 54px 1fr 44px 106px 80px 66px; }
-.sg-row.sg-pt { grid-template-columns: 28px 54px 1fr; }
-.sg-row.sg-pg { grid-template-columns: 28px 54px 1fr 44px; }
-/* Color swatch */
-.sg-swatch {
-  width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
-  border: 2px solid rgba(0,0,0,0.18); overflow: hidden; position: relative; }
-.sg-swatch input[type=color] {
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 700; color: var(--blue); padding-bottom: 8px;
+  border-bottom: 2px solid var(--blue); margin-bottom: 14px; }
+.sg-section-note {
+  font-size: 11px; color: var(--ink-3); margin-bottom: 12px; }
+
+/* Feature style table */
+.fs-table { width: 100%; border-collapse: collapse; }
+.fs-thead th {
+  font: 600 9px/1 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--ink-3); padding: 0 8px 8px 0; text-align: left; white-space: nowrap; }
+.fs-thead th:first-child { padding-left: 0; }
+.fs-row { border-top: 1px solid var(--rule); }
+.fs-row:hover { background: var(--hover); }
+.fs-row td { padding: 8px 8px 8px 0; vertical-align: middle; }
+.fs-row td:first-child { padding-left: 4px; }
+.fs-kind-label {
+  font: 500 12px/1.2 'IBM Plex Sans', sans-serif;
+  color: var(--ink); white-space: nowrap; min-width: 110px; display: block; }
+
+/* Color swatch + picker */
+.fs-swatch {
+  width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0;
+  border: 1.5px solid rgba(0,0,0,.18); cursor: pointer;
+  position: relative; overflow: hidden; }
+.fs-swatch input[type=color] {
   position: absolute; inset: -4px; width: calc(100% + 8px);
-  height: calc(100% + 8px); opacity: 0; cursor: pointer; border: none; }
-/* Text / number inputs */
-.sg-code {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;
-  width: 100%; padding: 4px 3px; text-align: center;
-  background: var(--hover); border: 1px solid var(--rule); border-radius: 4px;
-  color: var(--ink); }
-.sg-name, .sg-weight {
-  font-size: 12px; width: 100%; padding: 4px 6px;
-  background: var(--hover); border: 1px solid var(--rule); border-radius: 4px;
-  color: var(--ink); }
-.sg-weight { width: 38px; text-align: right; padding: 4px 4px; }
-.sg-select {
-  font-size: 11px; padding: 4px 3px; width: 100%;
-  background: var(--hover); border: 1px solid var(--rule); border-radius: 4px;
-  color: var(--ink); }
-/* Apply button */
-.sg-apply-btn {
-  padding: 9px 22px; background: #15803d; color: #fff;
-  border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
-  cursor: pointer; margin-top: 14px; }
-.sg-apply-btn:hover { background: #166534; }
-/* Label rows */
-.sg-label-row {
-  display: flex; align-items: center; gap: 12px; padding: 9px 0;
-  border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
-.sg-label-name { flex: 1; font-size: 13px; color: var(--ink); min-width: 160px; }
-.sg-toggle-lbl {
-  display: flex; align-items: center; gap: 6px; font-size: 12px;
-  color: var(--ink-2); white-space: nowrap; cursor: pointer; }
-.sg-toggle-lbl input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
-.sg-color-sml {
-  width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-  border: 1.5px solid var(--rule); overflow: hidden; position: relative; flex-shrink: 0; }
-.sg-color-sml input[type=color] {
-  position: absolute; inset: -4px; opacity: 0; cursor: pointer; border: none; }
-.sg-sz-input {
-  width: 48px; padding: 5px 6px; font-size: 12px; text-align: right;
-  background: var(--hover); border: 1px solid var(--rule); border-radius: 4px; color: var(--ink); }
-/* Hover field grid */
-.sg-hover-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 7px; margin-top: 8px; }
-.sg-hover-chip {
-  display: flex; align-items: center; gap: 7px; padding: 8px 11px;
-  background: var(--hover); border: 1.5px solid var(--rule); border-radius: 7px;
-  font-size: 12px; color: var(--ink-2); cursor: pointer;
-  transition: background .1s; }
-.sg-hover-chip:hover { background: var(--hover); }
-.sg-hover-chip.active { background: #dcfce7; border-color: #22c55e; color: #15803d; }
-.sg-hover-chip input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
-/* Vertex label table */
-.sg-vertex-hdr, .sg-vertex-row {
-  display: grid;
-  grid-template-columns: 60px 48px 1fr 32px 44px;
-  gap: 6px; align-items: center;
-  padding: 4px 4px;
-  border-bottom: 1px solid var(--rule); }
-.sg-vertex-hdr {
-  font-size: 9px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--ink-3); padding-bottom: 6px; }
-.sg-vertex-row:hover { background: var(--hover); }
-.sg-vx-name { font-size: 12px; font-weight: 600; color: var(--ink-2); }
-.sg-vx-tpl {
-  width: 100%; padding: 4px 6px; font-size: 11px;
-  background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; color: var(--ink); }
-.sg-vx-tpl::placeholder { color: var(--ink-mute); font-style: italic; }
-/* Style guide header button */
+  height: calc(100% + 8px); opacity: 0; cursor: pointer; }
+
+/* Line-type select */
+.fs-lt-select {
+  font: 400 11px/1.4 'IBM Plex Mono', monospace;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--rule); border-radius: 3px;
+  padding: 4px 5px; min-width: 152px; }
+
+/* Weight + offset number inputs */
+.fs-num {
+  font: 400 12px/1 'IBM Plex Mono', monospace;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--rule); border-radius: 3px;
+  padding: 5px 6px; width: 46px; text-align: center; }
+
+/* SLD offset slider */
+.fs-offset-cell { display: flex; align-items: center; gap: 7px; }
+.fs-offset-val {
+  font: 600 11px/1 'IBM Plex Mono', monospace;
+  color: var(--blue); min-width: 22px; text-align: right; }
+input.fs-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 88px; height: 4px; border-radius: 2px;
+  background: var(--rule); cursor: pointer; }
+input.fs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--blue);
+  border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+
+/* Line preview cell */
+.fs-preview { min-width: 84px; }
+.fs-preview svg { display: block; }
+
+/* Style Guide header button */
 .header-styleguide-btn {
   width: 32px; height: 32px; margin-left: 4px;
   background: var(--paper); color: var(--ink);
@@ -16722,11 +16689,224 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
 
 <script>
-// ── Style Guide & Labels ── v1.0 ─────────────────────────────────────────────
-(function() {
+// ── Feature Style Guide ── Phase 1: Line feature styles ──────────────────────
+(function () {
   'use strict';
 
-  // Default render mode per kind (mirrors _DEFAULT_RENDER_AS in renderStrip)
+  // ── Line type catalog ──────────────────────────────────────────────────────
+  // da    = SVG stroke-dasharray for Leaflet polylines
+  // hatch = CSS gradient string (with {c} color placeholder) for SLD bars
+  // double = render two parallel strokes on map
+  const LINE_TYPES = [
+    { v: 'solid',          l: 'Solid',           da: null },
+    { v: 'dashed',         l: 'Dashed',          da: '8 5' },
+    { v: 'short_dash',     l: 'Short dash',      da: '4 3' },
+    { v: 'dotted',         l: 'Dotted',          da: '1 4' },
+    { v: 'double',         l: 'Double solid',    da: null,  double: true },
+    { v: 'double_dashed',  l: 'Double dashed',   da: '5 4', double: true },
+    { v: 'guardrail',      l: 'Guard rail',      da: '6 3',
+      hatch: 'repeating-linear-gradient(90deg,transparent 0 6px,{c} 6px 8px)', thick: 6 },
+    { v: 'retaining_wall', l: 'Retaining wall',  da: null,
+      hatch: 'repeating-linear-gradient(-45deg,transparent 0 2px,{c} 2px 3px,transparent 3px 5px)', thick: 7 },
+    { v: 'fence',          l: 'Fence',           da: '3 3',
+      hatch: 'repeating-linear-gradient(45deg,transparent 0 2px,{c} 2px 3px,transparent 3px 5px)' },
+    { v: 'dash_dot',       l: 'Dash-dot',        da: '8 4 2 4' },
+  ];
+  const LINE_TYPE_MAP = Object.fromEntries(LINE_TYPES.map(t => [t.v, t]));
+
+  // Expose as LINE_STYLE_MAP on _RW so buildPinLayer + SLD renderer can
+  // resolve hatch/dash patterns from the stored lineStyle key.
+  function _exposeLTM() { if (window._RW) window._RW.LINE_STYLE_MAP = LINE_TYPE_MAP; }
+  _exposeLTM();
+  document.addEventListener('DOMContentLoaded', _exposeLTM, { once: true });
+
+  // ── Feature definitions — Phase 1: bundle line kinds ──────────────────────
+  // Phase 2 will add point kinds and the quick-action description-type table.
+  const FS_LINE_FEATURES = [
+    { kind: 'guardrail', label: 'Guardrails',      defColor: '#E8A838', defLT: 'guardrail',      defWt: 6, defOff: 3 },
+    { kind: 'wall',      label: 'Retaining Walls', defColor: '#7B3F9E', defLT: 'retaining_wall', defWt: 5, defOff: 5 },
+    { kind: 'culvert',   label: 'Culverts',        defColor: '#3A7AC8', defLT: 'dashed',         defWt: 4, defOff: 2 },
+    { kind: 'misc_line', label: 'Misc Lines',      defColor: '#8A5A2B', defLT: 'solid',          defWt: 3, defOff: 0 },
+  ];
+
+  // ── Storage: featureStyles lives inside rw_v1 (same key as layersVis) ──────
+  function fsLoadAll() {
+    try {
+      var fn = window.RWLsLoad;
+      return (typeof fn === 'function' && fn().featureStyles) || {};
+    } catch (_) { return {}; }
+  }
+  function fsSaveAll(obj) {
+    try {
+      if (typeof window.RWLsSave === 'function') window.RWLsSave({ featureStyles: obj });
+    } catch (_) {}
+  }
+
+  // Merged style for one kind: saved overrides on top of defaults
+  function fsGet(kind) {
+    var saved = fsLoadAll()[kind] || {};
+    var def   = FS_LINE_FEATURES.find(function (f) { return f.kind === kind; }) || {};
+    return {
+      color:    saved.color    !== undefined ? saved.color    : (def.defColor || '#888'),
+      lineType: saved.lineType !== undefined ? saved.lineType : (def.defLT    || 'solid'),
+      weight:   saved.weight   !== undefined ? saved.weight   : (def.defWt    || 4),
+      offset:   saved.offset   !== undefined ? saved.offset   : (def.defOff   || 0),
+    };
+  }
+
+  // ── Apply one kind's style to PIN_STYLE, MAP_LAYERS, styleOverrides ────────
+  function applyKindStyle(kind, s) {
+    // 1. PIN_STYLE — drives Leaflet map rendering
+    var PS = window._RW && window._RW.PIN_STYLE;
+    if (PS && PS[kind]) {
+      PS[kind].color     = s.color;
+      PS[kind].weight    = s.weight;
+      PS[kind].lineStyle = s.lineType;
+      var lt = LINE_TYPE_MAP[s.lineType];
+      PS[kind].dashArray = lt ? lt.da : null;
+    }
+
+    // 2. MAP_LAYERS dot — drives layer toggle panel color
+    var ML = window._RW && window._RW.MAP_LAYERS;
+    if (ML) {
+      var ml = ML.find(function (l) { return l.kind === kind; });
+      if (ml) ml.color = s.color;
+    }
+
+    // 3. styleOverrides — drives SLD bar pattern + slot offset
+    var st = window._RW && window._RW.state;
+    if (st) {
+      if (!st.settings)                       st.settings = {};
+      if (!st.settings.styleOverrides)        st.settings.styleOverrides = {};
+      if (!st.settings.styleOverrides[kind])  st.settings.styleOverrides[kind] = {};
+      var so = st.settings.styleOverrides[kind];
+      so.color     = s.color;
+      so.weight    = s.weight;
+      so.lineStyle = s.lineType;
+      so.slotLevel = s.offset;
+    }
+
+    // 4. Rebuild layer toggle dots then re-render map + SLD
+    if (typeof window.buildLayersPanel === 'function') window.buildLayersPanel();
+    if (window._RW && typeof window._RW.rerender === 'function') window._RW.rerender();
+  }
+
+  // Apply all saved styles (called at boot and on panel open)
+  function applyAllStyles() {
+    FS_LINE_FEATURES.forEach(function (f) { applyKindStyle(f.kind, fsGet(f.kind)); });
+  }
+
+  // ── Line preview SVG ──────────────────────────────────────────────────────
+  function previewSVG(color, lineType, weight) {
+    var lt  = LINE_TYPE_MAP[lineType] || LINE_TYPE_MAP['solid'];
+    var W = 84, H = 28, cy = H / 2;
+    var w   = Math.min(Math.max(weight, 1), 8);
+    var da  = lt.da ? ' stroke-dasharray="' + lt.da + '"' : '';
+    var lines;
+    if (lt.double) {
+      var gap = w + 2;
+      lines = '<line x1="4" y1="' + (cy - gap / 2) + '" x2="' + (W - 4) + '" y2="' + (cy - gap / 2) + '" stroke="' + color + '" stroke-width="' + w + '"' + da + '/>' +
+              '<line x1="4" y1="' + (cy + gap / 2) + '" x2="' + (W - 4) + '" y2="' + (cy + gap / 2) + '" stroke="' + color + '" stroke-width="' + w + '"' + da + '/>';
+    } else {
+      lines = '<line x1="4" y1="' + cy + '" x2="' + (W - 4) + '" y2="' + cy + '" stroke="' + color + '" stroke-width="' + w + '"' + da + '/>';
+    }
+    return '<svg width="' + W + '" height="' + H + '">' + lines + '</svg>';
+  }
+
+  // ── Render the panel ──────────────────────────────────────────────────────
+  window.renderStyleGuide = function () {
+    var body = document.getElementById('sg-body');
+    if (!body) return;
+
+    // Cache current styles
+    var styles = {};
+    FS_LINE_FEATURES.forEach(function (f) { styles[f.kind] = fsGet(f.kind); });
+
+    // Build table HTML
+    var ltOptions = LINE_TYPES.map(function (t) {
+      return '<option value="' + t.v + '">' + t.l + '</option>';
+    }).join('');
+
+    var rows = FS_LINE_FEATURES.map(function (f) {
+      var s   = styles[f.kind];
+      var sel = LINE_TYPES.map(function (t) {
+        return '<option value="' + t.v + '"' + (t.v === s.lineType ? ' selected' : '') + '>' + t.l + '</option>';
+      }).join('');
+      return [
+        '<tr class="fs-row" data-kind="' + f.kind + '">',
+        '<td><span class="fs-kind-label">' + f.label + '</span></td>',
+        '<td><div class="fs-swatch" id="fs-sw-' + f.kind + '" style="background:' + s.color + '">',
+        '<input type="color" id="fs-color-' + f.kind + '" value="' + s.color + '"></div></td>',
+        '<td><select class="fs-lt-select" id="fs-lt-' + f.kind + '">' + sel + '</select></td>',
+        '<td><input type="number" class="fs-num" id="fs-wt-' + f.kind + '" value="' + s.weight + '" min="1" max="12" step="1"></td>',
+        '<td><div class="fs-offset-cell">',
+        '<input type="range" class="fs-slider" id="fs-sl-' + f.kind + '" min="-5" max="10" step="1" value="' + s.offset + '">',
+        '<span class="fs-offset-val" id="fs-ov-' + f.kind + '">' + s.offset + '</span>',
+        '</div></td>',
+        '<td class="fs-preview" id="fs-pv-' + f.kind + '">' + previewSVG(s.color, s.lineType, s.weight) + '</td>',
+        '</tr>',
+      ].join('');
+    }).join('');
+
+    body.innerHTML =
+      '<div class="sg-section">' +
+      '<div class="sg-section-title">Line Feature Styles</div>' +
+      '<p class="sg-section-note">Changes apply live to the map, SLD, and layer toggle dots.</p>' +
+      '<table class="fs-table">' +
+      '<thead><tr class="fs-thead">' +
+      '<th>Feature</th><th>Color</th><th>Line Type</th><th>Wt</th><th style="min-width:140px">SLD Offset</th><th>Preview</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+      '</div>';
+
+    // ── Wire every control ─────────────────────────────────────────────────
+    FS_LINE_FEATURES.forEach(function (f) {
+      function collect() {
+        return {
+          color:    document.getElementById('fs-color-' + f.kind)?.value ?? styles[f.kind].color,
+          lineType: document.getElementById('fs-lt-'    + f.kind)?.value ?? styles[f.kind].lineType,
+          weight:   parseFloat(document.getElementById('fs-wt-' + f.kind)?.value) || styles[f.kind].weight,
+          offset:   parseInt(  document.getElementById('fs-sl-' + f.kind)?.value, 10),
+        };
+      }
+      function commit() {
+        var s = collect();
+        styles[f.kind] = s;
+        var all = fsLoadAll();
+        all[f.kind] = s;
+        fsSaveAll(all);
+        applyKindStyle(f.kind, s);
+        var pv = document.getElementById('fs-pv-' + f.kind);
+        if (pv) pv.innerHTML = previewSVG(s.color, s.lineType, s.weight);
+      }
+
+      var colorEl = document.getElementById('fs-color-' + f.kind);
+      if (colorEl) colorEl.oninput = function (e) {
+        var sw = document.getElementById('fs-sw-' + f.kind);
+        if (sw) sw.style.background = e.target.value;
+        commit();
+      };
+
+      var ltEl = document.getElementById('fs-lt-' + f.kind);
+      if (ltEl) ltEl.onchange = commit;
+
+      var wtEl = document.getElementById('fs-wt-' + f.kind);
+      if (wtEl) wtEl.oninput = commit;
+
+      var slEl = document.getElementById('fs-sl-' + f.kind);
+      var ovEl = document.getElementById('fs-ov-' + f.kind);
+      if (slEl) slEl.oninput = function (e) {
+        if (ovEl) ovEl.textContent = e.target.value;
+        commit();
+      };
+    });
+  };
+
+  // Apply saved styles at boot once _RW + PIN_STYLE are ready
+  setTimeout(applyAllStyles, 400);
+
+})();
   const SG_DEFAULT_RENDER_AS = {
     ln_pvmt_change:'cross', pavement_change:'cross',
     ln_stop_bar:'cross', ln_crosswalk:'cross',
@@ -17807,6 +17987,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // Both functions reference LS_KEY which is in this IIFE's closure.
   window.RWLsLoad = lsLoad;
   window.RWLsSave = lsSave;
+
+  // Expose MAP_LAYERS array by reference so the Style Guide can mutate
+  // layer dot colors and have buildLayersPanel() pick them up immediately.
+  window._RW.MAP_LAYERS = MAP_LAYERS;
+  // Expose buildLayersPanel so the Style Guide can rebuild toggle dots
+  // after a color change without knowing about the module IIFE internals.
+  window.buildLayersPanel = buildLayersPanel;
 
   // Also expose doAutoSave so other modules can trigger a save after writes.
   window.RWAutoSave = doAutoSave;
