@@ -8419,6 +8419,20 @@ body.mobile-mode #app {
     });
   });
 
+  // ── Bundle pre-walk feature kinds (short names from prewalk-bundle.json) ───
+  // The feature catalog uses ln_*/pt_* prefixes for user-drawn features;
+  // the pre-walk bundle uses unprefixed short kinds.  These entries let the
+  // map renderer (buildPinLayer) and SLD (renderStrip) handle them correctly.
+  // Colors intentionally match MAP_LAYERS for consistent layer-panel / map /
+  // SLD iconography across all three views.
+  PIN_STYLE.culvert      = { code: 'Cv', color: '#3A7AC8', kind: 'line',    lineStyle: 'culvert',   weight: 2 };
+  PIN_STYLE.guardrail    = { code: 'GR', color: '#E8A838', kind: 'line',    lineStyle: 'guardrail', weight: 4 };
+  PIN_STYLE.wall         = { code: 'RW', color: '#7B3F9E', kind: 'line',    weight: 2 };
+  PIN_STYLE.sign         = { code: 'Si', color: '#27A04B', kind: 'point',   shape: 'circle' };
+  PIN_STYLE.pavement     = { code: 'Pv', color: '#9CA3AF', kind: 'polygon', weight: 2 };
+  PIN_STYLE.overlook     = { code: 'Ov', color: '#DC2626', kind: 'point' };
+  PIN_STYLE.ngs_monument = { code: 'Ng', color: '#0EA5E9', kind: 'point',   shape: 'triangle' };
+
   // Expose showView + showProjectPicker globally so the Phase 1 Dashboard
   // module can navigate into sections and trigger the project picker without
   // needing direct access to this IIFE's scope.
@@ -11398,12 +11412,17 @@ body.mobile-mode #app {
       ln_stop_bar: 'line', ln_crosswalk: 'line', ln_dycl: 'line', ln_sycl: 'line',
       ln_swel: 'line', ln_parking: 'line', ln_hatching: 'line', ln_mark_other: 'line',
       ln_loops: 'line', ln_misc_other: 'line', user_line: 'line',
+      // Bundle short-kind names (prewalk-bundle.json uses unprefixed kinds)
+      guardrail: 'guardrail', wall: 'guardrail',
+      culvert:   'line',  // routed to culvert-crossing symbol via isCulvertKind
     };
     // Numeric slot levels for default positioning (each level = 5px from road edge)
     const _KIND_SLOT_LV = {
       ln_guardrail:3, ln_retaining_wall:4, ln_barrier:2,
       ln_curb:1, ln_cg:1, ln_sidewalk:2,
       ln_swale:5, ln_drain_other:5, ln_fence:6,
+      // Bundle short-kind names
+      guardrail: 3, wall: 4,
     };
     // Default render mode (inline = parallel bar, cross = perpendicular marker)
     const _DEFAULT_RENDER_AS = {
@@ -11413,7 +11432,7 @@ body.mobile-mode #app {
     const kindRenderAs = k =>
       state.settings?.styleOverrides?.[k]?.renderAs || _DEFAULT_RENDER_AS[k] || 'inline';
 
-    const isCulvertKind = k => k === 'ln_culvert' || k === 'ln_box_culvert';
+    const isCulvertKind = k => k === 'ln_culvert' || k === 'ln_box_culvert' || k === 'culvert';
 
     // ── Pre-pass: project sta_ft for any pin that doesn't have it yet ──────────
     // Covers point pins and cross-type line features that skip the trackPins path.
