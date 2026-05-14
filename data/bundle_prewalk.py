@@ -114,6 +114,64 @@ def _point_to_alignment_m(plat, plon, alignment_lnglat):
     return best
 
 
+def _bearing_deg(lng1, lat1, lng2, lat2):
+    """Forward azimuth in degrees (0=N, 90=E) from (lng1,lat1) to (lng2,lat2)."""
+    lat1r = math.radians(lat1); lat2r = math.radians(lat2)
+    dlng  = math.radians(lng2 - lng1)
+    x = math.sin(dlng) * math.cos(lat2r)
+    y = math.cos(lat1r) * math.sin(lat2r) - math.sin(lat1r) * math.cos(lat2r) * math.cos(dlng)
+    return math.degrees(math.atan2(x, y)) % 360
+
+
+def _road_bearing_at(lat, lng, alignment_lnglat):
+    """Forward bearing of the alignment at the point nearest (lat, lng)."""
+    if not alignment_lnglat or len(alignment_lnglat) < 2:
+        return 0.0
+    best_d = float('inf'); best_i = 0
+    for i in range(len(alignment_lnglat) - 1):
+        a_lng, a_lat = alignment_lnglat[i]
+        b_lng, b_lat = alignment_lnglat[i + 1]
+        d = _point_to_segment_m(lat, lng, a_lat, a_lng, b_lat, b_lng)
+        if d < best_d:
+            best_d = d; best_i = i
+    a_lng, a_lat = alignment_lnglat[best_i]
+    b_lng, b_lat = alignment_lnglat[best_i + 1]
+    return _bearing_deg(a_lng, a_lat, b_lng, b_lat)
+
+
+def _orient_linestring_with_road(coords_lnglat, alignment_lnglat):
+    """Return coords_lnglat (possibly reversed) so the LineString runs in the
+    same direction as the road (low-STA → high-STA).
+
+    The JS viewer's _perpOffsetCoords derives the perpendicular direction from
+    the feature's own coordinate order.  If the GIS feature was digitised
+    high-STA→low-STA the perpendicular flips and the feature lands on the
+    wrong side of the road.  This function corrects the coordinate ORDER only;
+    the `side` attribute (L/R from NPS data) is NOT changed.
+
+    coords_lnglat: list of [lng, lat] pairs (GeoJSON order)
+    alignment_lnglat: section alignment list of [lng, lat] pairs
+    Returns the original list unchanged, or a new reversed list.
+    """
+    if not coords_lnglat or len(coords_lnglat) < 2 or not alignment_lnglat:
+        return coords_lnglat
+    # Feature midpoint (for road-bearing lookup)
+    mid_idx = max(1, len(coords_lnglat) // 2)
+    mid = coords_lnglat[mid_idx]
+    mid_lat, mid_lng = mid[1], mid[0]
+    # Feature bearing: start → end vertex
+    a, z = coords_lnglat[0], coords_lnglat[-1]
+    if a == z:          # degenerate (single unique point)
+        return coords_lnglat
+    feat_bear = _bearing_deg(a[0], a[1], z[0], z[1])
+    # Road bearing at the feature's midpoint
+    road_bear = _road_bearing_at(mid_lat, mid_lng, alignment_lnglat)
+    diff = (feat_bear - road_bear) % 360
+    if 90 < diff < 270:
+        return list(reversed(coords_lnglat))
+    return coords_lnglat
+
+
 def _project_sta_ft(plat, plon, alignment_lnglat):
     """Return arc-length (feet) along polyline of the closest projection."""
     if not alignment_lnglat or len(alignment_lnglat) < 2:
@@ -306,9 +364,28 @@ def load_alignment(path):
 # Translates a per-section GeoJSON feature into the compact pin dict that
 # lives in prewalk-bundle.json. Schema v2 adds the ULID, strips bridge data
 # to name only, and runs culvert enrichment from the park-wide CSV.
-def compact_pin(ft, kind, source, section_id, pin_id, culvert_csv_points):
+
+# Tally of LineStrings reversed to match road direction (logged at end of run)
+_reorient_count = {}
+
+
+def compact_pin(ft, kind, source, section_id, pin_id, culvert_csv_points,
+                alignment_lnglat=None):
     props = ft.get('properties', {})
-    geom = ft.get('geometry', {})
+    geom  = ft.get('geometry', {})
+
+    # Normalise coordinate direction for guardrail/wall so the JS viewer's
+    # _perpOffsetCoords pushes the feature to the correct side of the road.
+    # The `side` attribute (L/R) is NOT changed — only vertex ORDER is fixed.
+    if kind in ('guardrail', 'wall') and alignment_lnglat:
+        if geom.get('type') == 'LineString':
+            coords = geom.get('coordinates', [])
+            oriented = _orient_linestring_with_road(coords, alignment_lnglat)
+            if oriented is not coords:          # actually reversed
+                geom = dict(geom)               # shallow copy — don't mutate original
+                geom['coordinates'] = oriented
+                _reorient_count[kind] = _reorient_count.get(kind, 0) + 1
+
     pin = {
         'id':       pin_id,
         'ulid':     make_ulid(),
@@ -600,7 +677,7 @@ for meta in SECTIONS_META:
             pin_counter[kind] += 1
             kind_prefix = kind[:3].upper()
             pin_id = '%s-%s-%03d' % (sec_id, kind_prefix, pin_counter[kind])
-            pins.append(compact_pin(ft, kind, source, sec_id, pin_id, culvert_pts))
+            pins.append(compact_pin(ft, kind, source, sec_id, pin_id, culvert_pts, align))
 
     # New kinds: assign sequential pin_ids in their own counter buckets
     for new_kind, per_sec_dict, kind_prefix in [
@@ -648,3 +725,10 @@ for sec_id, t in totals.items():
 grand = sum(t['pins'] for t in totals.values())
 print('')
 print('Grand total: %d pins across %d sections' % (grand, len(SECTIONS_META)))
+if _reorient_count:
+    print('')
+    print('Geometry orientation corrections (coord order reversed to match road direction):')
+    for k, n in sorted(_reorient_count.items()):
+        print('  %-12s %d reversed' % (k, n))
+else:
+    print('(no geometry orientation corrections applied)')
