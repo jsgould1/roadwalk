@@ -4041,6 +4041,12 @@ input.fs-slider::-webkit-slider-thumb {
   transition: border-color .1s, background .1s; }
 .fs-glyph-btn:hover { border-color: var(--blue); background: var(--hover); }
 .fs-glyph-btn.fs-active { border-color: var(--blue); background: rgba(10,42,93,.08); }
+/* SLD position select */
+.fs-sldpos-sel {
+  font: 400 11px/1.4 'IBM Plex Mono', monospace;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--rule); border-radius: 3px;
+  padding: 4px 3px; min-width: 76px; }
 /* Size input */
 .fs-pt-size {
   font: 400 12px/1 'IBM Plex Mono', monospace;
@@ -12005,44 +12011,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (style.shape) el.classList.add('shape-' + style.shape);
       el.style[axisKey] = `${pct}%`;
 
-      // SVG-symbol kinds render plan-view shapes instead of pill chips.
-      const _usesSvg    = _SVG_PIN_KINDS.has(pin.kind);
-      const _isSlot6    = _SLOT6_KINDS.has(pin.kind);
-      // Non-slot-6 SVG kinds (CBs, manholes, gates, monuments) sit at slot −2
-      // (10 px INSIDE the pavement edge, toward CL).
-      const _isSlotNeg2 = _usesSvg && !_isSlot6;
+      // ── SLD cross-section placement ────────────────────────────────────────
+      // sldPos: 'road' (CL) | 'edge' (pavement edge) | 'offroad' (outside ROW)
+      // Read from PIN_STYLE (populated by applyAllPtStyles at boot); fall back to
+      // set-membership defaults so the SLD works even before any style is saved.
+      const _sldPos = style.sldPos || (() => {
+        if (_SLOT6_KINDS.has(pin.kind)) return 'offroad';
+        if (_SVG_PIN_KINDS.has(pin.kind)) return 'edge';
+        return 'road';
+      })();
+
       const _hasSide    = pin.attrs?.side === 'L' || pin.attrs?.side === 'R';
-      // Both slot-6 and slot-neg2 get explicit cross-section placement on named sides.
-      const _signOnSide = (_isSlot6 || _isSlotNeg2) && _hasSide;
-      // Slot offset: +px = outside pavement edge, −px = inside.
-      // slot 6 → +30 px  |  slot −2 → −10 px
-      const _slotPx    =  _isSlot6 ? 30 : _isSlotNeg2 ? -10 : 0;
-      const _RD_HALF   = 20;   // half of 40 px pavement band
-      const _PIN_H     = _usesSvg ? 20 : 16;
-      const _PIN_W_HALF = _usesSvg ? 10 : 10;
+      // 'road' pins sit on CL and don't need side offset; edge/offroad do.
+      const _signOnSide = (_sldPos === 'edge' || _sldPos === 'offroad') && _hasSide;
+      // Pin-centre distance from CL:
+      //   offroad → 50 px  (_RD_HALF + 30, _slotPx = +30)
+      //   edge    → 20 px  (_RD_HALF +  0, _slotPx =   0)
+      //   road    →  0 px  (_RD_HALF − 20, _slotPx = −20)
+      // Formula: L top = calc(50% − (RD_HALF + slotPx + PIN_H/2))
+      //          R top = calc(50% + (RD_HALF + slotPx − PIN_H/2))
+      const _slotPx     = _sldPos === 'offroad' ? 30 : _sldPos === 'edge' ? 0 : -20;
+      const _RD_HALF    = 20;   // half of 40 px pavement band
+      const _PIN_H      = 20;   // uniform pin height for all point features
+      const _PIN_W_HALF = 10;
 
       if (horiz) {
-        // Base CSS positions pins as vertical-mode markers (right:50%, no top).
-        // Override inline so they ride the correct cross-section lane.
-        const _PIN_TOP = { L: 'calc(50% - 100px)', R: 'calc(50% + 92px)', C: 'calc(50% - 8px)' };
         const _side = pin.attrs?.side || 'C';
         if (_signOnSide) {
-          // top = CL ± (roadHalf + slotPx ± halfPinH)
-          // positive slotPx → outside pavement; negative → inside.
           el.style.top = _side === 'L'
             ? `calc(50% - ${_RD_HALF + _slotPx + _PIN_H / 2}px)`
             : `calc(50% + ${_RD_HALF + _slotPx - _PIN_H / 2}px)`;
         } else {
-          el.style.top = _PIN_TOP[_side] || 'calc(50% - 8px)';
+          // road (CL) or no side: centre pin on CL
+          el.style.top = 'calc(50% - 10px)';
         }
         el.style.bottom = 'auto';
         el.style.right = 'auto';
         el.style.marginLeft = '0';
         el.style.marginRight = '0';
-        el.style.transform = _side === 'C' ? 'translate(-50%,-50%)' : 'translateX(-50%)';
+        el.style.transform = 'translateX(-50%)';
       } else if (_signOnSide) {
-        // Vertical strip: right/left = 50% + (roadHalf + slotPx − pinHalfW)
-        // → pin centre at (roadHalf + slotPx) px from CL.
+        // Vertical strip: pin centre at (RD_HALF + slotPx) px from CL.
         const _slotEdge = `calc(50% + ${_RD_HALF + _slotPx - _PIN_W_HALF}px)`;
         if (pin.attrs.side === 'L') {
           el.style.right = _slotEdge;
@@ -12058,10 +12067,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       el.style.opacity = pin.status === 'discarded' ? '0.3' : '1';
       el.style.zIndex = '3';       // above pavement band (z-index:1) and feature bars (z-index:2)
       el.style.cursor = 'pointer';
-      const _svgHtml = _usesSvg ? makeStripPinSvg(pin, style.color) : null;
+
+      // Render: SVG engineering symbol > style-guide glyph > fallback text chip
+      const _svgHtml = makeStripPinSvg(pin, style.color);
       if (_svgHtml) {
         el.classList.add('strip-pin-svg');
         el.innerHTML = _svgHtml;
+      } else if (style.glyph) {
+        // Glyph only — no circle background; color is glyph text color
+        el.style.background = 'transparent';
+        el.style.border = 'none';
+        el.style.color = style.color;
+        el.style.fontSize = Math.round((style.size || 20) * 0.8) + 'px';
+        el.style.lineHeight = '1';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.textContent = style.glyph;
       } else {
         el.style.background = style.color;
         el.textContent = style.code;
@@ -12076,22 +12098,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         lab.textContent = labelText; lab.title = `${pin.id} · ${labelText}`;
         if (horiz) {
           lab.style.left = `${pct}%`; lab.style.transform = 'translateX(-50%)';
-          if (_isSlot6 && _hasSide) {
-            // Slot-6 label just outside the pin (above for L, below for R)
+          if (_sldPos === 'offroad' && _hasSide) {
+            // Label just outside the pin — above for L, below for R
             lab.style.top = pin.attrs.side === 'L'
               ? `calc(50% - ${_RD_HALF + 30 + _PIN_H / 2 + 14}px)`  // 50% − 74px
               : `calc(50% + ${_RD_HALF + 30 - _PIN_H / 2 + 18}px)`; // 50% + 58px
+          } else if (_sldPos === 'edge' && _hasSide) {
+            lab.style.top = pin.attrs.side === 'L'
+              ? `calc(50% - ${_RD_HALF + _PIN_H / 2 + 12}px)`       // 50% − 42px
+              : `calc(50% + ${_RD_HALF + _PIN_H / 2 + 4}px)`;       // 50% + 34px
           } else {
-            // Slot-neg2 and others: labels float to the far outer band
+            // road (CL) labels float to the far outer band
             lab.style.top = pin.attrs?.side === 'R' ? 'calc(50% + 110px)' : 'calc(50% - 122px)';
           }
         } else {
           lab.style.top = `${pct}%`; lab.style.transform = 'translateY(-50%)';
-          if (_isSlot6 && _hasSide) {
-            // Slot-6 label beyond the pin (further from CL)
+          if (_sldPos === 'offroad' && _hasSide) {
+            // Label beyond the pin (further from CL)
             const _labOuter = `calc(50% + ${_RD_HALF + 30 + _PIN_W_HALF + 4}px)`; // 50% + 64px
             if (pin.attrs.side === 'R') lab.style.left = _labOuter;
             else                         lab.style.right = _labOuter;
+          } else if (_sldPos === 'edge' && _hasSide) {
+            const _labEdge = `calc(50% + ${_RD_HALF + _PIN_W_HALF + 4}px)`;       // 50% + 34px
+            if (pin.attrs.side === 'R') lab.style.left = _labEdge;
+            else                         lab.style.right = _labEdge;
           } else {
             if (pin.attrs?.side === 'R') lab.style.left = 'calc(50% + 24px)';
             else                         lab.style.right = 'calc(50% + 24px)';
@@ -16904,42 +16934,43 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   var FS_POINT_FEATURES = [
     // ── Misc ─────────────────────────────────────────────────────────────────
-    { kind: 'pt_sign',        label: 'Sign',        defColor: '#C85A2B', defGlyph: '⬛', defSize: 22, group: 'Misc' },
-    { kind: 'pt_swing_gate',  label: 'Swing Gate',  defColor: '#C85A2B', defGlyph: '⊞', defSize: 20, group: 'Misc' },
-    { kind: 'pt_man_gate',    label: 'Man Gate',    defColor: '#C85A2B', defGlyph: '⊟', defSize: 20, group: 'Misc' },
-    { kind: 'pt_monument',    label: 'Monument',    defColor: '#0B3D66', defGlyph: '▲', defSize: 22, group: 'Misc' },
-    { kind: 'pt_light_pole',  label: 'Light Pole',  defColor: '#C85A2B', defGlyph: '✦', defSize: 20, group: 'Misc' },
-    { kind: 'pt_guy_wire',    label: 'Guy Wire',    defColor: '#C85A2B', defGlyph: '✕', defSize: 20, group: 'Misc' },
-    { kind: 'pt_delineator',  label: 'Delineator',  defColor: '#C85A2B', defGlyph: '◆', defSize: 20, group: 'Misc' },
-    { kind: 'pt_mailbox',     label: 'Mailbox',     defColor: '#C85A2B', defGlyph: '▪', defSize: 20, group: 'Misc' },
-    { kind: 'pt_flagpole',    label: 'Flagpole',    defColor: '#C85A2B', defGlyph: '🚩', defSize: 20, group: 'Misc' },
-    { kind: 'pt_ada_ramp',    label: 'ADA Ramp',    defColor: '#C85A2B', defGlyph: '♿', defSize: 20, group: 'Misc' },
+    { kind: 'pt_sign',        label: 'Sign',        defColor: '#C85A2B', defGlyph: '⬛', defSize: 22, group: 'Misc',      defSldPos: 'offroad' },
+    { kind: 'pt_swing_gate',  label: 'Swing Gate',  defColor: '#C85A2B', defGlyph: '⊞', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
+    { kind: 'pt_man_gate',    label: 'Man Gate',    defColor: '#C85A2B', defGlyph: '⊟', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
+    { kind: 'pt_monument',    label: 'Monument',    defColor: '#0B3D66', defGlyph: '▲', defSize: 22, group: 'Misc',      defSldPos: 'road'    },
+    { kind: 'pt_light_pole',  label: 'Light Pole',  defColor: '#C85A2B', defGlyph: '✦', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
+    { kind: 'pt_guy_wire',    label: 'Guy Wire',    defColor: '#C85A2B', defGlyph: '✕', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
+    { kind: 'pt_delineator',  label: 'Delineator',  defColor: '#C85A2B', defGlyph: '◆', defSize: 20, group: 'Misc',      defSldPos: 'edge'    },
+    { kind: 'pt_mailbox',     label: 'Mailbox',     defColor: '#C85A2B', defGlyph: '▪', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
+    { kind: 'pt_flagpole',    label: 'Flagpole',    defColor: '#C85A2B', defGlyph: '🚩', defSize: 20, group: 'Misc',      defSldPos: 'offroad' },
+    { kind: 'pt_ada_ramp',    label: 'ADA Ramp',    defColor: '#C85A2B', defGlyph: '♿', defSize: 20, group: 'Misc',      defSldPos: 'road'    },
     // ── Utilities ────────────────────────────────────────────────────────────
-    { kind: 'pt_cb',          label: 'CB',          defColor: '#0B3D66', defGlyph: '⊕', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_di',          label: 'DI',          defColor: '#0B3D66', defGlyph: '◎', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_dmh',         label: 'DMH',         defColor: '#0B3D66', defGlyph: '⊗', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_smh',         label: 'SMH',         defColor: '#0B3D66', defGlyph: '⊙', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_emh',         label: 'EMH',         defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_pb',          label: 'PB',          defColor: '#0B3D66', defGlyph: '⬡', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_gg',          label: 'GG',          defColor: '#0B3D66', defGlyph: '◈', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_wg',          label: 'WG',          defColor: '#0B3D66', defGlyph: '◉', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_hyd',         label: 'HYD',         defColor: '#CC3333', defGlyph: '✚', defSize: 20, group: 'Utilities' },
-    { kind: 'pt_transformer', label: 'Transformer', defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities' },
+    { kind: 'pt_cb',          label: 'CB',          defColor: '#0B3D66', defGlyph: '⊕', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_di',          label: 'DI',          defColor: '#0B3D66', defGlyph: '◎', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_dmh',         label: 'DMH',         defColor: '#0B3D66', defGlyph: '⊗', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_smh',         label: 'SMH',         defColor: '#0B3D66', defGlyph: '⊙', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_emh',         label: 'EMH',         defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_pb',          label: 'PB',          defColor: '#0B3D66', defGlyph: '⬡', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_gg',          label: 'GG',          defColor: '#0B3D66', defGlyph: '◈', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_wg',          label: 'WG',          defColor: '#0B3D66', defGlyph: '◉', defSize: 20, group: 'Utilities', defSldPos: 'edge'    },
+    { kind: 'pt_hyd',         label: 'HYD',         defColor: '#CC3333', defGlyph: '✚', defSize: 20, group: 'Utilities', defSldPos: 'offroad' },
+    { kind: 'pt_transformer', label: 'Transformer', defColor: '#0B3D66', defGlyph: '⚡', defSize: 20, group: 'Utilities', defSldPos: 'offroad' },
     // ── Markings ─────────────────────────────────────────────────────────────
-    { kind: 'pt_hc_marking',  label: 'HC Marking',  defColor: '#D4A943', defGlyph: '♿', defSize: 20, group: 'Markings' },
-    { kind: 'pt_arrow',       label: 'Arrow',       defColor: '#D4A943', defGlyph: '➡', defSize: 20, group: 'Markings' },
-    { kind: 'pt_fire_lane',   label: 'Fire Lane',   defColor: '#D4A943', defGlyph: '⛔', defSize: 20, group: 'Markings' },
-    { kind: 'pt_text',        label: 'TEXT',        defColor: '#D4A943', defGlyph: '▪', defSize: 20, group: 'Markings' },
+    { kind: 'pt_hc_marking',  label: 'HC Marking',  defColor: '#D4A943', defGlyph: '♿', defSize: 20, group: 'Markings', defSldPos: 'road'    },
+    { kind: 'pt_arrow',       label: 'Arrow',       defColor: '#D4A943', defGlyph: '➡', defSize: 20, group: 'Markings', defSldPos: 'road'    },
+    { kind: 'pt_fire_lane',   label: 'Fire Lane',   defColor: '#D4A943', defGlyph: '⛔', defSize: 20, group: 'Markings', defSldPos: 'road'    },
+    { kind: 'pt_text',        label: 'TEXT',        defColor: '#D4A943', defGlyph: '▪', defSize: 20, group: 'Markings', defSldPos: 'road'    },
   ];
 
   function ptGet(kind) {
     var f    = FS_POINT_FEATURES.find(function (x) { return x.kind === kind; });
-    if (!f) return { color: '#888888', glyph: '●', size: 20 };
+    if (!f) return { color: '#888888', glyph: '●', size: 20, sldPos: 'road' };
     var saved = fsLoadAll()[kind] || {};
     return {
-      color: saved.color !== undefined ? saved.color : f.defColor,
-      glyph: saved.glyph !== undefined ? saved.glyph : f.defGlyph,
-      size:  saved.size  !== undefined ? saved.size  : f.defSize,
+      color:  saved.color  !== undefined ? saved.color  : f.defColor,
+      glyph:  saved.glyph  !== undefined ? saved.glyph  : f.defGlyph,
+      size:   saved.size   !== undefined ? saved.size   : f.defSize,
+      sldPos: saved.sldPos !== undefined ? saved.sldPos : f.defSldPos,
     };
   }
 
@@ -16947,9 +16978,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var rw = window._RW;
     if (!rw || !rw.PIN_STYLE) return;
     if (rw.PIN_STYLE[kind]) {
-      rw.PIN_STYLE[kind].color = s.color;
-      rw.PIN_STYLE[kind].glyph = s.glyph;
-      rw.PIN_STYLE[kind].size  = s.size;
+      rw.PIN_STYLE[kind].color  = s.color;
+      rw.PIN_STYLE[kind].glyph  = s.glyph;
+      rw.PIN_STYLE[kind].size   = s.size;
+      rw.PIN_STYLE[kind].sldPos = s.sldPos;
     }
     if (typeof rw.rerender === 'function') rw.rerender();
   }
@@ -17079,8 +17111,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var groupHdr = '';
       if (f.group !== prevGroup) {
         prevGroup = f.group;
-        groupHdr = '<tr class="fs-group-hdr"><td colspan="5">' + f.group + '</td></tr>';
+        groupHdr = '<tr class="fs-group-hdr"><td colspan="6">' + f.group + '</td></tr>';
       }
+      var sp = s.sldPos || 'road';
+      var sldSel = '<select class="fs-sldpos-sel" id="fs-sp-' + f.kind + '">' +
+        '<option value="road"'    + (sp === 'road'    ? ' selected' : '') + '>Road (CL)</option>' +
+        '<option value="edge"'    + (sp === 'edge'    ? ' selected' : '') + '>Road Edge</option>' +
+        '<option value="offroad"' + (sp === 'offroad' ? ' selected' : '') + '>Off-Road</option>' +
+        '</select>';
       return groupHdr + [
         '<tr class="fs-row" data-kind="' + f.kind + '">',
         '<td><span class="fs-kind-label">' + f.label + '</span></td>',
@@ -17088,6 +17126,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<input type="color" id="fs-color-' + f.kind + '" value="' + s.color + '"></div></td>',
         '<td><button class="fs-glyph-trigger" id="fs-gt-' + f.kind + '" title="Click to pick symbol">' + (s.glyph || '●') + '</button></td>',
         '<td><input type="number" class="fs-pt-size" id="fs-sz-' + f.kind + '" value="' + s.size + '" min="12" max="30" step="1"></td>',
+        '<td>' + sldSel + '</td>',
         '<td class="fs-pt-preview" id="fs-pv-' + f.kind + '">' + previewMarker(s.color, s.glyph, s.size) + '</td>',
         '</tr>',
       ].join('');
@@ -17104,7 +17143,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       '<div class="sg-section-title">Point Feature Styles</div>' +
       '<p class="sg-section-note">Click the symbol cell to open the glyph picker. Changes apply live to map pins.</p>' +
       '<table class="fs-table"><thead><tr class="fs-thead">' +
-      '<th>Feature</th><th>Color</th><th>Symbol</th><th>Size</th><th>Preview</th>' +
+      '<th>Feature</th><th>Color</th><th>Symbol</th><th>Size</th><th>SLD Pos</th><th>Preview</th>' +
       '</tr></thead><tbody>' + ptRows + '</tbody></table></div>';
 
     // ── Wire line controls ───────────────────────────────────────────────────
@@ -17164,6 +17203,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var szEl = document.getElementById('fs-sz-' + f.kind);
       if (szEl) szEl.oninput = function (e) {
         ptStyles[f.kind].size = parseInt(e.target.value, 10) || ptStyles[f.kind].size;
+        commitPt();
+      };
+
+      var spEl = document.getElementById('fs-sp-' + f.kind);
+      if (spEl) spEl.onchange = function (e) {
+        ptStyles[f.kind].sldPos = e.target.value;
         commitPt();
       };
 
