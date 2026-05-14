@@ -4941,13 +4941,25 @@ input.fs-slider::-webkit-slider-thumb {
 .dcp-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   padding: 5px 2px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: grab;
   transition: background 0.1s;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 .dcp-row:hover { background: var(--paper-2); }
+.dcp-row.dcp-drop-above { border-top-color: var(--blue); }
+.dcp-row.dcp-drop-below { border-bottom-color: var(--blue); }
+.dcp-drag-grip {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--ink-4);
+  cursor: grab;
+  line-height: 1;
+  margin-left: 1px;
+}
 .dcp-row input[type=checkbox] { flex-shrink: 0; margin: 0; cursor: pointer; }
 .dcp-row label {
   font: 400 11px/1.2 'IBM Plex Sans', sans-serif;
@@ -4964,7 +4976,8 @@ input.fs-slider::-webkit-slider-thumb {
 }
 .data-table {
   border-collapse: collapse;
-  width: 100%;
+  width: max-content;   /* grow to fit columns; wrapper scrolls horizontally */
+  min-width: 100%;
   table-layout: fixed;
 }
 /* Header row — blue background */
@@ -4974,18 +4987,36 @@ input.fs-slider::-webkit-slider-thumb {
   z-index: 4;
   background: var(--blue);
   border-bottom: 2px solid #09335a;
-  padding: 7px 10px;
-  font: 700 8.5px/1 'IBM Plex Mono', monospace;
+  border-right: 1px solid rgba(255,255,255,0.18);
+  padding: 9px 22px 9px 10px; /* right pad leaves room for resize handle */
+  font: 700 11px/1 'IBM Plex Mono', monospace;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   color: #fff;
   white-space: nowrap;
   text-align: left;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
 }
-.data-table thead tr th:hover { color: #a8d4ff; }
+.data-table thead tr th:hover { background: #0d4d85; }
+/* Resize drag handle — right edge of each th */
+.dt-resize-handle {
+  position: absolute;
+  right: 0; top: 0;
+  width: 7px; height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 120ms;
+}
+.dt-resize-handle:hover,
+.dt-resize-handle.dt-resizing { background: rgba(255,255,255,0.40); }
+/* Column drag-to-reorder visual feedback */
+.dt-th-drag-over-before { box-shadow: inset 3px 0 0 #fff !important; }
+.dt-th-drag-over-after  { box-shadow: inset -3px 0 0 #fff !important; }
+.dt-th-dragging         { opacity: 0.35; }
 /* Sticky dot + ID columns (body) */
 .dt-th-dot, .dt-cell-dot {
   position: sticky;
@@ -4993,7 +5024,7 @@ input.fs-slider::-webkit-slider-thumb {
   background: #fff;
   z-index: 5;
   width: 32px;
-  padding: 0 4px 0 12px !important;
+  padding: 0 4px 0 10px !important;
   border-right: none;
 }
 .dt-th-id, .dt-cell-id {
@@ -5002,7 +5033,7 @@ input.fs-slider::-webkit-slider-thumb {
   background: #fff;
   z-index: 5;
   border-right: 2px solid #c5d8ec;
-  padding-right: 12px !important;
+  padding-right: 22px !important; /* room for resize handle */
 }
 .dt-th-caret, .dt-cell-caret {
   position: sticky;
@@ -5013,7 +5044,7 @@ input.fs-slider::-webkit-slider-thumb {
   padding: 0 8px !important;
   border-left: 1px solid #dde8f4;
   color: #bbb;
-  font-size: 11px;
+  font-size: 13px;
 }
 /* Override sticky cell backgrounds in header row to stay blue */
 .data-table thead th.dt-th-dot,
@@ -5021,43 +5052,48 @@ input.fs-slider::-webkit-slider-thumb {
 .data-table thead th.dt-th-caret {
   background: var(--blue);
   z-index: 6;
-  border-right-color: #1a5589;
-  border-left-color: #1a5589;
+  border-right-color: rgba(255,255,255,0.18);
+  border-left-color: rgba(255,255,255,0.18);
 }
-/* Body rows — white base */
+/* Body rows */
 .data-table tbody tr.data-pin-row {
   cursor: pointer;
   transition: background 0.08s;
   -webkit-tap-highlight-color: transparent;
   background: #fff;
 }
-.data-table tbody tr.data-pin-row:hover { background: #ddeeff; }
+.data-table tbody tr.data-pin-row:nth-child(even) { background: #f5f8fd; }
+.data-table tbody tr.data-pin-row:nth-child(even) .dt-cell-dot,
+.data-table tbody tr.data-pin-row:nth-child(even) .dt-cell-id,
+.data-table tbody tr.data-pin-row:nth-child(even) .dt-cell-caret { background: #f5f8fd; }
+.data-table tbody tr.data-pin-row:hover { background: #ddeeff !important; }
 .data-table tbody tr.data-pin-row:hover .dt-cell-dot,
 .data-table tbody tr.data-pin-row:hover .dt-cell-id,
-.data-table tbody tr.data-pin-row:hover .dt-cell-caret { background: #ddeeff; }
-.data-table tbody tr.data-pin-row:active { background: #c5d8f5; }
+.data-table tbody tr.data-pin-row:hover .dt-cell-caret { background: #ddeeff !important; }
+.data-table tbody tr.data-pin-row:active { background: #c5d8f5 !important; }
 .data-table tbody td {
-  padding: 8px 10px;
-  font: 400 11px/1.3 'IBM Plex Sans', sans-serif;
+  padding: 9px 10px;
+  font: 400 12px/1.3 'IBM Plex Sans', sans-serif;
   color: var(--ink-2);
   white-space: nowrap;
   vertical-align: middle;
   border-bottom: 1px solid #e8f0f8;
+  border-right: 1px solid #edf2fa;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dt-cell-dot { background: #fff; }
 .dt-cell-id {
   background: #fff;
-  font: 700 10px/1 'IBM Plex Mono', monospace;
+  font: 700 11px/1 'IBM Plex Mono', monospace;
   color: var(--blue);
   letter-spacing: 0.02em;
 }
-.dt-cell-caret { background: #fff; }
+.dt-cell-caret { background: #fff; border-right: none; }
 /* Section group header rows inside tbody — light blue band */
 .dt-sec-hdr td {
   padding: 5px 12px;
-  font: 700 8.5px/1 'IBM Plex Mono', monospace;
+  font: 700 9px/1 'IBM Plex Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--blue-2);
@@ -5065,7 +5101,7 @@ input.fs-slider::-webkit-slider-thumb {
   border-top: 1px solid #c5d8ec;
   border-bottom: 1px solid #c5d8ec;
   position: sticky;
-  top: 27px;
+  top: 32px; /* match new header height */
   z-index: 3;
 }
 /* Status chip inside table cell */
@@ -5079,9 +5115,9 @@ input.fs-slider::-webkit-slider-thumb {
   color: var(--ink-3);
 }
 .dt-status .data-dot { flex-shrink: 0; }
-/* Sort indicator arrow */
-.dt-sort-asc::after  { content: ' ↑'; opacity: 0.7; }
-.dt-sort-desc::after { content: ' ↓'; opacity: 0.7; }
+/* Sort indicator arrows */
+.dt-sort-asc::after  { content: ' ▴'; opacity: 0.85; font-size: 9px; }
+.dt-sort-desc::after { content: ' ▾'; opacity: 0.85; font-size: 9px; }
 
 .data-list-scroll {
   flex: 1;
@@ -19625,49 +19661,60 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   // ── Column definitions ────────────────────────────────────────────────────
-  // id: localStorage key fragment; label: header text; w: min-width px;
+  // id: localStorage key fragment; label: header text; w: default width px;
   // def: shown by default; get(row): returns cell text value
   var DATA_COLUMNS = [
-    { id:'seg',    label:'Seg',          w:40,  def:true,
+    { id:'seg',    label:'Seg',               w:70,  def:true,
       get:function(r){ return r.sec.id; } },
-    { id:'kind',   label:'Kind',         w:68,  def:false,
+    { id:'kind',   label:'Kind',              w:100, def:false,
       get:function(r){ return r.merged.kind || '—'; } },
-    { id:'type',   label:'Type / Description', w:175, def:true,
+    { id:'type',   label:'Type / Description',w:240, def:true,
       get:function(r){ return _pinListDesc(r.merged); } },
-    { id:'sta',    label:'STA',          w:80,  def:true,
+    { id:'sta',    label:'STA',               w:110, def:true,
       get:function(r){ return r.merged.sta || '—'; } },
-    { id:'side',   label:'Side',         w:44,  def:true,
+    { id:'side',   label:'Side',              w:70,  def:true,
       get:function(r){ return (r.merged.attrs||{}).side || '—'; } },
-    { id:'length', label:'Length ft',    w:72,  def:true,
+    { id:'length', label:'Length (ft)',        w:100, def:true,
       get:function(r){ var a=r.merged.attrs||{}; return a.length_ft ? Math.round(a.length_ft)+'' : '—'; } },
-    { id:'rating', label:'Rating',       w:58,  def:false,
+    { id:'rating', label:'Rating',            w:80,  def:false,
       get:function(r){ var a=r.merged.attrs||{}; return a.rating!=null ? String(a.rating) : '—'; } },
-    { id:'cost',   label:'Repair Cost',  w:95,  def:false,
+    { id:'cost',   label:'Repair Cost',       w:130, def:false,
       get:function(r){ return (r.merged.attrs||{}).repair_cost || '—'; } },
-    { id:'asset',  label:'Report ID',    w:130, def:false,
+    { id:'asset',  label:'Report ID',         w:160, def:false,
       get:function(r){ return r.merged.asset_id || '—'; } },
-    { id:'fmss',   label:'FMSS',         w:88,  def:false,
+    { id:'fmss',   label:'FMSS',              w:120, def:false,
       get:function(r){ var a=r.merged.attrs||{}; return a.fmss_asset || a.fmss_loc || '—'; } },
-    { id:'source', label:'Source',       w:72,  def:false,
+    { id:'source', label:'Source',            w:100, def:false,
       get:function(r){ return (r.merged.reported_in||[]).join('/') || '—'; } },
-    { id:'date',   label:'Insp Date',    w:90,  def:false,
+    { id:'date',   label:'Insp Date',         w:120, def:false,
       get:function(r){ return (r.merged.attrs||{}).inspection_date || '—'; } },
-    { id:'status', label:'Status',       w:80,  def:true,
+    { id:'status', label:'Status',            w:110, def:true,
       get:function(r){ return (r.merged.status || 'pending'); } },
-    { id:'notes',  label:'Notes',        w:160, def:false,
+    { id:'notes',  label:'Notes',             w:220, def:false,
       get:function(r){ return (r.merged.attrs||{}).notes || '—'; } },
   ];
-  var _LS_COLS = 'rw_data_cols_v1';
+  var _LS_COLS       = 'rw_data_cols_v1';
+  var _LS_COL_WIDTHS = 'rw_data_col_widths_v1';
 
   function _getActiveCols() {
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(_LS_COLS)); } catch(e) {}
-    var ids = Array.isArray(saved) ? saved
-            : DATA_COLUMNS.filter(function(c){ return c.def; }).map(function(c){ return c.id; });
-    return DATA_COLUMNS.filter(function(c){ return ids.indexOf(c.id) !== -1; });
+    if (Array.isArray(saved) && saved.length) {
+      // Return in SAVED ORDER — the array itself defines column order
+      return saved.map(function(id) {
+        return DATA_COLUMNS.find(function(c) { return c.id === id; });
+      }).filter(Boolean);
+    }
+    return DATA_COLUMNS.filter(function(c) { return c.def; });
   }
   function _saveActiveCols(ids) {
     try { localStorage.setItem(_LS_COLS, JSON.stringify(ids)); } catch(e) {}
+  }
+  function _getColWidths() {
+    try { return JSON.parse(localStorage.getItem(_LS_COL_WIDTHS)) || {}; } catch(e) { return {}; }
+  }
+  function _saveColWidths(w) {
+    try { localStorage.setItem(_LS_COL_WIDTHS, JSON.stringify(w)); } catch(e) {}
   }
 
   // ── _tableRowHtml: one <tr> per feature ────────────────────────────────────
@@ -19689,25 +19736,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // ── _buildTable: complete table HTML from a filtered/sorted row array ───────
   function _buildTable(rows) {
     var cols    = _getActiveCols();
+    var widths  = _getColWidths();
     var grouped = (_filterState.sort === 'sec-sta') && (_filterState.section === 'all');
     var span    = cols.length + 3;  // dot + id + configurable + caret
 
-    // colgroup — defines fixed column widths (required for table-layout:fixed)
+    // colgroup — defines fixed column widths (table-layout:fixed relies on this)
     var colgroup = '<colgroup>';
-    colgroup += '<col style="width:32px">';   // dot
-    colgroup += '<col style="width:120px">';  // ID
+    colgroup += '<col data-col-el="dot" style="width:32px">';
+    colgroup += '<col data-col-el="id"  style="width:' + (widths['id'] || 170) + 'px">';
     cols.forEach(function(col) {
-      colgroup += '<col style="width:' + col.w + 'px">';
+      colgroup += '<col data-col-el="' + col.id + '" style="width:' + (widths[col.id] || col.w) + 'px">';
     });
-    colgroup += '<col style="width:28px">';   // caret
+    colgroup += '<col data-col-el="caret" style="width:28px">';
     colgroup += '</colgroup>';
 
-    // thead
+    // thead — draggable configurable columns; resize handle on every resizable th
     var thead = '<thead><tr>';
     thead += '<th class="dt-th-dot"></th>';
-    thead += '<th class="dt-th-id">ID</th>';
+    thead += '<th class="dt-th-id" data-col-id="id">ID' +
+             '<div class="dt-resize-handle" data-resize-id="id"></div></th>';
     cols.forEach(function(col) {
-      thead += '<th data-sort-col="' + col.id + '">' + _esc(col.label) + '</th>';
+      thead += '<th data-col-id="' + col.id + '" data-sort-col="' + col.id + '" draggable="true">' +
+               _esc(col.label) +
+               '<div class="dt-resize-handle" data-resize-id="' + col.id + '"></div>' +
+               '</th>';
     });
     thead += '<th class="dt-th-caret"></th></tr></thead>';
 
@@ -19741,25 +19793,84 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var panel = document.getElementById('dt-col-picker-panel');
     var btn   = document.getElementById('dt-col-picker-btn');
     if (!panel) return;
-    var saved = null;
-    try { saved = JSON.parse(localStorage.getItem(_LS_COLS)); } catch(e) {}
-    var active = Array.isArray(saved) ? saved
-               : DATA_COLUMNS.filter(function(c){ return c.def; }).map(function(c){ return c.id; });
-    var html = '<div class="dcp-title">Visible Columns</div>';
-    DATA_COLUMNS.forEach(function(col) {
-      var chk = active.indexOf(col.id) !== -1 ? ' checked' : '';
-      html += '<div class="dcp-row"><input type="checkbox" id="dcp-' + col.id + '" value="' + col.id + '"' + chk + '>' +
-              '<label for="dcp-' + col.id + '">' + _esc(col.label) + '</label></div>';
+
+    // Build ordered list: active cols first (in their current order), then inactive
+    var activeCols   = _getActiveCols();
+    var activeIds    = activeCols.map(function(c){ return c.id; });
+    var inactiveCols = DATA_COLUMNS.filter(function(c){ return activeIds.indexOf(c.id) === -1; });
+    var orderedCols  = activeCols.concat(inactiveCols);
+
+    var html = '<div class="dcp-title">Columns <span style="font-weight:400;font-size:9px;opacity:.7">drag to reorder</span></div>';
+    orderedCols.forEach(function(col) {
+      var chk = activeIds.indexOf(col.id) !== -1 ? ' checked' : '';
+      html += '<div class="dcp-row" draggable="true" data-dcp-id="' + col.id + '">' +
+              '<span class="dcp-drag-grip">⠿</span>' +
+              '<input type="checkbox" id="dcp-' + col.id + '" value="' + col.id + '"' + chk + '>' +
+              '<label for="dcp-' + col.id + '">' + _esc(col.label) + '</label>' +
+              '</div>';
     });
     panel.innerHTML = html;
     panel.classList.add('open');
     if (btn) btn.classList.add('active');
+
+    // Checkbox change → update saved order (active only) + re-render
+    function _refreshFromPanel() {
+      var ids = [];
+      panel.querySelectorAll('[data-dcp-id]').forEach(function(row) {
+        var cb = row.querySelector('input[type=checkbox]');
+        if (cb && cb.checked) ids.push(row.dataset.dcpId);
+      });
+      _saveActiveCols(ids);
+      renderDataList(_dataState.type);
+    }
     panel.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
-      cb.addEventListener('change', function() {
-        var ids = [];
-        panel.querySelectorAll('input[type=checkbox]:checked').forEach(function(c){ ids.push(c.value); });
-        _saveActiveCols(ids);
-        renderDataList(_dataState.type);
+      cb.addEventListener('change', _refreshFromPanel);
+    });
+
+    // Drag-to-reorder within picker
+    var _dcpDragId = null;
+    panel.querySelectorAll('[data-dcp-id]').forEach(function(row) {
+      row.addEventListener('dragstart', function(e) {
+        _dcpDragId = row.dataset.dcpId;
+        row.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', function() {
+        row.style.opacity = '';
+        panel.querySelectorAll('[data-dcp-id]').forEach(function(r) {
+          r.classList.remove('dcp-drop-above','dcp-drop-below');
+        });
+        _dcpDragId = null;
+      });
+      row.addEventListener('dragover', function(e) {
+        if (!_dcpDragId || _dcpDragId === row.dataset.dcpId) return;
+        e.preventDefault();
+        var rect = row.getBoundingClientRect();
+        panel.querySelectorAll('[data-dcp-id]').forEach(function(r) {
+          r.classList.remove('dcp-drop-above','dcp-drop-below');
+        });
+        row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'dcp-drop-above' : 'dcp-drop-below');
+      });
+      row.addEventListener('dragleave', function() {
+        row.classList.remove('dcp-drop-above','dcp-drop-below');
+      });
+      row.addEventListener('drop', function(e) {
+        if (!_dcpDragId || _dcpDragId === row.dataset.dcpId) return;
+        e.preventDefault();
+        row.classList.remove('dcp-drop-above','dcp-drop-below');
+        var allRows = Array.from(panel.querySelectorAll('[data-dcp-id]'));
+        var fromIdx = allRows.findIndex(function(r){ return r.dataset.dcpId === _dcpDragId; });
+        var toIdx   = allRows.findIndex(function(r){ return r === row; });
+        if (fromIdx === -1 || toIdx === -1) return;
+        var rect = row.getBoundingClientRect();
+        var insertAfter = e.clientY >= rect.top + rect.height / 2;
+        var dragRow = allRows.splice(fromIdx, 1)[0];
+        if (fromIdx < toIdx) toIdx--;
+        allRows.splice(insertAfter ? toIdx + 1 : toIdx, 0, dragRow);
+        // Rebuild panel rows in new order
+        var list = panel.querySelector('.dcp-title');
+        allRows.forEach(function(r) { panel.appendChild(r); });
+        _refreshFromPanel();
       });
     });
   }
@@ -21545,10 +21656,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     });
 
-    // Column-header sort (click <th data-sort-col="...">)
+    // ── Table: column resize + drag-to-reorder ────────────────────────────────
+    // Module-level resize state
+    var _resizing  = null;  // { colId, startX, startW, colEl, handleEl }
+    var _dragColId = null;  // dragged column id (header drag)
+
     var scrollEl = document.getElementById('data-list-scroll');
+
     if (scrollEl) {
+      // Resize: mousedown on .dt-resize-handle (event delegation from scrollEl)
+      scrollEl.addEventListener('mousedown', function (e) {
+        var handle = e.target.closest('.dt-resize-handle[data-resize-id]');
+        if (!handle) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var colId = handle.dataset.resizeId;
+        var table = scrollEl.querySelector('.data-table');
+        var colEl = table ? table.querySelector('col[data-col-el="' + colId + '"]') : null;
+        if (!colEl) return;
+        var startW = parseInt(colEl.style.width) || colEl.offsetWidth || 100;
+        handle.classList.add('dt-resizing');
+        _resizing = { colId: colId, startX: e.clientX, startW: startW, colEl: colEl, handleEl: handle };
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      // Column header sort — ignore if clicking resize handle or during drag
       scrollEl.addEventListener('click', function (e) {
+        if (e.target.closest('.dt-resize-handle')) return; // ignore resize handle clicks
         var th = e.target.closest('th[data-sort-col]');
         if (!th) return;
         var col = th.dataset.sortCol;
@@ -21560,7 +21695,77 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (sel) sel.value = _filterState.sort;
         renderDataList(_dataState.type);
       });
+
+      // Column header drag-to-reorder (event delegation)
+      scrollEl.addEventListener('dragstart', function (e) {
+        var th = e.target.closest('th[data-col-id][draggable]');
+        if (!th) return;
+        _dragColId = th.dataset.colId;
+        th.classList.add('dt-th-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', _dragColId);
+      });
+      scrollEl.addEventListener('dragend', function (e) {
+        var th = e.target.closest('th[data-col-id]');
+        if (th) th.classList.remove('dt-th-dragging');
+        scrollEl.querySelectorAll('.dt-th-drag-over-before,.dt-th-drag-over-after').forEach(function (el) {
+          el.classList.remove('dt-th-drag-over-before','dt-th-drag-over-after');
+        });
+        _dragColId = null;
+      });
+      scrollEl.addEventListener('dragover', function (e) {
+        var th = e.target.closest('th[data-col-id][draggable]');
+        if (!th || !_dragColId || _dragColId === th.dataset.colId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var rect = th.getBoundingClientRect();
+        scrollEl.querySelectorAll('.dt-th-drag-over-before,.dt-th-drag-over-after').forEach(function (el) {
+          el.classList.remove('dt-th-drag-over-before','dt-th-drag-over-after');
+        });
+        th.classList.add(e.clientX < rect.left + rect.width / 2 ? 'dt-th-drag-over-before' : 'dt-th-drag-over-after');
+      });
+      scrollEl.addEventListener('dragleave', function (e) {
+        var th = e.target.closest('th[data-col-id]');
+        if (th) { th.classList.remove('dt-th-drag-over-before','dt-th-drag-over-after'); }
+      });
+      scrollEl.addEventListener('drop', function (e) {
+        var th = e.target.closest('th[data-col-id][draggable]');
+        if (!th || !_dragColId || _dragColId === th.dataset.colId) return;
+        e.preventDefault();
+        th.classList.remove('dt-th-drag-over-before','dt-th-drag-over-after');
+        var activeCols = _getActiveCols();
+        var ids = activeCols.map(function(c){ return c.id; });
+        var fromIdx = ids.indexOf(_dragColId);
+        var toIdx   = ids.indexOf(th.dataset.colId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        var rect = th.getBoundingClientRect();
+        var insertAfter = e.clientX >= rect.left + rect.width / 2;
+        ids.splice(fromIdx, 1);
+        if (fromIdx < toIdx) toIdx--;
+        ids.splice(insertAfter ? toIdx + 1 : toIdx, 0, _dragColId);
+        _saveActiveCols(ids);
+        renderDataList(_dataState.type);
+      });
     }
+
+    // Resize track: mousemove + mouseup on document (wired once)
+    document.addEventListener('mousemove', function (e) {
+      if (!_resizing) return;
+      var newW = Math.max(50, _resizing.startW + (e.clientX - _resizing.startX));
+      _resizing.colEl.style.width = newW + 'px';
+    });
+    document.addEventListener('mouseup', function (e) {
+      if (!_resizing) return;
+      var newW = Math.max(50, _resizing.startW + (e.clientX - _resizing.startX));
+      _resizing.colEl.style.width = newW + 'px';
+      var w = _getColWidths();
+      w[_resizing.colId] = newW;
+      _saveColWidths(w);
+      if (_resizing.handleEl) _resizing.handleEl.classList.remove('dt-resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      _resizing = null;
+    });
 
     // Back button
     document.getElementById('data-back-btn')?.addEventListener('click', function () {
