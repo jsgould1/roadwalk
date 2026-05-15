@@ -6868,6 +6868,7 @@ body.mobile-mode #app {
             </select>
             <div class="dfc-sep"></div>
             <button class="dfc-col-btn" id="dt-col-picker-btn" aria-label="Choose columns">⊞ Cols</button>
+            <button class="dfc-col-btn" id="dt-csv-export-btn" aria-label="Export all feature data to CSV">⬇ CSV</button>
           </div>
 
           <!-- Column picker flyout (shown/hidden by JS) -->
@@ -19981,6 +19982,73 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (btn)   btn.classList.remove('active');
   }
 
+  // ── CSV export ─────────────────────────────────────────────────────────────
+  // Flattens every feature (all sections, merged with field data) into one
+  // CSV table. Leading columns are the GIS/CAD-relevant identity fields
+  // (field_id first), followed by a union of every attribute key found across
+  // all features — so a shared field like `condition` lands in one column
+  // regardless of feature kind.
+  function _exportDataCSV() {
+    var sections = window.SECTIONS || [];
+    var rows = [];
+    sections.forEach(function (sec) {
+      (sec.pins || []).forEach(function (pin) {
+        rows.push({ sec: sec, merged: _mergedPin(pin) });
+      });
+    });
+    if (!rows.length) { window.alert('No features to export.'); return; }
+
+    // Union of all attribute keys (skip bulky/non-tabular fields)
+    var SKIP = { photos: 1, panels: 1, custom_fields: 1, labels: 1 };
+    var attrSet = {};
+    rows.forEach(function (r) {
+      var a = r.merged.attrs || {};
+      Object.keys(a).forEach(function (k) { if (!SKIP[k]) attrSet[k] = true; });
+    });
+    var attrKeys = Object.keys(attrSet).sort();
+
+    var header = ['field_id', 'kind', 'section_id', 'section_name', 'sta',
+                  'status', 'latitude', 'longitude'].concat(attrKeys);
+
+    function _cell(v) {
+      if (v == null) return '';
+      if (Array.isArray(v)) v = v.join('; ');
+      else if (typeof v === 'object') v = JSON.stringify(v);
+      v = String(v);
+      return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }
+    function _latlng(pin) {
+      var g = pin.geometry;
+      if (!g || !g.coordinates) return [null, null];
+      var c = g.coordinates;
+      if (g.type === 'Point')      return [c[1], c[0]];
+      if (g.type === 'LineString' && c.length) { var m = c[Math.floor(c.length / 2)]; return [m[1], m[0]]; }
+      if (g.type === 'Polygon' && c[0] && c[0].length) { var p = c[0][0]; return [p[1], p[0]]; }
+      return [null, null];
+    }
+
+    var lines = [header.map(_cell).join(',')];
+    rows.forEach(function (r) {
+      var m  = r.merged, a = m.attrs || {};
+      var ll = _latlng(m);
+      var row = [m.id, m.kind, r.sec.id, r.sec.name, m.sta,
+                 m.status || 'pending', ll[0], ll[1]];
+      attrKeys.forEach(function (k) { row.push(a[k]); });
+      lines.push(row.map(_cell).join(','));
+    });
+
+    // Prepend a UTF-8 BOM so Excel reads accented characters correctly
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var aEl  = document.createElement('a');
+    aEl.href = url;
+    aEl.download = 'roadwalk_data_' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(aEl);
+    aEl.click();
+    document.body.removeChild(aEl);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
   // ── _renderAllOverview: "All" tab — summary cards + full feature list ────────
   function _renderAllOverview(sections, scrollEl) {
     var TYPES     = ['sign', 'culvert', 'guardrail', 'wall', 'pavement', 'overlook', 'monument', 'other'];
@@ -21798,6 +21866,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _closeColPicker();
       }
     });
+
+    // ── CSV export button ──────────────────────────────────────────────────────
+    var csvBtn = document.getElementById('dt-csv-export-btn');
+    if (csvBtn) csvBtn.addEventListener('click', function () { _exportDataCSV(); });
 
     // ── Table: column resize + drag-to-reorder ────────────────────────────────
     // Module-level resize state
