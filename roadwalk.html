@@ -12130,7 +12130,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // fallback to legacy field names (ep1_type/ep2_type) for older saved data.
       const ep1 = (pin.attrs?.ep_inlet_type  || pin.attrs?.ep1_type || '').toLowerCase();
       const ep2 = (pin.attrs?.ep_outlet_type || pin.attrs?.ep2_type || '').toLowerCase();
-      const C = '#0B3D66';
+      // Pull the culvert color from PIN_STYLE so the SLD stays unified with the
+      // map and reflects any Style Guide customization.
+      const C = (PIN_STYLE.culvert && PIN_STYLE.culvert.color) || '#0B3D66';
       // Use .includes() so values like "Headwall — concrete" or "Flange/mitered" still match
       const _isHeadwall = (t) => t.includes('headwall');
       const _isFlange   = (t) => t.includes('flange') || t.includes('miter');
@@ -12158,12 +12160,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       el.innerHTML = svgMarkup;
       el.addEventListener('click', (e) => { e.stopPropagation(); openFeaturePopup(pin, sec, e); });
       inner.appendChild(el);
-      const culCode = pin.kind === 'ln_box_culvert' ? 'BC' : 'CV';
+      const culCode = (PIN_STYLE[pin.kind] && PIN_STYLE[pin.kind].code) ||
+                      (pin.kind === 'ln_box_culvert' ? 'BC' : 'CV');
       const badge = document.createElement('div');
       badge.className = 'strip-bar-badge';
       badge.textContent = culCode;
       badge.title = `${pin.id} · culvert · ${pin.sta || fmtSta(pin.sta_ft)}`;
-      badge.style.background = '#0B3D66'; badge.style.transform = 'translate(-50%, -50%)';
+      badge.style.background = C; badge.style.transform = 'translate(-50%, -50%)';
       badge.addEventListener('click', (e) => { e.stopPropagation(); openFeaturePopup(pin, sec, e); });
       if (horiz) { badge.style.left = `${pSta}%`; badge.style.top = '50%'; }
       else        { badge.style.top  = `${pSta}%`; badge.style.left = '50%'; }
@@ -21654,6 +21657,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       saved_at: new Date().toISOString(),
     };
 
+    // ── Sync edited attrs/status back onto the live bundle pin ───────────────
+    // The SLD (renderStrip) and map (buildPinLayer) render from
+    // window.SECTIONS — NOT from IDB. Without this write-back the saved data
+    // persists to the database but never appears on the diagram. _dataState.pin
+    // is a _mergedPin() copy, so we locate the original in sec.pins by id/ulid.
+    var _sec = _dataState.sec;
+    if (_sec && Array.isArray(_sec.pins)) {
+      var _bp = null;
+      for (var _i = 0; _i < _sec.pins.length; _i++) {
+        var _p = _sec.pins[_i];
+        if (_p.id === pin.id || (pin.ulid && _p.ulid === pin.ulid)) { _bp = _p; break; }
+      }
+      if (_bp) {
+        _bp.attrs  = Object.assign({}, _bp.attrs, pin.attrs);
+        _bp.status = pin.status || _bp.status || 'pending';
+        if (!_bp.ulid) _bp.ulid = pin.ulid;
+      }
+    }
+
     window.RWIdb.put('inspections', record).then(function () {
       // Update both cache indexes so _mergedPin finds the record immediately
       _dataState.idbCache[pin.id]             = record;
@@ -21666,6 +21688,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (saveBtn) saveBtn.disabled = false;
       // Re-render the list badge counts
       _updateTypeBadges();
+      // Redraw map + SLD so endpoint caps, colors, condition, etc. show live
+      if (window._RW && typeof window._RW.rerender === 'function') window._RW.rerender();
     }).catch(function () {
       if (flash) flash.textContent = '⚠ Error';
       if (saveBtn) saveBtn.disabled = false;
