@@ -20956,6 +20956,201 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }).join('') + '</div>';
   }
 
+  // ── Culvert Detail QC diagram ──────────────────────────────────────────────
+  // Auto-generated profile (side elevation) + plan (top-down) cross-section
+  // plus an inlet/barrel/outlet summary — a visual QC check of entered data.
+  // Ported from the NPS Culvert Assessment tool's renderDetail().
+  function _renderCulvertDetail(pin, sec) {
+    var d = pin.attrs || {};
+    var e2 = _esc;
+    // condition color: 1-2 green, 3 orange, 4-5 red, blank/NA gray
+    var cc = function (r) {
+      var n = parseInt(r) || 0;
+      if (!n || r === 'N/A') return '#999';
+      return n <= 2 ? '#1a6b3a' : n === 3 ? '#c45800' : '#b51c1c';
+    };
+    var condLabel = function (r) {
+      if (!r || r === 'N/A') return 'N/A';
+      return (String(r).split('–')[1] || '').trim() || String(r);
+    };
+    var hwName = function (v) { return (v && !/^none/i.test(v)) ? v : null; };
+
+    var mat     = d.material || '—';
+    var shape   = d.shape || 'Circular';
+    var numB    = parseInt(d.num_barrels) || 1;
+    var sizeW   = d.size_width || '—';
+    var sizeH   = d.size_height || '';
+    var lengthS = d.length_ft ? d.length_ft + ' ft' : '—';
+    var slope   = d.slope || '—';
+    var inletCond  = d.inlet_condition  || 'N/A';
+    var barrelCond = d.barrel_condition || 'N/A';
+    var outletCond = d.outlet_condition || 'N/A';
+    var hwUS = hwName(d.hw_upstream), hwDS = hwName(d.hw_downstream);
+    var hwUSCond = d.hw_upstream_cond || 'N/A', hwDSCond = d.hw_downstream_cond || 'N/A';
+    var ripIn  = d.riprap_inlet  || 'N/A – None Present';
+    var ripOut = d.riprap_outlet || 'N/A – None Present';
+    var swaleUSL = d.swale_us_left || 'N/A', swaleUSR = d.swale_us_right || 'N/A';
+    var swaleDSL = d.swale_ds_left || 'N/A', swaleDSR = d.swale_ds_right || 'N/A';
+    var flow = d.flow || '', flowDir = d.flow_direction || '', waterbody = d.waterbody || '';
+    var roadName = (sec && sec.name) || 'Roadway';
+    var pick = function (obj) {
+      return Object.keys(obj || {}).filter(function (k) { return obj[k] && obj[k].on; });
+    };
+    var inIssues = pick(d.inlet_issues), barIssues = pick(d.barrel_issues), outIssues = pick(d.outlet_issues);
+
+    var swaleClr = function (s) {
+      if (!s || s === 'N/A') return '#999';
+      if (/^Good/.test(s)) return '#1a6b3a';
+      if (/^(Fair|Vegetated)/.test(s)) return '#c45800';
+      if (/^(Poor|Silted|Bare)/.test(s)) return '#b51c1c';
+      if (/^Armored/.test(s)) return '#2a4a6b';
+      return '#999';
+    };
+    var ripClr = function (r) {
+      return r === 'Good' ? '#1a6b3a' : r === 'Displaced' ? '#c45800' : r === 'Missing' ? '#b51c1c' : '#999';
+    };
+
+    // cardinal directions from flow direction
+    var cardUS = '', cardDS = '';
+    if (/North to South/.test(flowDir)) { cardUS = 'N'; cardDS = 'S'; }
+    else if (/South to North/.test(flowDir)) { cardUS = 'S'; cardDS = 'N'; }
+    else if (/East to West/.test(flowDir)) { cardUS = 'E'; cardDS = 'W'; }
+    else if (/West to East/.test(flowDir)) { cardUS = 'W'; cardDS = 'E'; }
+
+    // ── PROFILE (side elevation) ──────────────────────────────────────────────
+    var W = 900, H = 360, pipeY = 175;
+    var diaRaw = parseInt(sizeW) || 24;
+    var diaSc = Math.max(18, Math.min(60, diaRaw * 0.55));
+    var pipeTop = pipeY - diaSc, pipeBot = pipeY + diaSc, pipeMid = W / 2;
+    var roadHalfW = 163, embL = pipeMid - roadHalfW, embR = pipeMid + roadHalfW;
+    var embankH = 80, embankTop = pipeTop - embankH, groundY = pipeBot + 28, embSlopeW = 40;
+    var pipeX1 = embL - embSlopeW - 45, pipeX2 = embR + embSlopeW + 45;
+    var pipeClr = cc(barrelCond), pipeFill = pipeClr + '22';
+    var inClr = cc(inletCond), outClr = cc(outletCond), hwNone = '#b0b8c8';
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">' +
+      '<defs><style>text{paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;font-family:sans-serif}</style>' +
+      '<pattern id="cvhatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#b0bbd0" stroke-width="1.5"/></pattern>' +
+      '<marker id="cvad" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,.5 L6,3 L0,5.5 Z" fill="#111"/></marker>' +
+      '<marker id="cvadr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M0,.5 L6,3 L0,5.5 Z" fill="#111"/></marker>' +
+      '<marker id="cvfa" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#0B3D66"/></marker>' +
+      '</defs><rect width="' + W + '" height="' + H + '" fill="#f4f6fb"/>';
+    svg += '<line x1="0" y1="' + groundY + '" x2="' + W + '" y2="' + groundY + '" stroke="#8a9bb5" stroke-width="1.5" stroke-dasharray="5,3"/>';
+    svg += '<polygon points="' + embL + ',' + embankTop + ' ' + embR + ',' + embankTop + ' ' + (embR + embSlopeW) + ',' + groundY + ' ' + (embL - embSlopeW) + ',' + groundY + '" fill="url(#cvhatch)" stroke="#8a9bb5" stroke-width="1"/>';
+    svg += '<rect x="' + (embL - 6) + '" y="' + (embankTop - 12) + '" width="' + (embR - embL + 12) + '" height="14" fill="#5a6a88" rx="2"/>';
+    svg += '<text x="' + pipeMid + '" y="' + (embankTop - 2) + '" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" style="stroke:#222;stroke-width:4px">' + e2(roadName) + '</text>';
+    // pipe barrels
+    for (var b = 0; b < Math.min(numB, 3); b++) {
+      var off = b * 6;
+      svg += '<rect x="' + pipeX1 + '" y="' + (pipeTop + off) + '" width="' + (pipeX2 - pipeX1) + '" height="' + (diaSc * 2) +
+        '" rx="' + (/Circular|Oval/.test(shape) ? diaSc : 4) + '" fill="' + pipeFill + '" stroke="' + pipeClr + '" stroke-width="3"/>';
+    }
+    svg += '<rect x="' + pipeX1 + '" y="' + pipeTop + '" width="30" height="' + (diaSc * 2) + '" rx="3" fill="' + inClr + '" opacity=".28"/>';
+    svg += '<rect x="' + (pipeX2 - 30) + '" y="' + pipeTop + '" width="30" height="' + (diaSc * 2) + '" rx="3" fill="' + outClr + '" opacity=".28"/>';
+    // headwalls
+    if (hwUS) {
+      var hc1 = cc(hwUSCond);
+      svg += '<rect x="' + (pipeX1 - 24) + '" y="' + (pipeTop - 14) + '" width="22" height="' + (diaSc * 2 + 28) + '" rx="3" fill="' + hc1 + '" opacity=".85" stroke="' + hc1 + '" stroke-width="2"/>';
+      svg += '<text x="' + (pipeX1 - 13) + '" y="' + (pipeTop - 20) + '" text-anchor="middle" font-size="12" fill="' + hc1 + '" font-weight="700">HW: ' + e2(String(hwUS).split(' ')[0]) + '</text>';
+    } else {
+      svg += '<rect x="' + (pipeX1 - 24) + '" y="' + (pipeTop - 8) + '" width="22" height="' + (diaSc * 2 + 16) + '" rx="3" fill="none" stroke="' + hwNone + '" stroke-width="1.5" stroke-dasharray="5,4"/>';
+      svg += '<text x="' + (pipeX1 - 13) + '" y="' + (pipeTop - 14) + '" text-anchor="middle" font-size="13" fill="' + hwNone + '" font-weight="600">No HW</text>';
+    }
+    if (hwDS) {
+      var hc2 = cc(hwDSCond);
+      svg += '<rect x="' + (pipeX2 + 2) + '" y="' + (pipeTop - 14) + '" width="22" height="' + (diaSc * 2 + 28) + '" rx="3" fill="' + hc2 + '" opacity=".85" stroke="' + hc2 + '" stroke-width="2"/>';
+      svg += '<text x="' + (pipeX2 + 13) + '" y="' + (pipeTop - 20) + '" text-anchor="middle" font-size="12" fill="' + hc2 + '" font-weight="700">HW: ' + e2(String(hwDS).split(' ')[0]) + '</text>';
+    } else {
+      svg += '<rect x="' + (pipeX2 + 2) + '" y="' + (pipeTop - 8) + '" width="22" height="' + (diaSc * 2 + 16) + '" rx="3" fill="none" stroke="' + hwNone + '" stroke-width="1.5" stroke-dasharray="5,4"/>';
+      svg += '<text x="' + (pipeX2 + 13) + '" y="' + (pipeTop - 14) + '" text-anchor="middle" font-size="13" fill="' + hwNone + '" font-weight="600">No HW</text>';
+    }
+    // flow arrow
+    svg += '<path d="M' + (pipeMid - 50) + ',36 q6,-6 12,0 q6,6 12,0 q6,-6 12,0 L' + (pipeMid + 42) + ',36" stroke="#0B3D66" stroke-width="2.2" fill="none" marker-end="url(#cvfa)" opacity=".85"/>';
+    svg += '<text x="' + pipeMid + '" y="28" text-anchor="middle" font-size="13" font-weight="800" fill="#0B3D66">FLOW' + (waterbody ? ' — ' + e2(waterbody) : '') + '</text>';
+    // length dimension
+    var dimY = groundY + 38;
+    svg += '<line x1="' + pipeX1 + '" y1="' + dimY + '" x2="' + pipeX2 + '" y2="' + dimY + '" stroke="#111" stroke-width="1.2" marker-start="url(#cvadr)" marker-end="url(#cvad)"/>';
+    svg += '<text x="' + pipeMid + '" y="' + (dimY + 14) + '" text-anchor="middle" font-size="13" fill="#111" font-weight="700">' + e2(lengthS) + '</text>';
+    // diameter + slope labels
+    svg += '<text x="' + (pipeX1 + 30) + '" y="' + (pipeTop - 32) + '" text-anchor="middle" font-size="13" fill="#111" font-weight="700">Ø ' + e2(sizeW) + (sizeH ? ' × ' + e2(sizeH) : '') + '</text>';
+    if (d.slope) svg += '<text x="' + (pipeX2 - 30) + '" y="' + (pipeTop - 32) + '" text-anchor="middle" font-size="13" fill="#111" font-weight="600">Slope: ' + e2(slope) + '</text>';
+    // cardinal labels
+    svg += '<text x="14" y="' + (pipeY - 10) + '" font-size="' + (cardUS ? 14 : 11) + '" font-weight="800" fill="#0B3D66">' + (cardUS || '') + '</text>';
+    svg += '<text x="14" y="' + (pipeY + 6) + '" font-size="11" font-weight="600" fill="#5a6a88">UPSTREAM</text>';
+    svg += '<text x="' + (W - 14) + '" y="' + (pipeY - 10) + '" text-anchor="end" font-size="' + (cardDS ? 14 : 11) + '" font-weight="800" fill="#0B3D66">' + (cardDS || '') + '</text>';
+    svg += '<text x="' + (W - 14) + '" y="' + (pipeY + 6) + '" text-anchor="end" font-size="11" font-weight="600" fill="#5a6a88">DOWNSTREAM</text>';
+    // condition badges
+    svg += '<text x="' + (pipeX1 + 15) + '" y="' + (H - 20) + '" text-anchor="middle" font-size="12" fill="' + inClr + '" font-weight="700">Inlet: ' + e2(condLabel(inletCond)) + '</text>';
+    svg += '<text x="' + pipeMid + '" y="' + (H - 20) + '" text-anchor="middle" font-size="12" fill="' + pipeClr + '" font-weight="700">Barrel: ' + e2(condLabel(barrelCond)) + '</text>';
+    svg += '<text x="' + (pipeX2 - 15) + '" y="' + (H - 20) + '" text-anchor="middle" font-size="12" fill="' + outClr + '" font-weight="700">Outlet: ' + e2(condLabel(outletCond)) + '</text>';
+    if (inIssues.length)  svg += '<text x="' + (pipeX1 + 15) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="' + inClr + '" font-style="italic">⚠ ' + e2(inIssues.slice(0,3).join(', ')) + '</text>';
+    if (barIssues.length) svg += '<text x="' + pipeMid + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="' + pipeClr + '" font-style="italic">⚠ ' + e2(barIssues.slice(0,3).join(', ')) + '</text>';
+    if (outIssues.length) svg += '<text x="' + (pipeX2 - 15) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="' + outClr + '" font-style="italic">⚠ ' + e2(outIssues.slice(0,3).join(', ')) + '</text>';
+    svg += '</svg>';
+
+    // ── SUMMARY TABLE ─────────────────────────────────────────────────────────
+    var badge = function (r, lbl) {
+      return '<span style="display:inline-flex;align-items:center;gap:5px">' +
+        '<span style="width:10px;height:10px;border-radius:50%;background:' + cc(r) + ';display:inline-block"></span>' +
+        '<span style="font-weight:700;color:' + cc(r) + '">' + e2(lbl || condLabel(r)) + '</span></span>';
+    };
+    var swBadge = function (s) {
+      return '<span style="width:8px;height:8px;border-radius:2px;background:' + swaleClr(s) +
+        ';margin-right:4px;display:inline-block"></span><span style="color:' + swaleClr(s) +
+        ';font-weight:600">' + e2(String(s || 'N/A').split('–')[0].trim()) + '</span>';
+    };
+    var issRow = function (iss, cond) {
+      return iss.length ? '<div style="font-size:11px;color:' + cc(cond) + ';margin-top:2px">⚠ ' + e2(iss.join(', ')) + '</div>' : '';
+    };
+    var col = function (title, bg, body) {
+      return '<div style="padding:12px 14px;border-right:1px solid #e8edf8;' + (bg ? 'background:#f4f6fb' : '') + '">' +
+        '<div style="font-weight:700;font-size:12px;color:var(--blue);letter-spacing:.05em;margin-bottom:7px;text-transform:uppercase">' + title + '</div>' + body + '</div>';
+    };
+    var table =
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid #d0d9ee">' +
+        col('Inlet', false,
+          '<div style="margin-bottom:5px">' + badge(inletCond, 'Condition: ' + condLabel(inletCond)) + '</div>' +
+          (hwUS ? '<div style="font-size:12px;margin-bottom:3px">Headwall: <strong>' + e2(hwUS) + '</strong></div>'
+                : '<div style="font-size:12px;color:#5a6a88;margin-bottom:3px">No headwall</div>') +
+          '<div style="font-size:12px">Riprap: <span style="color:' + ripClr(ripIn) + ';font-weight:600">' + e2(ripIn) + '</span></div>' +
+          issRow(inIssues, inletCond)) +
+        col('Barrel', true,
+          '<div style="margin-bottom:5px">' + badge(barrelCond, 'Condition: ' + condLabel(barrelCond)) + '</div>' +
+          '<div style="font-size:12px;margin-bottom:2px">Material: <strong>' + e2(mat) + '</strong></div>' +
+          '<div style="font-size:12px;margin-bottom:2px">Shape: <strong>' + e2(shape) + '</strong> · ' + (numB > 1 ? '<strong>' + numB + ' barrels</strong>' : 'Single barrel') + '</div>' +
+          '<div style="font-size:12px;margin-bottom:2px">Size: <strong>' + e2(sizeW) + (sizeH ? ' × ' + e2(sizeH) : '') + '</strong> · Length: <strong>' + e2(lengthS) + '</strong></div>' +
+          '<div style="font-size:12px">Slope: <strong>' + e2(slope) + '</strong></div>' +
+          issRow(barIssues, barrelCond)) +
+        col('Outlet', false,
+          '<div style="margin-bottom:5px">' + badge(outletCond, 'Condition: ' + condLabel(outletCond)) + '</div>' +
+          (hwDS ? '<div style="font-size:12px;margin-bottom:3px">Headwall: <strong>' + e2(hwDS) + '</strong></div>'
+                : '<div style="font-size:12px;color:#5a6a88;margin-bottom:3px">No headwall</div>') +
+          '<div style="font-size:12px">Riprap: <span style="color:' + ripClr(ripOut) + ';font-weight:600">' + e2(ripOut) + '</span></div>' +
+          issRow(outIssues, outletCond)) +
+      '</div>' +
+      '<div style="padding:10px 14px;border-top:1px solid #e8edf8;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end">' +
+        '<div style="font-weight:700;font-size:11px;color:var(--blue);text-transform:uppercase">Swales</div>' +
+        '<div style="font-size:12px"><span style="color:#5a6a88;font-size:10px;font-weight:700">US LEFT</span><br>' + swBadge(swaleUSL) + '</div>' +
+        '<div style="font-size:12px"><span style="color:#5a6a88;font-size:10px;font-weight:700">US RIGHT</span><br>' + swBadge(swaleUSR) + '</div>' +
+        '<div style="font-size:12px"><span style="color:#5a6a88;font-size:10px;font-weight:700">DS LEFT</span><br>' + swBadge(swaleDSL) + '</div>' +
+        '<div style="font-size:12px"><span style="color:#5a6a88;font-size:10px;font-weight:700">DS RIGHT</span><br>' + swBadge(swaleDSR) + '</div>' +
+        (flow ? '<div style="font-size:12px;margin-left:auto"><span style="color:#5a6a88;font-size:10px;font-weight:700">FLOW</span><br><strong>' + e2(flow) + '</strong></div>' : '') +
+      '</div>' +
+      '<div style="padding:8px 14px;border-top:1px solid #e8edf8;background:#f4f6fb;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px">' +
+        '<span style="font-weight:700;color:#5a6a88;text-transform:uppercase">Legend:</span>' +
+        '<span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#1a6b3a;vertical-align:middle"></span> Excellent / Good</span>' +
+        '<span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#c45800;vertical-align:middle"></span> Fair</span>' +
+        '<span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#b51c1c;vertical-align:middle"></span> Poor / Critical</span>' +
+        '<span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#999;vertical-align:middle"></span> Not rated</span>' +
+      '</div>';
+
+    return _sectionHdr('DETAIL — QC CROSS-SECTION') +
+      '<div style="padding:10px 12px;font:11px/1.5 \'IBM Plex Mono\',monospace;color:var(--ink-3)">' +
+        'Auto-generated from the entered data — use it to QC the inspection.</div>' +
+      '<div style="margin:0 12px 10px;border:1px solid #d0d9ee;border-radius:6px;overflow:hidden">' + svg + '</div>' +
+      '<div style="margin:0 12px 14px;border:1px solid #d0d9ee;border-radius:6px;overflow:hidden">' + table + '</div>';
+  }
+
   function _renderCulvertForm(pin, sec) {
     var a   = pin.attrs || {};
     var sub = _dataState.culvertSubTab || 'location';
@@ -21129,11 +21324,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '</div>';
     }
 
-    // ── DETAIL — QC DIAGRAM (Phase C) ─────────────────────────────────────────
+    // ── DETAIL — QC CROSS-SECTION ─────────────────────────────────────────────
     if (sub === 'detail') {
-      return _sectionHdr('DETAIL — QC DIAGRAM') +
-        '<div class="df-row" style="color:var(--ink-3);font:11px/1.5 \'IBM Plex Mono\',monospace;padding:14px 12px;">' +
-        'The auto-generated culvert cross-section QC diagram is coming next — Phase C.</div>';
+      return _renderCulvertDetail(pin, sec);
     }
 
     // ── NOTES ─────────────────────────────────────────────────────────────────
