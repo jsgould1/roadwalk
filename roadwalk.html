@@ -4078,15 +4078,32 @@ input.fs-slider::-webkit-slider-thumb {
    - Save / Sync / Style / Settings / Phone-toggle icon buttons (right)
    --------------------------------------------------------------------------- */
 #app-nav {
-  flex: 0 0 44px;
-  height: 44px;
+  flex: 0 0 54px;
+  height: 54px;
   background: var(--blue);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   padding: 0 6px 0 10px;
-  gap: 2px;
+  gap: 4px;
   z-index: 60;
   border-bottom: 1px solid rgba(0,0,0,0.25);
+}
+/* Left cluster: brand · back · title — flexes/truncates */
+#app-nav .nav-left {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+/* Right cluster: status + action icons */
+#app-nav .nav-right {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1px;
 }
 /* AECOM wordmark — fixed left; right-border separates from rest */
 #app-nav .aecom-brand {
@@ -4172,51 +4189,55 @@ input.fs-slider::-webkit-slider-thumb {
   font-weight: 600;
 }
 
-/* --- #app-tabs: module tab bar (38px) -----------------------------------------------
-   One button per module. Active module tab underlined with --blue accent.
-   Tabs scroll horizontally on small screens (scrollbar hidden via CSS).
+/* --- #app-tabs: module tabs, centered inside the combined nav row -----------
+   Stacked icon-over-label buttons on the dark nav. Active = white text +
+   white underline accent. Scrolls horizontally if the row gets tight.
    --------------------------------------------------------------------------- */
 #app-tabs {
-  flex: 0 0 38px;
-  height: 38px;
-  background: var(--paper);
-  border-bottom: 2px solid var(--rule);
+  flex: 0 1 auto;
   display: flex;
   align-items: stretch;
+  height: 100%;
   z-index: 55;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;        /* Firefox */
 }
 #app-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-/* Individual module tab button */
+/* Individual module tab — icon stacked over label */
 .app-tab {
-  flex: 1;
-  min-width: 52px;
-  padding: 0 6px;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  color: var(--ink-3);
-  text-transform: none;
+  flex: 0 0 auto;
+  min-width: 62px;
+  padding: 0 12px;
   border: none;
-  /* Bottom border is the active indicator — 3px solid replaces the row border */
   border-bottom: 3px solid transparent;
   background: none;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  color: rgba(255,255,255,0.62);
   white-space: nowrap;
   transition: color 0.12s, background 0.12s;
-  /* Offset bottom border so it sits on the #app-tabs bottom-border line */
-  margin-bottom: -2px;
 }
-.app-tab:hover { color: var(--ink-2); background: var(--paper-2); }
-.app-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
-/* Optional notification dot on a tab (e.g. unread safety alert, pending log) */
+.app-tab-icon  { font-size: 19px; line-height: 1; }
+.app-tab-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.app-tab:hover { color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.08); }
+.app-tab.active { color: #fff; border-bottom-color: #fff; }
+/* Settings gear — set slightly apart from the module tabs */
+.app-tab-gear {
+  border-left: 1px solid rgba(255,255,255,0.16);
+  margin-left: 4px;
+}
+/* Optional notification dot on a tab */
 .app-tab .tab-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
@@ -6069,70 +6090,67 @@ body.mobile-mode #app {
        ============================================================ -->
   <nav id="app-nav" aria-label="Application navigation">
 
-    <!-- Brand wordmark — always visible at left edge -->
-    <span class="aecom-brand" aria-label="AECOM">AECOM</span>
-
-    <!-- Back button: hidden at module root; shown when inside a section.
-         Existing JS uses els.backBtn.style.visibility to toggle this. -->
-    <button class="nav-icon-btn" id="back-btn" aria-label="Back to section list"
-            style="visibility:hidden;">◀</button>
-
-    <!-- Two-line title block: kicker (e.g. "SECTION · LINEAR") + name.
-         Existing JS writes to #header-kicker and #header-name directly. -->
-    <div class="nav-title-block" id="header-title">
-      <span id="header-kicker">PROJECT</span>
-      <strong id="header-name">GRSM RoadWalk</strong>
+    <!-- LEFT: brand · back · title -->
+    <div class="nav-left">
+      <span class="aecom-brand" aria-label="AECOM">AECOM</span>
+      <!-- Back button: hidden at module root; shown when inside a section. -->
+      <button class="nav-icon-btn" id="back-btn" aria-label="Back to section list"
+              style="visibility:hidden;">◀</button>
+      <!-- Two-line title block: kicker + name (written by existing JS). -->
+      <div class="nav-title-block" id="header-title">
+        <span id="header-kicker">PROJECT</span>
+        <strong id="header-name">GRSM RoadWalk</strong>
+      </div>
     </div>
 
-    <!-- Auto-save badge — updated by doAutoSave() with last save time (e.g. "💾 10:32") -->
-    <span id="autosave-nav-badge" title="Last auto-save time" aria-live="polite"></span>
+    <!-- CENTER: module tabs (stacked icon + label) + settings gear.
+         data-module is consumed by showModule() + the tab-click handler.
+         The gear has no data-module — its own #header-settings-btn handler
+         opens the Settings view. -->
+    <div id="app-tabs" role="tablist" aria-label="Module navigation">
+      <button class="app-tab active" data-module="dashboard" role="tab" aria-selected="true"
+              title="Project overview &amp; section list">
+        <span class="app-tab-icon">📊</span><span class="app-tab-label">Dash</span></button>
+      <button class="app-tab" data-module="map" role="tab" aria-selected="false"
+              title="Map &amp; Feature inventory">
+        <span class="app-tab-icon">🗺</span><span class="app-tab-label">Map</span></button>
+      <button class="app-tab" data-module="data" role="tab" aria-selected="false"
+              title="Data entry &amp; table">
+        <span class="app-tab-icon">📋</span><span class="app-tab-label">Data</span></button>
+      <button class="app-tab" data-module="safety" role="tab" aria-selected="false"
+              title="Safety (JSB, PPE, THA)">
+        <span class="app-tab-icon">⚠️</span><span class="app-tab-label">Safety</span></button>
+      <button class="app-tab" data-module="log" role="tab" aria-selected="false"
+              title="Daily field log">
+        <span class="app-tab-icon">📅</span><span class="app-tab-label">Log</span></button>
+      <button class="app-tab app-tab-gear" id="header-settings-btn" type="button"
+              title="Settings" aria-label="Settings">
+        <span class="app-tab-icon">⚙️</span><span class="app-tab-label">Settings</span></button>
+    </div>
 
-    <!-- Manual save button — triggers doAutoSave(true) for immediate local save -->
-    <button class="nav-btn nav-save-btn" id="nav-save-btn"
-            title="Save to browser storage now" aria-label="Save">💾</button>
-
-    <!-- Sync status chip — existing CSS (.sync-chip) and JS (sync-chip, sync-text) unchanged -->
-    <span class="sync-chip" data-state="solo" id="sync-chip">
-      <span class="dot"></span>
-      <span id="sync-text">Solo</span>
-    </span>
-
-    <!-- Style guide / label editor (existing) -->
-    <button class="nav-btn" id="header-styleguide-btn"
-            title="Style Guide &amp; Labels" type="button" aria-label="Style Guide">◈</button>
-
-    <!-- Settings panel (existing) -->
-    <button class="nav-btn header-settings-btn" id="header-settings-btn"
-            title="Settings" type="button" aria-label="Settings">⋯</button>
-
-    <!-- Phone / desktop layout toggle (existing view-toggle-btn logic preserved) -->
-    <button class="nav-btn" id="view-toggle-btn"
-            title="Switch between phone preview and desktop full-width">
-      <span id="view-toggle-label">📱</span>
-    </button>
+    <!-- RIGHT: status + action icons -->
+    <div class="nav-right">
+      <!-- Auto-save badge — updated by doAutoSave() with last save time -->
+      <span id="autosave-nav-badge" title="Last auto-save time" aria-live="polite"></span>
+      <!-- Manual save button — triggers doAutoSave(true) -->
+      <button class="nav-btn nav-save-btn" id="nav-save-btn"
+              title="Save to browser storage now" aria-label="Save">💾</button>
+      <!-- Sync status chip -->
+      <span class="sync-chip" data-state="solo" id="sync-chip">
+        <span class="dot"></span>
+        <span id="sync-text">Solo</span>
+      </span>
+      <!-- Style guide / label editor -->
+      <button class="nav-btn" id="header-styleguide-btn"
+              title="Style Guide &amp; Labels" type="button" aria-label="Style Guide">◈</button>
+      <!-- Phone / desktop layout toggle -->
+      <button class="nav-btn" id="view-toggle-btn"
+              title="Switch between phone preview and desktop full-width">
+        <span id="view-toggle-label">📱</span>
+      </button>
+    </div>
 
   </nav><!-- /#app-nav -->
-
-  <!-- ============================================================
-       MODULE TAB BAR (#app-tabs, 38px)
-       One button per top-level module. Clicking calls showModule(name).
-       'Map' is the default active module (matches existing behaviour).
-       data-module attribute is consumed by showModule() and the tab-click handler.
-       ============================================================ -->
-  <div id="app-tabs" role="tablist" aria-label="Module navigation">
-    <button class="app-tab active" data-module="dashboard"
-            role="tab" aria-selected="true"  title="Project overview &amp; section list">📊 Dash</button>
-    <button class="app-tab" data-module="map"
-            role="tab" aria-selected="false" title="Map &amp; Feature inventory">🗺 Map</button>
-    <button class="app-tab" data-module="data"
-            role="tab" aria-selected="false" title="Data entry &amp; table">📋 Data</button>
-    <button class="app-tab" data-module="safety"
-            role="tab" aria-selected="false" title="Safety (JSB, PPE, THA)">⚠ Safety</button>
-    <button class="app-tab" data-module="log"
-            role="tab" aria-selected="false" title="Daily field log">📅 Log</button>
-    <button class="app-tab" data-module="settings"
-            role="tab" aria-selected="false" title="App settings &amp; export">⚙ Settings</button>
-  </div><!-- /#app-tabs -->
 
   <!-- ============================================================
        MODULE TOOLBAR (#module-toolbar, 34px, contextual)
