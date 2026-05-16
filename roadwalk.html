@@ -4378,6 +4378,99 @@ input.fs-slider::-webkit-slider-thumb {
   opacity: 0.6;
 }
 
+/* --- Project module (#mod-project): collapsible info cards --------------------------- */
+#mod-project { background: var(--paper-2); }
+.proj-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+}
+.proj-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.proj-card-hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.proj-card.collapsed .proj-card-hdr { border-bottom: none; }
+.proj-card-icon {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2f9;
+  border-radius: 8px;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.proj-card-titles { flex: 1; min-width: 0; }
+.proj-card-title {
+  font: 700 14px/1.2 'IBM Plex Sans', sans-serif;
+  color: var(--ink-1);
+}
+.proj-card-sub {
+  font: 400 11px/1.3 'IBM Plex Sans', sans-serif;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.proj-card-badge {
+  font: 700 10px/1 'IBM Plex Mono', monospace;
+  color: var(--blue);
+  background: #eef2f9;
+  padding: 4px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.proj-card-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--ink-3);
+  width: 22px; height: 22px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.proj-card.collapsed .proj-card-toggle { transform: rotate(180deg); }
+.proj-card-body { padding: 16px; }
+.proj-card.collapsed .proj-card-body { display: none; }
+.proj-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.proj-field { display: flex; flex-direction: column; gap: 4px; }
+.proj-field label {
+  font: 700 9px/1.2 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.proj-field input,
+.proj-field select {
+  font: 400 13px/1.3 'IBM Plex Sans', sans-serif;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink-1);
+  outline: none;
+  transition: border-color 0.12s;
+}
+.proj-field input:focus,
+.proj-field select:focus { border-color: var(--blue); }
+
 /* --- Daily log reminder modal -------------------------------------------------------
    Bottom-sheet style modal. Fires on page load when no daily_log record exists
    for today's date in the 'daily_logs' IDB store. User can fill quick details
@@ -6121,6 +6214,9 @@ body.mobile-mode #app {
          The gear has no data-module — its own #header-settings-btn handler
          opens the Settings view. -->
     <div id="app-tabs" role="tablist" aria-label="Module navigation">
+      <button class="app-tab" data-module="project" role="tab" aria-selected="false"
+              title="Project information — details, client, contract, contacts">
+        <span class="app-tab-icon">📁</span><span class="app-tab-label">Project</span></button>
       <button class="app-tab active" data-module="dashboard" role="tab" aria-selected="true"
               title="Project overview &amp; section list">
         <span class="app-tab-icon">📊</span><span class="app-tab-label">Dash</span></button>
@@ -6136,6 +6232,9 @@ body.mobile-mode #app {
       <button class="app-tab" data-module="log" role="tab" aria-selected="false"
               title="Daily field log">
         <span class="app-tab-icon">📅</span><span class="app-tab-label">Log</span></button>
+      <button class="app-tab app-tab-gear" id="header-styleguide-btn" type="button"
+              title="Style Guide &amp; Labels" aria-label="Style Guide">
+        <span class="app-tab-icon">◈</span><span class="app-tab-label">Style</span></button>
       <button class="app-tab app-tab-gear" id="header-settings-btn" type="button"
               title="Settings" aria-label="Settings">
         <span class="app-tab-icon">⚙️</span><span class="app-tab-label">Settings</span></button>
@@ -6153,9 +6252,6 @@ body.mobile-mode #app {
         <span class="dot"></span>
         <span id="sync-text">Solo</span>
       </span>
-      <!-- Style guide / label editor -->
-      <button class="nav-btn" id="header-styleguide-btn"
-              title="Style Guide &amp; Labels" type="button" aria-label="Style Guide">◈</button>
       <!-- Phone / desktop layout toggle -->
       <button class="nav-btn" id="view-toggle-btn"
               title="Switch between phone preview and desktop full-width">
@@ -7063,6 +7159,145 @@ body.mobile-mode #app {
         <span class="mod-scaffold-phase">Phase 5</span>
       </div>
     </div><!-- /#mod-settings -->
+
+    <!-- ============================================================
+         MODULE: PROJECT  (#mod-project)
+         Project information — collapsible cards. Every [data-pf] field
+         persists to localStorage 'rw_project_info' (wired by initProjectModule).
+         ============================================================ -->
+    <div id="mod-project" class="module-view">
+      <div class="proj-scroll">
+
+        <!-- Project Details -->
+        <div class="proj-card" data-card="details">
+          <div class="proj-card-hdr">
+            <span class="proj-card-icon">📝</span>
+            <div class="proj-card-titles">
+              <div class="proj-card-title">Project Details</div>
+              <div class="proj-card-sub">Name, location, route, district</div>
+            </div>
+            <span class="proj-card-badge">0 / 6</span>
+            <button class="proj-card-toggle" type="button" aria-label="Collapse">▴</button>
+          </div>
+          <div class="proj-card-body">
+            <div class="proj-grid">
+              <div class="proj-field"><label>Project Name</label>
+                <input type="text" data-pf="project_name" placeholder="Project name"></div>
+              <div class="proj-field"><label>Route / Corridor</label>
+                <input type="text" data-pf="route" placeholder="e.g. US-71, I-40"></div>
+              <div class="proj-field"><label>City / Area</label>
+                <input type="text" data-pf="city" placeholder="City / area"></div>
+              <div class="proj-field"><label>County</label>
+                <input type="text" data-pf="county" placeholder="County"></div>
+              <div class="proj-field"><label>State</label>
+                <select data-pf="state">
+                  <option value="">— State —</option>
+                  <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
+                  <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
+                  <option>DC</option><option>FL</option><option>GA</option><option>HI</option>
+                  <option>ID</option><option>IL</option><option>IN</option><option>IA</option>
+                  <option>KS</option><option>KY</option><option>LA</option><option>ME</option>
+                  <option>MD</option><option>MA</option><option>MI</option><option>MN</option>
+                  <option>MS</option><option>MO</option><option>MT</option><option>NE</option>
+                  <option>NV</option><option>NH</option><option>NJ</option><option>NM</option>
+                  <option>NY</option><option>NC</option><option>ND</option><option>OH</option>
+                  <option>OK</option><option>OR</option><option>PA</option><option>RI</option>
+                  <option>SC</option><option>SD</option><option>TN</option><option>TX</option>
+                  <option>UT</option><option>VT</option><option>VA</option><option>WA</option>
+                  <option>WV</option><option>WI</option><option>WY</option>
+                </select></div>
+              <div class="proj-field"><label>DOT District</label>
+                <input type="text" data-pf="dot_district" placeholder="Optional"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client & Contract -->
+        <div class="proj-card" data-card="client">
+          <div class="proj-card-hdr">
+            <span class="proj-card-icon">🏢</span>
+            <div class="proj-card-titles">
+              <div class="proj-card-title">Client &amp; Contract</div>
+              <div class="proj-card-sub">Project number, client info, contract type</div>
+            </div>
+            <span class="proj-card-badge">0 / 4</span>
+            <button class="proj-card-toggle" type="button" aria-label="Collapse">▴</button>
+          </div>
+          <div class="proj-card-body">
+            <div class="proj-grid">
+              <div class="proj-field"><label>Project Number</label>
+                <input type="text" data-pf="project_number" placeholder="60XXXXXX"></div>
+              <div class="proj-field"><label>Pay Item / WBS</label>
+                <input type="text" data-pf="pay_item" placeholder="Pay #"></div>
+              <div class="proj-field"><label>Client Name</label>
+                <input type="text" data-pf="client_name" placeholder="Client organization"></div>
+              <div class="proj-field"><label>Contract Type</label>
+                <select data-pf="contract_type">
+                  <option value="">— Select —</option>
+                  <option>Lump Sum</option>
+                  <option>Cost Plus Fixed Fee</option>
+                  <option>Time &amp; Materials</option>
+                  <option>Unit Price</option>
+                  <option>On-Call / IDIQ</option>
+                  <option>Task Order</option>
+                  <option>Other</option>
+                </select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Management -->
+        <div class="proj-card" data-card="mgmt">
+          <div class="proj-card-hdr">
+            <span class="proj-card-icon">👥</span>
+            <div class="proj-card-titles">
+              <div class="proj-card-title">Project Management</div>
+              <div class="proj-card-sub">AECOM PM, Client PM, contact info</div>
+            </div>
+            <span class="proj-card-badge">0 / 4</span>
+            <button class="proj-card-toggle" type="button" aria-label="Collapse">▴</button>
+          </div>
+          <div class="proj-card-body">
+            <div class="proj-grid">
+              <div class="proj-field"><label>AECOM Project Manager</label>
+                <input type="text" data-pf="aecom_pm" placeholder="Name"></div>
+              <div class="proj-field"><label>AECOM PM Email</label>
+                <input type="email" data-pf="aecom_pm_email" placeholder="email@aecom.com"></div>
+              <div class="proj-field"><label>Client Project Manager</label>
+                <input type="text" data-pf="client_pm" placeholder="Name"></div>
+              <div class="proj-field"><label>Client PM Phone</label>
+                <input type="tel" data-pf="client_pm_phone" placeholder="(555) 555-5555"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report / Memo Header -->
+        <div class="proj-card" data-card="memo">
+          <div class="proj-card-hdr">
+            <span class="proj-card-icon">📄</span>
+            <div class="proj-card-titles">
+              <div class="proj-card-title">Report / Memo Header</div>
+              <div class="proj-card-sub">To, CC, From, Subject — used in AECOM Tech Memo</div>
+            </div>
+            <span class="proj-card-badge">0 / 4</span>
+            <button class="proj-card-toggle" type="button" aria-label="Collapse">▴</button>
+          </div>
+          <div class="proj-card-body">
+            <div class="proj-grid">
+              <div class="proj-field"><label>To</label>
+                <input type="text" data-pf="memo_to" placeholder="Client Name, Title"></div>
+              <div class="proj-field"><label>CC</label>
+                <input type="text" data-pf="memo_cc" placeholder="Additional recipients"></div>
+              <div class="proj-field"><label>From</label>
+                <input type="text" data-pf="memo_from" placeholder="AECOM author"></div>
+              <div class="proj-field"><label>Subject</label>
+                <input type="text" data-pf="memo_subject" placeholder="Memo subject"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /#mod-project -->
 
   </main>
 
@@ -18439,7 +18674,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   function showModule(name) {
     // Guard: ignore unknown module names
-    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings'];
+    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings', 'project'];
     if (!VALID.includes(name)) {
       console.warn('[RoadWalk] showModule: unknown module "' + name + '"');
       return;
@@ -22550,6 +22785,66 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   window.initDataModule = initDataModule;
 
   /* ---------------------------------------------------------------
+     PROJECT MODULE — project information form
+     Every [data-pf] field persists to localStorage 'rw_project_info'.
+     Cards collapse on header click; per-card "N / M" filled-count badge.
+     --------------------------------------------------------------- */
+  function initProjectModule() {
+    var KEY  = 'rw_project_info';
+    var root = document.getElementById('mod-project');
+    if (!root) return;
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+    }
+    function save(obj) {
+      try { localStorage.setItem(KEY, JSON.stringify(obj)); } catch (e) {}
+    }
+    function refreshBadges() {
+      root.querySelectorAll('.proj-card').forEach(function (card) {
+        var fields = card.querySelectorAll('[data-pf]');
+        var filled = 0;
+        fields.forEach(function (f) { if (String(f.value || '').trim()) filled++; });
+        var badge = card.querySelector('.proj-card-badge');
+        if (badge) badge.textContent = filled + ' / ' + fields.length;
+      });
+    }
+    function syncHeaderName(v) {
+      var hn = document.getElementById('header-name');
+      if (hn && v != null) hn.textContent = v;
+    }
+
+    // Populate saved values
+    var data = load();
+    root.querySelectorAll('[data-pf]').forEach(function (el) {
+      if (data[el.dataset.pf] != null) el.value = data[el.dataset.pf];
+    });
+    refreshBadges();
+    if (data.project_name) syncHeaderName(data.project_name);
+
+    // Persist on edit
+    root.querySelectorAll('[data-pf]').forEach(function (el) {
+      var evt = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(evt, function () {
+        var d = load();
+        d[el.dataset.pf] = el.value;
+        save(d);
+        refreshBadges();
+        if (el.dataset.pf === 'project_name') syncHeaderName(el.value);
+      });
+    });
+
+    // Collapse / expand on header click
+    root.querySelectorAll('.proj-card-hdr').forEach(function (hdr) {
+      hdr.addEventListener('click', function () {
+        var card = hdr.closest('.proj-card');
+        if (card) card.classList.toggle('collapsed');
+      });
+    });
+  }
+  window.initProjectModule = initProjectModule;
+
+  /* ---------------------------------------------------------------
      10. STARTUP SEQUENCE
      ---------------------------------------------------------------
      Run after DOM is ready. Order matters:
@@ -22580,6 +22875,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     initLayersButton();
     initDashboard();
     initDataModule();
+    initProjectModule();
 
     // d) Initial dashboard render — will show real data if IDB bundle is already
     //    cached (returning user); shows loading state for first-time load.
