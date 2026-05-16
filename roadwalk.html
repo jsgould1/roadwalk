@@ -668,20 +668,39 @@ a { color: inherit; text-decoration: none; }
 .ed-tab.hidden { display: none; }
 /* Leaflet top-left control stack slides clear of the open Edge Drop panel */
 .leaflet-top.leaflet-left { transition: transform 0.22s ease; }
-.map-stage.ed-open .leaflet-top.leaflet-left { transform: translateX(308px); }
+.map-stage.ed-open .leaflet-top.leaflet-left { transform: translateX(var(--ed-w, 308px)); }
 .ed-panel {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 300px; max-width: 86%;
+  width: 300px; max-width: 92%;
   z-index: 640;
   background: var(--paper);
   border-right: 1px solid var(--rule);
   box-shadow: 4px 0 16px rgba(0,0,0,0.18);
   display: flex; flex-direction: column;
   transform: translateX(-100%);
-  transition: transform 0.22s ease;
+  transition: transform 0.22s ease, top 0.22s ease;
 }
 .ed-panel.open { transform: translateX(0); }
+.ed-panel.ed-resizing { transition: none; }
+/* Drag handle on the panel's right edge to change width */
+.ed-resize {
+  position: absolute;
+  top: 0; bottom: 0; right: -4px;
+  width: 9px;
+  cursor: ew-resize;
+  z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+}
+.ed-resize::after {
+  content: "";
+  width: 3px; height: 42px;
+  border-radius: 2px;
+  background: var(--rule);
+}
+.ed-resize:hover::after, .ed-panel.ed-resizing .ed-resize::after {
+  background: var(--blue);
+}
 .ed-head {
   flex: 0 0 auto;
   display: flex; align-items: center;
@@ -6727,6 +6746,7 @@ body.mobile-mode #app {
         <button class="ed-tab" id="ed-tab" type="button" title="Edge Drop measurements">
           <span class="ed-tab-icon">📐</span><span class="ed-tab-lbl">EDGE<br>DROP</span></button>
         <aside class="ed-panel" id="ed-panel" aria-label="Edge Drop measurements">
+          <div class="ed-resize" id="ed-resize" title="Drag to resize panel"></div>
           <div class="ed-head">
             <span class="ed-title">📐 Edge Drop</span>
             <button class="ed-close" id="ed-close" type="button" aria-label="Close">✕</button>
@@ -7124,9 +7144,7 @@ body.mobile-mode #app {
             <!-- Dock arrows: click to snap strip to that edge -->
             <div class="strip-dock-btns" id="strip-dock-btns">
               <button class="strip-dock-btn" data-dock="top"    title="Dock to top">▲</button>
-              <button class="strip-dock-btn" data-dock="left"   title="Dock to left">◀</button>
               <button class="strip-dock-btn" data-dock="right"  title="Dock to right">▶</button>
-              <button class="strip-dock-btn" data-dock="bottom" title="Dock to bottom">▼</button>
             </div>
             <div class="strip-kicker" id="strip-kicker">Stationing detail</div>
             <h3>
@@ -11993,7 +12011,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     strip.classList.remove('collapsed');
     stripOpen = true;
     // Restore saved dock position (default: top for the horizontal SLD view)
-    const savedPos = localStorage.getItem('rw_strip_pos') || 'top';
+    // Docking restricted to Top + Right; coerce legacy left/bottom values
+    let savedPos = localStorage.getItem('rw_strip_pos') || 'top';
+    if (savedPos === 'left' || savedPos === 'bottom') savedPos = 'top';
     strip.dataset.pos  = savedPos;
     strip.dataset.zoom = String(STRIP_WINDOW_FT);
     // Sync zoom button text
@@ -12076,6 +12096,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   // ── setStripPos — dock strip to any of the four edges ────────────────────
   function setStripPos(pos) {
+    // SLD docking is restricted to Top + Right; coerce legacy left/bottom
+    if (pos === 'left' || pos === 'bottom') pos = 'top';
     const strip = $('#alignment-strip');
     const stage = $('#map-stage');
     strip.dataset.pos = pos;
@@ -24290,6 +24312,67 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       document.querySelectorAll('.dm-mini[data-lwh]').forEach(function (b) {
         b.addEventListener('click', function () { dmMeasureLWH(b.dataset.lwh); });
       });
+    }
+
+    // ── Panel adapts its top edge to a top-docked SLD ──
+    function syncPanelToStrip() {
+      var strip = $('alignment-strip');
+      var sd = (stage && stage.dataset.strip) || '';
+      if (strip && strip.classList.contains('open') && sd.indexOf('top') === 0) {
+        panel.style.top = strip.offsetHeight + 'px';
+      } else {
+        panel.style.top = '0px';
+      }
+    }
+    window._edSyncPanelToStrip = syncPanelToStrip;
+    syncPanelToStrip();
+    if (window.ResizeObserver) {
+      var stripEl = $('alignment-strip');
+      if (stripEl) new ResizeObserver(syncPanelToStrip).observe(stripEl);
+    }
+    if (window.MutationObserver && stage) {
+      new MutationObserver(syncPanelToStrip).observe(stage, {
+        attributes: true, attributeFilter: ['data-strip']
+      });
+    }
+    window.addEventListener('resize', syncPanelToStrip);
+
+    // ── Drag-resize handle on the panel's right edge ──
+    var MIN_W = 240, MAX_W = 640;
+    function applyStackOffset() {
+      if (stage) stage.style.setProperty('--ed-w', (panel.offsetWidth + 8) + 'px');
+    }
+    var savedW = parseInt(localStorage.getItem('rw_ed_panel_w') || '', 10);
+    if (!isNaN(savedW)) {
+      panel.style.width = Math.min(MAX_W, Math.max(MIN_W, savedW)) + 'px';
+    }
+    applyStackOffset();
+    var handle = $('ed-resize');
+    if (handle) {
+      var dragging = false;
+      handle.addEventListener('pointerdown', function (e) {
+        dragging = true;
+        panel.classList.add('ed-resizing');
+        handle.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      handle.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var rect = panel.getBoundingClientRect();
+        var w = Math.min(MAX_W, Math.max(MIN_W, e.clientX - rect.left));
+        panel.style.width = w + 'px';
+        applyStackOffset();
+      });
+      function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        panel.classList.remove('ed-resizing');
+        try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+        applyStackOffset();
+        localStorage.setItem('rw_ed_panel_w', String(parseInt(panel.style.width, 10) || 300));
+      }
+      handle.addEventListener('pointerup', endDrag);
+      handle.addEventListener('pointercancel', endDrag);
     }
   }
 
