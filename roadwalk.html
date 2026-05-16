@@ -749,21 +749,22 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer; color: #fff;
 }
 .ed-take-L { background: #0e7490; }
+.ed-take-W { background: #15803d; }
 .ed-take-R { background: #b45309; }
 .ed-take:active { transform: scale(0.97); }
 .ed-take:disabled { opacity: 0.45; pointer-events: none; }
 .ed-track { flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden; }
 .ed-track-hdr {
-  display: grid; grid-template-columns: 1fr 64px 1fr;
+  display: grid; grid-template-columns: 1fr 50px 1fr 1fr;
   background: var(--blue); color: #fff;
-  font: 700 8.5px/1 'IBM Plex Mono', monospace;
-  text-transform: uppercase; letter-spacing: 0.05em;
+  font: 700 8px/1.1 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.04em;
 }
-.ed-track-hdr span { padding: 6px 4px; text-align: center; }
+.ed-track-hdr span { padding: 6px 3px; text-align: center; }
 .ed-track-body { flex: 1; overflow-y: auto; }
 .ed-empty { padding: 20px 12px; text-align: center; color: var(--ink-4); font: 400 11px/1.5 'IBM Plex Sans', sans-serif; }
 .ed-row {
-  display: grid; grid-template-columns: 1fr 64px 1fr;
+  display: grid; grid-template-columns: 1fr 50px 1fr 1fr;
   border-bottom: 1px solid var(--rule-soft);
 }
 .ed-row:nth-child(even) { background: var(--paper-2); }
@@ -778,8 +779,9 @@ a { color: inherit; text-decoration: none; }
   display: flex; align-items: center; justify-content: center;
 }
 .ed-cell.ed-empty-cell { color: var(--ink-4); }
-.ed-val.ed-pos { color: #b45309; }   /* positive = a drop */
-.ed-val.ed-neg { color: #0e7490; }   /* negative = a rise */
+.ed-val.ed-pos   { color: #b45309; }   /* positive = a drop */
+.ed-val.ed-neg   { color: #0e7490; }   /* negative = a rise */
+.ed-val.ed-width { color: #15803d; }   /* roadway width */
 .ed-del {
   position: absolute; top: 1px; right: 2px;
   background: none; border: none; color: var(--ink-4);
@@ -6644,15 +6646,16 @@ body.mobile-mode #app {
             </div>
           </div>
 
-          <!-- Take Reading buttons — always visible (Left + Right are independent) -->
+          <!-- Take Reading buttons — always visible. L / W / R are independent. -->
           <div class="ed-take-row">
-            <button class="ed-take ed-take-L" id="ed-take-L" type="button">◀ Take Left</button>
-            <button class="ed-take ed-take-R" id="ed-take-R" type="button">Take Right ▶</button>
+            <button class="ed-take ed-take-L" id="ed-take-L" type="button">↓ Left</button>
+            <button class="ed-take ed-take-W" id="ed-take-W" type="button">↔ Width</button>
+            <button class="ed-take ed-take-R" id="ed-take-R" type="button">↓ Right</button>
           </div>
 
-          <!-- Tracker: Left value · STA · Right value -->
+          <!-- Tracker: Left edge-drop · STA · Width · Right edge-drop -->
           <div class="ed-track">
-            <div class="ed-track-hdr"><span>LEFT (in)</span><span>STA</span><span>RIGHT (in)</span></div>
+            <div class="ed-track-hdr"><span>LEFT (in)</span><span>STA</span><span>WIDTH (ft)</span><span>RIGHT (in)</span></div>
             <div class="ed-track-body" id="ed-track-body">
               <div class="ed-empty" id="ed-empty">No readings yet.</div>
             </div>
@@ -23822,46 +23825,68 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     $('ed-ref-status').textContent = parts.length ? 'Reference: ' + parts.join('  ·  ') : 'No reference set.';
   }
 
-  // ── Take a reading (Left or Right — fully independent) ──
+  // ── Take a reading — L / R = edge drop (B − A), W = raw roadway width ──
+  // All three channels are fully independent.
   async function takeReading(side) {
-    var sta = ($('ed-sta').value || '').trim();
-    var lat = _lat, lng = _lng;
-    var dropIn, aIn = null, bIn = null, manual = false;
-    if (_connected) {
-      if (refA[side] == null) { alert('Set Ref ' + side + ' first (in the Settings area).'); return; }
-      var tbtn = $('ed-take-' + side), prev = tbtn.textContent;
-      tbtn.textContent = 'Aiming…'; tbtn.disabled = true;
-      try {
-        var dist = await captureDistance();
-        aIn = refA[side] * M_TO_IN;
-        bIn = heightM(dist) * M_TO_IN;
-        dropIn = bIn - aIn;
-      } catch (e) {
-        tbtn.textContent = prev; tbtn.disabled = false;
-        alert('Take ' + side + ' failed: ' + (e && e.message));
-        return;
-      }
-      tbtn.textContent = prev; tbtn.disabled = false;
-    } else {
-      var raw = prompt('DISTO not connected — enter the ' +
-        (side === 'L' ? 'Left' : 'Right') + ' edge drop (inches):');
-      if (raw == null) return;
-      dropIn = parseFloat(raw);
-      if (isNaN(dropIn)) { alert('Not a number: ' + raw); return; }
-      manual = true;
-    }
-    ROWS.push({
+    var row = {
       id: 'ed' + Date.now() + Math.random().toString(36).slice(2, 5),
-      side: side, drop_in: dropIn, a_in: aIn, b_in: bIn, sta: sta,
-      lat: lat != null ? +lat.toFixed(6) : null,
-      lng: lng != null ? +lng.toFixed(6) : null,
-      manual: manual, ts: new Date().toISOString(),
-    });
+      side: side,
+      sta: ($('ed-sta').value || '').trim(),
+      lat: _lat != null ? +_lat.toFixed(6) : null,
+      lng: _lng != null ? +_lng.toFixed(6) : null,
+      ts: new Date().toISOString(),
+    };
+    if (side === 'W') {
+      // Roadway width — the raw C distance, no reference, no calculation.
+      if (_connected) {
+        var wbtn = $('ed-take-W'), wprev = wbtn.textContent;
+        wbtn.textContent = 'Aiming…'; wbtn.disabled = true;
+        try {
+          var distW = await captureDistance();
+          row.width_ft = distW * 3.28084;
+        } catch (e) {
+          wbtn.textContent = wprev; wbtn.disabled = false;
+          alert('Take Width failed: ' + (e && e.message)); return;
+        }
+        wbtn.textContent = wprev; wbtn.disabled = false;
+      } else {
+        var rawW = prompt('DISTO not connected — enter roadway width (feet):');
+        if (rawW == null) return;
+        var wv = parseFloat(rawW);
+        if (isNaN(wv)) { alert('Not a number: ' + rawW); return; }
+        row.width_ft = wv; row.manual = true;
+      }
+    } else {
+      // Left / Right edge drop — drop = B − A.
+      if (_connected) {
+        if (refA[side] == null) { alert('Set Ref ' + side + ' first (in the Settings area).'); return; }
+        var tbtn = $('ed-take-' + side), prev = tbtn.textContent;
+        tbtn.textContent = 'Aiming…'; tbtn.disabled = true;
+        try {
+          var dist = await captureDistance();
+          row.a_in = refA[side] * M_TO_IN;
+          row.b_in = heightM(dist) * M_TO_IN;
+          row.drop_in = row.b_in - row.a_in;
+        } catch (e) {
+          tbtn.textContent = prev; tbtn.disabled = false;
+          alert('Take ' + side + ' failed: ' + (e && e.message)); return;
+        }
+        tbtn.textContent = prev; tbtn.disabled = false;
+      } else {
+        var raw = prompt('DISTO not connected — enter the ' +
+          (side === 'L' ? 'Left' : 'Right') + ' edge drop (inches):');
+        if (raw == null) return;
+        var dv = parseFloat(raw);
+        if (isNaN(dv)) { alert('Not a number: ' + raw); return; }
+        row.drop_in = dv; row.manual = true;
+      }
+    }
+    ROWS.push(row);
     save();
     render();
   }
 
-  // ── Tracker render — Left value · STA · Right value, newest first ──
+  // ── Tracker render — Left drop · STA · Width · Right drop, newest first ──
   function render() {
     var body = $('ed-track-body');
     if (!ROWS.length) {
@@ -23870,23 +23895,45 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     var sorted = ROWS.slice().sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
     body.innerHTML = sorted.map(function (r) {
-      var cls = r.drop_in >= 0 ? 'ed-pos' : 'ed-neg';
-      var calc = r.manual ? 'manual entry'
-        : (r.b_in != null ? r.b_in.toFixed(2) + ' − ' + r.a_in.toFixed(2) + ' = ' +
-           r.drop_in.toFixed(2) + ' in' : '');
-      var attrs = ' data-a="' + (r.a_in != null ? r.a_in.toFixed(2) : '—') +
-        '" data-b="' + (r.b_in != null ? r.b_in.toFixed(2) : '—') +
-        '" data-calc="' + _esc(calc) +
-        '" data-lat="' + (r.lat != null ? r.lat : '—') +
-        '" data-lng="' + (r.lng != null ? r.lng : '—') + '"';
-      var valCell = '<div class="ed-cell ed-val ' + cls + '"' + attrs + '>' +
-        r.drop_in.toFixed(2) +
-        '<button class="ed-del" data-del="' + r.id + '" title="Delete">✕</button></div>';
+      var when = '';
+      try {
+        var d = new Date(r.ts);
+        when = d.toLocaleDateString() + ' ' +
+               d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } catch (e) {}
+      var del = '<button class="ed-del" data-del="' + r.id + '" title="Delete">✕</button>';
       var emptyCell = '<div class="ed-cell ed-empty-cell">·</div>';
+
+      var dropCell = function () {
+        var cls = r.drop_in >= 0 ? 'ed-pos' : 'ed-neg';
+        var calc = r.manual ? 'manual entry'
+          : (r.b_in != null ? r.b_in.toFixed(2) + ' − ' + r.a_in.toFixed(2) + ' = ' +
+             r.drop_in.toFixed(2) + ' in' : '');
+        var attrs = ' data-type="drop" data-a="' + (r.a_in != null ? r.a_in.toFixed(2) : '—') +
+          '" data-b="' + (r.b_in != null ? r.b_in.toFixed(2) : '—') +
+          '" data-calc="' + _esc(calc) +
+          '" data-lat="' + (r.lat != null ? r.lat : '—') +
+          '" data-lng="' + (r.lng != null ? r.lng : '—') +
+          '" data-when="' + _esc(when) + '"';
+        return '<div class="ed-cell ed-val ' + cls + '"' + attrs + '>' +
+          r.drop_in.toFixed(2) + del + '</div>';
+      };
+      var widthCell = function () {
+        var attrs = ' data-type="width" data-c="' +
+          (r.width_ft != null ? r.width_ft.toFixed(2) : '—') +
+          '" data-manual="' + (r.manual ? '1' : '') +
+          '" data-lat="' + (r.lat != null ? r.lat : '—') +
+          '" data-lng="' + (r.lng != null ? r.lng : '—') +
+          '" data-when="' + _esc(when) + '"';
+        return '<div class="ed-cell ed-val ed-width"' + attrs + '>' +
+          (r.width_ft != null ? r.width_ft.toFixed(2) : '—') + del + '</div>';
+      };
+
       return '<div class="ed-row">' +
-        (r.side === 'L' ? valCell : emptyCell) +
+        (r.side === 'L' ? dropCell() : emptyCell) +
         '<div class="ed-cell ed-sta-cell">' + _esc(r.sta || '—') + '</div>' +
-        (r.side === 'R' ? valCell : emptyCell) +
+        (r.side === 'W' ? widthCell() : emptyCell) +
+        (r.side === 'R' ? dropCell() : emptyCell) +
         '</div>';
     }).join('');
   }
@@ -23897,11 +23944,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     hidePopup();
     _popup = document.createElement('div');
     _popup.className = 'ed-popup';
-    _popup.innerHTML =
-      '<div><b>A reading (ref):</b> ' + cell.dataset.a + ' in</div>' +
-      '<div><b>B reading:</b> ' + cell.dataset.b + ' in</div>' +
-      '<div><b>Edge drop:</b> ' + (cell.dataset.calc || '—') + '</div>' +
-      '<div><b>GPS:</b> ' + cell.dataset.lat + ', ' + cell.dataset.lng + '</div>';
+    var html;
+    if (cell.dataset.type === 'width') {
+      html = '<div><b>Width (C distance):</b> ' + cell.dataset.c + ' ft' +
+             (cell.dataset.manual ? ' (manual)' : '') + '</div>';
+    } else {
+      html = '<div><b>A reading (ref):</b> ' + cell.dataset.a + ' in</div>' +
+             '<div><b>B reading:</b> ' + cell.dataset.b + ' in</div>' +
+             '<div><b>Edge drop:</b> ' + (cell.dataset.calc || '—') + '</div>';
+    }
+    html += '<div><b>GPS:</b> ' + cell.dataset.lat + ', ' + cell.dataset.lng + '</div>' +
+            '<div><b>Logged:</b> ' + (cell.dataset.when || '—') + '</div>';
+    _popup.innerHTML = html;
     document.body.appendChild(_popup);
     var r = cell.getBoundingClientRect();
     _popup.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 230)) + 'px';
@@ -23930,6 +23984,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     $('ed-setref-L').addEventListener('click', function () { setRef('L'); });
     $('ed-setref-R').addEventListener('click', function () { setRef('R'); });
     $('ed-take-L').addEventListener('click', function () { takeReading('L'); });
+    $('ed-take-W').addEventListener('click', function () { takeReading('W'); });
     $('ed-take-R').addEventListener('click', function () { takeReading('R'); });
     $('ed-auto-sta').addEventListener('change', function () {
       if (this.checked) { _staFt = 0; _gpsLastLat = _lat; _gpsLastLng = _lng; $('ed-sta').value = '0+00'; }
