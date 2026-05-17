@@ -2915,19 +2915,29 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
 }
 .tally-panel .tp-handle {
+  position: relative;
   background: var(--ink);
   color: var(--paper);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  padding: 4px 0 5px;
+  padding: 4px 22px 5px;
   text-align: center;
   cursor: grab;
   border-bottom: 1px solid var(--rule);
   touch-action: none;
 }
 .tally-panel .tp-handle.dragging { cursor: grabbing; background: var(--orange); }
+/* X-close on the tally handle — quick dismiss, matching the measure popup */
+.tp-close {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: 20px; height: 20px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.16); border: none; border-radius: 3px;
+  color: var(--paper); font-size: 11px; line-height: 1; cursor: pointer;
+}
+.tp-close:hover { background: rgba(255,255,255,0.34); }
 .tally-panel .tp-body {
   display: flex;
   align-items: center;
@@ -7129,7 +7139,7 @@ body.mobile-mode #app {
         <!-- Floating, draggable Crack Seal tally panel — replaces the old
              bottom tally-bar so the map can extend to the bottom of the window. -->
         <div class="tally-panel" id="tally-panel" hidden>
-          <div class="tp-handle" id="tp-handle" title="Drag to move">CRACK SEAL</div>
+          <div class="tp-handle" id="tp-handle" title="Drag to move">CRACK SEAL<button class="tp-close" type="button" title="Close" aria-label="Close">✕</button></div>
           <div class="tp-body">
             <div class="tp-total">
               <div class="tp-label">Crack seal</div>
@@ -7154,7 +7164,7 @@ body.mobile-mode #app {
 
         <!-- Curb stop tally panel -->
         <div class="tally-panel curbstop-tally" id="curbstop-tally-panel" hidden>
-          <div class="tp-handle" id="cstp-handle" title="Drag to move">CURB STOPS</div>
+          <div class="tp-handle" id="cstp-handle" title="Drag to move">CURB STOPS<button class="tp-close" type="button" title="Close" aria-label="Close">✕</button></div>
           <div class="cs-body">
             <div class="cs-subhdr">
               <span></span>
@@ -7197,7 +7207,7 @@ body.mobile-mode #app {
 
         <!-- Parking space tally panel -->
         <div class="tally-panel parking-tally" id="parking-tally-panel" hidden>
-          <div class="tp-handle" id="ptp-handle" title="Drag to move">PARKING</div>
+          <div class="tp-handle" id="ptp-handle" title="Drag to move">PARKING<button class="tp-close" type="button" title="Close" aria-label="Close">✕</button></div>
           <div class="pt-rows">
             <div class="pt-row">
               <span class="pt-lbl">Normal</span>
@@ -9905,7 +9915,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     ]},
     // ===== LINES =====
     { geom: 'line', name: 'Misc', items: [
-      { value: 'ln_pvmt_change',  label: 'Pvmt Change', code: 'PC', color: '#444444', dashArray: '4 3' },
+      { value: 'ln_pvmt_change',   label: 'Pvmt Change',    code: 'PC', color: '#444444', dashArray: '4 3' },
+      { value: 'ln_pvmt_widening', label: 'Pvmt Widening',  code: 'PW', color: '#B5651D' },
       { value: 'ln_loops',        label: 'Loops',       code: 'LO', color: '#8A5A2B' },
       { value: 'ln_curb',         label: 'Curb',        code: 'CU', color: '#8A5A2B' },
       { value: 'ln_cg',           label: 'C&G',         code: 'CG', color: '#8A5A2B' },
@@ -9916,6 +9927,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     { geom: 'line', name: 'Drainage', items: [
       { value: 'ln_culvert',      label: 'Culvert',     code: 'CV', color: '#0B3D66' },
       { value: 'ln_swale',        label: 'Swale',       code: 'SL', color: '#0B3D66', lineStyle: 'swale' },
+      { value: 'ln_paved_swale',  label: 'Paved Swale', code: 'PS', color: '#2563A8' },
       { value: 'ln_box_culvert',  label: 'Box Culvert', code: 'BC', color: '#0B3D66' },
       { value: 'ln_drain_other',  label: 'Other',       code: 'OT', color: '#0B3D66' },
     ]},
@@ -14614,6 +14626,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!panel || !handle || !stage) return;
     let drag = null;
     const onPointerDown = (e) => {
+      if (e.target.closest('.tp-close')) return;   // X button closes, never drags
       const sRect = stage.getBoundingClientRect();
       const pRect = panel.getBoundingClientRect();
       drag = {
@@ -14670,6 +14683,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!panel || !handle || !stage) return;
     let drag = null;
     const onPointerDown = (e) => {
+      if (e.target.closest('.tp-close')) return;   // X button closes, never drags
       const sRect = stage.getBoundingClientRect();
       const pRect = panel.getBoundingClientRect();
       drag = { offsetX: e.clientX - pRect.left, offsetY: e.clientY - pRect.top, stage: sRect };
@@ -14743,6 +14757,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!panel || !handle || !stage) return;
     let drag = null;
     const onPointerDown = (e) => {
+      if (e.target.closest('.tp-close')) return;   // X button closes, never drags
       const sRect = stage.getBoundingClientRect();
       const pRect = panel.getBoundingClientRect();
       drag = { offsetX: e.clientX - pRect.left, offsetY: e.clientY - pRect.top };
@@ -16868,6 +16883,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         menu.hidden = true;
         btn.classList.remove('on');
       }
+    });
+  })();
+
+  // --- X-close buttons on the tally panels --------------------------------
+  // Quick dismiss; also clears the matching row's "on" dot in the tally menu.
+  (function wireTallyCloseButtons() {
+    document.querySelectorAll('.tp-close').forEach((x) => {
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const panel = x.closest('.tally-panel');
+        if (!panel) return;
+        panel.hidden = true;
+        const row = document.querySelector('.tvm-row[data-target="' + panel.id + '"]');
+        if (row) row.classList.remove('on');
+      });
     });
   })();
 
@@ -20216,6 +20246,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     { label: 'Pavement',      kind: 'pavement',      color: '#9CA3AF', active: true  },
     { label: 'Overlooks',     kind: 'overlook',      color: '#DC2626', active: true  },
     { label: 'NGS Monuments', kind: 'ngs_monument',  color: '#0EA5E9', active: false },
+    // Drawn linear features — toggles key off the catalog `value` kind.
+    { label: 'Paved Swales',  kind: 'ln_paved_swale',   color: '#2563A8', active: true },
+    { label: 'Pvmt Widening', kind: 'ln_pvmt_widening', color: '#B5651D', active: true },
   ];
 
   /**
@@ -23690,7 +23723,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _renderOtherForm(pin, sec) {
     var a = pin.attrs || {};
     var conditions = window._RW.SIGN_CONDITIONS || [];
-    var kindLabel  = (pin.kind || '').replace(/_/g,' ').replace(/\b\w/g, function(c){return c.toUpperCase();});
+    var kindLabel  = (pin.kind || '').replace(/^(ln|pt|pg)_/, '')
+      .replace(/_/g,' ').replace(/\b\w/g, function(c){return c.toUpperCase();});
 
     return _sectionHdr(kindLabel.toUpperCase() + ' — IDENTITY') +
       _readonlyRow('Pin ID',  pin.id) +
