@@ -8031,8 +8031,15 @@ body.mobile-mode #app {
     <div class="tcm-body">
       <div class="tcm-status" id="tcm-status">Cache: checking…</div>
 
-      <div class="tcm-sec">1 — Corridor along the route centerline</div>
+      <div class="tcm-sec">1 — Area to cache</div>
       <div class="tcm-row">
+        <label>Coverage</label>
+        <select id="tcm-coverage">
+          <option value="route" selected>Route corridor — whole alignment</option>
+          <option value="view">Current map view — what's on screen now</option>
+        </select>
+      </div>
+      <div class="tcm-row" id="tcm-buffer-row">
         <label>Corridor width (each side of centerline)</label>
         <select id="tcm-buffer">
           <option value="75">75 m</option>
@@ -8041,8 +8048,7 @@ body.mobile-mode #app {
           <option value="500">500 m</option>
         </select>
       </div>
-      <p class="tcm-note">Tiles are cached only within this distance of the section
-        alignment(s) — a thin ribbon along the route, not a full rectangle.</p>
+      <p class="tcm-note" id="tcm-area-note"></p>
 
       <div class="tcm-sec">2 — Layer &amp; zoom range</div>
       <div class="tcm-grid3">
@@ -19256,24 +19262,90 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     return tiles;
   }
-  // Fetch one tile → { dataUrl, bytes }.
-  function _fetchTile(url) {
+  // Tiles covering the current Leaflet viewport (rectangle), minZ..maxZ.
+  // This is the "select what I want" path: the user pans/zooms the map to the
+  // area they need, then caches exactly that view.
+  function _viewTiles(minZ, maxZ) {
+    var map = _rwState().map;
+    if (!map || typeof map.getBounds !== 'function') return [];
+    var b = map.getBounds();
+    var w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth();
+    var tiles = [];
+    for (var z = minZ; z <= maxZ; z++) {
+      var x0 = Math.floor(_lng2tileX(w, z));
+      var x1 = Math.floor(_lng2tileX(e, z));
+      var y0 = Math.floor(_lat2tileY(n, z));
+      var y1 = Math.floor(_lat2tileY(s, z));
+      for (var x = x0; x <= x1; x++) {
+        for (var y = y0; y <= y1; y++) tiles.push({ z: z, x: x, y: y });
+      }
+    }
+    return tiles;
+  }
+
+  // Fetch one tile → { dataUrl, bytes }. Retries transient errors with
+  // exponential backoff; a 404 (no imagery at that tile) is not retried and
+  // is flagged err.noRetry so the caller can report it as "no coverage".
+  function _fetchTile(url, attempt) {
+    attempt = attempt || 0;
     return fetch(url, { mode: 'cors' }).then(function (r) {
+      if (r.status === 404 || r.status === 204) {
+        var e404 = new Error('no imagery (' + r.status + ')');
+        e404.noRetry = true;
+        throw e404;
+      }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.blob();
     }).then(function (blob) {
+      if (!blob || !blob.size) throw new Error('empty tile');
       return new Promise(function (res, rej) {
         var fr = new FileReader();
         fr.onload  = function () { res({ dataUrl: fr.result, bytes: blob.size }); };
         fr.onerror = function () { rej(fr.error); };
         fr.readAsDataURL(blob);
       });
+    }).catch(function (err) {
+      // Retry network / rate-limit / 5xx errors; give up on noRetry (404).
+      if (!err || !err.noRetry) {
+        if (attempt < 3) {
+          var delay = 500 * Math.pow(2, attempt) + Math.random() * 400;
+          return new Promise(function (r) { setTimeout(r, delay); })
+            .then(function () { return _fetchTile(url, attempt + 1); });
+        }
+      }
+      throw err;
     });
   }
 
   // ── Cache modal ────────────────────────────────────────────────────────────
   var _tcmTiles = null, _tcmBusy = false;
   function _tcmCfg() { return TILE_CACHE_LAYERS[document.getElementById('tcm-layer').value]; }
+  function _tcmCoverage() {
+    var el = document.getElementById('tcm-coverage');
+    return el ? el.value : 'route';
+  }
+  // Build the tile list for the chosen coverage mode.
+  function _tcmComputeTiles(minZ, maxZ) {
+    if (_tcmCoverage() === 'view') return _viewTiles(minZ, maxZ);
+    var buf = parseInt(document.getElementById('tcm-buffer').value, 10);
+    return _corridorTiles(minZ, maxZ, buf);
+  }
+  // Show/hide the corridor-width row and refresh the explanatory note.
+  function _tcmRefreshArea() {
+    var mode = _tcmCoverage();
+    var bufRow = document.getElementById('tcm-buffer-row');
+    var note   = document.getElementById('tcm-area-note');
+    if (bufRow) bufRow.style.display = mode === 'view' ? 'none' : '';
+    if (note) {
+      note.textContent = mode === 'view'
+        ? 'Caches only the tiles inside the current map view. Pan / zoom the map '
+          + 'to frame the area you need, then estimate and download — repeat for '
+          + 'each spot. Best way to keep the tile count small.'
+        : 'Caches a thin ribbon within the corridor width of the route '
+          + 'centerline(s) — not a full rectangle. High zooms over a long route '
+          + 'can reach millions of tiles; use Current map view to grab key spots.';
+    }
+  }
   function _tcmRefreshZoom() {
     var cfg = _tcmCfg();
     var minEl = document.getElementById('tcm-minz'), maxEl = document.getElementById('tcm-maxz');
@@ -19297,23 +19369,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _tcmEstimate() {
     var minZ = parseInt(document.getElementById('tcm-minz').value, 10);
     var maxZ = parseInt(document.getElementById('tcm-maxz').value, 10);
-    var buf  = parseInt(document.getElementById('tcm-buffer').value, 10);
+    var mode = _tcmCoverage();
     var out  = document.getElementById('tcm-estimate-out');
     out.hidden = false;
     if (minZ > maxZ) {
       out.className = 'tcm-estimate tcm-warn';
       out.textContent = 'Min zoom must be ≤ max zoom.'; _tcmTiles = null; return;
     }
-    if (!_routeSegments().length) {
+    if (mode === 'route' && !_routeSegments().length) {
       out.className = 'tcm-estimate tcm-warn';
       out.textContent = 'No route loaded — open a project bundle first.'; _tcmTiles = null; return;
     }
-    _tcmTiles = _corridorTiles(minZ, maxZ, buf);
+    if (mode === 'view' && !(_rwState().map && _rwState().map.getBounds)) {
+      out.className = 'tcm-estimate tcm-warn';
+      out.textContent = 'Map not ready — open the Map module first.'; _tcmTiles = null; return;
+    }
+    _tcmTiles = _tcmComputeTiles(minZ, maxZ);
     var n = _tcmTiles.length;
     var mb = (n * 20 / 1024).toFixed(1);  // ~20 KB avg per tile
-    out.className = 'tcm-estimate' + (n > 40000 ? ' tcm-warn' : '');
+    var heavy = n > 40000;
+    out.className = 'tcm-estimate' + (heavy ? ' tcm-warn' : '');
     out.textContent = n.toLocaleString() + ' tiles · ≈ ' + mb + ' MB to download' +
-      (n > 40000 ? ' — large cache; consider a smaller zoom range or corridor width.' : '.');
+      (n === 0 ? ' — nothing in range.'
+       : heavy ? ' — large; narrow the zoom range, or use Current map view on key spots.'
+       : '.');
   }
   function _tcmDownload() {
     if (_tcmBusy) return;
@@ -19338,17 +19417,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var ptxt = document.getElementById('tcm-progress-text');
     var dlBtn = document.getElementById('tcm-download');
     prog.hidden = false; ptxt.hidden = false; bar.style.width = '0%'; dlBtn.disabled = true;
-    var i = 0, done = 0, failed = 0, CONC = 6;
+    // done = freshly cached · skip = already cached · noCov = 404/no imagery ·
+    // netFail = network/rate-limit failure after retries.
+    var i = 0, done = 0, skip = 0, noCov = 0, netFail = 0, CONC = 5;
+    function processed() { return done + skip + noCov + netFail; }
     function update() {
-      var p = done + failed;
+      var p = processed();
       bar.style.width = Math.round(p / tiles.length * 100) + '%';
       ptxt.textContent = 'Caching ' + p.toLocaleString() + ' / ' + tiles.length.toLocaleString() +
-        (failed ? '  (' + failed + ' failed)' : '');
+        (netFail ? '  ·  ' + netFail + ' failed' : '');
     }
     function finish() {
       _tcmBusy = false; dlBtn.disabled = false;
-      ptxt.textContent = 'Done — cached ' + done.toLocaleString() + ' tiles' +
-        (failed ? ', ' + failed + ' failed (likely network)' : '') + '.';
+      var msg = 'Done — ' + done.toLocaleString() + ' cached';
+      if (skip)    msg += ', ' + skip.toLocaleString() + ' already cached';
+      if (noCov)   msg += ', ' + noCov.toLocaleString() + ' had no imagery at this zoom';
+      if (netFail) msg += ', ' + netFail.toLocaleString() +
+                          ' failed — re-run Download to retry just those';
+      ptxt.textContent = msg + '.';
       _tcmStatus();
       _redrawBasemap();
     }
@@ -19357,13 +19443,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var t = tiles[i++];
       var url = urlTmpl.replace('{z}', t.z).replace('{x}', t.x).replace('{y}', t.y);
       var k = layerKey + '/' + t.z + '/' + t.x + '/' + t.y;
-      _fetchTile(url).then(function (res) {
-        return _tileCachePut({ k: k, v: res.dataUrl, layer: layerKey, bytes: res.bytes });
-      }).then(function () { done++; }, function () { failed++; })
-        .then(function () {
-          update();
-          if (done + failed >= tiles.length) finish(); else next();
+      // Skip tiles already in the cache — makes a re-run only retry the gaps.
+      _tileCacheGet(k).catch(function () { return null; }).then(function (cached) {
+        if (cached) { skip++; return null; }
+        return _fetchTile(url).then(function (res) {
+          return _tileCachePut({ k: k, v: res.dataUrl, layer: layerKey, bytes: res.bytes })
+            .then(function () { done++; });
         });
+      }).catch(function (err) {
+        if (err && err.noRetry) noCov++; else netFail++;
+      }).then(function () {
+        update();
+        if (processed() >= tiles.length) finish(); else next();
+      });
     }
     update();
     for (var c = 0; c < Math.min(CONC, tiles.length); c++) next();
@@ -19372,6 +19464,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var m = document.getElementById('tile-cache-modal');
     if (!m) return;
     _tcmRefreshZoom();
+    _tcmRefreshArea();
     _tcmStatus();
     _tcmTiles = null;
     document.getElementById('tcm-estimate-out').hidden = true;
@@ -19395,6 +19488,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     on('tcm-cancel', 'click', _closeTileCacheModal);
     on('tcm-layer',  'change', function () {
       _tcmRefreshZoom();
+      _tcmTiles = null;
+      document.getElementById('tcm-estimate-out').hidden = true;
+    });
+    on('tcm-coverage', 'change', function () {
+      _tcmRefreshArea();
       _tcmTiles = null;
       document.getElementById('tcm-estimate-out').hidden = true;
     });
