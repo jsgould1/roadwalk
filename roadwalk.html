@@ -555,6 +555,7 @@ a { color: inherit; text-decoration: none; }
   pointer-events: auto;
 }
 .map-ctl-btn {
+  position: relative;
   width: 34px; height: 34px;
   display: inline-flex;
   align-items: center;
@@ -587,6 +588,15 @@ a { color: inherit; text-decoration: none; }
 #map-north-btn .ctl-icon { color: #D32F2F !important; }
 /* Locate button highlights Google blue when CL is on */
 #map-locate-btn.cl-on .ctl-icon { color: #1A73E8; }
+/* External GPS (Web Serial) connect button — colour reflects state */
+#map-gps-btn.gps-connecting .ctl-icon { color: #d97706; }
+#map-gps-btn.gps-on  .ctl-icon { color: #b45309; }
+#map-gps-btn.gps-fix .ctl-icon { color: #15803d; }
+#map-gps-btn .gps-badge {
+  position: absolute; bottom: 1px; right: 2px;
+  font: 700 7px/1 'IBM Plex Mono', monospace;
+  color: #15803d;
+}
 
 /* Basemap control — opacity slider + dropdown, bottom-right L.Control */
 .basemap-ctrl {
@@ -7147,6 +7157,13 @@ body.mobile-mode #app {
               <line x1="10" y1="17"  x2="10" y2="19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
               <line x1="0.5" y1="10" x2="3"  y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
               <line x1="17" y1="10"  x2="19.5" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="map-ctl-btn" id="map-gps-btn" title="Connect a Bluetooth GPS receiver (Garmin GLO etc.)" aria-label="Connect GPS receiver">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" class="ctl-icon">
+              <circle cx="10" cy="14.5" r="2.4" fill="currentColor"/>
+              <path d="M5.5 11 A6.4 6.4 0 0 1 14.5 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              <path d="M3 8.2 A10 10 0 0 1 17 8.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
             </svg>
           </button>
           <button class="map-ctl-btn" id="map-rotate-btn" title="Rotate map +15° (Shift+click for −15°)" aria-label="Rotate map">
@@ -16388,6 +16405,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       locateBtn.title = 'Geolocation not available';
     }
     locateBtn.addEventListener('click', () => {
+      // Prefer an external serial GPS fix when one is connected.
+      const sg = window.RWGps;
+      if (sg && sg.connected) {
+        if (sg.last) {
+          const { lat, lng } = sg.last;
+          if (state.map) {
+            state.map.flyTo([lat, lng], 18, { duration: 1.2 });
+            if (state.mapLayers.me) state.mapLayers.me.setLatLng([lat, lng]);
+          }
+          applyGpsFix(lat, lng, sg.last.accuracy);
+        } else {
+          alert('GPS receiver connected but no fix yet — wait for a clear sky view.');
+        }
+        return;
+      }
       if (!navigator.geolocation) return;
       locateBtn.classList.add('busy');
       navigator.geolocation.getCurrentPosition(
@@ -16401,7 +16433,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         },
         (err) => {
           locateBtn.classList.remove('busy');
-          alert(`Could not get location: ${err.message}`);
+          alert(`Could not get location: ${err.message}\n\nNo cell/Wi-Fi signal? Tap the satellite-dish button to connect a Bluetooth GPS receiver.`);
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
       );
@@ -16452,22 +16484,27 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     dot.style[crossAxisKey] = '50%';
   }
 
+  // Apply one GPS fix from any source (OS geolocation or external serial GPS):
+  // update state, the Leaflet dot, and the SLD strip dot.
+  function applyGpsFix(lat, lng, accuracy) {
+    state.gpsPos = { lat, lng, accuracy };
+    if (state.gpsDot) {
+      state.gpsDot.setLatLng([lat, lng]);
+      if (state.map && !state.map.hasLayer(state.gpsDot)) {
+        state.gpsDot.addTo(state.map);
+      }
+    }
+    _updateStripGpsDot();
+  }
+  // Exposed so the Web-Serial GPS engine (window.RWGps) can push fixes here.
+  window._rwApplyGpsFix = applyGpsFix;
+
   if (navigator.geolocation && !window._rwGpsWatchId) {
     window._rwGpsWatchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-        state.gpsPos = { lat, lng, accuracy };
-
-        // Update Leaflet map dot
-        if (state.gpsDot) {
-          state.gpsDot.setLatLng([lat, lng]);
-          if (state.map && !state.map.hasLayer(state.gpsDot)) {
-            state.gpsDot.addTo(state.map);
-          }
-        }
-
-        // Update strip dot (lightweight reposition)
-        _updateStripGpsDot();
+        // An external serial GPS, once connected, takes over as the source.
+        if (window.RWGps && window.RWGps.connected) return;
+        applyGpsFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
       },
       () => {},   // silent on permission-denied / timeout
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
@@ -24344,16 +24381,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var ft = parseSta(txt);
     return ft != null ? fmtSta(ft) : (txt == null ? '' : String(txt).trim());
   }
+  // Apply one GPS fix to the Edge Drop panel — drives _lat/_lng (logged with
+  // each reading) and the Auto-GPS cumulative stationing.
+  function onGpsFix(nlat, nlng) {
+    var auto = $('ed-auto-sta') && $('ed-auto-sta').checked;
+    if (auto && _gpsLastLat !== null) {
+      var d = haversine(_gpsLastLat, _gpsLastLng, nlat, nlng);
+      if (d > 0.3) { _staFt += d * 3.28084; if ($('ed-sta')) $('ed-sta').value = fmtSta(_staFt); }
+    }
+    _gpsLastLat = nlat; _gpsLastLng = nlng; _lat = nlat; _lng = nlng;
+  }
+  // Exposed so the Web-Serial GPS engine (window.RWGps) can push fixes here.
+  window._rwEdgeOnGpsFix = onGpsFix;
   function startGPS() {
     if (!navigator.geolocation) return;
     navigator.geolocation.watchPosition(function (p) {
-      var nlat = p.coords.latitude, nlng = p.coords.longitude;
-      var auto = $('ed-auto-sta') && $('ed-auto-sta').checked;
-      if (auto && _gpsLastLat !== null) {
-        var d = haversine(_gpsLastLat, _gpsLastLng, nlat, nlng);
-        if (d > 0.3) { _staFt += d * 3.28084; if ($('ed-sta')) $('ed-sta').value = fmtSta(_staFt); }
-      }
-      _gpsLastLat = nlat; _gpsLastLng = nlng; _lat = nlat; _lng = nlng;
+      // A connected external serial GPS takes over as the source.
+      if (window.RWGps && window.RWGps.connected) return;
+      onGpsFix(p.coords.latitude, p.coords.longitude);
     }, function () {}, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
   }
 
@@ -24934,6 +24979,201 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     document.addEventListener('DOMContentLoaded', function () { wire(); render(); startGPS(); });
   } else {
     wire(); render(); startGPS();
+  }
+})();
+</script>
+
+<!-- ============================================================
+     EXTERNAL GPS RECEIVER  (window.RWGps)
+     Reads NMEA from a Bluetooth-paired serial GPS (Garmin GLO etc.)
+     via the Web Serial API and feeds fixes to the app — independent
+     of the OS location service. Needed on Windows/Edge where a
+     Bluetooth GPS is exposed only as a serial COM port. On iOS the
+     OS routes the GLO to navigator.geolocation automatically.
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+  var RWGps = {
+    supported: (typeof navigator !== 'undefined' && 'serial' in navigator),
+    connected: false,
+    last: null,            // { lat, lng, accuracy, sats, fix, ts }
+    _port: null,
+    _reader: null,
+    _keep: false,
+  };
+  window.RWGps = RWGps;
+
+  var btn = document.getElementById('map-gps-btn');
+
+  function setBtn(cls) {
+    if (!btn) return;
+    btn.classList.remove('gps-connecting', 'gps-on', 'gps-fix');
+    if (cls) btn.classList.add(cls);
+    var badge = btn.querySelector('.gps-badge');
+    if (RWGps.connected && RWGps.last && RWGps.last.sats != null) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'gps-badge';
+        btn.appendChild(badge);
+      }
+      badge.textContent = RWGps.last.sats;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  // ── NMEA helpers ───────────────────────────────────────────────────────────
+  // ddmm.mmmm + hemisphere → signed decimal degrees.
+  function nmeaDeg(val, hemi) {
+    if (!val) return null;
+    var dot = val.indexOf('.');
+    if (dot < 3) return null;
+    var deg = parseInt(val.slice(0, dot - 2), 10);
+    var min = parseFloat(val.slice(dot - 2));
+    if (isNaN(deg) || isNaN(min)) return null;
+    var d = deg + min / 60;
+    if (hemi === 'S' || hemi === 'W') d = -d;
+    return d;
+  }
+
+  function emit(fix) {
+    RWGps.last = fix;
+    setBtn('gps-fix');
+    try { if (window._rwApplyGpsFix)  window._rwApplyGpsFix(fix.lat, fix.lng, fix.accuracy); } catch (e) {}
+    try { if (window._rwEdgeOnGpsFix) window._rwEdgeOnGpsFix(fix.lat, fix.lng); } catch (e) {}
+  }
+
+  // Parse one NMEA sentence; supports any talker id (GP/GN/GL/GA).
+  function parseLine(line) {
+    if (line.length < 7 || line.charAt(0) !== '$') return;
+    var star = line.indexOf('*');
+    var f = (star >= 0 ? line.slice(1, star) : line.slice(1)).split(',');
+    var type = f[0];
+    if (/GGA$/.test(type)) {
+      // $--GGA,time,lat,N,lng,E,fixQuality,numSats,hdop,alt,...
+      var fixQ = parseInt(f[6], 10) || 0;
+      if (fixQ === 0) return;                       // no fix
+      var lat = nmeaDeg(f[2], f[3]);
+      var lng = nmeaDeg(f[4], f[5]);
+      if (lat == null || lng == null) return;
+      var sats = parseInt(f[7], 10);
+      var hdop = parseFloat(f[8]);
+      emit({ lat: lat, lng: lng,
+             accuracy: isNaN(hdop) ? null : Math.max(2, hdop * 5),  // HDOP → ~m
+             sats: isNaN(sats) ? null : sats,
+             fix: fixQ, ts: Date.now() });
+    } else if (/RMC$/.test(type)) {
+      // $--RMC,time,status,lat,N,lng,E,...  — fallback when no GGA
+      if (f[2] !== 'A') return;                     // V = void
+      if (RWGps.last && Date.now() - RWGps.last.ts < 2500) return;  // prefer GGA
+      var rlat = nmeaDeg(f[3], f[4]);
+      var rlng = nmeaDeg(f[5], f[6]);
+      if (rlat == null || rlng == null) return;
+      emit({ lat: rlat, lng: rlng,
+             accuracy: RWGps.last ? RWGps.last.accuracy : null,
+             sats: RWGps.last ? RWGps.last.sats : null,
+             fix: 1, ts: Date.now() });
+    }
+  }
+
+  // ── Serial read loop ───────────────────────────────────────────────────────
+  function readLoop(port) {
+    RWGps._keep = true;
+    var dec = new TextDecoder();
+    var buf = '';
+    function stop() {
+      if (RWGps._reader) { try { RWGps._reader.releaseLock(); } catch (e) {} }
+      RWGps._reader = null;
+      if (RWGps.connected) {            // unexpected end → reflect disconnect
+        RWGps.connected = false;
+        setBtn(null);
+        if (btn) btn.title = 'Connect a Bluetooth GPS receiver (Garmin GLO etc.)';
+      }
+    }
+    var reader;
+    try { reader = port.readable.getReader(); }
+    catch (e) { stop(); return; }
+    RWGps._reader = reader;
+    (function pump() {
+      reader.read().then(function (r) {
+        if (r.value) {
+          buf += dec.decode(r.value, { stream: true });
+          var nl;
+          while ((nl = buf.indexOf('\n')) >= 0) {
+            var line = buf.slice(0, nl).replace(/\r$/, '').trim();
+            buf = buf.slice(nl + 1);
+            if (line) { try { parseLine(line); } catch (e) {} }
+          }
+          if (buf.length > 8000) buf = buf.slice(-2000);
+        }
+        if (r.done || !RWGps._keep) { stop(); return; }
+        pump();
+      }).catch(function () { stop(); });
+    })();
+  }
+
+  function connect() {
+    if (!RWGps.supported) {
+      alert('This browser cannot open a serial GPS.\n\n' +
+        'Use Microsoft Edge or Chrome on Windows. On an iPad, pair the ' +
+        'Garmin GLO in iOS Bluetooth settings instead — iOS feeds it to the ' +
+        'app automatically, no connection needed here.');
+      return;
+    }
+    navigator.serial.requestPort().then(function (port) {
+      setBtn('gps-connecting');
+      // For a Bluetooth serial GPS the baud rate is nominal; 9600 is standard.
+      return port.open({ baudRate: 9600 }).then(function () {
+        RWGps._port = port;
+        RWGps.connected = true;
+        setBtn('gps-on');
+        if (btn) btn.title = 'GPS receiver connected — tap to disconnect';
+        readLoop(port);
+        setTimeout(function () {
+          if (RWGps.connected && !RWGps.last) {
+            alert('GPS receiver connected, but no position data yet.\n\n' +
+              'Make sure the Garmin GLO is powered on and has a clear view of ' +
+              'the sky. A cold start can take a minute or two.');
+          }
+        }, 9000);
+      });
+    }).catch(function (err) {
+      // A bare AbortError means the user dismissed the port picker — stay quiet.
+      if (err && err.name === 'AbortError') { setBtn(null); return; }
+      setBtn(null);
+      alert('Could not open the GPS serial port: ' + ((err && err.message) || err));
+    });
+  }
+
+  function disconnect() {
+    RWGps._keep = false;
+    RWGps.connected = false;
+    var p = RWGps._port;
+    if (RWGps._reader) { try { RWGps._reader.cancel(); } catch (e) {} }
+    setTimeout(function () {
+      if (p) { try { p.close(); } catch (e) {} }
+    }, 150);
+    RWGps._port = null;
+    RWGps.last = null;
+    setBtn(null);
+    if (btn) btn.title = 'Connect a Bluetooth GPS receiver (Garmin GLO etc.)';
+  }
+
+  if (btn) {
+    btn.addEventListener('click', function () {
+      if (RWGps.connected) {
+        if (window.confirm('Disconnect the external GPS receiver?')) disconnect();
+      } else {
+        connect();
+      }
+    });
+  }
+  // Reflect a physical unplug / unpair.
+  if (RWGps.supported && navigator.serial.addEventListener) {
+    navigator.serial.addEventListener('disconnect', function (e) {
+      if (RWGps._port && e.target === RWGps._port) disconnect();
+    });
   }
 })();
 </script>
