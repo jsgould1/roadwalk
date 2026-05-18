@@ -12916,6 +12916,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         .join('');
       const treatOpts = [`<option value="">— select —</option>`]
         .concat(treatments.map(t => `<option value="${t}"${a.repair_type === t ? ' selected' : ''}>${t}</option>`))
+        .concat([`<option value="__add__">+ Add new…</option>`])
         .join('');
 
       const lengthDisp = a.length_ft != null ? `${a.length_ft} ft` : '—';
@@ -13025,8 +13026,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           render();
         }));
 
-      // Treatment
-      overlay.querySelector('#gr-treat-sel')?.addEventListener('change', e => { a.repair_type = e.target.value; });
+      // Repair Type (+ Add new… writes to the shared dropdown library)
+      overlay.querySelector('#gr-treat-sel')?.addEventListener('change', e => {
+        const sel = e.target;
+        if (sel.value === '__add__') {
+          const v = (window.prompt('New repair type value:') || '').trim();
+          if (v && window._RW && window._RW.dropdownAdd) {
+            window._RW.dropdownAdd('repair_type', v);
+            a.repair_type = v;
+          }
+          render();
+          return;
+        }
+        a.repair_type = sel.value;
+      });
 
       // Repair length
       overlay.querySelector('#gr-repair-len')?.addEventListener('change', e => {
@@ -16149,6 +16162,27 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
   }
 
+  // SLD roadway tap (when not in add-feature mode) → log a roadway width.
+  // The value is added to the Edge Drop list at the tapped station.
+  function _promptStripWidth(staFt) {
+    const raw = window.prompt('Roadway width at STA ' + fmtSta(staFt) + ' (feet):');
+    if (raw == null) return;
+    const w = parseFloat(raw);
+    if (isNaN(w) || w <= 0) { _rwToast('Enter a valid width in feet.'); return; }
+    if (!(window.RWEdgeDrop && window.RWEdgeDrop.addWidthAtStation)) {
+      _rwToast('Edge Drop module not ready.');
+      return;
+    }
+    window.RWEdgeDrop.addWidthAtStation(staFt, w);
+    if (!_widthLabelsOn) {                    // auto-show width labels so it's visible
+      _widthLabelsOn = true;
+      document.getElementById('width-toggle-btn')?.classList.remove('ctl-off');
+    }
+    _renderWidthLabels();
+    _renderStripWidths();
+    _rwToast(`Width ${w.toFixed(1)}' logged at STA ${fmtSta(staFt)}`);
+  }
+
   // Wire the ↔W left-stack button — show / hide width labels on map + SLD.
   {
     const _wBtn = document.getElementById('width-toggle-btn');
@@ -16913,7 +16947,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // → lat/lng on the alignment, then push the same way map clicks do.
   $('#strip-canvas')?.addEventListener('click', (e) => {
     if (_stripDragWasMoved) return;            // suppress tap after a pan gesture
-    if (!drawState.tool) return;
     if (!stripCurrentSec) return;
     const sec = stripCurrentSec;
     const canvas = e.currentTarget;
@@ -16934,11 +16967,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       staFt   = ((e.clientY - rect.top) + scroll) / pxPerFt;
       crossFt = (xPct - 0.5) * 100;
     }
-    // Build a lat/lng on the alignment, offset perpendicular by crossFt
-    // Use the section's alignment as a [lat,lng] polyline
     const totalSecFt = polylineLengthFt(sec.alignment);
     if (staFt < 0) staFt = 0;
     if (staFt > totalSecFt) staFt = totalSecFt;
+    // Not in add-feature mode → tapping the roadway band logs a roadway width.
+    if (!drawState.tool) {
+      if (Math.abs(crossFt) <= 30) _promptStripWidth(staFt);
+      return;
+    }
+    // Build a lat/lng on the alignment, offset perpendicular by crossFt
     const tan = tangentAt(sec.alignment, staFt);
     const ctr = pointAt(sec.alignment, staFt);
     let bearing = tan;
@@ -25572,7 +25609,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _inputRow ('Repair length (ft)','repair_length_ft', a.repair_length_ft, 'number') +
       _sectionHdr('CONDITION') +
       _condRow  ('Overall',          'condition',         a.condition,        conditions, 'data-cond') +
-      _selectRow('Repair Type','repair_type',    a.repair_type  || '',[{v:'',l:'— select —'}].concat(treatments.map(function(t){return {v:t,l:t};}))) +
+      _selectRow('Repair Type','repair_type',    a.repair_type  || '',[{v:'',l:'— select —'}].concat(treatments.map(function(t){return {v:t,l:t};})).concat([{v:'__add__',l:'+ Add new…'}])) +
       _textareaRow('Notes',          'notes',             a.notes) +
       _customFieldsSection(pin);
   }
@@ -25604,7 +25641,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _condRow  ('Drainage',        'drain_condition',a.drain_condition,conditions, 'data-cond') +
       _condRow  ('Structural',      'struct_condition',a.struct_condition,conditions,'data-cond') +
       _selectRow('Repair Type','repair_type',a.repair_type || '',
-                 [{v:'',l:'— select —'}].concat(treatments.map(function(t){return {v:t,l:t};}))) +
+                 [{v:'',l:'— select —'}].concat(treatments.map(function(t){return {v:t,l:t};})).concat([{v:'__add__',l:'+ Add new…'}])) +
       _textareaRow('Notes', 'notes', a.notes) +
       _customFieldsSection(pin);
   }
@@ -26112,6 +26149,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // Generic select → update attrs or panel
     scroll.querySelectorAll('select.df-select[data-field]').forEach(function (sel) {
       sel.addEventListener('change', function () {
+        // "+ Add new…" → prompt, add to the shared dropdown library, re-render.
+        if (sel.value === '__add__') {
+          var nv = (window.prompt('New ' + sel.dataset.field.replace(/_/g, ' ') + ' value:') || '').trim();
+          if (nv && window._RW && window._RW.dropdownAdd) {
+            window._RW.dropdownAdd(sel.dataset.field, nv);
+            _targetObj(sel)[sel.dataset.field] = nv;
+            _dataState.dirty = true;
+          }
+          _renderFormBody();
+          return;
+        }
         _targetObj(sel)[sel.dataset.field] = sel.value;
         _dataState.dirty = true;
         // data-rerender selects re-render the form (e.g. to reveal an "Other"
@@ -26929,6 +26977,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
       return out;
+    },
+    // Log a roadway width at a station (feet) — used by the SLD tap-to-add-width.
+    // Creates or updates the W channel on the row matching that station.
+    addWidthAtStation: function (staFt, widthFt) {
+      if (typeof staFt !== 'number' || isNaN(staFt)) return;
+      var staTxt = fmtSta(staFt);
+      var row = rowForSta(staTxt);
+      if (row.sta_ft == null) { row.sta = staTxt; row.sta_ft = parseSta(staTxt); }
+      row.W = { width_ft: +widthFt, manual: true, lat: null, lng: null,
+                ts: new Date().toISOString() };
+      resort(); save(); render();
     },
   };
 
