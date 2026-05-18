@@ -2654,9 +2654,25 @@ a { color: inherit; text-decoration: none; }
 .fp-left-stack {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   pointer-events: auto;
 }
+/* Add Feature — the primary, most-tapped control: large, colourful,
+   and set apart from the rest of the stack. */
+#fp-toggle-btn {
+  width: 48px; height: 48px;
+  margin-bottom: 12px;
+  background: linear-gradient(150deg, #34d058 0%, #15803d 100%);
+  box-shadow: 0 2px 9px rgba(0,0,0,0.38);
+}
+#fp-toggle-btn:hover  { background: linear-gradient(150deg, #3ee066 0%, #1a9148 100%); }
+#fp-toggle-btn:active { background: linear-gradient(150deg, #15803d 0%, #0f5f2e 100%); }
+#fp-toggle-btn .fp-plus {
+  font: 800 34px/1 'IBM Plex Sans', sans-serif;
+  color: #fff;
+}
+#fp-toggle-btn.on { box-shadow: 0 0 0 3px var(--blue), 0 2px 9px rgba(0,0,0,0.38); }
 /* Add Feature — bottom slide-up sheet (sits above tally / measure panels) */
 .feature-picker {
   position: absolute;
@@ -7087,7 +7103,7 @@ body.mobile-mode #app {
         <!-- Feature picker — toggle button + collapsible panel, anchored topleft -->
         <div class="fp-left-stack" id="fp-left-stack">
           <button class="map-ctl-btn" id="fp-toggle-btn" title="Add Feature (Insert)">
-            <span style="font-size:16px;line-height:1;">⚡</span>
+            <span class="fp-plus">+</span>
           </button>
 
           <!-- SLD toggle — show / hide the alignment strip -->
