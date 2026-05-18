@@ -5612,6 +5612,85 @@ input.fs-slider::-webkit-slider-thumb {
 }
 .dlm-btn-save:hover { background: var(--blue-2); }
 
+/* --- Daily Log module (#mod-log) — list of field-day log cards -------------- */
+.dlog-scroll {
+  flex: 1; overflow-y: auto; padding: 14px 16px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.dlog-empty {
+  padding: 40px 24px; text-align: center; color: var(--ink-3);
+  font: 11px/1.7 'IBM Plex Mono', monospace;
+}
+.dlog-card {
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 12px 14px;
+}
+.dlog-card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 9px;
+}
+.dlog-date { font: 600 14px 'IBM Plex Serif', serif; color: var(--ink); }
+.dlog-today {
+  font: 700 8px 'IBM Plex Mono', monospace; letter-spacing: 0.8px;
+  background: var(--blue); color: #fff; padding: 2px 6px; border-radius: 3px;
+  vertical-align: middle; margin-left: 4px;
+}
+.dlog-feat-badge {
+  font: 700 10px 'IBM Plex Mono', monospace; color: var(--blue);
+  background: var(--paper-2); border: 1px solid var(--rule);
+  border-radius: 12px; padding: 3px 9px; white-space: nowrap;
+}
+.dlog-nolog {
+  font: 10px/1.5 'IBM Plex Mono', monospace; color: #b45309;
+  background: #fef3c7; border-radius: 4px; padding: 5px 8px; margin-bottom: 9px;
+}
+.dlog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.dlog-f { display: flex; flex-direction: column; gap: 3px; }
+.dlog-f > span {
+  font: 600 9px 'IBM Plex Mono', monospace; letter-spacing: 0.4px;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.dlog-f-wide { grid-column: 1 / -1; }
+.dlog-f input, .dlog-f select, .dlog-f textarea {
+  font: 13px 'IBM Plex Sans', sans-serif; color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 6px 8px;
+  background: var(--paper); width: 100%; box-sizing: border-box;
+}
+.dlog-f input:focus, .dlog-f select:focus, .dlog-f textarea:focus {
+  outline: none; border-color: var(--blue);
+}
+.dlog-f textarea { resize: vertical; }
+.dlog-f-chk {
+  grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 8px;
+}
+.dlog-f-chk span {
+  text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--ink-2);
+}
+.dlog-f-chk input { width: auto; }
+.dlog-rollup {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 10px;
+}
+.dlog-rollup-lbl {
+  font: 600 9px 'IBM Plex Mono', monospace; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.dlog-kind {
+  font: 600 10px 'IBM Plex Mono', monospace; color: var(--ink-2);
+  background: var(--paper-2); border: 1px solid var(--rule-soft);
+  border-radius: 10px; padding: 2px 8px;
+}
+.dlog-card-ft {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; margin-top: 11px;
+}
+.dlog-saved { font: 700 10px 'IBM Plex Mono', monospace; color: #15803d; }
+.dlog-save-btn {
+  font: 700 11px 'IBM Plex Sans', sans-serif; color: #fff;
+  background: var(--blue); border: none; border-radius: 5px;
+  padding: 7px 16px; cursor: pointer;
+}
+.dlog-save-btn:hover { background: var(--blue-2); }
+
 /* --- Dashboard action bar ---------------------------------------------------
    Three horizontally-arranged action buttons sitting between the masthead
    and the section filter tabs. Import (outlined) · Export (outlined) ·
@@ -8588,15 +8667,22 @@ body.mobile-mode #app {
          exists for today in the 'daily_logs' IDB store.
          ============================================================ -->
     <div id="mod-log" class="module-view">
-      <div class="mod-scaffold">
-        <div class="mod-scaffold-icon">📅</div>
-        <div class="mod-scaffold-title">Daily Log</div>
-        <div class="mod-scaffold-sub">
-          Weather, crew size, hours worked, and JSB status for each field day.
-          Full build in Phase 4.
+
+      <!-- Masthead — running totals across all logged field days -->
+      <div class="list-masthead">
+        <div class="label">Daily Log</div>
+        <h1>Field Day Log</h1>
+        <div class="meta">
+          <span><strong id="dlog-day-count">—</strong> days logged</span>
+          <span><strong id="dlog-feat-count">—</strong> features inspected</span>
         </div>
-        <span class="mod-scaffold-phase">Phase 4</span>
       </div>
+
+      <!-- One editable card per field day; populated by renderDailyLog() -->
+      <div class="dlog-scroll" id="dlog-list">
+        <div class="dlog-empty">Loading…</div>
+      </div>
+
     </div><!-- /#mod-log -->
 
     <!-- ============================================================
@@ -23276,6 +23362,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
     }
 
+    // ── Daily Log module: rebuild the day cards on tab switch ──
+    if (name === 'log' && typeof renderDailyLog === 'function') {
+      renderDailyLog();
+    }
+
     // ── Map module switch: resize + re-render once the panel is visible ──
     // The map is only rendered while #mod-map is .active (rerender() bails
     // otherwise), so when we switch TO the map we both invalidateSize (fixes
@@ -23437,6 +23528,204 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     });
   }
+
+
+  /* ---------------------------------------------------------------
+     8b. DAILY LOG MODULE — renderDailyLog()
+     ---------------------------------------------------------------
+     Populates #mod-log with one editable card per field day. Each
+     card merges the 'daily_logs' IDB record (inspectors, weather,
+     crew, hours, JSB, notes) with a rollup of how many features were
+     inspected (saved to 'inspections') on that date. A card exists
+     for every date that has either a log record OR inspection
+     activity; saving a card writes/updates the daily_logs record.
+     --------------------------------------------------------------- */
+  var DLOG_WEATHER = ['Clear', 'Partly Cloudy', 'Overcast', 'Light Rain',
+                      'Heavy Rain', 'Fog / Mist', 'Snow / Ice'];
+
+  /** 'YYYY-MM-DD' → 'Monday, May 18, 2026' (falls back to the raw key). */
+  function _fmtLogDate(key) {
+    var p = String(key || '').split('-');
+    if (p.length !== 3) return key || '—';
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(d.getTime())) return key;
+    return d.toLocaleDateString(undefined,
+      { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderDailyLog() {
+    var host = document.getElementById('dlog-list');
+    if (!host) return;
+    host.innerHTML = '<div class="dlog-empty">Loading…</div>';
+
+    Promise.all([idbGetAll('daily_logs'), idbGetAll('inspections')]).then(function (res) {
+      var logs = res[0] || [];
+      var insp = res[1] || [];
+
+      // Genuine field saves only — exclude baseline bundle seed records.
+      var realInsp = insp.filter(function (r) { return r && !r._seeded; });
+
+      // Group inspection saves by their save date (YYYY-MM-DD).
+      var byDate = {};
+      realInsp.forEach(function (r) {
+        var d = String(r.saved_at || '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+        if (!byDate[d]) byDate[d] = { total: 0, kinds: {} };
+        byDate[d].total++;
+        var k = String(r.kind || 'other').replace(/^pt_|^pg_/, '');
+        byDate[d].kinds[k] = (byDate[d].kinds[k] || 0) + 1;
+      });
+
+      var logByDate = {};
+      logs.forEach(function (l) { if (l && l.date) logByDate[l.date] = l; });
+
+      // Union of all dates that have a log OR inspection activity, newest first.
+      var dateSet = {};
+      Object.keys(logByDate).forEach(function (d) { dateSet[d] = 1; });
+      Object.keys(byDate).forEach(function (d) { dateSet[d] = 1; });
+      var dates = Object.keys(dateSet).sort().reverse();
+
+      var dc = document.getElementById('dlog-day-count');
+      var fc = document.getElementById('dlog-feat-count');
+      if (dc) dc.textContent = String(logs.length);
+      if (fc) fc.textContent = String(realInsp.length);
+
+      if (!dates.length) {
+        host.innerHTML = '<div class="dlog-empty">No daily logs yet.<br>' +
+          'The start-of-day prompt creates one automatically, or inspect a ' +
+          'feature and that day will appear here.</div>';
+        return;
+      }
+
+      var todayKey = _todayKey();
+      host.innerHTML = dates.map(function (d) {
+        var log    = logByDate[d] || {};
+        var act    = byDate[d] || { total: 0, kinds: {} };
+        var hasLog = !!logByDate[d];
+        var isToday = (d === todayKey);
+
+        var weatherOpts = ['<option value="">— weather —</option>'].concat(
+          DLOG_WEATHER.map(function (w) {
+            return '<option value="' + _esc(w) + '"' +
+              (log.weather === w ? ' selected' : '') + '>' + _esc(w) + '</option>';
+          })).join('');
+
+        var kindChips = Object.keys(act.kinds).sort().map(function (k) {
+          return '<span class="dlog-kind">' + _esc(k.replace(/_/g, ' ')) +
+            ' · ' + act.kinds[k] + '</span>';
+        }).join('');
+
+        return '<div class="dlog-card" data-dlog-date="' + _esc(d) + '">' +
+          '<div class="dlog-card-hd">' +
+            '<div class="dlog-date">' + _esc(_fmtLogDate(d)) +
+              (isToday ? '<span class="dlog-today">TODAY</span>' : '') + '</div>' +
+            '<div class="dlog-feat-badge" title="Features inspected this day">' +
+              act.total + ' feature' + (act.total === 1 ? '' : 's') + '</div>' +
+          '</div>' +
+          (hasLog ? '' : '<div class="dlog-nolog">No log was started for this ' +
+            'day — fill in the details and Save to create one.</div>') +
+          '<div class="dlog-grid">' +
+            '<label class="dlog-f dlog-f-wide"><span>Inspector(s)</span>' +
+              '<input type="text" data-dlf="inspectors" value="' +
+              _esc(log.inspectors || '') + '" placeholder="e.g. J. Gould, N. Faruk"></label>' +
+            '<label class="dlog-f"><span>Weather</span>' +
+              '<select data-dlf="weather">' + weatherOpts + '</select></label>' +
+            '<label class="dlog-f"><span>Crew size</span>' +
+              '<input type="number" inputmode="numeric" min="1" max="99" ' +
+              'data-dlf="crew" value="' + _esc(log.crew == null ? '' : log.crew) + '"></label>' +
+            '<label class="dlog-f"><span>Planned hours</span>' +
+              '<input type="number" inputmode="decimal" step="0.5" min="0" ' +
+              'data-dlf="hours_planned" value="' +
+              _esc(log.hours_planned == null ? '' : log.hours_planned) + '"></label>' +
+            '<label class="dlog-f"><span>Actual hours</span>' +
+              '<input type="number" inputmode="decimal" step="0.5" min="0" ' +
+              'data-dlf="hours_actual" value="' +
+              _esc(log.hours_actual == null ? '' : log.hours_actual) + '"></label>' +
+            '<label class="dlog-f dlog-f-chk"><input type="checkbox" ' +
+              'data-dlf="jsb_done"' + (log.jsb_done ? ' checked' : '') + '>' +
+              '<span>JSB / tailgate safety briefing completed</span></label>' +
+            '<label class="dlog-f dlog-f-wide"><span>Notes</span>' +
+              '<textarea data-dlf="notes" rows="2" ' +
+              'placeholder="Field notes, delays, conditions…">' +
+              _esc(log.notes || '') + '</textarea></label>' +
+          '</div>' +
+          (kindChips ? '<div class="dlog-rollup">' +
+            '<span class="dlog-rollup-lbl">Inspected</span>' + kindChips + '</div>' : '') +
+          '<div class="dlog-card-ft">' +
+            '<span class="dlog-saved" data-dlog-flash></span>' +
+            '<button class="dlog-save-btn" data-dlog-save>Save day</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function (err) {
+      console.warn('[RoadWalk] renderDailyLog failed:', err);
+      host.innerHTML = '<div class="dlog-empty">Could not load daily logs.</div>';
+    });
+  }
+  window.renderDailyLog = renderDailyLog;
+
+  // Save a daily-log card — delegated so it works for every card. Writes the
+  // record to the 'daily_logs' IDB store (keyed by date), preserving created_at.
+  document.getElementById('dlog-list')?.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-dlog-save]');
+    if (!btn) return;
+    var card = btn.closest('[data-dlog-date]');
+    if (!card) return;
+    var date = card.dataset.dlogDate;
+    function fld(name) { return card.querySelector('[data-dlf="' + name + '"]'); }
+
+    var inspectors = (fld('inspectors').value || '').trim();
+    var weather    = fld('weather').value || '';
+    var crewRaw    = fld('crew').value;
+    var hpRaw      = fld('hours_planned').value;
+    var haRaw      = fld('hours_actual').value;
+    var jsbDone    = fld('jsb_done').checked;
+    var notes      = (fld('notes').value || '').trim();
+
+    var crew = crewRaw === '' ? null : parseInt(crewRaw, 10);
+    var hp   = hpRaw   === '' ? null : parseFloat(hpRaw);
+    var ha   = haRaw   === '' ? null : parseFloat(haRaw);
+
+    btn.disabled = true;
+    idbGet('daily_logs', date).then(function (existing) {
+      var record = {
+        date:          date,
+        inspectors:    inspectors,
+        weather:       weather,
+        crew:          (crew != null && !isNaN(crew)) ? crew : null,
+        hours_planned: (hp   != null && !isNaN(hp))   ? hp   : null,
+        hours_actual:  (ha   != null && !isNaN(ha))   ? ha   : null,
+        jsb_done:      jsbDone,
+        notes:         notes,
+        created_at:    (existing && existing.created_at) || new Date().toISOString(),
+        updated_at:    new Date().toISOString(),
+      };
+      return idbPut('daily_logs', record);
+    }).then(function () {
+      if (inspectors) {
+        try { localStorage.setItem('rw_last_inspectors', inspectors); } catch (_) {}
+      }
+      btn.disabled = false;
+      var flash = card.querySelector('[data-dlog-flash]');
+      if (flash) {
+        flash.textContent = '✓ Saved';
+        setTimeout(function () { if (flash) flash.textContent = ''; }, 2500);
+      }
+      // The day now has a log — drop the "no log" banner if present.
+      var banner = card.querySelector('.dlog-nolog');
+      if (banner) banner.remove();
+      var dc = document.getElementById('dlog-day-count');
+      // Recount logged days so the masthead total stays correct.
+      idbGetAll('daily_logs').then(function (all) {
+        if (dc) dc.textContent = String((all || []).length);
+      });
+    }).catch(function (err) {
+      console.warn('[RoadWalk] daily log save failed:', err);
+      btn.disabled = false;
+      var flash = card.querySelector('[data-dlog-flash]');
+      if (flash) flash.textContent = '⚠ Error';
+    });
+  });
 
 
   /* ---------------------------------------------------------------
