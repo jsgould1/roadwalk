@@ -6841,9 +6841,9 @@ input.fs-slider::-webkit-slider-thumb {
   display: flex; gap: 8px; align-items: flex-start;
   padding: 10px; overflow-x: auto;
 }
-/* Five equal columns (post + 4 panels) fill the window; min-width scrolls. */
+/* Five resizable columns (post + 4 panels); widths persist, min-width scrolls. */
 .sign-col {
-  flex: 1 1 0; min-width: 228px;
+  flex: 1 1 0; min-width: 140px;
   background: var(--paper-2, #f1f3f5);
   border: 1px solid var(--rule, #d8dde2); border-radius: 6px;
   padding: 6px 8px 10px;
@@ -6904,6 +6904,40 @@ input.fs-slider::-webkit-slider-thumb {
 .sign-retro-cell { flex: 1; min-width: 0; text-align: center; }
 .sign-retro-lbl { font: 700 8px 'IBM Plex Mono', monospace; color: var(--ink-3, #8a93a0); margin-bottom: 2px; }
 .sign-retro-cell .df-input { width: 100%; box-sizing: border-box; text-align: center; }
+/* Compact non-editable meta block (Pin ID / Section / STA / Overall) — no rules */
+.sign-meta {
+  background: #fff; border: 1px solid var(--rule, #d8dde2); border-radius: 5px;
+  margin: 4px 2px 2px; padding: 3px 7px;
+}
+.sign-meta-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.sign-meta-lbl {
+  flex: 0 0 70px; font: 600 9px 'IBM Plex Mono', monospace;
+  letter-spacing: 0.4px; text-transform: uppercase; color: var(--ink-3, #8a93a0);
+}
+.sign-meta-val {
+  flex: 1; min-width: 0; font: 600 12px 'IBM Plex Sans', sans-serif;
+  color: var(--ink, #222); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Single-column DAMAGE flags — buttons wrap to fill column width */
+.sign-dmg-flags { display: flex; flex-wrap: wrap; gap: 4px; padding: 5px 2px 3px; }
+.sign-dmg-flags .df-flag { flex: 0 1 auto; }
+/* Column resize handles between sign columns */
+.sign-resize {
+  flex: 0 0 9px; align-self: stretch; cursor: col-resize;
+  background: transparent; position: relative; touch-action: none;
+}
+.sign-resize::before {
+  content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 3px;
+  border-radius: 2px; background: var(--rule, #d8dde2);
+}
+.sign-resize:hover::before, .sign-resize.dragging::before {
+  background: var(--blue, #1a5276);
+}
+/* "More photos" — additional photos parked at the column bottom */
+.sign-photos-more-hdr {
+  font: 700 8px 'IBM Plex Mono', monospace; letter-spacing: 0.5px;
+  color: var(--ink-3, #8a93a0); padding: 6px 2px 2px;
+}
 /* Form sections */
 .df-sec { }
 .df-sec-hdr {
@@ -25637,11 +25671,67 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       {v:'painted',l:'Painted'},{v:'bare_steel',l:'Bare steel'},{v:'other',l:'Other'}];
     var breakOpts = [{v:'',l:'— select —'},{v:'yes',l:'Yes — breakaway'},{v:'no',l:'No'},{v:'unknown',l:'Unknown'}];
 
-    var sideBtns = ['L','R','C','N/A'].map(function (s) {
+    // Fixed retroreflectivity rating scale (independent of the condition library).
+    var retroRatings = [
+      {v:'E',l:'Excellent',col:'#15803d'},{v:'G',l:'Good',col:'#22c55e'},
+      {v:'F',l:'Fair',col:'#f59e0b'},{v:'P',l:'Poor',col:'#ef4444'},
+      {v:'X',l:'Fail',col:'#111111'}
+    ];
+
+    // Persisted per-column widths (post + 4 panel columns).
+    function _signColWidths() {
+      var def = [248, 248, 248, 248, 248];
+      try {
+        var raw = JSON.parse(localStorage.getItem('rw_sign_col_widths') || 'null');
+        if (Array.isArray(raw) && raw.length === 5) {
+          return raw.map(function (w, i) { var n = Number(w); return (n && n >= 140) ? n : def[i]; });
+        }
+      } catch (e) {}
+      return def;
+    }
+    var colW = _signColWidths();
+    function _colAttr(i) {
+      return ' data-sign-col="' + i + '" style="flex:0 0 ' + colW[i] + 'px;width:' + colW[i] + 'px;"';
+    }
+
+    var sideBtns = ['L','R','C','OVERHEAD'].map(function (s) {
       var on = (a.side || '') === s;
       return '<button class="df-cond-btn" data-cond="' + s + '" data-field="side"' +
         (on ? ' style="background:var(--blue);color:#fff;border-color:var(--blue)"' : '') + '>' + s + '</button>';
     }).join('');
+
+    // Compact, non-editable identity block (Pin ID / Section / STA / Overall).
+    function _signMetaBlock() {
+      var ov = _deriveOverallCondition(pin);
+      var ovHtml = ov
+        ? '<span style="display:inline-block;min-width:22px;text-align:center;padding:2px 7px;' +
+          'border-radius:3px;color:#fff;font:700 11px/1 \'IBM Plex Mono\',monospace;background:' +
+          _condColorFor(ov) + '">' + _esc(ov) + '</span>'
+        : '—';
+      function row(lbl, val) {
+        return '<div class="sign-meta-row"><span class="sign-meta-lbl">' + lbl +
+          '</span><span class="sign-meta-val">' + val + '</span></div>';
+      }
+      return '<div class="sign-meta">' +
+        row('Pin ID', _esc(pin.id || '—')) +
+        row('Section', _esc(sec ? sec.name : '—')) +
+        row('STA', _esc(pin.sta || '—')) +
+        row('Overall', ovHtml) +
+      '</div>';
+    }
+
+    // Single-column DAMAGE block — header then flag buttons filling the column.
+    function _signFlagBlock(field, flags, options) {
+      var btns = options.map(function (d) {
+        var v = typeof d === 'object' ? d.v : d;
+        var l = typeof d === 'object' ? d.l : d;
+        var on = Array.isArray(flags) && flags.includes(v);
+        return '<button class="df-flag' + (on ? ' on' : '') + '" data-flag-field="' +
+          _esc(field) + '" data-flag-val="' + _esc(v) + '">' + _esc(l) + '</button>';
+      }).join('');
+      return '<div class="df-sec-hdr">DAMAGE</div>' +
+        '<div class="sign-dmg-flags">' + btns + '</div>';
+    }
 
     // ── POST column ──────────────────────────────────────────────────────
     var postBlocks = a.posts.map(function (post, oi) {
@@ -25656,54 +25746,62 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _selectRow('Finish', 'post_finish', post.post_finish || '', finishOpts) +
         _selectRow('Breakaway', 'post_breakaway', post.post_breakaway || '', breakOpts) +
         _condRow  ('Post cond', 'post_condition', post.post_condition, conditions, 'data-post-field') +
-        _flagRow  ('Damage', 'post_damage', post.post_damage, postDmg) +
+        _signFlagBlock('post_damage', post.post_damage, postDmg) +
         _textareaRow('Notes', 'notes', post.notes) +
       '</div>';
     }).join('');
 
     var postCol =
-      '<div class="sign-col sign-col-post">' +
+      '<div class="sign-col sign-col-post"' + _colAttr(0) + '>' +
         '<div class="sign-col-hdr">POST INFORMATION</div>' +
+        _signMetaBlock() +
         _sectionHdr('LOCATION') +
         _sourceRow(pin) +
         '<div class="df-row"><span class="df-lbl">Side</span>' +
           '<span class="df-ctrl"><div class="df-cond">' + sideBtns + '</div></span></div>' +
         _inputRow('EOP Offset (ft)', 'eop_offset', a.eop_offset, 'number') +
-        _readonlyRow('Pin ID', pin.id) +
-        _readonlyRow('Section', sec ? sec.name : '—') +
-        _readonlyRow('STA', pin.sta || '—') +
-        _condReadonlyRow('Overall', _deriveOverallCondition(pin), 'worst of post + panels') +
         _sectionHdr('POSTS') +
         postBlocks +
         '<div class="sign-add-row"><button class="sign-add-btn" data-add-post>＋ Add Post</button></div>' +
         _customFieldsSection(pin) +
         '<div class="sign-photos-sep"></div>' +
         '<div class="sign-col-hdr" style="margin-top:6px">POST PHOTOS</div>' +
-        _photoBlock('post') +
+        _photoHead('post') +
+        _photoTail('post') +
       '</div>';
 
-    // ── Photo block (reused by direction columns + the post column) ──────
-    function _photoBlock(dirKey) {
-      var thumbs = a.photos.map(function (ph, i) { return { ph: ph, i: i }; })
-        .filter(function (x) { return String(x.ph.dir) === String(dirKey); })
-        .map(function (x) {
-          return '<div class="sign-photo-card">' +
-            '<img class="sign-photo-thumb" src="' + x.ph.dataUrl + '" data-photo-idx="' + x.i + '" title="Tap to annotate">' +
-            '<button class="sign-photo-del" data-photo-del="' + x.i + '">✕</button></div>';
-        }).join('');
+    // ── Photo blocks (reused by direction columns + the post column) ─────
+    function _photoList(dirKey) {
+      return a.photos.map(function (ph, i) { return { ph: ph, i: i }; })
+        .filter(function (x) { return String(x.ph.dir) === String(dirKey); });
+    }
+    function _photoThumb(ph, i) {
+      return '<div class="sign-photo-card">' +
+        '<img class="sign-photo-thumb" src="' + ph.dataUrl + '" data-photo-idx="' + i +
+        '" title="Tap to annotate">' +
+        '<button class="sign-photo-del" data-photo-del="' + i + '">✕</button></div>';
+    }
+    // Head: Take / Upload buttons with the first photo shown right below them.
+    function _photoHead(dirKey) {
+      var list = _photoList(dirKey);
+      var first = list.length
+        ? '<div class="sign-photos">' + _photoThumb(list[0].ph, list[0].i) + '</div>' : '';
       return '<div class="sign-photo-row">' +
           '<button class="sign-ph-take" data-sign-photo data-dir="' + dirKey + '">📷 Photo</button>' +
           '<button class="sign-ph-up" data-sign-upload data-dir="' + dirKey + '">⬆ Upload</button>' +
-        '</div><div class="sign-photos">' + thumbs + '</div>';
+        '</div>' + first;
+    }
+    // Tail: additional photos parked at the column bottom after a separator.
+    function _photoTail(dirKey) {
+      var list = _photoList(dirKey);
+      if (list.length < 2) return '';
+      var rest = list.slice(1).map(function (x) { return _photoThumb(x.ph, x.i); }).join('');
+      return '<div class="sign-photos-sep"></div>' +
+        '<div class="sign-photos-more-hdr">MORE PHOTOS</div>' +
+        '<div class="sign-photos">' + rest + '</div>';
     }
 
     // ── Panel block ──────────────────────────────────────────────────────
-    function _retroCell(field, lbl, val) {
-      return '<div class="sign-retro-cell">' +
-        '<div class="sign-retro-lbl">' + lbl + '</div>' +
-        '<input class="df-input" type="number" inputmode="decimal" data-field="' + field + '" ' +
-        'value="' + _esc(val == null ? '' : val) + '"></div>';
-    }
     function _panelBlock(p, idx) {
       var code = p.sign_code || '';
       var meta = code && (window._RW.MUTCD_SIGNS || []).find(function (s) { return s.c === code; });
@@ -25725,34 +25823,37 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _condRow  ('Sheeting cond','sheeting_condition', p.sheeting_condition, conditions, 'data-panel-field') +
         _selectRow('Sheeting type','sheeting_type',      p.sheeting_type || '', sheetOpts) +
         _selectRow('Back panel',   'back_panel',         p.back_panel || '',   backOpts) +
-        _flagRow  ('Damage',       'panel_damage_flags', p.damage_flags,       damage) +
-        '<div class="df-sec-hdr">RETRO · DAYTIME</div>' +
-        '<div class="sign-retro-row">' + _retroCell('retro_day_r1', 'Rater 1', p.retro_day_r1) +
-          _retroCell('retro_day_r2', 'Rater 2', p.retro_day_r2) + '</div>' +
-        '<div class="df-sec-hdr">RETRO · NIGHTTIME</div>' +
-        '<div class="sign-retro-row">' + _retroCell('retro_night_r1', 'Rater 1', p.retro_night_r1) +
-          _retroCell('retro_night_r2', 'Rater 2', p.retro_night_r2) + '</div>' +
+        _signFlagBlock('panel_damage_flags', p.damage_flags, damage) +
+        '<div class="df-sec-hdr">RETRO · DAYTIME (E / G / F / P / X)</div>' +
+        _condRow('Rater 1', 'retro_day_r1',   p.retro_day_r1,   retroRatings, 'data-panel-field') +
+        _condRow('Rater 2', 'retro_day_r2',   p.retro_day_r2,   retroRatings, 'data-panel-field') +
+        '<div class="df-sec-hdr">RETRO · NIGHTTIME (E / G / F / P / X)</div>' +
+        _condRow('Rater 1', 'retro_night_r1', p.retro_night_r1, retroRatings, 'data-panel-field') +
+        _condRow('Rater 2', 'retro_night_r2', p.retro_night_r2, retroRatings, 'data-panel-field') +
+        _textareaRow('Retro notes', 'retro_notes', p.retro_notes) +
         _textareaRow('Notes', 'notes', p.notes) +
       '</div>';
     }
-    function _dirCol(D, lbl) {
+    function _dirCol(D, lbl, ci) {
       var panelHtml = a.panels.map(function (p, i) { return { p: p, i: i }; })
         .filter(function (x) { return Number(x.p.facing_degrees) === D; })
         .map(function (x) { return _panelBlock(x.p, x.i); }).join('');
-      return '<div class="sign-col sign-col-dir" data-dir="' + D + '">' +
+      return '<div class="sign-col sign-col-dir" data-dir="' + D + '"' + _colAttr(ci) + '>' +
         '<div class="sign-col-hdr">' + _esc(lbl) + '</div>' +
-        _photoBlock(D) +
+        _photoHead(D) +
         panelHtml +
         '<div class="sign-add-row"><button class="sign-add-btn" data-add-panel data-dir="' + D + '">＋ Add Panel</button></div>' +
+        _photoTail(D) +
       '</div>';
     }
 
+    var rs = '<div class="sign-resize" title="Drag to resize column"></div>';
     return '<div class="sign-grid">' +
-      postCol +
-      _dirCol(0,   '0° · Faces traffic') +
-      _dirCol(90,  '90° · Right') +
-      _dirCol(180, '180° · Back') +
-      _dirCol(270, '270° · Left') +
+      postCol + rs +
+      _dirCol(0,   '0° · Faces traffic', 1) + rs +
+      _dirCol(90,  '90° · Right', 2) + rs +
+      _dirCol(180, '180° · Back', 3) + rs +
+      _dirCol(270, '270° · Left', 4) +
     '</div>' +
     '<input type="file" id="ds-sign-photo-input" accept="image/*" capture="environment" style="display:none">' +
     '<input type="file" id="ds-sign-upload-input" accept="image/*" multiple style="display:none">';
@@ -27022,6 +27123,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           if (typeof _openAnnotateModal === 'function') {
             _openAnnotateModal(i, pin, function () { _dataState.dirty = true; _renderFormBody(); });
           }
+        });
+      });
+
+      // Column resize handles — drag adjusts the column to the left; the five
+      // widths are persisted to localStorage so they survive form re-renders.
+      scroll.querySelectorAll('.sign-resize').forEach(function (h) {
+        h.addEventListener('pointerdown', function (e) {
+          var leftCol = h.previousElementSibling;
+          if (!leftCol || !leftCol.hasAttribute('data-sign-col')) return;
+          e.preventDefault();
+          h.classList.add('dragging');
+          var startX = e.clientX;
+          var startW = leftCol.getBoundingClientRect().width;
+          try { h.setPointerCapture(e.pointerId); } catch (er) {}
+          function move(ev) {
+            var w = Math.max(140, startW + (ev.clientX - startX));
+            leftCol.style.flex = '0 0 ' + w + 'px';
+            leftCol.style.width = w + 'px';
+          }
+          function up() {
+            h.classList.remove('dragging');
+            try { h.releasePointerCapture(e.pointerId); } catch (er) {}
+            h.removeEventListener('pointermove', move);
+            h.removeEventListener('pointerup', up);
+            var widths = [];
+            scroll.querySelectorAll('.sign-col[data-sign-col]').forEach(function (c) {
+              widths[Number(c.dataset.signCol)] = Math.round(c.getBoundingClientRect().width);
+            });
+            try { localStorage.setItem('rw_sign_col_widths', JSON.stringify(widths)); } catch (er) {}
+          }
+          h.addEventListener('pointermove', move);
+          h.addEventListener('pointerup', up);
         });
       });
     }
