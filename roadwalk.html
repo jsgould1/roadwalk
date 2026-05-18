@@ -10047,7 +10047,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       { value: 'ln_loops',        label: 'Loops',       code: 'LO', color: '#8A5A2B' },
       { value: 'ln_curb',         label: 'Curb',        code: 'CU', color: '#8A5A2B' },
       { value: 'ln_cg',           label: 'C&G',         code: 'CG', color: '#8A5A2B' },
-      { value: 'ln_sidewalk',     label: 'Sidewalk',    code: 'SW', color: '#8A5A2B' },
       { value: 'ln_misc_other',   label: 'Other',       code: 'OT', color: '#8A5A2B' },
       { value: 'ln_fence',        label: 'Fence',       code: 'FN', color: '#8A5A2B', lineStyle: 'fence' },
     ]},
@@ -10079,6 +10078,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     ]},
     // ===== POLYGONS =====
     { geom: 'polygon', name: 'Misc', items: [
+      { value: 'pg_sidewalk',     label: 'Sidewalk',       code: 'SW', color: '#8A5A2B' },
       { value: 'pg_parking_area', label: 'Parking Area',   code: 'PA', color: '#C85A2B' },
       { value: 'pg_repair_area',  label: 'Repair Area',    code: 'RP', color: '#C85A2B' },
       { value: 'pg_edge_drop',    label: 'Edge Drop Area', code: 'ED', color: '#C85A2B' },
@@ -13285,7 +13285,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const KIND_TO_SLOT = {
       ln_guardrail: 'guardrail', ln_retaining_wall: 'guardrail', ln_barrier: 'guardrail',
       ln_curb: 'curb', ln_cg: 'curb',
-      ln_sidewalk: 'sidewalk',
+      ln_sidewalk: 'sidewalk', pg_sidewalk: 'sidewalk',
       ln_swale: 'swale', ln_drain_other: 'swale',
       ln_fence: 'fence',
       ln_culvert: 'line', ln_box_culvert: 'line', ln_pvmt_change: 'line', pavement_change: 'line',
@@ -13300,7 +13300,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // Numeric slot levels for default positioning (each level = 5px from road edge)
     const _KIND_SLOT_LV = {
       ln_guardrail:3, ln_retaining_wall:4, ln_barrier:2,
-      ln_curb:1, ln_cg:1, ln_sidewalk:2,
+      ln_curb:1, ln_cg:1, ln_sidewalk:2, pg_sidewalk:2,
       ln_swale:5, ln_drain_other:5, ln_fence:6,
       // Bundle short-kind names  (wall at slot 5 — one clear slot above guardrail's
       // thick:6 bar, giving a 4 px gap rather than the 1 px overlap at slot 4)
@@ -13355,12 +13355,39 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     }
 
-    // Inline bars: parallel to road, need attrs.side
+    // Sidewalk polygons render on the SLD as a parallel bar — precompute the
+    // along-route station extent + side by projecting the polygon vertices
+    // onto the alignment.
+    if (sec.alignment) {
+      for (const p of (sec.pins || [])) {
+        if (p.kind !== 'pg_sidewalk') continue;
+        p._sldPoly = null;
+        const ring = p.geometry && p.geometry.coordinates && p.geometry.coordinates[0];
+        if (!ring || ring.length < 3) continue;
+        let minS = Infinity, maxS = -Infinity, sLat = 0, sLng = 0, nv = 0;
+        for (const v of ring) {
+          const sv = projectOntoAlignment({ lat: v[1], lng: v[0] }, sec.alignment)[0];
+          if (sv == null || !isFinite(sv)) continue;
+          if (sv < minS) minS = sv;
+          if (sv > maxS) maxS = sv;
+          sLat += v[1]; sLng += v[0]; nv++;
+        }
+        if (!nv || !isFinite(minS) || maxS <= minS) continue;
+        const swSide = sideOfAlignment({ lat: sLat / nv, lng: sLng / nv }, sec.alignment);
+        p._sldPoly = { sta0: minS, sta1: maxS, side: swSide === 'L' ? 'L' : 'R' };
+      }
+    }
+
+    // Inline bars: parallel to road. LineString features need attrs.side;
+    // sidewalk polygons supply their extent + side via _sldPoly (above).
     const trackPins = (sec.pins || []).filter(p =>
       _sldPinVisible(p)
       && KIND_TO_SLOT[p.kind] && !isCulvertKind(p.kind)
-      && p.geometry && p.geometry.type === 'LineString' && p.attrs && p.attrs.side
-      && kindRenderAs(p.kind) === 'inline'
+      && p.attrs && kindRenderAs(p.kind) === 'inline'
+      && (
+        (p.geometry && p.geometry.type === 'LineString' && p.attrs.side)
+        || (p.kind === 'pg_sidewalk' && p._sldPoly)
+      )
     );
     // Cross markers: perpendicular to road (pavement change, stop bar, etc.)
     const crossPins = (sec.pins || []).filter(p =>
@@ -13374,14 +13401,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     //  feature bars themselves convey position relative to the pavement band.)
 
     for (const pin of trackPins) {
-      const startSta = pin.sta_ft != null
-        ? pin.sta_ft
-        : (pin.attrs.mp_start != null ? (pin.attrs.mp_start - sec.mpStart) * 5280 : 0);
-      const endSta = pin.sta_ft != null && pin.attrs.length_ft
-        ? pin.sta_ft + pin.attrs.length_ft
-        : (pin.attrs.mp_end != null
-            ? (pin.attrs.mp_end - sec.mpStart) * 5280
-            : startSta + (pin.attrs.length_ft || 0));
+      const _isPolySw = pin.kind === 'pg_sidewalk' && pin._sldPoly;
+      const _side = _isPolySw ? pin._sldPoly.side : pin.attrs.side;
+      const startSta = _isPolySw ? pin._sldPoly.sta0
+        : (pin.sta_ft != null
+            ? pin.sta_ft
+            : (pin.attrs.mp_start != null ? (pin.attrs.mp_start - sec.mpStart) * 5280 : 0));
+      const endSta = _isPolySw ? pin._sldPoly.sta1
+        : (pin.sta_ft != null && pin.attrs.length_ft
+            ? pin.sta_ft + pin.attrs.length_ft
+            : (pin.attrs.mp_end != null
+                ? (pin.attrs.mp_end - sec.mpStart) * 5280
+                : startSta + (pin.attrs.length_ft || 0)));
       const p1 = axisPct(startSta);
       const p2 = axisPct(endSta);
       const bar = document.createElement('div');
@@ -13417,15 +13448,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (horiz) {
         bar.style.left  = `${p1}%`; bar.style.width = `${p2 - p1}%`;
         // 23 = roadHalf(20) + 3px margin from band edge
-        if (pin.attrs.side === 'L') { bar.style.top = `calc(50% - ${baseOffset + slotThick + roadHalf + 3}px)`; bar.style.height = `${slotThick}px`; }
-        else                        { bar.style.top = `calc(50% + ${baseOffset + roadHalf - 1}px)`;              bar.style.height = `${slotThick}px`; }
+        if (_side === 'L') { bar.style.top = `calc(50% - ${baseOffset + slotThick + roadHalf + 3}px)`; bar.style.height = `${slotThick}px`; }
+        else               { bar.style.top = `calc(50% + ${baseOffset + roadHalf - 1}px)`;              bar.style.height = `${slotThick}px`; }
       } else {
         bar.style.top = `${p1}%`; bar.style.height = `${p2 - p1}%`;
         // roadHalf offsets bars so baseOffset=0 (line) sits at the road edge
-        if (pin.attrs.side === 'L') { bar.style.right = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
-        else                        { bar.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
+        if (_side === 'L') { bar.style.right = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
+        else               { bar.style.left  = `calc(50% + ${roadHalf + baseOffset}px)`; bar.style.width = `${slotThick}px`; }
       }
-      bar.title = `${pin.id} · ${pin.kind} · ${pin.attrs.length_ft || '?'} ft ${pin.attrs.length_source === 'estimated_pending_ocr' ? '(est)' : ''}`;
+      bar.title = `${pin.id} · ${pin.kind} · ${_isPolySw ? Math.round(endSta - startSta) : (pin.attrs.length_ft || '?')} ft ${pin.attrs.length_source === 'estimated_pending_ocr' ? '(est)' : ''}`;
       bar.style.pointerEvents = 'auto'; bar.style.cursor = 'pointer';
       const _isBarrierKind = pin.kind === 'ln_guardrail' || pin.kind === 'ln_retaining_wall' || pin.kind === 'ln_barrier';
       bar.addEventListener('click', (e) => {
@@ -13446,9 +13477,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return tpl
           .replace(/{code}/g,   _c)
           .replace(/{id}/g,     pin.id || '')
-          .replace(/{length}/g, pin.attrs?.length_ft ? `${Math.round(pin.attrs.length_ft)}'` : '')
+          .replace(/{length}/g, pin.attrs?.length_ft ? `${Math.round(pin.attrs.length_ft)}'`
+                                : (_isPolySw ? `${Math.round(endSta - startSta)}'` : ''))
           .replace(/{sta}/g,    pin.sta_ft != null ? `${Math.round(pin.sta_ft)}` : '')
-          .replace(/{side}/g,   pin.attrs?.side || '')
+          .replace(/{side}/g,   _side || '')
           .replace(/{kind}/g,   pin.kind || '');
       }
       // Badge circle at bar start
@@ -13464,12 +13496,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         badge.addEventListener('click', (e) => { e.stopPropagation(); if (_isBarrierKind) openBarrierSheet(pin, sec); else openFeaturePopup(pin, sec, e); });
         if (horiz) {
           badge.style.left = `${axisPct(startSta)}%`;
-          badge.style.top = pin.attrs.side === 'L'
+          badge.style.top = _side === 'L'
             ? `calc(50% - ${baseOffset + slotThick + roadHalf + 3 - halfThick}px)`
             : `calc(50% + ${baseOffset + roadHalf - 1 + halfThick}px)`;
         } else {
           badge.style.top = `${axisPct(startSta)}%`;
-          badge.style.left = pin.attrs.side === 'L'
+          badge.style.left = _side === 'L'
             ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
             : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
         }
@@ -13487,13 +13519,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (horiz) {
           lab.style.left      = `${axPct}%`;
           lab.style.transform = 'translate(-50%, -50%)';
-          lab.style.top       = pin.attrs.side === 'L' ? barCrossL : barCrossR;
+          lab.style.top       = _side === 'L' ? barCrossL : barCrossR;
         } else {
           lab.style.top       = `${axPct}%`;
           // Rotate -90deg so text runs along the bar (parallel to road axis in
           // vertical mode); translate first to centre on the anchor point
           lab.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
-          lab.style.left = pin.attrs.side === 'L'
+          lab.style.left = _side === 'L'
             ? `calc(50% - ${roadHalf + baseOffset + halfThick}px)`
             : `calc(50% + ${roadHalf + baseOffset + halfThick}px)`;
         }
