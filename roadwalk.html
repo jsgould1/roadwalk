@@ -2558,6 +2558,73 @@ a { color: inherit; text-decoration: none; }
 }
 @keyframes tbRecPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+/* --- Multi-track GPS walk recording — stacked banners, one per track --- */
+.walk-track-stack {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 701;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: none;
+}
+.walk-track-stack[hidden] { display: none; }
+.wt-row {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a5276;
+  color: #fff;
+  padding: 5px 7px 5px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-radius: 3px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+.wt-row.paused { background: #5a6472; }
+.wt-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid #fff; flex: none;
+  animation: tbRecPulse 1.1s ease-in-out infinite;
+}
+.wt-row.paused .wt-dot { animation: none; opacity: 0.55; }
+.wt-code { font-weight: 700; text-transform: uppercase; }
+.wt-stat { opacity: 0.85; }
+.wt-btn {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 2px 7px;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; border-radius: 2px;
+}
+.wt-btn:hover { background: rgba(255,255,255,0.3); }
+.wt-btn.wt-done { border-color: rgba(100,220,100,0.7); }
+.wt-btn.wt-x    { border-color: rgba(255,140,120,0.6); }
+/* Walk-track start dialog — side picker */
+.wt-side-row { display: flex; gap: 6px; }
+.wt-side-btn {
+  flex: 1;
+  padding: 9px 4px;
+  border: 1.5px solid var(--line, #d4d8dd);
+  background: var(--paper, #fff);
+  border-radius: 5px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-2, #555);
+  cursor: pointer;
+}
+.wt-side-btn.active {
+  border-color: #1a5276;
+  background: #1a5276;
+  color: #fff;
+}
+
 /* --- New section dialog (shown after trace is finished) --- */
 .nsd-overlay {
   position: fixed;
@@ -7126,6 +7193,9 @@ body.mobile-mode #app {
           <button class="tb-btn" id="draw-cancel-btn">✕ Cancel</button>
         </div>
 
+        <!-- Multi-track GPS walk recorders — one stacked banner per active track -->
+        <div class="walk-track-stack" id="walk-track-stack" hidden></div>
+
         <!-- Feature picker — toggle button + collapsible panel, anchored topleft -->
         <div class="fp-left-stack" id="fp-left-stack">
           <button class="map-ctl-btn" id="fp-toggle-btn" title="Add Feature (Insert)">
@@ -8276,6 +8346,32 @@ body.mobile-mode #app {
       <span class="nsd-err" id="cl-confirm-err"></span>
       <button class="nsd-cancel-btn" id="cl-confirm-cancel">Cancel</button>
       <button class="nsd-save-btn"   id="cl-confirm-ok">Replace →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== WALK-TRACK START DIALOG (side + offset for a GPS line track) ====== -->
+<div class="nsd-overlay" id="wt-overlay" hidden>
+  <div class="nsd-card">
+    <div class="nsd-title" id="wt-dlg-title">Start walk track</div>
+    <div class="nsd-traced" id="wt-dlg-sub">Walk the feature — vertices record by GPS.
+      Other tracks keep running; you can drop points anytime.</div>
+    <div class="nsd-row">
+      <label>Side of your walked path</label>
+      <div class="wt-side-row" id="wt-side-row">
+        <button type="button" class="wt-side-btn" data-side="L">◄ Left</button>
+        <button type="button" class="wt-side-btn active" data-side="C">On path</button>
+        <button type="button" class="wt-side-btn" data-side="R">Right ►</button>
+      </div>
+    </div>
+    <div class="nsd-row" id="wt-offset-row" style="display:none">
+      <label for="wt-offset">Offset distance from your path (ft)</label>
+      <input id="wt-offset" type="number" min="0" step="1" value="10" inputmode="decimal">
+    </div>
+    <div class="nsd-foot">
+      <span class="nsd-err" id="wt-dlg-err"></span>
+      <button class="nsd-cancel-btn" id="wt-cancel">Cancel</button>
+      <button class="nsd-save-btn" id="wt-start">Start walking →</button>
     </div>
   </div>
 </div>
@@ -14587,13 +14683,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (gpsBtn) {
         gpsBtn.hidden = false;
         gpsBtn.classList.remove('rec');
-        gpsBtn.textContent = isPoint ? '📍 Drop at GPS' : '📍 Walk';
+        gpsBtn.textContent = isPoint ? '📍 Drop at GPS'
+                           : (tool === 'line' ? '📍 Walk track' : '📍 Walk');
         gpsBtn.title = isPoint
           ? 'Drop this feature at your current GPS position'
-          : 'Record this feature by walking it with GPS';
+          : (tool === 'line'
+              ? 'Walk this feature with GPS — runs as its own track, up to 4 at once'
+              : 'Record this feature by walking it with GPS');
       }
       if (!isPoint) _updateDrawBanner();
       $('#draw-banner').classList.add('open');
+      _layoutTopBanners();
     }
     // Disable Leaflet's double-click zoom while drawing so dblclick = "finish"
     if (state.map && state.map.doubleClickZoom) state.map.doubleClickZoom.disable();
@@ -14617,7 +14717,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (hint) hint.hidden = true;
     const gpsBtn = $('#draw-gps-btn');
     if (gpsBtn) { gpsBtn.classList.remove('rec'); gpsBtn.hidden = true; }
-    $('#draw-banner')?.classList.remove('open');
+    const dBan = $('#draw-banner');
+    if (dBan) { dBan.classList.remove('open'); dBan.style.top = ''; }
     if (state.map && state.map.doubleClickZoom) state.map.doubleClickZoom.enable();
   }
 
@@ -14696,6 +14797,57 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     _updateDrawBanner();
   }
 
+  // Build a feature pin from a traced vertex string and save it into `sec`.
+  // Returns the new pin (already pushed + renumbered). Shared by finishDraw()
+  // and the multi-track GPS walk recorders.
+  function _buildAndSaveFeaturePin(sec, tool, kind, verts, source) {
+    // Build GeoJSON geometry — convention is [lng, lat]
+    let geometry;
+    if (tool === 'point') {
+      geometry = { type: 'Point', coordinates: [verts[0][1], verts[0][0]] };
+    } else if (tool === 'line') {
+      geometry = { type: 'LineString', coordinates: verts.map(v => [v[1], v[0]]) };
+    } else {
+      const ring = verts.map(v => [v[1], v[0]]);
+      if (ring[0][0] !== ring[ring.length-1][0] || ring[0][1] !== ring[ring.length-1][1]) {
+        ring.push([ring[0][0], ring[0][1]]);
+      }
+      geometry = { type: 'Polygon', coordinates: [ring] };
+    }
+    let staFt = null;
+    try {
+      const [s] = projectOntoAlignment({ lat: verts[0][0], lng: verts[0][1] }, sec.alignment);
+      staFt = s;
+    } catch (e) { /* off-alignment, ok */ }
+    const attrs = {
+      _added_at: new Date().toISOString(),
+      _added_via: source || 'map',
+    };
+    if (tool === 'line' && verts.length >= 2) {
+      let lengthFt = 0;
+      for (let i = 1; i < verts.length; i++) lengthFt += havFt(verts[i-1], verts[i]);
+      attrs.length_ft = +lengthFt.toFixed(2);
+      attrs.length_source = (source === 'gps' ? 'gps' : 'drawn');
+    } else if (tool === 'polygon') {
+      attrs.area_sq_ft = +polygonAreaSqFt(geometry.coordinates[0]).toFixed(2);
+    }
+    const pin = {
+      id: '',
+      ulid: (typeof makeULID === 'function' ? makeULID() : ''),
+      kind,
+      source: 'AECOM',
+      status: 'pending',
+      geometry,
+      sta_ft: staFt,
+      sta: staFt != null ? `${(staFt/100|0)}+${(staFt%100).toFixed(2).padStart(5,'0')}` : null,
+      attrs,
+    };
+    if (!sec.pins) sec.pins = [];
+    sec.pins.push(pin);
+    renumberPinsForKind(sec, kind);
+    return pin;
+  }
+
   function finishDraw() {
     if (!drawState.tool) return;
     const sec = SECTIONS.find(s => s.id === state.sectionId);
@@ -14709,67 +14861,225 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       const simp = _simplifyTrack(verts);
       if (simp.length >= need) verts = simp;
     }
-    // Build GeoJSON geometry — convention is [lng, lat]
-    let geometry;
-    if (tool === 'point') {
-      geometry = { type: 'Point', coordinates: [verts[0][1], verts[0][0]] };
-    } else if (tool === 'line') {
-      geometry = { type: 'LineString', coordinates: verts.map(v => [v[1], v[0]]) };
-    } else {
-      const ring = verts.map(v => [v[1], v[0]]);
-      // Close the ring per GeoJSON spec
-      if (ring[0][0] !== ring[ring.length-1][0] || ring[0][1] !== ring[ring.length-1][1]) {
-        ring.push([ring[0][0], ring[0][1]]);
-      }
-      geometry = { type: 'Polygon', coordinates: [ring] };
-    }
-    // Project the first vertex onto the alignment so the strip can place it
-    let staFt = null;
-    try {
-      const [s] = projectOntoAlignment({ lat: verts[0][0], lng: verts[0][1] }, sec.alignment);
-      staFt = s;
-    } catch (e) { /* off-alignment, ok */ }
-    // No more prompt — the right-side feature panel handles labels/notes
-    // editing right after the pin is created.
     const kind = drawState.kind ||
                  { point: 'user_point', line: 'user_line', polygon: 'user_polygon' }[tool];
-    // ID gets assigned during the renumber pass below. Use a sentinel for now.
-    const attrs = {
-      _added_at: new Date().toISOString(),
-      _added_via: drawState.source || 'map',
-    };
-    // Auto-populate length / area on geometry creation
-    if (tool === 'line' && verts.length >= 2) {
-      let lengthFt = 0;
-      for (let i = 1; i < verts.length; i++) {
-        lengthFt += havFt(verts[i-1], verts[i]);
-      }
-      attrs.length_ft = +lengthFt.toFixed(2);
-      attrs.length_source = 'drawn';
-    } else if (tool === 'polygon') {
-      attrs.area_sq_ft = +polygonAreaSqFt(geometry.coordinates[0]).toFixed(2);
-    }
-    const pin = {
-      id: '',                         // filled by renumberPinsForKind below (mutable label)
-      ulid: (typeof makeULID === 'function' ? makeULID() : ''), // canonical immutable id
-      kind,
-      source: 'AECOM',
-      status: 'pending',
-      geometry,
-      sta_ft: staFt,
-      sta: staFt != null ? `${(staFt/100|0)}+${(staFt%100).toFixed(2).padStart(5,'0')}` : null,
-      attrs,
-    };
-    if (!sec.pins) sec.pins = [];
-    sec.pins.push(pin);
-    // Renumber so the new pin gets its sequential ID by milepost order.
-    renumberPinsForKind(sec, kind);
+    const pin = _buildAndSaveFeaturePin(sec, tool, kind, verts, drawState.source || 'map');
     cancelDraw();
     // Re-render map + strip
     initOrUpdateMap(sec);
     if (typeof renderStrip === 'function' && stripCurrentSec === sec) renderStrip();
     // Open the right-side feature panel for inline editing
     openPinSheet(pin, sec);
+  }
+
+  // ── Multi-track GPS walk recording ──────────────────────────────────────
+  // Up to 4 line features record concurrently as you walk the route. Each
+  // track follows your GPS path; on finish it is RDP-simplified and (when a
+  // side + offset are set) shifted perpendicular into its true position.
+  const WALK_TRACK_MAX    = 4;
+  const WALK_TRACK_COLORS = ['#c85a2b', '#2b8cc8', '#7a3fb8', '#1f9c5a'];
+  const walkTracks = [];          // active GPS line recorders
+  let _wtPendingKind = null;      // feature kind awaiting the side/offset dialog
+  let _rwToastTimer  = null;
+
+  function _rwToast(text) {
+    let t = document.getElementById('rw-ks-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'rw-ks-toast';
+      t.className = 'rw-ks-toast';
+      document.getElementById('map')?.appendChild(t);
+    }
+    t.textContent = text;
+    t.classList.add('visible');
+    clearTimeout(_rwToastTimer);
+    _rwToastTimer = setTimeout(() => t.classList.remove('visible'), 2000);
+  }
+
+  // Bearing (radians) from point a to point b.
+  function _bearingRad(a, b) {
+    const lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
+    const dlon = (b[1]-a[1])*Math.PI/180;
+    const x = Math.sin(dlon)*Math.cos(lat2);
+    const y = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
+    return Math.atan2(x, y);
+  }
+
+  // Shift a walked polyline perpendicular to itself by offsetFt on the given
+  // side of travel ('L' / 'R'); 'C' or zero offset returns the path unchanged.
+  function _offsetTrack(verts, side, offsetFt) {
+    if (!offsetFt || side === 'C' || verts.length < 2) return verts.slice();
+    const perp = (side === 'R' ? 1 : -1) * Math.PI / 2;  // R = right of travel
+    return verts.map((v, i) => {
+      let b;
+      if (i === 0)                   b = _bearingRad(verts[0], verts[1]);
+      else if (i === verts.length-1) b = _bearingRad(verts[i-1], verts[i]);
+      else                           b = _bearingRad(verts[i-1], verts[i+1]);
+      return offsetLatLng(v, b + perp, offsetFt);
+    });
+  }
+
+  function _walkTrackById(id) { return walkTracks.find(t => t.id === id); }
+
+  // Keep the draw banner clear of the stacked track banners.
+  function _layoutTopBanners() {
+    const stack = $('#walk-track-stack');
+    const db = $('#draw-banner');
+    if (!db) return;
+    if (stack && !stack.hidden && walkTracks.length) {
+      db.style.top = (8 + stack.getBoundingClientRect().height + 6) + 'px';
+    } else {
+      db.style.top = '';
+    }
+  }
+
+  // Append a GPS fix to a track's vertex string (subject to spacing) and
+  // refresh its on-map preview polyline. Returns true if a vertex was added.
+  // One polyline per track (updated in place) keeps it light on long walks.
+  function _trackAppend(track, lat, lng) {
+    const v = track.vertices;
+    if (v.length > 0) {
+      const minStep = state.settings.gpsWalkStepFt || 5;
+      if (havFt(v[v.length-1], [lat, lng]) < minStep) return false;
+    }
+    v.push([lat, lng]);
+    if (state.map && v.length >= 2) {
+      if (track.polyLayer) {
+        track.polyLayer.setLatLngs(v);
+      } else {
+        track.polyLayer = L.polyline(v, {
+          color: track.color, weight: 4, opacity: 0.9, dashArray: '6 4',
+          interactive: false,
+        }).addTo(state.map);
+      }
+    }
+    return true;
+  }
+
+  // One GPS fix → feed every track that is not paused.
+  function _walkTracksOnFix(lat, lng) {
+    let recorded = false;
+    for (const t of walkTracks) {
+      if (t.paused) continue;
+      if (_trackAppend(t, lat, lng)) recorded = true;
+    }
+    if (state.map) state.map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    if (recorded) _renderWalkTrackStack();
+  }
+
+  function _renderWalkTrackStack() {
+    const stack = $('#walk-track-stack');
+    if (!stack) return;
+    stack.innerHTML = '';
+    for (const t of walkTracks) {
+      let lenFt = 0;
+      for (let i = 1; i < t.vertices.length; i++) lenFt += havFt(t.vertices[i-1], t.vertices[i]);
+      const offTxt = t.side === 'C' ? '' : ` · ${t.side}${t.offsetFt}'`;
+      const row = document.createElement('div');
+      row.className = 'wt-row' + (t.paused ? ' paused' : '');
+      row.innerHTML =
+        `<span class="wt-dot" style="background:${t.color}"></span>` +
+        `<span class="wt-code"></span>` +
+        `<span class="wt-stat">${t.vertices.length} pt · ${_fmtTraceDist(lenFt)}${offTxt}` +
+        `${t.paused ? ' · PAUSED' : ''}</span>` +
+        `<button class="wt-btn wt-pause" data-id="${t.id}">${t.paused ? '▶' : '⏸'}</button>` +
+        `<button class="wt-btn wt-done" data-id="${t.id}" title="Finish this track">✓</button>` +
+        `<button class="wt-btn wt-x" data-id="${t.id}" title="Discard this track">✕</button>`;
+      row.querySelector('.wt-code').textContent = t.code;   // textContent — no HTML injection
+      stack.appendChild(row);
+    }
+    stack.hidden = walkTracks.length === 0;
+    _layoutTopBanners();
+  }
+
+  function _tearDownTrack(t) {
+    if (state.map && t.polyLayer) state.map.removeLayer(t.polyLayer);
+    t.polyLayer = null;
+    const i = walkTracks.indexOf(t);
+    if (i >= 0) walkTracks.splice(i, 1);
+  }
+
+  // Start a new GPS walk track for a line feature.
+  function _startWalkTrack(kind, side, offsetFt) {
+    if (walkTracks.length >= WALK_TRACK_MAX) {
+      _rwToast(`Max ${WALK_TRACK_MAX} tracks already recording`);
+      return;
+    }
+    const meta = (typeof PIN_STYLE !== 'undefined' && kind && PIN_STYLE[kind]) || null;
+    const code = meta?.code || (kind || 'line').replace(/_/g, ' ');
+    const used = walkTracks.map(t => t.colorIdx);
+    let colorIdx = 0;
+    while (used.includes(colorIdx) && colorIdx < WALK_TRACK_COLORS.length - 1) colorIdx++;
+    const track = {
+      id: 'wt' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      kind: kind || 'user_line', code, tool: 'line',
+      side: side || 'C', offsetFt: +offsetFt || 0,
+      vertices: [], polyLayer: null, paused: false,
+      colorIdx, color: WALK_TRACK_COLORS[colorIdx],
+    };
+    walkTracks.push(track);
+    if (state.gpsPos) _trackAppend(track, state.gpsPos.lat, state.gpsPos.lng);
+    _renderWalkTrackStack();
+    _rwToast(`${code} track started${state.gpsPos ? '' : ' — waiting for GPS'}`);
+  }
+
+  function _toggleTrackPause(id) {
+    const t = _walkTrackById(id);
+    if (t) { t.paused = !t.paused; _renderWalkTrackStack(); }
+  }
+
+  function _discardWalkTrack(id) {
+    const t = _walkTrackById(id);
+    if (!t) return;
+    _tearDownTrack(t);
+    _renderWalkTrackStack();
+    _rwToast(`${t.code} track discarded`);
+  }
+
+  // Finish a track → simplify, offset, save the feature, drop its banner.
+  function _finishWalkTrack(id) {
+    const t = _walkTrackById(id);
+    if (!t) return;
+    const sec = SECTIONS.find(s => s.id === state.sectionId);
+    const verts0 = t.vertices.slice();
+    _tearDownTrack(t);
+    _renderWalkTrackStack();
+    if (!sec) { _rwToast(`${t.code}: no active section — discarded`); return; }
+    if (verts0.length < 2) { _rwToast(`${t.code}: too short — discarded`); return; }
+    let verts = _simplifyTrack(verts0);
+    if (verts.length < 2) verts = verts0;
+    if (t.offsetFt && t.side !== 'C') verts = _offsetTrack(verts, t.side, t.offsetFt);
+    const pin = _buildAndSaveFeaturePin(sec, 'line', t.kind, verts, 'gps');
+    if (pin && pin.attrs && t.side !== 'C') {
+      pin.attrs.offset_side = t.side;
+      pin.attrs.offset_ft   = t.offsetFt;
+    }
+    initOrUpdateMap(sec);
+    // Re-assert any still-recording tracks' preview lines in case the map
+    // re-render dropped them.
+    for (const tr of walkTracks) {
+      if (tr.polyLayer && state.map && !state.map.hasLayer(tr.polyLayer)) {
+        tr.polyLayer.addTo(state.map);
+      }
+    }
+    if (typeof renderStrip === 'function' && stripCurrentSec === sec) renderStrip();
+    _rwToast(`${pin.id || t.code} saved · ${Math.round(pin.attrs?.length_ft || 0)} ft`);
+  }
+
+  // Open the side/offset dialog before starting a walk track for `kind`.
+  function _openWalkTrackDialog(kind) {
+    if (walkTracks.length >= WALK_TRACK_MAX) {
+      _rwToast(`Max ${WALK_TRACK_MAX} tracks already recording`);
+      return;
+    }
+    _wtPendingKind = kind || 'user_line';
+    const meta = (typeof PIN_STYLE !== 'undefined' && PIN_STYLE[_wtPendingKind]) || null;
+    const code = meta?.code || _wtPendingKind.replace(/_/g, ' ');
+    $('#wt-dlg-title').textContent = `Walk track — ${code}`;
+    $$('#wt-side-row .wt-side-btn').forEach(b => b.classList.toggle('active', b.dataset.side === 'C'));
+    $('#wt-offset-row').style.display = 'none';
+    $('#wt-dlg-err').textContent = '';
+    $('#wt-overlay').hidden = false;
   }
 
   // --- Floating feature picker -------------------------------------------
@@ -15367,7 +15677,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     const container = state.map.getContainer();
 
-    const _uiSelectors = '.leaflet-control, .map-ctl-stack, .basemap-ctrl, .rw-ks-toast, .fp-left-stack, .trace-banner, #draw-banner';
+    const _uiSelectors = '.leaflet-control, .map-ctl-stack, .basemap-ctrl, .rw-ks-toast, .fp-left-stack, .trace-banner, #draw-banner, #walk-track-stack';
 
     container.addEventListener('click', (e) => {
       if (relocateState && relocateState.active) return;
@@ -16861,11 +17171,46 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // --- Feature draw: Done / Cancel buttons in the draw banner (touch-friendly) ---
   $('#draw-done-btn').addEventListener('click', () => finishDraw());
   $('#draw-cancel-btn').addEventListener('click', () => cancelDraw());
-  // --- Feature draw: GPS button — drops a point, or toggles walk-recording
-  //     for a line / polygon feature ---
+  // --- Feature draw: GPS button — point drops at GPS, a line starts a
+  //     multi-track walk recorder, a polygon does a single GPS walk ---
   $('#draw-gps-btn').addEventListener('click', () => {
-    if (drawState.tool === 'point') _dropFeatureAtGps();
-    else _toggleDrawWalk();
+    if (drawState.tool === 'point')     _dropFeatureAtGps();
+    else if (drawState.tool === 'line') _openWalkTrackDialog(drawState.kind);
+    else                                _toggleDrawWalk();
+  });
+  // --- Walk-track start dialog (side + offset) ---
+  $$('#wt-side-row .wt-side-btn').forEach(b => b.addEventListener('click', () => {
+    $$('#wt-side-row .wt-side-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    $('#wt-offset-row').style.display = b.dataset.side === 'C' ? 'none' : '';
+  }));
+  $('#wt-cancel').addEventListener('click', () => {
+    $('#wt-overlay').hidden = true;
+    _wtPendingKind = null;
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#wt-overlay').hidden) {
+      $('#wt-overlay').hidden = true;
+      _wtPendingKind = null;
+    }
+  });
+  $('#wt-start').addEventListener('click', () => {
+    const side   = $('#wt-side-row .wt-side-btn.active')?.dataset.side || 'C';
+    const offset = side === 'C' ? 0 : (parseFloat($('#wt-offset').value) || 0);
+    const kind   = _wtPendingKind;
+    $('#wt-overlay').hidden = true;
+    _wtPendingKind = null;
+    cancelDraw();                       // free the feature picker for the next track
+    _startWalkTrack(kind, side, offset);
+  });
+  // --- Walk-track stacked banners — pause / finish / discard per track ---
+  $('#walk-track-stack')?.addEventListener('click', e => {
+    const btn = e.target.closest('.wt-btn');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.classList.contains('wt-pause'))     _toggleTrackPause(id);
+    else if (btn.classList.contains('wt-done')) _finishWalkTrack(id);
+    else if (btn.classList.contains('wt-x'))    _discardWalkTrack(id);
   });
 
   // --- New Section dialog: Save / Cancel ---
@@ -17260,8 +17605,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     _updateStripGpsDot();
 
-    // ── GPS-walk: append vertices as the walker moves ────────────────────
-    // Section trace and line/polygon feature draw both support walk-recording.
+    // ── GPS-walk recording ───────────────────────────────────────────────
+    // Multi-track line recorders run independently of single-feature draw.
+    if (walkTracks.length) _walkTracksOnFix(lat, lng);
+    // Section trace and polygon feature draw use single-feature walk-record.
     if (drawState.tool && drawState.walkActive) {
       _drawWalkOnFix(lat, lng);
       return;   // walk handler owns map panning while recording
@@ -17270,6 +17617,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _walkOnFix(lat, lng, accuracy);
       return;   // walk handler owns map panning while recording
     }
+    if (walkTracks.length) return;   // tracks own map panning — skip follow-lock
 
     // ── Follow-lock ──────────────────────────────────────────────────────
     if (gpsLockMode !== 'off' && state.map) {
