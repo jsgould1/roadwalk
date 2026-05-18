@@ -2638,6 +2638,36 @@ a { color: inherit; text-decoration: none; }
 /* Left-stack toggle button in its "off" state (e.g. ↔W width labels hidden) */
 .map-ctl-btn.ctl-off { opacity: 0.4; }
 
+/* --- Settings: dropdown-list library --- */
+.dl-list { margin-top: 12px; }
+.dl-list-name {
+  font: 700 11px 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--ink-2, #5a6470); margin-bottom: 5px;
+}
+.dl-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.dl-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 6px 3px 10px;
+  background: var(--paper-2, #f1f3f5);
+  border: 1px solid var(--line, #d4d8dd); border-radius: 12px;
+  font: 12px 'IBM Plex Sans', sans-serif; color: var(--ink, #222);
+}
+.dl-chip button {
+  border: none; background: none; color: #c0392b;
+  font-size: 13px; cursor: pointer; padding: 0; line-height: 1;
+}
+.dl-add { display: flex; gap: 5px; margin-top: 6px; }
+.dl-add input {
+  flex: 1; padding: 5px 8px; font-size: 12px;
+  border: 1px solid var(--line, #d4d8dd); border-radius: 5px;
+}
+.dl-add button {
+  padding: 5px 13px; font: 700 11px 'IBM Plex Sans', sans-serif;
+  border: 1px solid var(--blue, #1a5276); background: var(--blue, #1a5276);
+  color: #fff; border-radius: 5px; cursor: pointer;
+}
+
 /* --- Feature form — simple right slide-out --- */
 .ff-scrim {
   position: fixed; inset: 0; z-index: 1200;
@@ -7839,6 +7869,22 @@ body.mobile-mode #app {
         </div>
 
         <div class="settings-group">
+          <h3>Dropdown lists</h3>
+          <div class="settings-row">
+            <div>
+              <div class="s-label">Shared dropdown library</div>
+              <div class="s-sub">Edit the option lists used by the data-entry forms.
+                Keeping these consistent means a compiled feature list sorts cleanly
+                on Repair Type, Condition, etc. New values can also be added on the
+                fly from a form's dropdown.</div>
+            </div>
+          </div>
+          <div class="dropdown-lib" id="dropdown-lib-body">
+            <!-- populated by renderSettings() -->
+          </div>
+        </div>
+
+        <div class="settings-group">
           <h3>Basemap</h3>
           <div class="basemap-row" id="basemap-row">
             <button class="basemap-btn active" data-map="osm">OSM Street</button>
@@ -11485,6 +11531,86 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   const sheetState = { pin: null, sec: null };
 
+  // ══ Dropdown-list library — shared option lists for the data-entry forms ══
+  // Stored in lean state; forms read from here so Repair Type / Condition /
+  // Sign Codes / Material stay consistent. Values can be added on the fly.
+  const DROPDOWN_LIB_DEFAULTS = {
+    repair_type: ['Do Nothing', 'Adjust', 'Repair', 'Replace', 'R&R', 'R&S', 'R&D', 'Other'],
+    condition:   ['E', 'G', 'F', 'P', 'X'],
+    sign_code:   [],
+    material:    ['Asphalt', 'Concrete', 'Gravel', 'Steel', 'Timber', 'Stone', 'Plastic'],
+  };
+  let _dropdownLib = null;
+  function _getDropdownLib() {
+    if (_dropdownLib) return _dropdownLib;
+    let saved = null;
+    try {
+      const fn = (typeof lsLoad === 'function') ? lsLoad : window.RWLsLoad;
+      saved = fn && fn().dropdownLib;
+    } catch (_) {}
+    _dropdownLib = {};
+    for (const k of Object.keys(DROPDOWN_LIB_DEFAULTS)) {
+      _dropdownLib[k] = (saved && Array.isArray(saved[k]))
+        ? saved[k].slice() : DROPDOWN_LIB_DEFAULTS[k].slice();
+    }
+    return _dropdownLib;
+  }
+  function _saveDropdownLib() {
+    try { if (window.RWLsSave) window.RWLsSave({ dropdownLib: _getDropdownLib() }); } catch (_) {}
+  }
+  window._RW = window._RW || {};
+  window._RW.dropdownGet = function (name) { return (_getDropdownLib()[name] || []).slice(); };
+  window._RW.dropdownAdd = function (name, value) {
+    value = (value == null ? '' : String(value)).trim();
+    if (!value) return false;
+    const lib = _getDropdownLib();
+    if (!lib[name]) lib[name] = [];
+    if (lib[name].some(v => String(v).toLowerCase() === value.toLowerCase())) return false;
+    lib[name].push(value);
+    _saveDropdownLib();
+    return true;
+  };
+
+  // Settings UI — renders the editable library into #dropdown-lib-body.
+  function _renderDropdownLib() {
+    const host = document.getElementById('dropdown-lib-body');
+    if (!host) return;
+    const lib = _getDropdownLib();
+    const META = { repair_type: 'Repair Type', condition: 'Condition',
+                   sign_code: 'Sign Codes', material: 'Material' };
+    host.innerHTML = Object.keys(META).map(key => {
+      const vals = lib[key] || [];
+      const chips = vals.map((v, i) =>
+        `<span class="dl-chip">${_ffEsc(v)}` +
+        `<button data-dlkey="${key}" data-dlidx="${i}" title="Remove">✕</button></span>`).join('')
+        || '<span style="font-size:11px;color:var(--ink-3,#8a93a0)">No values yet.</span>';
+      return `<div class="dl-list">
+        <div class="dl-list-name">${META[key]}</div>
+        <div class="dl-chips">${chips}</div>
+        <div class="dl-add">
+          <input type="text" placeholder="Add value…" data-dladd="${key}">
+          <button type="button" data-dladdbtn="${key}">Add</button>
+        </div></div>`;
+    }).join('');
+    host.querySelectorAll('[data-dlkey]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lib2 = _getDropdownLib(), k = btn.dataset.dlkey, i = +btn.dataset.dlidx;
+        if (lib2[k]) { lib2[k].splice(i, 1); _saveDropdownLib(); _renderDropdownLib(); }
+      });
+    });
+    const addFrom = key => {
+      const inp = host.querySelector(`[data-dladd="${key}"]`);
+      if (inp && window._RW.dropdownAdd(key, inp.value)) { inp.value = ''; _renderDropdownLib(); }
+    };
+    host.querySelectorAll('[data-dladdbtn]').forEach(btn =>
+      btn.addEventListener('click', () => addFrom(btn.dataset.dladdbtn)));
+    host.querySelectorAll('[data-dladd]').forEach(inp =>
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addFrom(inp.dataset.dladd); }
+      }));
+  }
+  window._RW.renderDropdownLib = _renderDropdownLib;
+
   // ══ Simple feature form — right slide-out for misc points / lines / polys ══
   // One universal form: every feature writes the SAME attr keys (condition,
   // repair_type, material, …) so a compiled feature list sorts cleanly across
@@ -11521,8 +11647,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const a = pin.attrs || {};
     const mid = _ffMidCoords(pin);
     const gps = mid ? `${(+mid[1]).toFixed(6)},<br>${(+mid[0]).toFixed(6)}` : '—';
-    const repairSel = FF_REPAIR_TYPES.map(r =>
-      `<option value="${r}"${a.repair_type === r ? ' selected' : ''}>${r}</option>`).join('');
+    const dd = (n, def) => (window._RW && window._RW.dropdownGet) ? window._RW.dropdownGet(n) : def;
+    const repairList = dd('repair_type', FF_REPAIR_TYPES);
+    const condList   = dd('condition', FF_CONDITIONS);
+    const matList    = dd('material', []);
+    const optList = (arr, cur) => arr.map(v =>
+      `<option value="${_ffEsc(v)}"${cur === v ? ' selected' : ''}>${_ffEsc(v)}</option>`).join('');
+    const repairSel = optList(repairList, a.repair_type) +
+      `<option value="__add__">+ Add new…</option>`;
+    const matExtra = (a.material && !matList.includes(a.material))
+      ? `<option value="${_ffEsc(a.material)}" selected>${_ffEsc(a.material)}</option>` : '';
+    const matSel = `<option value="">—</option>` + optList(matList, a.material) + matExtra +
+      `<option value="__add__">+ Add new…</option>`;
     const customRows = (Array.isArray(a.custom_fields) ? a.custom_fields : [])
       .map(cf => _ffCustomRowHtml(cf.label, cf.value)).join('');
     const photoN = (Array.isArray(a.photos) ? a.photos.length : 0) + (a.photo ? 1 : 0);
@@ -11545,11 +11681,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                  value="${a.offset_ft != null ? _ffEsc(a.offset_ft) : ''}"></div>
       </div>
       <div class="ff-row">
-        <label class="ff-lbl">Condition</label>${_ffSegHtml('condition', FF_CONDITIONS, a.condition)}
+        <label class="ff-lbl">Condition</label>${_ffSegHtml('condition', condList, a.condition)}
       </div>
       <div class="ff-row2">
         <div><label class="ff-lbl">Material</label>
-          <input class="ff-in" id="ff-material" type="text" value="${_ffEsc(a.material)}"></div>
+          <select class="ff-sel" id="ff-material">${matSel}</select></div>
         <div><label class="ff-lbl">Dimensions <span style="opacity:.55">(opt)</span></label>
           <input class="ff-in" id="ff-dimensions" type="text" value="${_ffEsc(a.dimensions)}"></div>
       </div>
@@ -11597,11 +11733,36 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           });
         });
       });
-      const repair = body.querySelector('#ff-repair');
       const otherRow = body.querySelector('#ff-repair-other-row');
-      if (repair && otherRow) repair.addEventListener('change', () => {
-        otherRow.style.display = repair.value === 'Other' ? '' : 'none';
+      // Wire a library-backed select: a "+ Add new…" choice prompts for a
+      // value, adds it to the dropdown library, and selects it.
+      const wireAddNew = (selId, listName, onChange) => {
+        const sel = body.querySelector('#' + selId);
+        if (!sel) return;
+        sel._ffPrev = sel.value;
+        sel.addEventListener('change', () => {
+          if (sel.value === '__add__') {
+            const v = (window.prompt('New ' + listName.replace(/_/g, ' ') + ' value:') || '').trim();
+            if (v && window._RW && window._RW.dropdownAdd) {
+              window._RW.dropdownAdd(listName, v);
+              if (![].slice.call(sel.options).some(o => o.value === v)) {
+                const opt = document.createElement('option');
+                opt.value = v; opt.textContent = v;
+                sel.insertBefore(opt, sel.querySelector('option[value="__add__"]'));
+              }
+              sel.value = v;
+            } else {
+              sel.value = sel._ffPrev || '';
+            }
+          }
+          sel._ffPrev = sel.value;
+          if (onChange) onChange(sel.value);
+        });
+      };
+      wireAddNew('ff-repair', 'repair_type', v => {
+        if (otherRow) otherRow.style.display = v === 'Other' ? '' : 'none';
       });
+      wireAddNew('ff-material', 'material', null);
       const addBtn = body.querySelector('#ff-addfield');
       const list = body.querySelector('#ff-custom-list');
       if (addBtn && list) addBtn.addEventListener('click', () => {
@@ -11646,6 +11807,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       repair_type_other: null,
       notes:             (g('ff-notes')?.value || '').trim() || null,
     };
+    if (out.material === '__add__') out.material = null;
+    if (out.repair_type === '__add__') out.repair_type = null;
     if (out.repair_type === 'Other') {
       out.repair_type_other = (g('ff-repair-other')?.value || '').trim() || null;
     }
@@ -17872,6 +18035,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if ($('#s-snap-centerline')) {
       $('#s-snap-centerline').checked = state.settings.snapToCenterline !== false;
     }
+    if (typeof _renderDropdownLib === 'function') _renderDropdownLib();
     $('#s-streetview').checked = state.settings.streetViewEnabled;
 
     // Watermark — re-apply saved values each time view opens
