@@ -2549,6 +2549,14 @@ a { color: inherit; text-decoration: none; }
 .trace-banner .tb-btn:hover { background: rgba(255,255,255,0.28); }
 .trace-banner .tb-done { border-color: rgba(100,220,100,0.7); }
 .trace-banner .tb-done:disabled { opacity: 0.35; cursor: default; border-color: rgba(255,255,255,0.3); }
+/* GPS-walk toggle — turns red + pulses while actively recording the track */
+.trace-banner .tb-walk { border-color: rgba(120,200,255,0.75); }
+.trace-banner .tb-walk.rec {
+  background: #d8463c;
+  border-color: #ff9b91;
+  animation: tbRecPulse 1.1s ease-in-out infinite;
+}
+@keyframes tbRecPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 /* --- New section dialog (shown after trace is finished) --- */
 .nsd-overlay {
@@ -7097,10 +7105,9 @@ body.mobile-mode #app {
         <div class="trace-banner" id="trace-banner">
           <span id="trace-banner-type">TRACING LINEAR</span>
           <span class="tb-sep">·</span>
-          <span>Tap map vertices</span>
-          <span class="tb-sep">·</span>
-          <span>Double-tap to finish</span>
+          <span id="trace-instr">Tap vertices · double-tap to finish</span>
           <span class="tb-stats" id="trace-stats"></span>
+          <button class="tb-btn tb-walk" id="trace-walk-btn" title="Record the route by walking it with GPS">📍 Walk</button>
           <button class="tb-btn tb-done" id="trace-done-btn">✓ Done</button>
           <button class="tb-btn" id="trace-cancel-btn">✕ Cancel</button>
         </div>
@@ -7498,7 +7505,8 @@ body.mobile-mode #app {
       <div class="kickoff-head">
         <div class="kicker">NEW SECTION</div>
         <h1>What are you inspecting?</h1>
-        <div class="subtitle">Pick the section type — you can split into sub-sections later.</div>
+        <div class="subtitle">Pick the section type, then tap the map to draw it — or
+          walk it with GPS, handy where tree canopy blocks the aerial view.</div>
       </div>
       <div class="ko-type-picker">
         <button class="ko-type-card" data-type="linear">
@@ -7579,6 +7587,21 @@ body.mobile-mode #app {
               <option value="150">150 ft</option>
               <option value="250">250 ft</option>
               <option value="500">500 ft</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="s-label">GPS-walk trace spacing</div>
+              <div class="s-sub">When tracing a new section by walking it (the 📍 Walk
+                button on the trace banner), a vertex is recorded each time you move
+                this far from the last one. Tighter spacing = more detail.</div>
+            </div>
+            <select id="s-gps-walk-step">
+              <option value="5" selected>5 ft</option>
+              <option value="10">10 ft</option>
+              <option value="25">25 ft</option>
+              <option value="50">50 ft</option>
+              <option value="100">100 ft</option>
             </select>
           </div>
         </div>
@@ -9132,6 +9155,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // The map recenters once the GPS dot drifts more than half this past
       // the view centre — a 100 ft window recenters at 50 ft of drift.
       gpsFollowOffsetFt: 100,
+      // GPS-walk trace: a vertex is recorded each time the walker moves this
+      // far (ft) from the last recorded vertex while tracing a new section.
+      gpsWalkStepFt: 5,
       // Per-type ID counters (monotonic project-wide).
       // When any feature is saved of type X, counters[X]++; ID = X + "-" + padded counter.
       idCounters: { Si: 23, CB: 11, Re: 7, GR: 4, ED: 9, AR: 2, No: 5, Cu: 3 },
@@ -14063,7 +14089,60 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // Replace-mode fields (Track 2e — adjust existing CL)
     replaceSectionId: null,  // if set, we're replacing an existing section's alignment
     ghostLayer:      null,   // gray ghost of the old alignment shown during tracing
+    // GPS-walk mode: when true, fixes from applyGpsFix() auto-record vertices
+    walkActive:      false,
   };
+
+  // Reset the GPS-walk toggle button + banner instruction back to idle state.
+  function _resetWalkUI() {
+    traceState.walkActive = false;
+    const btn = $('#trace-walk-btn');
+    if (btn) { btn.classList.remove('rec'); btn.textContent = '📍 Walk'; }
+    const instr = $('#trace-instr');
+    if (instr) instr.textContent = 'Tap vertices · double-tap to finish';
+  }
+
+  // Toggle GPS-walk recording on/off from the trace banner.
+  function _toggleWalkTrace() {
+    if (!traceState.active) return;
+    traceState.walkActive = !traceState.walkActive;
+    const btn   = $('#trace-walk-btn');
+    const instr = $('#trace-instr');
+    if (traceState.walkActive) {
+      if (btn) { btn.classList.add('rec'); btn.textContent = '● Recording'; }
+      if (state.gpsPos) {
+        if (instr) instr.textContent = 'Walking the route — vertices auto-record';
+        // Seed the very first vertex right away from the current fix.
+        if (traceState.vertices.length === 0) {
+          _walkOnFix(state.gpsPos.lat, state.gpsPos.lng, state.gpsPos.accuracy);
+        }
+      } else if (instr) {
+        instr.textContent = 'Waiting for GPS fix…';
+      }
+    } else {
+      if (btn) { btn.classList.remove('rec'); btn.textContent = '📍 Walk'; }
+      if (instr) instr.textContent = 'Tap vertices · double-tap to finish';
+    }
+  }
+
+  // Handle one GPS fix while GPS-walk recording is armed: keep the walker
+  // centred (so they can watch the trace build under canopy) and append a
+  // vertex once they've moved at least the configured spacing.
+  function _walkOnFix(lat, lng, accuracy) {
+    if (!traceState.active || !traceState.walkActive) return;
+    // While recording a walk the map always follows the walker so the trace
+    // stays visible — independent of the satellite-LOCK setting.
+    if (state.map) state.map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    const v = traceState.vertices;
+    if (v.length === 0) {
+      addTraceVertex({ lat, lng });
+      const instr = $('#trace-instr');
+      if (instr) instr.textContent = 'Walking the route — vertices auto-record';
+      return;
+    }
+    const minStep = state.settings.gpsWalkStepFt || 5;
+    if (havFt(v[v.length - 1], [lat, lng]) >= minStep) addTraceVertex({ lat, lng });
+  }
 
   function _fmtTraceDist(ft) {
     if (ft < 100) return `${ft.toFixed(0)} ft`;
@@ -14109,6 +14188,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     traceState.polyLayer       = null;
     traceState.replaceSectionId = null;
     traceState.ghostLayer      = null;
+    traceState.walkActive      = false;
+    _resetWalkUI();
     showView('trace');
   }
 
@@ -14123,7 +14204,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     Object.assign(traceState, {
       active: false, type: null, vertices: [], layers: [],
       polyLayer: null, replaceSectionId: null, ghostLayer: null,
+      walkActive: false,
     });
+    _resetWalkUI();
     $('#trace-banner').classList.remove('open');
     $('#nsd-overlay').hidden     = true;
     $('#cl-confirm-overlay').hidden = true;
@@ -14206,7 +14289,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       traceState.layers.forEach(l => state.map.removeLayer(l));
       if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
     }
-    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null });
+    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false });
+    _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
     renderSectionList('all');
@@ -14255,7 +14339,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       traceState.layers.forEach(l => state.map.removeLayer(l));
       if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
     }
-    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null });
+    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false });
+    _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
 
@@ -14278,6 +14363,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     traceState.layers          = [];
     traceState.polyLayer       = null;
     traceState.ghostLayer      = null;
+    traceState.walkActive      = false;
+    _resetWalkUI();
     showView('trace');
     // Add ghost alignment after map is ready
     requestAnimationFrame(() => {
@@ -14346,7 +14433,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     Object.assign(traceState, {
       active: false, type: null, vertices: [], layers: [],
       polyLayer: null, replaceSectionId: null, ghostLayer: null,
+      walkActive: false,
     });
+    _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
 
@@ -16522,6 +16611,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if ($('#s-gps-offset')) {
       $('#s-gps-offset').value = String(state.settings.gpsFollowOffsetFt || 100);
     }
+    if ($('#s-gps-walk-step')) {
+      $('#s-gps-walk-step').value = String(state.settings.gpsWalkStepFt || 5);
+    }
     $('#s-streetview').checked = state.settings.streetViewEnabled;
 
     // Watermark — re-apply saved values each time view opens
@@ -16590,6 +16682,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // --- Alignment trace: Done / Cancel buttons in the trace banner ---
   $('#trace-done-btn').addEventListener('click', () => finishAlignmentTrace());
   $('#trace-cancel-btn').addEventListener('click', () => cancelAlignmentTrace());
+  // --- GPS-walk: toggle auto-recording the route as you walk it ---
+  $('#trace-walk-btn').addEventListener('click', () => _toggleWalkTrace());
 
   // --- Feature draw: Done / Cancel buttons in the draw banner (touch-friendly) ---
   $('#draw-done-btn').addEventListener('click', () => finishDraw());
@@ -16986,6 +17080,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     }
     _updateStripGpsDot();
+
+    // ── GPS-walk trace: append vertices as the walker moves ──────────────
+    if (traceState.active && traceState.walkActive) {
+      _walkOnFix(lat, lng, accuracy);
+      return;   // walk handler owns map panning while recording
+    }
 
     // ── Follow-lock ──────────────────────────────────────────────────────
     if (gpsLockMode !== 'off' && state.map) {
@@ -18109,6 +18209,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   });
   $('#s-gps-offset')?.addEventListener('change', e => {
     state.settings.gpsFollowOffsetFt = parseInt(e.target.value, 10) || 100;
+  });
+  $('#s-gps-walk-step')?.addEventListener('change', e => {
+    state.settings.gpsWalkStepFt = parseInt(e.target.value, 10) || 5;
   });
   $('#s-streetview').addEventListener('change', e => {
     state.settings.streetViewEnabled = e.target.checked;
