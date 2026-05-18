@@ -7606,6 +7606,20 @@ body.mobile-mode #app {
               <option value="100">100 ft</option>
             </select>
           </div>
+          <div class="settings-row">
+            <div>
+              <div class="s-label">GPS trace simplification</div>
+              <div class="s-sub">When a GPS-walked section or line/polygon feature
+                is finished, vertices sitting within this distance of a straight
+                run are dropped — curves keep their detail. Off keeps every point.</div>
+            </div>
+            <select id="s-gps-trace-simplify">
+              <option value="0">Off</option>
+              <option value="8">Light · 8 ft</option>
+              <option value="15" selected>Medium · 15 ft</option>
+              <option value="25">Strong · 25 ft</option>
+            </select>
+          </div>
         </div>
 
         <div class="settings-group">
@@ -9160,6 +9174,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // GPS-walk trace: a vertex is recorded each time the walker moves this
       // far (ft) from the last recorded vertex while tracing a new section.
       gpsWalkStepFt: 5,
+      // GPS trace simplification tolerance (ft). On finishing a GPS-walked
+      // section or line/polygon feature, vertices sitting within this distance
+      // of a straight run are dropped (Ramer–Douglas–Peucker); 0 disables it.
+      gpsTraceSimplifyFt: 15,
       // Per-type ID counters (monotonic project-wide).
       // When any feature is saved of type X, counters[X]++; ID = X + "-" + padded counter.
       idCounters: { Si: 23, CB: 11, Re: 7, GR: 4, ED: 9, AR: 2, No: 5, Cu: 3 },
@@ -14074,9 +14092,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   const drawState = {
     tool: null,        // 'point' | 'line' | 'polygon'
     kind: null,        // optional override of the saved pin's kind (else user_*)
-    source: null,      // 'map' | 'strip'
+    source: null,      // 'map' | 'strip' | 'gps'
     vertices: [],      // [[lat, lng], ...] WGS84
     tempLayers: [],    // Leaflet layers (markers + temp polyline) shown while drawing
+    walkActive: false, // GPS-walk recording armed (line / polygon features)
+    walkUsed:   false, // GPS contributed at least one vertex → simplify on finish
   };
 
   // --- Alignment trace state + functions -----------------------------------
@@ -14093,6 +14113,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     ghostLayer:      null,   // gray ghost of the old alignment shown during tracing
     // GPS-walk mode: when true, fixes from applyGpsFix() auto-record vertices
     walkActive:      false,
+    // True once GPS contributed a vertex → the track is simplified on finish.
+    walkUsed:        false,
   };
 
   // Reset the GPS-walk toggle button + banner instruction back to idle state.
@@ -14138,12 +14160,62 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const v = traceState.vertices;
     if (v.length === 0) {
       addTraceVertex({ lat, lng });
+      traceState.walkUsed = true;
       const instr = $('#trace-instr');
       if (instr) instr.textContent = 'Walking the route — vertices auto-record';
       return;
     }
     const minStep = state.settings.gpsWalkStepFt || 5;
-    if (havFt(v[v.length - 1], [lat, lng]) >= minStep) addTraceVertex({ lat, lng });
+    if (havFt(v[v.length - 1], [lat, lng]) >= minStep) {
+      addTraceVertex({ lat, lng });
+      traceState.walkUsed = true;
+    }
+  }
+
+  // ── Track simplification (Ramer–Douglas–Peucker) ──────────────────────────
+  // A GPS walk records a dense, slightly noisy point string. RDP keeps every
+  // vertex that bows away from the simplified line by more than a tolerance,
+  // and collapses near-straight runs — so curves stay tight while straight
+  // sections shed their redundant points.
+
+  // Perpendicular distance (ft) from point p to segment a–b, treating lat/lng
+  // as planar via a local equirectangular projection (fine at ft-scale).
+  function _perpFt(p, a, b) {
+    const FT_PER_DEG = 364320;                       // ft per degree latitude
+    const cos = Math.cos(a[0] * Math.PI / 180);
+    const px = (p[1] - a[1]) * cos * FT_PER_DEG, py = (p[0] - a[0]) * FT_PER_DEG;
+    const bx = (b[1] - a[1]) * cos * FT_PER_DEG, by = (b[0] - a[0]) * FT_PER_DEG;
+    const len2 = bx * bx + by * by;
+    if (len2 === 0) return Math.hypot(px, py);
+    let t = (px * bx + py * by) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - t * bx, py - t * by);
+  }
+
+  // Recursive RDP — returns the kept subset of pts ([[lat,lng],...]).
+  function _rdp(pts, tolFt) {
+    if (pts.length < 3) return pts.slice();
+    let maxD = 0, idx = 0;
+    const a = pts[0], b = pts[pts.length - 1];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = _perpFt(pts[i], a, b);
+      if (d > maxD) { maxD = d; idx = i; }
+    }
+    if (maxD > tolFt) {
+      const left  = _rdp(pts.slice(0, idx + 1), tolFt);
+      const right = _rdp(pts.slice(idx), tolFt);
+      return left.slice(0, -1).concat(right);
+    }
+    return [a, b];
+  }
+
+  // Simplify a traced vertex string. Honors the user's tolerance setting;
+  // a tolerance of 0 (Off) or too few points returns the input unchanged.
+  function _simplifyTrack(pts) {
+    const tolFt = state.settings.gpsTraceSimplifyFt || 0;
+    if (!tolFt || pts.length < 4) return pts.slice();
+    const out = _rdp(pts, tolFt);
+    return out.length >= 2 ? out : pts.slice();
   }
 
   function _fmtTraceDist(ft) {
@@ -14191,6 +14263,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     traceState.replaceSectionId = null;
     traceState.ghostLayer      = null;
     traceState.walkActive      = false;
+    traceState.walkUsed        = false;
     _resetWalkUI();
     showView('trace');
   }
@@ -14206,7 +14279,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     Object.assign(traceState, {
       active: false, type: null, vertices: [], layers: [],
       polyLayer: null, replaceSectionId: null, ghostLayer: null,
-      walkActive: false,
+      walkActive: false, walkUsed: false,
     });
     _resetWalkUI();
     $('#trace-banner').classList.remove('open');
@@ -14220,9 +14293,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   function finishAlignmentTrace() {
-    const n = traceState.vertices.length;
     const minPts = traceState.type === 'area' ? 3 : 2;
-    if (n < minPts) return; // not enough points — silently ignore
+    if (traceState.vertices.length < minPts) return; // not enough points
+    // GPS walks record a dense, slightly noisy point string — thin the
+    // straight runs (curves keep their detail) before the section is built.
+    if (traceState.walkUsed) {
+      const simp = _simplifyTrack(traceState.vertices);
+      if (simp.length >= minPts) traceState.vertices = simp;
+    }
+    const n = traceState.vertices.length;
     // Hide banner; keep preview + ghost visible while user reads the dialog
     $('#trace-banner').classList.remove('open');
 
@@ -14291,7 +14370,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       traceState.layers.forEach(l => state.map.removeLayer(l));
       if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
     }
-    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false });
+    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false, walkUsed: false });
     _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
@@ -14341,7 +14420,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       traceState.layers.forEach(l => state.map.removeLayer(l));
       if (traceState.polyLayer) state.map.removeLayer(traceState.polyLayer);
     }
-    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false });
+    Object.assign(traceState, { active: false, type: null, vertices: [], layers: [], polyLayer: null, walkActive: false, walkUsed: false });
     _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
     if (state.map?.doubleClickZoom) state.map.doubleClickZoom.enable();
@@ -14366,6 +14445,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     traceState.polyLayer       = null;
     traceState.ghostLayer      = null;
     traceState.walkActive      = false;
+    traceState.walkUsed        = false;
     _resetWalkUI();
     showView('trace');
     // Add ghost alignment after map is ready
@@ -14435,7 +14515,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     Object.assign(traceState, {
       active: false, type: null, vertices: [], layers: [],
       polyLayer: null, replaceSectionId: null, ghostLayer: null,
-      walkActive: false,
+      walkActive: false, walkUsed: false,
     });
     _resetWalkUI();
     document.querySelector('.app')?.classList.remove('drawing');
@@ -14497,12 +14577,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Point-only elements
       const ptHint = $('#draw-pt-hint');
       if (ptHint) { ptHint.hidden = !isPoint; ptHint.textContent = 'Tap the map to place it'; }
-      $('#draw-gps-btn').hidden = !isPoint;
       // Line/polygon-only elements
       $('#draw-banner-vcount').hidden = isPoint;
       $('#draw-banner-sep2').hidden   = isPoint;
-      $('#draw-banner-need').hidden    = isPoint;
-      $('#draw-done-btn').hidden        = isPoint;
+      $('#draw-banner-need').hidden   = isPoint;
+      $('#draw-done-btn').hidden      = isPoint;
+      // GPS button — "Drop at GPS" for points, "Walk" toggle for line/polygon
+      const gpsBtn = $('#draw-gps-btn');
+      if (gpsBtn) {
+        gpsBtn.hidden = false;
+        gpsBtn.classList.remove('rec');
+        gpsBtn.textContent = isPoint ? '📍 Drop at GPS' : '📍 Walk';
+        gpsBtn.title = isPoint
+          ? 'Drop this feature at your current GPS position'
+          : 'Record this feature by walking it with GPS';
+      }
       if (!isPoint) _updateDrawBanner();
       $('#draw-banner').classList.add('open');
     }
@@ -14519,11 +14608,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     drawState.source = null;
     drawState.vertices = [];
     drawState.tempLayers = [];
+    drawState.walkActive = false;
+    drawState.walkUsed = false;
     $$('.feature-picker .fp-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('.app')?.classList.remove('drawing');
     fpArmedKind = null;   // clear armed kind so no stale state persists
     const hint = $('#draw-hint');
     if (hint) hint.hidden = true;
+    const gpsBtn = $('#draw-gps-btn');
+    if (gpsBtn) { gpsBtn.classList.remove('rec'); gpsBtn.hidden = true; }
     $('#draw-banner')?.classList.remove('open');
     if (state.map && state.map.doubleClickZoom) state.map.doubleClickZoom.enable();
   }
@@ -14565,14 +14658,57 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     finishDraw();
   }
 
+  // Toggle GPS-walk recording for a line / polygon feature (the "📍 Walk"
+  // button on the draw banner). While armed, fixes append vertices.
+  function _toggleDrawWalk() {
+    if (!drawState.tool || drawState.tool === 'point') return;
+    drawState.walkActive = !drawState.walkActive;
+    const btn = $('#draw-gps-btn');
+    if (drawState.walkActive) {
+      if (btn) { btn.classList.add('rec'); btn.textContent = '● Recording'; }
+      drawState.source = 'gps';
+      if (state.gpsPos) _drawWalkOnFix(state.gpsPos.lat, state.gpsPos.lng);
+    } else if (btn) {
+      btn.classList.remove('rec');
+      btn.textContent = '📍 Walk';
+    }
+  }
+
+  // Handle one GPS fix while a line / polygon walk is armed: keep the walker
+  // centred and append a vertex once they've moved past the configured spacing.
+  function _drawWalkOnFix(lat, lng) {
+    if (!drawState.tool || !drawState.walkActive) return;
+    if (state.map) state.map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    const v = drawState.vertices;
+    if (v.length > 0) {
+      const minStep = state.settings.gpsWalkStepFt || 5;
+      if (havFt(v[v.length - 1], [lat, lng]) < minStep) return;
+    }
+    drawState.source = 'gps';
+    drawState.vertices.push([lat, lng]);
+    drawState.walkUsed = true;
+    const m = L.circleMarker([lat, lng], {
+      radius: 4, color: '#c85a2b', fillColor: '#fff', fillOpacity: 1, weight: 2,
+      interactive: false,
+    }).addTo(state.map);
+    drawState.tempLayers.push(m);
+    _redrawTempPolyline();
+    _updateDrawBanner();
+  }
+
   function finishDraw() {
     if (!drawState.tool) return;
     const sec = SECTIONS.find(s => s.id === state.sectionId);
     if (!sec) { cancelDraw(); return; }
     const tool = drawState.tool;
-    const verts = drawState.vertices.slice();
+    let verts = drawState.vertices.slice();
     const need = { point: 1, line: 2, polygon: 3 }[tool];
     if (verts.length < need) { cancelDraw(); return; }
+    // GPS-walked line / polygon: thin straight runs, keep curves tight.
+    if (drawState.walkUsed && tool !== 'point' && verts.length >= 4) {
+      const simp = _simplifyTrack(verts);
+      if (simp.length >= need) verts = simp;
+    }
     // Build GeoJSON geometry — convention is [lng, lat]
     let geometry;
     if (tool === 'point') {
@@ -16648,6 +16784,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if ($('#s-gps-walk-step')) {
       $('#s-gps-walk-step').value = String(state.settings.gpsWalkStepFt || 5);
     }
+    if ($('#s-gps-trace-simplify')) {
+      $('#s-gps-trace-simplify').value = String(state.settings.gpsTraceSimplifyFt ?? 15);
+    }
     $('#s-streetview').checked = state.settings.streetViewEnabled;
 
     // Watermark — re-apply saved values each time view opens
@@ -16722,8 +16861,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // --- Feature draw: Done / Cancel buttons in the draw banner (touch-friendly) ---
   $('#draw-done-btn').addEventListener('click', () => finishDraw());
   $('#draw-cancel-btn').addEventListener('click', () => cancelDraw());
-  // --- Feature draw: drop a point feature at the live GPS position ---
-  $('#draw-gps-btn').addEventListener('click', () => _dropFeatureAtGps());
+  // --- Feature draw: GPS button — drops a point, or toggles walk-recording
+  //     for a line / polygon feature ---
+  $('#draw-gps-btn').addEventListener('click', () => {
+    if (drawState.tool === 'point') _dropFeatureAtGps();
+    else _toggleDrawWalk();
+  });
 
   // --- New Section dialog: Save / Cancel ---
   $('#nsd-save-btn').addEventListener('click', () => _commitNewSection());
@@ -17117,7 +17260,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     _updateStripGpsDot();
 
-    // ── GPS-walk trace: append vertices as the walker moves ──────────────
+    // ── GPS-walk: append vertices as the walker moves ────────────────────
+    // Section trace and line/polygon feature draw both support walk-recording.
+    if (drawState.tool && drawState.walkActive) {
+      _drawWalkOnFix(lat, lng);
+      return;   // walk handler owns map panning while recording
+    }
     if (traceState.active && traceState.walkActive) {
       _walkOnFix(lat, lng, accuracy);
       return;   // walk handler owns map panning while recording
@@ -18248,6 +18396,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   });
   $('#s-gps-walk-step')?.addEventListener('change', e => {
     state.settings.gpsWalkStepFt = parseInt(e.target.value, 10) || 5;
+  });
+  $('#s-gps-trace-simplify')?.addEventListener('change', e => {
+    state.settings.gpsTraceSimplifyFt = parseInt(e.target.value, 10) || 0;
   });
   $('#s-streetview').addEventListener('change', e => {
     state.settings.streetViewEnabled = e.target.checked;
