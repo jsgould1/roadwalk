@@ -6837,17 +6837,16 @@ input.fs-slider::-webkit-slider-thumb {
   padding-bottom: 64px;  /* clear the single-row form footer */
 }
 /* ── Landscape Signs form — POST column + 4 panel direction columns ── */
-.sign-grid { display: flex; gap: 10px; align-items: flex-start; padding: 10px; }
+.sign-grid {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 10px; overflow-x: auto;
+}
+/* Five equal columns (post + 4 panels) fill the window; min-width scrolls. */
 .sign-col {
-  flex: 0 0 240px; min-width: 240px;
+  flex: 1 1 0; min-width: 228px;
   background: var(--paper-2, #f1f3f5);
   border: 1px solid var(--rule, #d8dde2); border-radius: 6px;
   padding: 6px 8px 10px;
-}
-.sign-col-post { flex: 0 0 272px; min-width: 272px; }
-.sign-dir-scroll {
-  flex: 1 1 auto; min-width: 0;
-  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
 }
 .sign-col-hdr {
   font: 700 11px 'IBM Plex Mono', monospace; letter-spacing: 0.5px;
@@ -9215,6 +9214,10 @@ body.mobile-mode #app {
     <!-- Quick-entry fields (full form in Log module, Phase 4) -->
     <div class="dlm-fields">
       <div class="dlm-row">
+        <label for="dlm-inspectors">Inspector name(s)</label>
+        <input id="dlm-inspectors" type="text" placeholder="e.g. J. Gould, N. Faruk">
+      </div>
+      <div class="dlm-row">
         <label for="dlm-weather">Weather conditions</label>
         <select id="dlm-weather">
           <option value="">-- select --</option>
@@ -9412,6 +9415,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     document.querySelectorAll('#dash-tabs .list-tab').forEach(function (t) {
       t.classList.toggle('active', t.dataset.dashTab === 'all');
     });
+
+    // ── Restore the field-edited working copy ────────────────────────────
+    // Every save persists the whole SECTIONS array to IDB. If a working copy
+    // exists it supersedes the pristine bundle so field edits survive reload.
+    try {
+      idbGet('safety', 'rw_sections_' + (PROJECT.id || 'default')).then(function (saved) {
+        if (saved && Array.isArray(saved.sections) && saved.sections.length) {
+          SECTIONS = saved.sections;
+          window.SECTIONS = SECTIONS;
+          if (typeof renderSectionList === 'function') renderSectionList('all');
+          if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
+          console.log('[RoadWalk] Restored field working copy —',
+                      SECTIONS.length, 'section(s), saved', saved.saved_at);
+        }
+      }).catch(function (e) { console.warn('[RoadWalk] working-copy restore failed:', e); });
+    } catch (e) { console.warn('[RoadWalk] working-copy restore error:', e); }
   }
 
   // --- Project manifest + picker --------------------------------------------
@@ -22840,8 +22859,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
    * Tier 1 save — write lean state to localStorage, update the badge.
    * @param {boolean} [manual=false] — true when triggered by the user pressing Save
    */
+  // Persist the full working SECTIONS array (all field edits — drawn
+  // features, slide-out edits, kickoff answers, walk tracks, photos) to IDB.
+  // This is what actually makes field data survive a reload / crash.
+  function _persistSections() {
+    try {
+      if (!window.SECTIONS || !window.SECTIONS.length) return;
+      var _pid = (window.PROJECT && window.PROJECT.id) || 'default';
+      idbPut('safety', { sections: window.SECTIONS, saved_at: new Date().toISOString() },
+             'rw_sections_' + _pid)
+        .then(function () {
+          const badge = document.getElementById('autosave-nav-badge');
+          if (badge) {
+            badge.textContent = '💾 ' + _fmtTime(new Date());
+            badge.title = 'Field data saved to device: ' + new Date().toLocaleString();
+          }
+        })
+        .catch(function (e) { console.warn('[RoadWalk] section persist failed:', e); });
+    } catch (e) { console.warn('[RoadWalk] _persistSections error:', e); }
+  }
+  window._RW = window._RW || {};
+  window._RW.persistSections = _persistSections;
+
   function doAutoSave(manual) {
     const saved = lsSave({ activeModule: _activeModule });
+    _persistSections();           // durably save all field data to IDB
     const badge = document.getElementById('autosave-nav-badge');
     if (badge) {
       badge.textContent = '💾 ' + _fmtTime(new Date());
@@ -22876,16 +22918,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
   }
 
-  /** Restart the Tier-1 auto-save interval (call when entering a new context). */
+  /** Restart the Tier-1 auto-save interval — honors the Settings interval. */
   function restartAutoSave() {
     clearInterval(_autoSaveTimer);
-    _autoSaveTimer = setInterval(doAutoSave, AUTO_SAVE_INTERVAL_MS);
+    var mins = (state.settings && +state.settings.autosaveMin) || 2;
+    if (mins > 0) _autoSaveTimer = setInterval(doAutoSave, mins * 60 * 1000);
   }
 
-  /** Restart the Tier-2 IDB backup interval. */
+  /** Restart the Tier-2 IDB backup interval — honors the Settings interval. */
   function restartAutoBackup() {
     clearInterval(_autoBackupTimer);
-    _autoBackupTimer = setInterval(doAutoBackup, AUTO_BACKUP_INTERVAL_MS);
+    var mins = (state.settings && +state.settings.backupMin) || 10;
+    if (mins > 0) _autoBackupTimer = setInterval(doAutoBackup, mins * 60 * 1000);
   }
 
   // Wire the manual Save button in #app-nav.
@@ -23262,6 +23306,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     const todayKey = _todayKey();
 
+    // Pre-fill inspector names from the last log (crew is usually the same).
+    try {
+      var _lastInsp = localStorage.getItem('rw_last_inspectors');
+      var _inspEl = document.getElementById('dlm-inspectors');
+      if (_inspEl && _lastInsp) _inspEl.value = _lastInsp;
+    } catch (_) {}
+
     // Update greeting text to time-appropriate message
     if (titleEl) titleEl.textContent = _greeting();
     if (subEl) {
@@ -23292,9 +23343,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       const weather = document.getElementById('dlm-weather')?.value || '';
       const crew    = parseInt(document.getElementById('dlm-crew')?.value, 10) || null;
       const hours   = parseFloat(document.getElementById('dlm-hours')?.value) || null;
+      const inspectors = (document.getElementById('dlm-inspectors')?.value || '').trim();
+      try { if (inspectors) localStorage.setItem('rw_last_inspectors', inspectors); } catch (_) {}
 
       const record = {
         date:           todayKey,
+        inspectors:     inspectors,
         weather:        weather,
         crew:           crew,
         hours_planned:  hours,
@@ -25695,12 +25749,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     return '<div class="sign-grid">' +
       postCol +
-      _dirCol(0, '0° · Faces traffic') +
-      '<div class="sign-dir-scroll">' +
-        _dirCol(90,  '90° · Right') +
-        _dirCol(180, '180° · Back') +
-        _dirCol(270, '270° · Left') +
-      '</div>' +
+      _dirCol(0,   '0° · Faces traffic') +
+      _dirCol(90,  '90° · Right') +
+      _dirCol(180, '180° · Back') +
+      _dirCol(270, '270° · Left') +
     '</div>' +
     '<input type="file" id="ds-sign-photo-input" accept="image/*" capture="environment" style="display:none">' +
     '<input type="file" id="ds-sign-upload-input" accept="image/*" multiple style="display:none">';
@@ -27155,6 +27207,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _dataState.idbCache[pin.id]             = record;
       _dataState.idbCacheByUlid[record.ulid]  = record;
       _dataState.dirty = false;
+      // Also persist the whole working SECTIONS copy so it survives reload.
+      if (window._RW && typeof window._RW.persistSections === 'function') {
+        window._RW.persistSections();
+      }
       if (flash) {
         flash.textContent = '✓ Saved';
         setTimeout(function () { if (flash) flash.textContent = ''; }, 2000);
@@ -27540,13 +27596,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // f) Guard browser tab close / refresh / navigate-away when the data form
     //    has unsaved edits. The browser shows its own generic confirm dialog.
+    // Always confirm before the page is closed, reloaded, or navigated away
+    // from — field data lives in this tab. Best-effort persist on the way out.
     window.addEventListener('beforeunload', function (e) {
-      if (window._RW && typeof window._RW.isDataFormDirty === 'function'
-          && window._RW.isDataFormDirty()) {
-        e.preventDefault();
-        e.returnValue = '';   // required for the prompt to appear in Chrome/Edge
-        return '';
-      }
+      try {
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          window._RW.persistSections();
+        }
+      } catch (_) {}
+      e.preventDefault();
+      e.returnValue = '';   // required for the prompt to appear in Chrome/Edge
+      return '';
     });
   }
 
