@@ -5973,8 +5973,9 @@ input.fs-slider::-webkit-slider-thumb {
 .section-row.surf-asphalt,
 .section-row.section-child.surf-asphalt { background: #E2EFDD; }   /* light green  */
 
-/* Give child rows clearance for the absolutely-positioned EDIT button */
-.section-row.section-child { padding-right: 92px; }
+/* Give every dashboard row clearance for the absolutely-positioned EDIT button */
+.section-row.section-child,
+.section-row.section-parent { padding-right: 92px; }
 
 /* EDIT-data button on a section row */
 .section-row .row-edit-btn {
@@ -7784,6 +7785,29 @@ body.mobile-mode #app {
     <button id="rw-backup-save" type="button">Save snapshot</button>
     <button id="rw-backup-dismiss" type="button" aria-label="Dismiss">✕</button>
   </div>
+
+  <!-- SVG fill patterns for hatched polygon feature kinds. A polygon path
+       elsewhere references these by id via fill="url(#…)" — the browser
+       resolves the reference document-wide, so the patterns can live here
+       in a zero-size SVG rather than inside Leaflet's own overlay SVG. -->
+  <svg id="rw-fill-patterns" width="0" height="0" aria-hidden="true"
+       style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <!-- Pavement Patch — dotted diagonal hatch -->
+      <pattern id="pg-patch-dots" patternUnits="userSpaceOnUse"
+               width="9" height="9" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="9" stroke="#2563A8" stroke-width="2.6"
+              stroke-dasharray="2.2 3"/>
+      </pattern>
+      <!-- Pavement Repair — double cross-hatch (two lines each diagonal) -->
+      <pattern id="pg-repair-xhatch" patternUnits="userSpaceOnUse"
+               width="16" height="16">
+        <path d="M0,0 L16,16 M0,8 L8,16 M8,0 L16,8
+                 M16,0 L0,16 M8,0 L0,8 M16,8 L8,16"
+              stroke="#B33A2F" stroke-width="1.1" fill="none"/>
+      </pattern>
+    </defs>
+  </svg>
 
   <!-- ============================================================
        MODULE TOOLBAR (#module-toolbar, 34px, contextual)
@@ -11380,6 +11404,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     { geom: 'polygon', name: 'Marking', items: [
       { value: 'pg_hatching_area', label: 'Hatching Area', code: 'HA', color: '#D4A943' },
     ]},
+    { geom: 'polygon', name: 'Pavement', items: [
+      { value: 'pg_pavement_repair', label: 'Pavement Repair', code: 'PR',
+        color: '#B33A2F', fillPattern: 'pg-repair-xhatch' },
+      { value: 'pg_pavement_patch',  label: 'Pavement Patch',  code: 'PP',
+        color: '#2563A8', fillPattern: 'pg-patch-dots' },
+    ]},
   ];
   // Extend PIN_STYLE with every catalog item so the map renderer knows how
   // to draw a pin of that kind.
@@ -11392,6 +11422,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (cat.geom === 'polygon') entry.weight = item.weight || 2;
       if (item.dashArray)         entry.dashArray = item.dashArray;
       if (item.lineStyle)         entry.lineStyle = item.lineStyle;
+      if (item.fillPattern)       entry.fillPattern = item.fillPattern;
       PIN_STYLE[item.value] = entry;
     });
   });
@@ -12255,12 +12286,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (style.kind === 'polygon') {
       if (!pin.geometry || pin.geometry.type !== 'Polygon') return null;
       const ring = pin.geometry.coordinates[0].map(c => [c[1], c[0]]);
+      // Hatch-pattern kinds (Pavement Repair / Patch) fill with an SVG
+      // <pattern> rather than a flat colour — see the #rw-fill-patterns
+      // defs in the page body. fillOpacity is raised so the hatch reads.
+      const _hasPattern = !!style.fillPattern;
       const poly = L.polygon(ring, {
         color: style.color,
         weight: (style.weight || 2) * status.weight_mul,
         opacity: status.opacity,
-        fillColor: style.color,
-        fillOpacity: 0.18 * status.opacity,
+        fillColor: _hasPattern ? 'url(#' + style.fillPattern + ')' : style.color,
+        fillOpacity: (_hasPattern ? 0.85 : 0.18) * status.opacity,
         lineCap: 'round',
         bubblingMouseEvents: false,
       });
@@ -24188,8 +24223,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   /**
+   * Save a JSON string to a file. Prefers the File System Access API so the
+   * user picks the folder (e.g. straight into a OneDrive project folder);
+   * falls back to a normal browser download where it isn't supported
+   * (e.g. iPad Safari). Returns { method, name } — method 'cancelled' when
+   * the user dismisses the save dialog.
+   */
+  async function _saveJsonFile(json, filename) {
+    if (typeof window.showSaveFilePicker === 'function') {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'RoadWalk project JSON',
+                    accept: { 'application/json': ['.json'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(json);
+        await writable.close();
+        return { method: 'picker', name: handle.name || filename };
+      } catch (err) {
+        // User dismissed the picker — leave it at that, don't also download.
+        if (err && err.name === 'AbortError') return { method: 'cancelled' };
+        // Any other failure → fall through to the classic download.
+        console.warn('[RoadWalk] Save picker failed, using download:', err);
+      }
+    }
+    _triggerDownload(json, filename, 'application/json');
+    return { method: 'download', name: filename };
+  }
+
+  /**
    * Build the full project export JSON (bundle + all field data + photos)
-   * and trigger a download — this is the actual "snapshot to file".
+   * and save it to a file — this is the actual "snapshot to file".
    * Reuses the same export engine the Dashboard Export modal uses.
    */
   async function _runBackupSnapshot() {
@@ -24205,7 +24270,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         .replace(/[^a-z0-9_\-\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
         .slice(0, 40);
       const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-      _triggerDownload(json, safeName + '-backup-' + stamp + '.json', 'application/json');
+      const res = await _saveJsonFile(json, safeName + '-backup-' + stamp + '.json');
+      if (res.method === 'cancelled') {
+        // User backed out of the save dialog — leave the prompt up to retry.
+        if (save) { save.disabled = false; save.textContent = 'Save snapshot'; }
+        return;
+      }
       if (msg)  msg.textContent = '✓ Snapshot saved — ' + _fmtBytes(json.length) + '.';
       if (save) save.style.display = 'none';
       setTimeout(_hideBackupPrompt, 4000);
@@ -25018,7 +25088,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + '<span class="item">' + _esc(childMeta || sec.meta || '') + '</span>'
         + (!sec.kickoff ? '<span class="item">— kickoff pending</span>' : '')
         + '</div>'
-        + (isChild ? '<button type="button" class="row-edit-btn">✎ Edit</button>' : '')
+        + '<button type="button" class="row-edit-btn">✎ Edit</button>'
         + '<span class="arrow">›</span>';
       row.addEventListener('click', function () {
         showModule('map');
