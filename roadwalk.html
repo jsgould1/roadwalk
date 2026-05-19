@@ -5389,6 +5389,33 @@ input.fs-slider::-webkit-slider-thumb {
 }
 #rw-update-dismiss:hover { color: #fff; }
 
+/* --- Timed "backup snapshot" prompt — slim bottom bar, amber so it reads
+   distinctly from the navy update banner --- */
+#rw-backup-banner {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9400;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  background: #7A4E16; color: #fff;
+  font: 600 12px 'IBM Plex Sans', sans-serif;
+  box-shadow: 0 -3px 14px rgba(0,0,0,0.32);
+}
+#rw-backup-banner[hidden] { display: none; }
+#rw-backup-banner .rub-msg { flex: 1; min-width: 0; }
+#rw-backup-banner button {
+  flex-shrink: 0; cursor: pointer; border: none; border-radius: 5px;
+  font: 700 11px 'IBM Plex Sans', sans-serif;
+}
+#rw-backup-save {
+  background: #15803d; color: #fff; padding: 8px 16px;
+}
+#rw-backup-save:hover { background: #1a9a4b; }
+#rw-backup-save:disabled { opacity: 0.6; cursor: default; }
+#rw-backup-dismiss {
+  background: transparent; color: rgba(255,255,255,0.7);
+  font-size: 15px; padding: 6px 8px; line-height: 1;
+}
+#rw-backup-dismiss:hover { color: #fff; }
+
 /* --- In-app camera capture overlay (getUserMedia) -------------------------
    Controls float over a full-bleed video. Twin shutter buttons sit in the
    bottom corners so either thumb can fire it while two-handing the tablet. */
@@ -7748,6 +7775,14 @@ body.mobile-mode #app {
     <span class="rub-msg">A new version of RoadWalk is ready.</span>
     <button id="rw-update-reload" type="button">Reload now</button>
     <button id="rw-update-dismiss" type="button" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- Backup-snapshot prompt — shown on the Settings backup interval.
+       One tap builds + downloads a full project JSON snapshot. -->
+  <div id="rw-backup-banner" hidden role="status" aria-live="polite">
+    <span class="rub-msg">Backup snapshot due — save a project file to keep your work safe.</span>
+    <button id="rw-backup-save" type="button">Save snapshot</button>
+    <button id="rw-backup-dismiss" type="button" aria-label="Dismiss">✕</button>
   </div>
 
   <!-- ============================================================
@@ -24112,8 +24147,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   /**
-   * Tier 2 backup — read all inspections from IDB and verify/timestamp them.
-   * In Phase 5 this will also generate a downloadable full-export blob.
+   * Tier 2 backup — runs on the Settings "Backup snapshot to file" interval.
+   * Stamps an IDB backup marker, then raises the one-tap snapshot prompt.
+   * We never download automatically: a timer is not a user gesture, so
+   * browsers block or nag on repeated programmatic downloads. One tap on
+   * the prompt keeps the snapshot reliable.
    */
   async function doAutoBackup() {
     try {
@@ -24124,9 +24162,57 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _backup_at: new Date().toISOString(),
         _count: all.filter(function (r) { return r.pin_id !== '__backup_marker__'; }).length,
       });
-      console.log('[RoadWalk] Auto-backup written. Inspection count:', all.length);
+      console.log('[RoadWalk] Auto-backup due — prompting for a snapshot file.');
     } catch (err) {
-      console.warn('[RoadWalk] Auto-backup failed:', err);
+      console.warn('[RoadWalk] Auto-backup marker failed:', err);
+    }
+    _showBackupPrompt();
+  }
+
+  /** Show the bottom "backup snapshot due" prompt bar. */
+  function _showBackupPrompt() {
+    const banner = document.getElementById('rw-backup-banner');
+    if (!banner) return;
+    const msg  = banner.querySelector('.rub-msg');
+    const save = document.getElementById('rw-backup-save');
+    if (msg)  msg.textContent =
+      'Backup snapshot due — save a project file to keep your work safe.';
+    if (save) { save.disabled = false; save.style.display = ''; save.textContent = 'Save snapshot'; }
+    banner.hidden = false;
+  }
+
+  /** Hide the backup prompt bar. */
+  function _hideBackupPrompt() {
+    const banner = document.getElementById('rw-backup-banner');
+    if (banner) banner.hidden = true;
+  }
+
+  /**
+   * Build the full project export JSON (bundle + all field data + photos)
+   * and trigger a download — this is the actual "snapshot to file".
+   * Reuses the same export engine the Dashboard Export modal uses.
+   */
+  async function _runBackupSnapshot() {
+    const banner = document.getElementById('rw-backup-banner');
+    const save   = document.getElementById('rw-backup-save');
+    const msg    = banner && banner.querySelector('.rub-msg');
+    if (save) { save.disabled = true; save.textContent = 'Building…'; }
+    try {
+      const scan = await _scanExportData(function () {});
+      const json = await _buildExportJSON(scan, true, function () {});
+      const project  = window.PROJECT || {};
+      const safeName = (project.name || 'roadwalk-project')
+        .replace(/[^a-z0-9_\-\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
+        .slice(0, 40);
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+      _triggerDownload(json, safeName + '-backup-' + stamp + '.json', 'application/json');
+      if (msg)  msg.textContent = '✓ Snapshot saved — ' + _fmtBytes(json.length) + '.';
+      if (save) save.style.display = 'none';
+      setTimeout(_hideBackupPrompt, 4000);
+    } catch (err) {
+      console.error('[RoadWalk] Backup snapshot failed:', err);
+      if (msg)  msg.textContent = 'Snapshot failed — ' + err.message;
+      if (save) { save.disabled = false; save.textContent = 'Retry'; }
     }
   }
 
@@ -24159,6 +24245,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   document.getElementById('nav-save-btn')?.addEventListener('click', function () {
     doAutoSave(true);
   });
+
+  // Wire the backup-snapshot prompt bar (raised by doAutoBackup()).
+  document.getElementById('rw-backup-save')?.addEventListener('click', _runBackupSnapshot);
+  document.getElementById('rw-backup-dismiss')?.addEventListener('click', _hideBackupPrompt);
 
 
   /* ---------------------------------------------------------------
