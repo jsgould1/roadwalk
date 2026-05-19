@@ -2314,13 +2314,19 @@ a { color: inherit; text-decoration: none; }
 /* ── Feature context popup (SLD + map clicks) ────────────────────────────── */
 .feature-popup {
   position: fixed;
-  z-index: 9000;
+  z-index: 12000;
   background: var(--paper-1, #fefefe);
   border: 1px solid var(--rule, #ddd);
   border-radius: 6px;
   box-shadow: 0 4px 18px rgba(0,0,0,0.20);
   width: 244px;
-  overflow: hidden;
+  /* Never exceed the viewport — if the button list is taller than the
+     screen the popup scrolls internally instead of clipping off-page. */
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: none;
 }
 .feature-popup.fp-visible { display: block; }
@@ -12510,17 +12516,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const conf = $('#fp-confirm');
     if (conf) conf.classList.remove('fp-conf-visible');
 
-    // Position near the click point (avoids going off-screen)
+    // Show first so the popup has real dimensions, then clamp it fully
+    // inside the viewport. The old code used a fixed 248×240 estimate, so a
+    // tall button list pushed the lower buttons off-screen.
+    popup.classList.add('fp-visible');
     if (e) {
       const raw = e.originalEvent || e;   // Leaflet wraps in .originalEvent
       const px  = raw.clientX != null ? raw.clientX : window.innerWidth  / 2;
       const py  = raw.clientY != null ? raw.clientY : window.innerHeight / 2;
-      const pw = 248, ph = 240;
-      popup.style.left = Math.max(8, Math.min(px + 4, window.innerWidth  - pw - 8)) + 'px';
-      popup.style.top  = Math.max(8, Math.min(py + 4, window.innerHeight - ph - 8)) + 'px';
+      // Provisional placement so the measure pass reads a sane position.
+      popup.style.left = Math.max(8, px + 4) + 'px';
+      popup.style.top  = Math.max(8, py + 4) + 'px';
+      const place = function () {
+        const r  = popup.getBoundingClientRect();
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const pw = r.width  || 244;
+        const ph = Math.min(r.height || 240, vh - 16);
+        popup.style.left = Math.max(8, Math.min(px + 4, vw - pw - 8)) + 'px';
+        popup.style.top  = Math.max(8, Math.min(py + 4, vh - ph - 8)) + 'px';
+      };
+      place();
+      // Re-measure once layout settles — button visibility toggles above
+      // (Edit Vertices / Section / AECOM Copy) change the final height.
+      requestAnimationFrame(place);
     }
-
-    popup.classList.add('fp-visible');
   }
 
   function closeFeaturePopup() {
@@ -25367,6 +25386,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
    */
   function openExportModal() {
     const modal      = document.getElementById('export-modal');
+    if (!modal) return;
+
+    // Swap the Download button for a fresh clone up-front. This drops any
+    // click handler left over from a previous open AND gives us a live
+    // reference: the old code cloned the button AFTER capturing dlBtn, so
+    // the scan re-enabled the detached original while the on-screen button
+    // stayed disabled forever — which is why Download did nothing.
+    const dlBtn0 = document.getElementById('exp-download-btn');
+    if (dlBtn0) dlBtn0.replaceWith(dlBtn0.cloneNode(true));
+
     const scanEl     = document.getElementById('exp-scanning');
     const summaryEl  = document.getElementById('exp-summary');
     const progressEl = document.getElementById('exp-progress-bar');
@@ -25374,7 +25403,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const dlBtn      = document.getElementById('exp-download-btn');
     const cancelBtn  = document.getElementById('exp-cancel-btn');
     const closeBtn   = document.getElementById('exp-close-btn');
-    if (!modal) return;
 
     // ── Reset to scanning state ──────────────────────────────────
     scanEl.hidden     = false;
@@ -25449,9 +25477,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     }
 
-    // Remove old handler and add fresh one (prevents stacking on repeated opens)
-    dlBtn.replaceWith(dlBtn.cloneNode(true));
-    document.getElementById('exp-download-btn').addEventListener('click', _onDownload);
+    // The button was already cloned fresh at modal-open, so just wire it.
+    dlBtn.addEventListener('click', _onDownload);
 
     // ── Close / cancel buttons ───────────────────────────────────
     function _closeModal() { modal.setAttribute('hidden', ''); }
