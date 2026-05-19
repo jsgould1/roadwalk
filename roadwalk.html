@@ -7913,6 +7913,12 @@ body.mobile-mode #app {
           <button class="tb-btn" id="sec-edit-cancel-btn">✕ Cancel</button>
         </div>
 
+        <!-- Guardrail / wall AECOM-copy placement banner -->
+        <div class="trace-banner" id="gr-dup-banner">
+          <span id="gr-dup-text">Tap the road at the true start point.</span>
+          <button class="tb-btn" id="gr-dup-cancel-btn">✕ Cancel</button>
+        </div>
+
         <!-- Multi-track GPS walk recorders — one stacked banner per active track -->
         <div class="walk-track-stack" id="walk-track-stack" hidden></div>
 
@@ -9118,6 +9124,8 @@ body.mobile-mode #app {
       <span class="fp-ico">⬡</span><span class="fp-lbl">Edit Vertices</span></button>
     <button class="fp-btn" id="fp-section" type="button" style="display:none">
       <span class="fp-ico">↪</span><span class="fp-lbl">Section</span></button>
+    <button class="fp-btn" id="fp-duplicate" type="button" style="display:none">
+      <span class="fp-ico">⧉</span><span class="fp-lbl">AECOM Copy</span></button>
     <button class="fp-btn fp-danger" id="fp-del" type="button">
       <span class="fp-ico">✕</span><span class="fp-lbl">Delete</span></button>
   </div>
@@ -10529,6 +10537,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
       // Wire relocate-mode map click handler (idempotent)
       if (window._wireRelocateOnMap) window._wireRelocateOnMap();
+      if (window._wireGrDupOnMap) window._wireGrDupOnMap();
       if (window._wireDrawingOnMap) window._wireDrawingOnMap();
       if (window._wireVertexEditExitOnMap) window._wireVertexEditExitOnMap();
 
@@ -10720,6 +10729,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       alignmentHit.on('click', (e) => {
         if (drawState && drawState.tool) return;
         if (relocateState && relocateState.active) return;
+        // Placing an AECOM copy → tapping the centerline sets its start.
+        if (_grDupState && _grDupState.active) { _grDupPlaceAt(e.latlng); return; }
         // A different section's centerline → select it first (scrolls the SLD).
         if (stripCurrentSec && stripCurrentSec.id !== sec.id) {
           const [staFt] = projectOntoAlignment(e.latlng, sec.alignment);
@@ -12282,6 +12293,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     }
 
+    // "AECOM Copy" — only for guardrail / retaining-wall line features.
+    const dupBtn = $('#fp-duplicate');
+    if (dupBtn) {
+      const dupOK = isShape &&
+        /^(guardrail|wall|ln_guardrail|ln_retaining_wall)$/.test(pin.kind || '');
+      dupBtn.style.display = dupOK ? '' : 'none';
+    }
+
     // Reset any open inline-confirm row
     const conf = $('#fp-confirm');
     if (conf) conf.classList.remove('fp-conf-visible');
@@ -12351,6 +12370,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!tgt || typeof showView !== 'function') return;
       if (tgt.mode === 'jump' && tgt.secId) showView('field', tgt.secId);
       else if (tgt.mode === 'new')          showView('ko-picker');
+    });
+
+    // AECOM Copy: duplicate this guardrail/wall, then tap the road to place it.
+    $('#fp-duplicate').addEventListener('click', () => {
+      const pin = _fpPin, sec = _fpSec;
+      closeFeaturePopup();
+      if (pin && sec) startGuardrailDuplicate(pin, sec);
     });
 
     // Take Photo: snap a picture, attach it to the feature, then open the form.
@@ -20485,6 +20511,149 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
   // Expose for openPinSheet to call
   window._rwStartRelocate = startRelocate;
+
+  // ── Guardrail / wall "AECOM copy" ────────────────────────────────────────
+  // Duplicate a pre-walk (GIP/WIP) guardrail or retaining-wall line as an
+  // AECOM record, then tap the road to re-trace it along the section
+  // centerline — holding the inherited length and the tapped start's
+  // perpendicular offset + side.
+  var _grDupState = { active: false, copy: null, sec: null, lengthFt: 0 };
+
+  function _grUniqueCopyId(baseId, sec) {
+    var root = (baseId || 'GR') + '-A';
+    var id = root, n = 2;
+    var taken = ((sec && sec.pins) || []).map(function (p) { return p.id; });
+    while (taken.indexOf(id) >= 0) { id = root + n; n++; }
+    return id;
+  }
+
+  // Re-trace a line of `lengthFt` that starts at `tapLL`, following the section
+  // centerline and holding the tap point's perpendicular offset + side.
+  function _retraceAlongCenterline(tapLL, lengthFt, sec) {
+    var al = sec && sec.alignment;
+    if (!al || al.length < 2) return null;
+    var pr = projectOntoAlignment(tapLL, al);          // [sta, perpFt]
+    var startSta = pr[0], perpFt = pr[1];
+    var side = sideOfAlignment(tapLL, al);             // 'L' | 'R' | 'on'
+    var total = polylineLengthFt(al);
+    var s0 = Math.max(0, Math.min(total, startSta));
+    var s1 = Math.max(0, Math.min(total, s0 + Math.max(1, lengthFt || 0)));
+    if (s1 - s0 < 1) return null;
+    var clSta = [0];
+    for (var i = 1; i < al.length; i++) clSta.push(clSta[i - 1] + havFt(al[i - 1], al[i]));
+    var stations = [s0];
+    for (var k = 0; k < al.length; k++) {
+      if (clSta[k] > s0 + 1 && clSta[k] < s1 - 1) stations.push(clSta[k]);
+    }
+    stations.push(s1);
+    var sign = side === 'R' ? 1 : (side === 'L' ? -1 : 0);
+    return stations.map(function (s) {
+      var base = pointAt(al, s);
+      if (sign === 0 || perpFt < 1) return base;
+      return offsetLatLng(base, tangentAt(al, s) + sign * Math.PI / 2, perpFt);
+    });
+  }
+
+  function startGuardrailDuplicate(orig, sec) {
+    if (!orig || !sec) return;
+    if (sec.type !== 'linear' || !sec.alignment || sec.alignment.length < 2) {
+      _rwToast('AECOM copy needs a roadway (linear) section with a centerline.');
+      return;
+    }
+    var oa = orig.attrs || {};
+    var lengthFt = +(oa.length_ft) || 0;
+    if (lengthFt < 1) { _rwToast('Set the original’s length first — nothing to re-trace.'); return; }
+    if (_grDupState.active) cancelGrDup(false);
+
+    var cp = {
+      id: _grUniqueCopyId(orig.id, sec),
+      ulid: (typeof makeULID === 'function') ? makeULID() : (orig.id + '-' + Date.now()),
+      kind: orig.kind,
+      source: 'AECOM',
+      status: 'pending',
+      reported_in: ['AECOM'],
+      _aecomCopyOf: orig.id,
+      geometry: JSON.parse(JSON.stringify(orig.geometry || { type: 'LineString', coordinates: [] })),
+      attrs: JSON.parse(JSON.stringify(oa)),
+    };
+    // Record the source line's GIP/WIP milepost + side in the copy's notes.
+    var srcLabel = orig.source || (orig.reported_in && orig.reported_in.join('/')) || 'pre-walk';
+    var mp = (oa.mp_start != null) ? oa.mp_start : null;
+    var hdr = 'AECOM copy of ' + srcLabel
+      + (mp != null ? ' · MP ' + (typeof mp === 'number' ? mp.toFixed(3) : mp) : '')
+      + (oa.side ? ' · Side ' + oa.side : '');
+    cp.attrs.notes = hdr + (oa.notes ? '\n' + oa.notes : '');
+    if (cp.attrs.photos) delete cp.attrs.photos;   // fresh AECOM record — no inherited photos
+
+    sec.pins.push(cp);
+    _grDupState.active = true;
+    _grDupState.copy = cp;
+    _grDupState.sec = sec;
+    _grDupState.lengthFt = lengthFt;
+    var banner = $('#gr-dup-banner');
+    if (banner) {
+      banner.classList.add('open');
+      var t = $('#gr-dup-text');
+      if (t) t.textContent = 'Tap the road at the true START of ' + (orig.id || 'this feature')
+        + ' — the copy re-traces along the centerline for ' + Math.round(lengthFt) + ' ft.';
+    }
+    if (state.map) state.map.getContainer().style.cursor = 'crosshair';
+    initOrUpdateMap(sec);
+  }
+
+  // Place the in-progress AECOM copy by re-tracing from the tapped location.
+  function _grDupPlaceAt(latlng) {
+    if (!_grDupState.active || !_grDupState.copy || !latlng) return;
+    var sec = _grDupState.sec;
+    var tap = { lat: latlng.lat, lng: latlng.lng };
+    var coords = _retraceAlongCenterline(tap, _grDupState.lengthFt, sec);
+    if (!coords || coords.length < 2) {
+      _rwToast('Could not re-trace there — tap nearer the roadway.');
+      return;
+    }
+    var cp = _grDupState.copy;
+    cp.geometry = { type: 'LineString',
+      coordinates: coords.map(function (p) { return [p[1], p[0]]; }) };
+    if (!cp.attrs) cp.attrs = {};
+    cp.attrs.length_ft = _grDupState.lengthFt;
+    var pr = projectOntoAlignment(tap, sec.alignment);
+    cp.sta_ft = pr[0];
+    cp.sta = fmtSta(pr[0]);
+    cp.attrs.side = sideOfAlignment(tap, sec.alignment);
+    cp._edited_at = new Date().toISOString();
+    cancelGrDup(true);                       // keep the placed copy
+    initOrUpdateMap(sec);
+    _rwToast('AECOM copy placed — tap it to fine-tune the vertices.');
+    if (window._RW && typeof window._RW.persistSections === 'function') window._RW.persistSections();
+  }
+
+  function cancelGrDup(keep) {
+    var sec = _grDupState.sec;
+    if (!keep && _grDupState.copy && sec && Array.isArray(sec.pins)) {
+      var i = sec.pins.indexOf(_grDupState.copy);
+      if (i >= 0) sec.pins.splice(i, 1);     // discard the un-placed copy
+    }
+    var rerenderSec = (!keep && sec) ? sec : null;
+    _grDupState.active = false;
+    _grDupState.copy = null;
+    _grDupState.sec = null;
+    _grDupState.lengthFt = 0;
+    var b = $('#gr-dup-banner');
+    if (b) b.classList.remove('open');
+    if (state.map) state.map.getContainer().style.cursor = '';
+    if (rerenderSec) initOrUpdateMap(rerenderSec);
+  }
+
+  // Map-click handler for AECOM-copy placement (wired once, gated by state).
+  window._wireGrDupOnMap = function () {
+    if (!state.map || state.map._rwGrDupWired) return;
+    state.map._rwGrDupWired = true;
+    state.map.on('click', function (e) {
+      if (_grDupState.active) _grDupPlaceAt(e.latlng);
+    });
+  };
+  window._rwStartGuardrailDuplicate = startGuardrailDuplicate;
+  $('#gr-dup-cancel-btn')?.addEventListener('click', function () { cancelGrDup(false); });
 
   // --- Endpoint placement (Move start / Move end on a LineString pin) -----
   // Click "Move start" or "Move end" in the feature panel → arms placement
