@@ -29,8 +29,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "2d99580f-1e35-41ae-ae57-97858cf730ae",
         "_section": "E",
-        "_sta_ft": 214.4,
-        "_sta": "2+14.44",
+        "_sta_ft": 1663.0,
+        "_sta": "16+63.01",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -66,8 +66,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "955f3982-c8af-4392-9ecc-177194cd6dee",
         "_section": "E",
-        "_sta_ft": 850.7,
-        "_sta": "8+50.67",
+        "_sta_ft": 2299.2,
+        "_sta": "22+99.24",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -103,8 +103,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "3c70c663-6423-4b2d-b093-619b03234af7",
         "_section": "E",
-        "_sta_ft": 1758.0,
-        "_sta": "17+58.03",
+        "_sta_ft": 3206.6,
+        "_sta": "32+06.60",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -140,9 +140,9 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "8aa65925-eaa8-4210-aa8f-f7bbae6a4665",
         "_section": "E",
-        "_sta_ft": 2171.9,
-        "_sta": "21+71.92",
-        "_dist_from_alignment_ft": 32.9,
+        "_sta_ft": 3620.5,
+        "_sta": "36+20.49",
+        "_dist_from_alignment_ft": 32.8,
         "_reported_in": [
           "NPS-GIS"
         ],
@@ -177,8 +177,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "79d8e76c-798d-49cb-8d9c-c5bd8e39a391",
         "_section": "E",
-        "_sta_ft": 2176.6,
-        "_sta": "21+76.61",
+        "_sta_ft": 3625.2,
+        "_sta": "36+25.18",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -214,8 +214,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "35d7c159-477a-4383-b38d-90c7ccf55f79",
         "_section": "E",
-        "_sta_ft": 2634.3,
-        "_sta": "26+34.27",
+        "_sta_ft": 4082.8,
+        "_sta": "40+82.84",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -251,8 +251,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "b51946d2-1a57-442c-9071-26b50c9d77cd",
         "_section": "E",
-        "_sta_ft": 3514.6,
-        "_sta": "35+14.61",
+        "_sta_ft": 4963.2,
+        "_sta": "49+63.17",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -288,9 +288,9 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "b59c6a63-3e51-42e5-80bf-0b6f92886bb5",
         "_section": "E",
-        "_sta_ft": 3524.4,
-        "_sta": "35+24.42",
-        "_dist_from_alignment_ft": 49.0,
+        "_sta_ft": 4973.0,
+        "_sta": "49+72.98",
+        "_dist_from_alignment_ft": 48.9,
         "_reported_in": [
           "NPS-GIS"
         ],
@@ -325,8 +325,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "3c2f9425-d023-4cfd-b496-26f62a898ec7",
         "_section": "E",
-        "_sta_ft": 3932.1,
-        "_sta": "39+32.07",
+        "_sta_ft": 5380.6,
+        "_sta": "53+80.64",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -362,9 +362,9 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "b773c0b7-8230-4f94-ae62-b59fa90f61c5",
         "_section": "E",
-        "_sta_ft": 3934.0,
-        "_sta": "39+34.03",
-        "_dist_from_alignment_ft": 51.3,
+        "_sta_ft": 5382.6,
+        "_sta": "53+82.60",
+        "_dist_from_alignment_ft": 51.2,
         "_reported_in": [
           "NPS-GIS"
         ],
@@ -399,9 +399,9 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "e222cd67-62a3-42bf-be54-06ad3216d4ae",
         "_section": "E",
-        "_sta_ft": 4334.4,
-        "_sta": "43+34.37",
-        "_dist_from_alignment_ft": 52.3,
+        "_sta_ft": 5782.9,
+        "_sta": "57+82.94",
+        "_dist_from_alignment_ft": 52.1,
         "_reported_in": [
           "NPS-GIS"
         ],
@@ -436,8 +436,8 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "f838dbee-16f2-4ec5-832a-309468544318",
         "_section": "E",
-        "_sta_ft": 4335.6,
-        "_sta": "43+35.63",
+        "_sta_ft": 5784.2,
+        "_sta": "57+84.19",
         "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
           "NPS-GIS"
@@ -473,9 +473,9 @@
         "XYACCURACY": "Unknown",
         "GlobalID": "172ebd13-de1a-4a03-98a3-9c6df54688a0",
         "_section": "E",
-        "_sta_ft": 5503.4,
-        "_sta": "55+03.43",
-        "_dist_from_alignment_ft": 51.3,
+        "_sta_ft": 6952.0,
+        "_sta": "69+51.99",
+        "_dist_from_alignment_ft": 51.2,
         "_reported_in": [
           "NPS-GIS"
         ],
