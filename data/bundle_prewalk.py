@@ -339,6 +339,22 @@ SECTIONS_META = [
             {'id': 6406, 'role': 'mainline_N', 'mp_start': 0.0, 'mp_end': 14.98, 'note': 'full 0010N Pathweb section; this RoadWalk section covers MP 1.86-6.50'},
         ],
     },
+    {
+        # ~1.25 miles of 0010S Newfound Gap Rd S immediately north of Section C.
+        # Alignment was walked along ROUTEID=*0010S in grsm-roads.geojson, with
+        # the south end anchored at Section C's MP 31.25 vertex — so E + C form
+        # a continuous chain from MP 30.00 down to MP 31.96.
+        # Pathweb section 12507 is the Cycle 7 (2024) data for 0010S, the same
+        # physical road as 6407 (Cycle 6 / 2021). Drop pathweb-section-12507.json
+        # into data/ when fetched, then refine these MP boundaries if needed.
+        'id': 'E', 'name': 'Newfound Gap Rd NC #3 (MP 30.00-31.25)',
+        'project_code': 'NC NP GRSM 10S(3)', 'type': 'linear',
+        'mp_start': 30.00, 'mp_end': 31.25,
+        'alignment_file': 'section-E-newfound-gap-NC-3.geojson',
+        'pathweb_refs': [
+            {'id': 12507, 'role': 'mainline_S', 'mp_start': 14.98, 'mp_end': 31.96, 'note': 'Cycle 7 / 2024 pathweb for 0010S Newfound Gap Rd S (same physical road as 6407); RoadWalk Section E covers MP 30.00-31.25'},
+        ],
+    },
 ]
 
 # Per-kind per-section feature sources (unchanged from v1)
