@@ -4231,14 +4231,36 @@ a { color: inherit; text-decoration: none; }
   font: 700 12px 'IBM Plex Sans', sans-serif; color: #fff;
   background: var(--blue); padding: 5px 11px; border-radius: 3px;
 }
-.tk-type-row { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
-.tk-type {
-  font: 700 10px 'IBM Plex Mono', monospace; letter-spacing: 0.4px;
-  background: #fff; border: 1px solid var(--rule); color: var(--ink-2);
-  padding: 6px 9px; border-radius: 3px; cursor: pointer;
+.tk-type-row {
+  display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 auto;
+  align-items: stretch;
 }
-.tk-type:hover { border-color: var(--blue); color: var(--blue); }
-.tk-type.assigned { background: var(--blue); color: #fff; border-color: var(--blue); }
+/* Tag pill — big, colour-coded by feature kind. Left swatch shows the
+   PIN_STYLE color so the picker reads as the same visual vocabulary
+   used on the map / SLD pin badges. */
+.tk-type {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 700 12px/1.1 'IBM Plex Sans', sans-serif;
+  background: #fff; border: 1.5px solid var(--rule); color: var(--ink);
+  padding: 8px 12px 8px 10px; border-radius: 4px; cursor: pointer;
+  position: relative; min-height: 36px;
+  transition: background 80ms, border-color 80ms, color 80ms, transform 80ms;
+}
+.tk-type::before {
+  content: ''; display: inline-block;
+  width: 14px; height: 14px; border-radius: 3px;
+  background: var(--tk-tag-color, var(--blue));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+  flex-shrink: 0;
+}
+.tk-type:hover  { border-color: var(--tk-tag-color, var(--blue)); transform: translateY(-1px); }
+.tk-type:active { transform: translateY(0); }
+.tk-type.assigned {
+  background: var(--tk-tag-color, var(--blue)); color: #fff;
+  border-color: var(--tk-tag-color, var(--blue));
+}
+.tk-type.assigned::before { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6); }
+.tk-action-bar.is-empty .tk-type { opacity: 0.45; }
 .tk-action-final { display: flex; gap: 6px; }
 .tk-group, .tk-drop {
   font: 700 11px 'IBM Plex Sans', sans-serif;
@@ -9743,16 +9765,21 @@ body.mobile-mode #app {
       <div class="tk-action-bar" id="tk-action-bar">
         <span class="tk-sel-count" id="tk-sel-count">Tap photos to select</span>
         <div class="tk-type-row" id="tk-type-row">
-          <button class="tk-type" data-type="sign">Sign</button>
-          <button class="tk-type" data-type="guardrail">Guardrail</button>
-          <button class="tk-type" data-type="wall">Ret. Wall</button>
-          <button class="tk-type" data-type="swale">Swale</button>
-          <button class="tk-type" data-type="mile_marker">Milepost</button>
-          <button class="tk-type" data-type="parking">Parking</button>
-          <button class="tk-type" data-type="edge_drop">Edge drop</button>
-          <button class="tk-type" data-type="sidewalk">Sidewalk</button>
-          <button class="tk-type" data-type="culvert">Culvert</button>
-          <button class="tk-type" data-type="other">Other</button>
+          <button class="tk-type" data-type="sign"         style="--tk-tag-color:#27A04B">Sign</button>
+          <button class="tk-type" data-type="mile_marker"  style="--tk-tag-color:#666">Mile&nbsp;Marker</button>
+          <button class="tk-type" data-type="culvert"      style="--tk-tag-color:#0B3D66">Culvert</button>
+          <button class="tk-type" data-type="pavement"     style="--tk-tag-color:#9CA3AF">Pavement</button>
+          <button class="tk-type" data-type="gate"         style="--tk-tag-color:#B33A2F">Gate</button>
+          <button class="tk-type" data-type="swale"        style="--tk-tag-color:#2563A8">Swale</button>
+          <button class="tk-type" data-type="guardrail"    style="--tk-tag-color:#E8A838">Guardrail</button>
+          <button class="tk-type" data-type="wall"         style="--tk-tag-color:#7B3F9E">Ret.&nbsp;Wall</button>
+          <button class="tk-type" data-type="parking"      style="--tk-tag-color:#5A8F3E">Parking</button>
+          <button class="tk-type" data-type="curb"         style="--tk-tag-color:#8A5A2B">Curb</button>
+          <button class="tk-type" data-type="curb_gutter"  style="--tk-tag-color:#8A5A2B">Curb&nbsp;&amp;&nbsp;Gutter</button>
+          <button class="tk-type" data-type="sidewalk"     style="--tk-tag-color:#8A5A2B">Sidewalk</button>
+          <button class="tk-type" data-type="edge_drop"    style="--tk-tag-color:#C85A2B">Edge&nbsp;Drop</button>
+          <button class="tk-type" data-type="bridge"       style="--tk-tag-color:#1A5589">Bridge</button>
+          <button class="tk-type" data-type="other"        style="--tk-tag-color:#888">Other</button>
         </div>
         <div class="tk-action-final">
           <button class="tk-group" id="tk-group" type="button"
@@ -33256,18 +33283,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   var TYPE_LABELS = {
     sign: 'SIGN', guardrail: 'GUARD', wall: 'WALL', swale: 'SWALE',
     mile_marker: 'MILE', parking: 'PARK', edge_drop: 'EDGE',
-    sidewalk: 'SIDEWLK', culvert: 'CULV', other: 'OTHER',
+    sidewalk: 'SIDEWLK', culvert: 'CULV',
+    pavement: 'PAVE', gate: 'GATE', curb: 'CURB', curb_gutter: 'C&G',
+    bridge: 'BRG', other: 'OTHER',
   };
+  // Map a Tracks tag → existing bundle pin.kind. Linear/polygon kinds that
+  // can't be represented by a single point fall back to pt_misc_other; the
+  // user can later promote the dropped pin via the section's vertex tools.
   var TYPE_TO_KIND = {
     sign: 'sign', guardrail: 'guardrail', wall: 'wall',
     swale: 'pt_misc_other', mile_marker: 'mile_marker',
     parking: 'parking', edge_drop: 'pt_misc_other',
-    sidewalk: 'pt_misc_other', culvert: 'culvert', other: 'pt_misc_other',
+    sidewalk: 'pt_misc_other', culvert: 'culvert',
+    pavement: 'pavement', gate: 'gate',
+    curb: 'pt_misc_other', curb_gutter: 'pt_misc_other',
+    bridge: 'bridge',
+    other: 'pt_misc_other',
   };
   var TYPE_TO_PREFIX = {
     sign: 'SIG', guardrail: 'GUA', wall: 'WAL', swale: 'SWL',
     mile_marker: 'MIL', parking: 'PAR', edge_drop: 'EDG',
-    sidewalk: 'SDW', culvert: 'CUL', other: 'OTH',
+    sidewalk: 'SDW', culvert: 'CUL',
+    pavement: 'PAV', gate: 'GAT', curb: 'CRB', curb_gutter: 'CGT',
+    bridge: 'BRI', other: 'OTH',
   };
 
   /* ---------- Project a [lat, lng] onto a [[lat, lng], …] polyline ----------
@@ -33578,8 +33616,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     bar.classList.toggle('is-empty', n === 0);
     var ct = $g('tk-sel-count');
     if (ct) ct.textContent = n === 0
-      ? 'Tap photos to select'
-      : n + ' selected · click Group to combine';
+      ? 'Tap photos to select, then tap a tag below'
+      : n + ' selected · tap a tag to group + label';
     var dp = $g('tk-drop-pin');
     if (dp) dp.disabled = n === 0;
     // Highlight the type button matching the selection's common group_type
@@ -33613,7 +33651,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     sel.forEach(function (p) { if (p.asset_group_id) gids.add(p.asset_group_id); });
     var gid = gids.size === 1 ? gids.values().next().value : A.newGroupId();
     sel.forEach(function (p) { p.asset_group_id = gid; p.group_type = type; });
-    A.saveMany(sel).then(function () { A.refresh(); renderTracks(); });
+    var n = sel.length;
+    A.saveMany(sel).then(function () {
+      A.refresh();
+      // Clear the selection so the next batch of photos can be picked
+      // without an extra "Clear" tap — the photos themselves keep their
+      // shared group ring + type tag visible on the grid.
+      selectedIds.clear();
+      renderTracks();
+      // Brief confirmation in the help text.
+      var ct = $g('tk-sel-count');
+      if (ct) {
+        ct.textContent = '✓ ' + n + ' photo' + (n === 1 ? '' : 's') + ' tagged as ' + (TYPE_LABELS[type] || type);
+        setTimeout(function () { updateActionBar(); }, 1800);
+      }
+    });
   }
   function dropPinAtCentroid() {
     var A = api(); if (!A || !selectedIds.size) return;
