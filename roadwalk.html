@@ -4121,45 +4121,71 @@ a { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--rule);
 }
 .tk-row-lbl b { color: var(--ink); font-weight: 700; }
-/* Thumbs are absolutely positioned at left = sta_ft × scale, top = 24px.
-   Width is driven by the --tk-thumb-w custom property so the user can
-   resize them at runtime from the header slider. Height tracks 3:4 aspect. */
-.tk-row { --tk-thumb-w: 84px; }
-.tk-thumb {
-  position: absolute; top: 24px;
-  width: var(--tk-thumb-w, 84px);
-  height: calc(var(--tk-thumb-w, 84px) * 0.75);
-  object-fit: cover;
-  border: 3px solid transparent; border-radius: 3px;
-  cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
-  transition: transform 80ms;
+/* Thumb wrappers are absolute-positioned at left = cluster.centerSta × scale.
+   Each wrap is a positioned <div> with an <img> inside, so we can layer
+   selection / group / count badges as siblings instead of pseudo-elements
+   (which don't render on the replaced <img>). Width via custom property. */
+.tk-row { --tk-thumb-w: 120px; }
+.tk-thumb-wrap {
+  position: absolute;
+  width: var(--tk-thumb-w, 120px);
+  height: calc(var(--tk-thumb-w, 120px) * 0.75);
+  border: 3px solid transparent; border-radius: 4px;
+  cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  background: #fff;
+  transform: translateX(-50%);
+  transition: transform 90ms ease-out, border-color 90ms, box-shadow 90ms;
+  overflow: visible;
 }
-.tk-thumb:hover { transform: scale(1.08); z-index: 5; box-shadow: 0 4px 12px rgba(0,0,0,0.45); }
-.tk-thumb.selected {
-  border-color: var(--blue); transform: scale(1.1);
-  box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,0.55); z-index: 6;
+.tk-thumb-wrap:hover {
+  z-index: 6;
+  transform: translateX(-50%) translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
 }
-.tk-thumb.selected::after {
-  content: '✓'; position: absolute; right: -8px; top: -8px;
-  background: var(--blue); color: #fff;
-  width: 22px; height: 22px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font: 700 13px 'IBM Plex Sans', sans-serif;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4); pointer-events: none;
+.tk-thumb-img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 1px;
 }
-/* Above is a pseudo-element that won't render on a real <img>. Real check
-   badge is drawn by a separate <span> sibling created in JS so it sits on
-   top of the image rather than nested. */
+.tk-thumb-wrap.selected {
+  border-color: var(--blue); z-index: 7;
+  transform: translateX(-50%) scale(1.06);
+  box-shadow: 0 0 0 2px #fff, 0 4px 14px rgba(0,0,0,0.55);
+}
+.tk-thumb-wrap.grouped { border-color: var(--gp-group-color, #c85a2b); }
+.tk-thumb-wrap.linked  { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* Selection check badge — rendered as a real <span> sibling of the <img>
+   inside the wrap so it overlays the image (vs. a pseudo-element). */
 .tk-thumb-check {
-  position: absolute; z-index: 7; width: 24px; height: 24px;
-  background: var(--blue); color: #fff; border-radius: 50%;
+  position: absolute; right: -8px; top: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--blue); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font: 800 13px 'IBM Plex Sans', sans-serif;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.45); pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  pointer-events: none; z-index: 8;
 }
-.tk-thumb.grouped { border-color: var(--gp-group-color, #c85a2b); }
-.tk-thumb.linked-mark {   /* class added in JS — :after on a replaced element doesn't render */
-  outline: 2px solid var(--blue); outline-offset: 1px;
+/* Stack count badge — appears top-right when this thumb represents a
+   grouped pile of N photos (asset_group_id collapsed to one tile). */
+.tk-stack-count {
+  position: absolute; right: 4px; top: 4px;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.78); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font: 800 11.5px 'IBM Plex Sans', sans-serif; letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  pointer-events: none; z-index: 8;
+}
+.tk-thumb-wrap.grouped .tk-stack-count {
+  background: var(--gp-group-color, #c85a2b);
+}
+/* Faint shadow layer under a grouped wrap to imply a "pile" of photos */
+.tk-thumb-wrap.grouped::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 4px; pointer-events: none;
+  box-shadow: 3px 3px 0 0 rgba(0,0,0,0.18), 6px 6px 0 0 rgba(0,0,0,0.10);
+  z-index: -1;
 }
 /* Floating large preview used on hover ----------------------------------- */
 #tk-hover-preview {
@@ -9741,7 +9767,7 @@ body.mobile-mode #app {
           <input id="tk-zoom" type="range" min="0.1" max="8" step="0.1" value="0.6"
                  title="Pixels per foot of station — slide right to spread photos apart">
           <label class="tk-head-lbl">Thumb</label>
-          <input id="tk-thumb-size" type="range" min="48" max="160" step="8" value="84"
+          <input id="tk-thumb-size" type="range" min="64" max="240" step="8" value="120"
                  title="Photo thumbnail size in pixels">
           <span id="tk-stats" class="tk-stats">—</span>
         </div>
@@ -33265,7 +33291,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   var currentSectionId = null;
   var visitGapMode     = '1800';   // seconds, or 'day'
   var pxPerFt          = 0.6;       // zoom; updated by the STA-zoom slider
-  var thumbSizePx      = 84;        // updated by the thumb-size slider
+  var thumbSizePx      = 120;       // updated by the thumb-size slider
   var PERP_TOL_FT      = 300;
   var thumbCache       = new Map(); // photoId → mapping {sta_ft, sec_id, perp_ft} or null
 
@@ -33501,36 +33527,128 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         row.className = 'tk-row';
         row.style.width = rowWidth + 'px';
         row.style.setProperty('--tk-thumb-w', thumbSizePx + 'px');
-        // Set a min-height so the row always fits its thumbs.
-        row.style.minHeight = (24 + thumbSizePx * 0.75 + 8) + 'px';
         var lbl = document.createElement('span');
         lbl.className = 'tk-row-lbl';
         lbl.innerHTML = _visitLabel(visit);
         row.appendChild(lbl);
-        visit.forEach(function (p) {
-          var m = thumbCache.get(p.id);
-          if (!m) return;
-          var img = document.createElement('img');
-          img.className = 'tk-thumb' +
-            (selectedIds.has(p.id) ? ' selected' : '') +
-            (p.asset_group_id ? ' grouped' : '');
-          img.src = p.dataUrl;
-          img.alt = p.description || '';
-          var staLbl = ((m.sta_ft / 100 | 0) + '+' + ('0' + Math.round(m.sta_ft % 100)).slice(-2));
-          img.dataset.photoId = p.id;
-          img.dataset.hoverDesc = p.description || '';
-          img.dataset.hoverMeta = 'STA ' + staLbl + ' · ' + Math.round(m.perp_ft) + ' ft off centerline';
-          img.style.left = (labelW + m.sta_ft * pxPerFt) + 'px';
-          if (p.asset_group_id && api()) {
-            img.style.setProperty('--gp-group-color', api().groupColor(p.asset_group_id));
-          }
-          img.addEventListener('click', function () { toggleSelection(p.id); });
-          // Hover preview (mouse devices only — touch never fires mouseenter).
-          img.addEventListener('mouseenter', _showHoverPreview);
-          img.addEventListener('mousemove',  _moveHoverPreview);
-          img.addEventListener('mouseleave', _hideHoverPreview);
-          row.appendChild(img);
+
+        // ── Build stacks ─────────────────────────────────────────────────
+        // Walk the visit's photos in STA order. Two photos within one
+        // thumb-width of each other (in STA-space) join the same stack.
+        // Within a stack, each asset_group_id collapses to ONE item (a
+        // group "pile") and each ungrouped photo is its own item. Items
+        // then render vertically offset so they never visually overlap.
+        var photoH        = thumbSizePx * 0.75;
+        var vertStep      = Math.max(14, Math.round(photoH * 0.28));
+        var stackTolerFt  = Math.max(1, thumbSizePx / pxPerFt);
+        var sorted        = visit.slice().sort(function (a, b) {
+          var ma = thumbCache.get(a.id), mb = thumbCache.get(b.id);
+          return (ma ? ma.sta_ft : 0) - (mb ? mb.sta_ft : 0);
         });
+        var clusters = [];
+        var open = null;
+        sorted.forEach(function (p) {
+          var m = thumbCache.get(p.id); if (!m) return;
+          if (!open || (m.sta_ft - open.maxSta) > stackTolerFt) {
+            open = { photos: [p], minSta: m.sta_ft, maxSta: m.sta_ft };
+            clusters.push(open);
+          } else {
+            open.photos.push(p);
+            open.maxSta = Math.max(open.maxSta, m.sta_ft);
+          }
+        });
+
+        // ── Track max items per cluster so the row gets the right height ──
+        var maxItemsInRow = 1;
+
+        // ── Render each cluster ─────────────────────────────────────────
+        clusters.forEach(function (cluster) {
+          var centerSta = (cluster.minSta + cluster.maxSta) / 2;
+          // Sub-divide: each distinct asset_group_id → one item; each
+          // ungrouped photo → its own item.
+          var groupBuckets = Object.create(null);
+          var items = [];
+          cluster.photos.forEach(function (p) {
+            if (p.asset_group_id) {
+              if (!groupBuckets[p.asset_group_id]) {
+                var bucket = { rep: p, photos: [p], group_id: p.asset_group_id };
+                groupBuckets[p.asset_group_id] = bucket;
+                items.push(bucket);
+              } else {
+                groupBuckets[p.asset_group_id].photos.push(p);
+              }
+            } else {
+              items.push({ rep: p, photos: [p] });
+            }
+          });
+          // Sort items: groups first (so they sit at the back of the stack
+          // visually if anything overlaps), then ungrouped photos by ts.
+          items.sort(function (a, b) {
+            if (!!a.group_id !== !!b.group_id) return a.group_id ? -1 : 1;
+            return (a.rep.ts || 0) - (b.rep.ts || 0);
+          });
+          if (items.length > maxItemsInRow) maxItemsInRow = items.length;
+
+          items.forEach(function (item, idx) {
+            var wrap = document.createElement('div');
+            wrap.className = 'tk-thumb-wrap';
+            if (item.photos.some(function (q) { return selectedIds.has(q.id); })) wrap.classList.add('selected');
+            if (item.group_id) wrap.classList.add('grouped');
+            if (item.rep.linked_pin_id) wrap.classList.add('linked');
+            wrap.style.left = (labelW + centerSta * pxPerFt) + 'px';
+            wrap.style.top  = (8 + idx * vertStep) + 'px';
+            if (item.group_id && api()) {
+              wrap.style.setProperty('--gp-group-color', api().groupColor(item.group_id));
+            }
+            var img = document.createElement('img');
+            img.className = 'tk-thumb-img';
+            img.src = item.rep.dataUrl;
+            img.alt = item.rep.description || '';
+            wrap.appendChild(img);
+
+            // Selection check badge
+            if (item.photos.some(function (q) { return selectedIds.has(q.id); })) {
+              var chk = document.createElement('span');
+              chk.className = 'tk-thumb-check';
+              chk.textContent = '✓';
+              wrap.appendChild(chk);
+            }
+            // Stack count badge — shows when the group represents > 1 photo
+            if (item.photos.length > 1) {
+              var badge = document.createElement('span');
+              badge.className = 'tk-stack-count';
+              badge.textContent = item.photos.length;
+              wrap.appendChild(badge);
+            }
+
+            // Hover preview meta
+            var staLbl = ((centerSta / 100 | 0) + '+' + ('0' + Math.round(centerSta % 100)).slice(-2));
+            wrap.dataset.hoverDesc = item.rep.description ||
+              (item.photos.length > 1 ? (item.photos.length + ' photos in group') : '');
+            wrap.dataset.hoverMeta = 'STA ' + staLbl +
+              (item.photos.length > 1 ? ' · ' + item.photos.length + ' photos · ' + (item.group_id ? 'asset group' : 'stack') : '');
+
+            // Click — toggles every photo in the item together so a tagged
+            // group selects/deselects as one unit.
+            wrap.addEventListener('click', function () {
+              var anySel = item.photos.some(function (q) { return selectedIds.has(q.id); });
+              item.photos.forEach(function (q) {
+                if (anySel) selectedIds.delete(q.id);
+                else        selectedIds.add(q.id);
+              });
+              renderTracks();
+            });
+
+            wrap.addEventListener('mouseenter', _showHoverPreview);
+            wrap.addEventListener('mousemove',  _moveHoverPreview);
+            wrap.addEventListener('mouseleave', _hideHoverPreview);
+            row.appendChild(wrap);
+          });
+        });
+
+        // Now set the row height to fit the tallest stack.
+        var rowH = 8 + photoH + (Math.max(0, maxItemsInRow - 1) * vertStep) + 12;
+        row.style.minHeight = rowH + 'px';
         grid.appendChild(row);
       });
     }
@@ -33739,7 +33857,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     var ts = $g('tk-thumb-size');
     if (ts) ts.addEventListener('input', function (e) {
-      thumbSizePx = parseInt(e.target.value, 10) || 84;
+      thumbSizePx = parseInt(e.target.value, 10) || 120;
       renderTracks();
     });
     var clr = $g('tk-clear');
