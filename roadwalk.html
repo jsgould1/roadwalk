@@ -4216,6 +4216,15 @@ a { color: inherit; text-decoration: none; }
 .tk-um-title {
   font: 700 9.5px 'IBM Plex Mono', monospace; letter-spacing: 0.4px;
   text-transform: uppercase; color: var(--ink-2);
+  padding: 2px 6px; border-radius: 3px;
+}
+/* Selected-mode header chip — high-contrast so the strip-mode swap reads */
+.tk-unmapped[data-mode="selected"] .tk-um-title {
+  background: var(--blue); color: #fff;
+}
+.tk-unmapped[data-mode="selected"] {
+  background: rgba(11, 61, 102, 0.06);
+  border-top-color: var(--blue);
 }
 .tk-um-sub { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--ink-3); }
 .tk-unmapped-strip {
@@ -33546,7 +33555,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // screen; the data quanta are constant. With the default 2.4 px/ft
         // a 50 ft bin renders as 120 px, i.e., 10 bins / 500 ft.
         var photoH        = thumbSizePx * 0.75;
-        var vertStep      = Math.max(14, Math.round(photoH * 0.28));
+        // Full-height step + a small gap — adjacent tiles in a stack never
+        // visually touch. Tall stacks just make the row taller (the grid
+        // scrolls vertically when needed).
+        var vertStep      = Math.round(photoH) + 4;
         var binFt         = BIN_FT;
         var bins          = new Map();
         var sorted        = visit.slice().sort(function (a, b) {
@@ -33668,30 +33680,58 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     }
 
-    // ---- Unmapped strip ----
+    // ---- Bottom strip: SELECTED-photos when you've started picking, otherwise UNMAPPED ----
+    // Re-uses the same DOM container — when selectedIds.size > 0 we hijack
+    // the strip to show "Selected" so you can review the picks in one place
+    // before tapping a tag. Clicking a thumb in the Selected strip removes
+    // it from the selection. The Unmapped strip comes back as soon as the
+    // selection is cleared.
     var um = $g('tk-um-strip');
     var sub = $g('tk-um-sub');
-    if (um) {
-      um.innerHTML = '';
-      if (!unmapped.length) {
-        var noEl = document.createElement('div');
-        noEl.className = 'tk-um-empty';
-        noEl.textContent = 'No unmapped photos.';
-        um.appendChild(noEl);
-      } else {
-        unmapped.forEach(function (p) {
+    var title = document.querySelector('#tk-unmapped .tk-um-title');
+    var umBox = $g('tk-unmapped');
+    if (umBox) umBox.dataset.mode = selectedIds.size > 0 ? 'selected' : 'unmapped';
+    if (selectedIds.size > 0) {
+      if (title) title.textContent = 'Selected';
+      var allPs = photos();
+      var picks = allPs.filter(function (p) { return selectedIds.has(p.id); });
+      if (sub) sub.textContent = '— ' + picks.length + ' photo' + (picks.length === 1 ? '' : 's') +
+        ' picked · click a tag to group + label · click a thumb here to remove';
+      if (um) {
+        um.innerHTML = '';
+        picks.forEach(function (p) {
           var img = document.createElement('img');
-          img.className = 'tk-um-thumb' + (selectedIds.has(p.id) ? ' selected' : '');
+          img.className = 'tk-um-thumb selected';
           img.src = p.dataUrl;
-          img.title = (p.description || '') + (typeof p.lat === 'number' ? ' · GPS but far from section' : ' · no GPS');
+          img.title = (p.description || 'photo') + ' — click to remove from selection';
           img.addEventListener('click', function () { toggleSelection(p.id); });
           um.appendChild(img);
         });
       }
+    } else {
+      if (title) title.textContent = 'Unmapped';
+      if (um) {
+        um.innerHTML = '';
+        if (!unmapped.length) {
+          var noEl = document.createElement('div');
+          noEl.className = 'tk-um-empty';
+          noEl.textContent = 'No unmapped photos.';
+          um.appendChild(noEl);
+        } else {
+          unmapped.forEach(function (p) {
+            var img = document.createElement('img');
+            img.className = 'tk-um-thumb';
+            img.src = p.dataUrl;
+            img.title = (p.description || '') + (typeof p.lat === 'number' ? ' · GPS but far from section' : ' · no GPS');
+            img.addEventListener('click', function () { toggleSelection(p.id); });
+            um.appendChild(img);
+          });
+        }
+      }
+      if (sub) sub.textContent = unmapped.length === 0
+        ? '— all photos mapped to this section'
+        : '— ' + unmapped.length + ' photo' + (unmapped.length === 1 ? '' : 's') + ' with no GPS or > 300 ft from this section';
     }
-    if (sub) sub.textContent = unmapped.length === 0
-      ? '— all photos mapped to this section'
-      : '— ' + unmapped.length + ' photo' + (unmapped.length === 1 ? '' : 's') + ' with no GPS or > 300 ft from this section';
 
     updateActionBar();
   }
