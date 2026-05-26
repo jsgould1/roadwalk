@@ -3797,8 +3797,12 @@ a { color: inherit; text-decoration: none; }
   background: var(--blue); color: #fff; padding: 1px 4px; border-radius: 3px;
 }
 
-/* ───────────────────────────── Photo Triage module ───────────────────────── */
-#mod-triage { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+/* ───────────────────────────── Photo Triage module ─────────────────────────
+   Inherits position:absolute + display:none-when-inactive from .module-view —
+   we ONLY override the inner layout once the module is active. Setting any
+   display/height on #mod-triage directly would beat .module-view:not(.active)
+   and the filmstrip would bleed through onto whichever tab is showing. */
+#mod-triage.active { flex-direction: column; overflow: hidden; }
 .tg-wrap { display: flex; flex: 1; min-height: 0; }
 .tg-side {
   width: 340px; max-width: 45vw; flex: 0 0 auto;
