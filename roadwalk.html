@@ -3686,6 +3686,79 @@ a { color: inherit; text-decoration: none; }
   font: 700 10px/1 'IBM Plex Mono', monospace; background: none; border: none;
   color: var(--blue); cursor: pointer; padding: 2px 0 6px;
 }
+/* Ring around a marker that shares an asset_group_id with other photos. */
+.gp-marker.gp-grouped .gp-dot {
+  box-shadow: 0 0 0 3px var(--gp-group-color, #c85a2b), 0 1px 4px rgba(0,0,0,0.55);
+}
+/* Small chain badge on a photo that is linked to a pin. */
+.gp-marker.gp-linked::after {
+  content: '🔗';
+  position: absolute; right: 6px; bottom: 6px;
+  font-size: 11px; line-height: 1;
+  background: #fff; border-radius: 50%; padding: 2px 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+/* When the user is in "pick another photo" grouping mode, ALL photo markers
+   pulse so it's obvious which target to tap. */
+.gp-marker.gp-grouping-target .gp-dot { animation: gpPulse 1.1s ease-in-out infinite; }
+@keyframes gpPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(37,99,168,0.0), 0 1px 4px rgba(0,0,0,0.55); }
+  50%      { transform: scale(1.15); box-shadow: 0 0 0 7px rgba(37,99,168,0.45), 0 1px 4px rgba(0,0,0,0.55); }
+}
+/* Action row inside the photo popup — buttons sit below Save/Delete. */
+.gp-pop-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.gp-pop-actions button {
+  flex: 1 1 0; min-width: 110px;
+  font: 700 10px/1 'IBM Plex Mono', monospace;
+  padding: 7px 5px; border-radius: 5px; cursor: pointer;
+  background: #fff; border: 1px solid var(--blue); color: var(--blue);
+}
+.gp-pop-actions button:hover { background: var(--paper-2, #f3f3f0); }
+.gp-pop-actions button.danger { border-color: #fca5a5; color: #b91c1c; }
+.gp-pop-actions button.muted  { border-color: var(--rule); color: var(--ink-3); }
+.gp-pop-status {
+  font: 600 10px/1.2 'IBM Plex Mono', monospace; color: var(--ink-3);
+  margin: 6px 0 0; padding: 4px 6px; background: var(--paper-2, #f6f4ee);
+  border-left: 3px solid var(--blue); border-radius: 2px;
+}
+.gp-pop-status .gp-link-chip {
+  display: inline-block; padding: 1px 5px; border-radius: 3px;
+  background: var(--blue); color: #fff; font-weight: 700; margin-right: 4px;
+}
+/* Floating banner used while the user is in "pick another photo" grouping mode. */
+#gp-group-banner {
+  position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+  z-index: 12500; background: #2563A8; color: #fff;
+  font: 600 12px 'IBM Plex Sans', sans-serif;
+  padding: 9px 14px; border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35); display: none; gap: 10px; align-items: center;
+}
+#gp-group-banner button {
+  background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.5);
+  font: 700 11px 'IBM Plex Mono', monospace; padding: 5px 9px; border-radius: 4px; cursor: pointer;
+}
+/* "Tag to nearby pin" picker list inside the popup. */
+.gp-tag-picker {
+  margin-top: 8px; max-height: 170px; overflow-y: auto;
+  border: 1px solid var(--rule); border-radius: 4px; background: #fff;
+}
+.gp-tag-picker .gp-tag-empty {
+  padding: 8px; font: 500 11px 'IBM Plex Sans', sans-serif; color: var(--ink-3);
+}
+.gp-tag-picker button.gp-tag-row {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; background: #fff; border: 0; border-bottom: 1px solid var(--rule);
+  padding: 6px 8px; cursor: pointer; text-align: left;
+  font: 600 11px 'IBM Plex Sans', sans-serif; color: var(--ink);
+}
+.gp-tag-picker button.gp-tag-row:last-child { border-bottom: 0; }
+.gp-tag-picker button.gp-tag-row:hover { background: var(--paper-2, #f3f3f0); }
+.gp-tag-row .gp-tag-dist { color: var(--ink-3); font-weight: 400; margin-left: auto; }
+.gp-tag-row .gp-tag-kind {
+  font: 700 9px 'IBM Plex Mono', monospace; letter-spacing: 0.4px;
+  background: var(--blue); color: #fff; padding: 1px 4px; border-radius: 3px;
+}
 .parking-tally .pt-total-row {
   display: flex;
   align-items: baseline;
@@ -7835,6 +7908,12 @@ body.mobile-mode #app {
     <span class="rub-msg">Backup snapshot due — save a project file to keep your work safe.</span>
     <button id="rw-backup-save" type="button">Save snapshot</button>
     <button id="rw-backup-dismiss" type="button" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- Floating banner shown while the user is grouping photos together. -->
+  <div id="gp-group-banner" role="status" aria-live="polite">
+    <span id="gp-group-banner-msg">Tap another photo to group it with this one. ESC to cancel.</span>
+    <button id="gp-group-banner-cancel" type="button">Cancel</button>
   </div>
 
   <!-- SVG fill patterns for hatched polygon feature kinds. A polygon path
@@ -31117,10 +31196,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   /* ===================== photo state + map layer ===================== */
-  var PHOTOS = [];               // {id,dataUrl,lat,lng,bearing,description,ts}
+  // Each photo: {id, dataUrl, lat, lng, bearing, description, ts,
+  //              asset_group_id?: string,   // shared by photos of the same asset
+  //              linked_pin_id?:  string }  // <section_id>::<pin_id> when tagged
+  var PHOTOS = [];
   var photoLayer = null;
   var photosVisible = true;
-  var GROUP_M = 9;               // photos within ~9 m collapse to one dot
+  // We deliberately do NOT auto-cluster by proximity any more. Two photos
+  // taken 5 m apart of different real-world assets used to silently collapse
+  // into one marker; that hid each photo's true GPS. Now every photo is its
+  // own marker. Grouping is explicit: photos sharing asset_group_id render
+  // with a coloured ring, and tapping any of them shows a gallery of all
+  // members.
 
   function distM(la1, lo1, la2, lo2) {
     var R = 6371000, r = Math.PI / 180;
@@ -31129,91 +31216,152 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             Math.cos(d1) * Math.cos(d2) * Math.sin(dn / 2) * Math.sin(dn / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
-  function buildGroups() {
-    var groups = [];
-    PHOTOS.forEach(function (p) {
-      var g = null;
-      for (var i = 0; i < groups.length; i++) {
-        if (distM(groups[i].lat, groups[i].lng, p.lat, p.lng) <= GROUP_M) { g = groups[i]; break; }
-      }
-      if (!g) { g = { lat: p.lat, lng: p.lng, photos: [] }; groups.push(g); }
-      g.photos.push(p);
-    });
-    return groups;
+  function distFt(la1, lo1, la2, lo2) { return distM(la1, lo1, la2, lo2) * 3.28084; }
+
+  // Stable per-group colour from the asset_group_id string (HSL hash).
+  function _groupColor(gid) {
+    if (!gid) return '#c85a2b';
+    var h = 0;
+    for (var i = 0; i < gid.length; i++) h = (h * 31 + gid.charCodeAt(i)) | 0;
+    return 'hsl(' + (Math.abs(h) % 360) + ', 70%, 45%)';
   }
-  function tipFor(g) {
-    if (g.photos.length > 1) return g.photos.length + ' photos';
-    var d = (g.photos[0].description || '').trim();
+  function _newGroupId() {
+    return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  // All photos that share p's asset_group_id (returns [p] when ungrouped).
+  function _groupMembers(p) {
+    if (!p) return [];
+    if (!p.asset_group_id) return [p];
+    return PHOTOS.filter(function (x) { return x.asset_group_id === p.asset_group_id; });
+  }
+  // Look up a pin by its bundle id across all SECTIONS; returns {sec, pin} or null.
+  function _findPinById(pinId) {
+    if (!pinId || typeof window.SECTIONS === 'undefined') return null;
+    for (var i = 0; i < window.SECTIONS.length; i++) {
+      var sec = window.SECTIONS[i];
+      var pins = sec.pins || [];
+      for (var j = 0; j < pins.length; j++) {
+        if (pins[j].id === pinId) return { sec: sec, pin: pins[j] };
+      }
+    }
+    return null;
+  }
+  // Resolve a linked_pin_id string "<sec>::<pin>" or plain "<pin>" → {sec, pin}.
+  function _resolveLink(link) {
+    if (!link) return null;
+    var pinId = link.indexOf('::') >= 0 ? link.split('::')[1] : link;
+    return _findPinById(pinId);
+  }
+  // Nearby pins ≤ maxFt of a lat/lng — point pins only (their geometry is a Point).
+  function _pinsNearby(lat, lng, maxFt) {
+    var out = [];
+    if (typeof window.SECTIONS === 'undefined') return out;
+    window.SECTIONS.forEach(function (sec) {
+      (sec.pins || []).forEach(function (pin) {
+        var g = pin.geometry;
+        if (!g || g.type !== 'Point' || !Array.isArray(g.coordinates)) return;
+        var d = distFt(lat, lng, g.coordinates[1], g.coordinates[0]);
+        if (d <= maxFt) out.push({ sec: sec, pin: pin, dist_ft: d });
+      });
+    });
+    out.sort(function (a, b) { return a.dist_ft - b.dist_ft; });
+    return out;
+  }
+
+  // Grouping mode — set when the user tapped "Group with another photo" on
+  // a photo's popup. The next photo they tap on the map joins the group.
+  var _groupingFrom = null;        // photo we're grouping FROM
+  var _groupingMarkers = [];       // markers currently flagged as targets
+
+  function tipFor(p) {
+    var n = _groupMembers(p).length;
+    if (n > 1) return n + ' photos in this asset group — tap to view';
+    var d = (p.description || '').trim();
     return d ? escapeHtml(d) : '(no description — tap to add)';
   }
-  function makeIcon(g) {
-    var html;
-    if (g.photos.length > 1) {
-      html = '<div class="gp-dot gp-dot-grp"></div><div class="gp-count">' + g.photos.length + '</div>';
-    } else {
-      var b = g.photos[0].bearing;
-      // Triangle (in the rotating wrapper) is drawn first so the circle
-      // renders over its base — circle + triangle merge into one cone.
-      html = (b != null && isFinite(b)
-          ? '<div class="gp-rot" style="transform:rotate(' + b + 'deg)"><div class="gp-tri"></div></div>'
-          : '') +
-        '<div class="gp-dot"></div>';
-    }
-    return L.divIcon({ className: 'gp-marker', html: html, iconSize: [44, 44], iconAnchor: [22, 22] });
+  function makeIconForPhoto(p) {
+    var b = p.bearing;
+    var classes = 'gp-marker';
+    if (p.asset_group_id) classes += ' gp-grouped';
+    if (p.linked_pin_id)  classes += ' gp-linked';
+    var html = (b != null && isFinite(b)
+        ? '<div class="gp-rot" style="transform:rotate(' + b + 'deg)"><div class="gp-tri"></div></div>'
+        : '') +
+      '<div class="gp-dot"></div>';
+    return L.divIcon({ className: classes, html: html, iconSize: [44, 44], iconAnchor: [22, 22] });
   }
   function render() {
     var map = rwMap();
     if (!map || !window.L) return;
     if (!photoLayer) photoLayer = L.layerGroup();
     photoLayer.clearLayers();
+    _groupingMarkers = [];
     if (!photosVisible) {
       if (map.hasLayer(photoLayer)) map.removeLayer(photoLayer);
+      _exitGroupMode();   // also closes the banner if it was open
       return;
     }
     if (!map.hasLayer(photoLayer)) photoLayer.addTo(map);
-    buildGroups().forEach(function (g) {
-      var single = g.photos.length === 1;
-      var m = L.marker([g.lat, g.lng], { icon: makeIcon(g), draggable: single, autoPan: false });
-      m.bindTooltip(tipFor(g), { direction: 'top', offset: [0, -14] });
-      // Cache the popup element so popup.update() (called when swapping
-      // gallery <-> detail views) re-lays-out instead of rebuilding it,
-      // which previously discarded the click-through to the detail view.
+    PHOTOS.forEach(function (p) {
+      // Pass the per-marker group color via inline style on the icon root.
+      var icon = makeIconForPhoto(p);
+      // Leaflet divIcon doesn't apply CSS custom properties to the root <div>
+      // it creates from `html`. Work around by setting the var via the
+      // className/style of the marker after it's added.
+      var m = L.marker([p.lat, p.lng], { icon: icon, draggable: true, autoPan: false });
+      m._gpPhotoId = p.id;
+      m.bindTooltip(tipFor(p), { direction: 'top', offset: [0, -14] });
       m.bindPopup(function () {
-        if (!m._gpPopEl) m._gpPopEl = buildPopupEl(g, m);
-        return m._gpPopEl;
-      }, { maxWidth: 320, minWidth: 256, autoPanPadding: [26, 26] });
-      if (single) {
-        m.on('dragend', function () {
-          var ll = m.getLatLng(), p = g.photos[0];
-          p.lat = ll.lat; p.lng = ll.lng;
-          dbPut(p).then(render);
-        });
-      }
+        // Re-build the popup each open so it picks up the latest state
+        // (description edits, tag changes, group changes).
+        return buildPopupEl(p, m);
+      }, { maxWidth: 340, minWidth: 280, autoPanPadding: [26, 26] });
+      m.on('add', function () {
+        // Set the CSS var on the root once Leaflet has materialised the icon.
+        var el = m.getElement();
+        if (!el) return;
+        if (p.asset_group_id) el.style.setProperty('--gp-group-color', _groupColor(p.asset_group_id));
+      });
+      m.on('click', function () {
+        // In grouping mode a click means "join this photo into the group".
+        if (_groupingFrom && _groupingFrom.id !== p.id) {
+          _finishGroupWith(p);
+        }
+      });
+      m.on('dragend', function () {
+        var ll = m.getLatLng();
+        p.lat = ll.lat; p.lng = ll.lng;
+        dbPut(p).then(function () { render(); });
+      });
       photoLayer.addLayer(m);
     });
   }
 
-  /* ===================== popup (photo + description) ===================== */
-  function buildPopupEl(g, m) {
+  /* ===================== popup (photo + description + actions) ===================== */
+  function buildPopupEl(p, m) {
     var wrap = document.createElement('div');
-    if (g.photos.length > 1) showGallery(wrap, g, m);
-    else showDetail(wrap, g.photos[0], g, m, false);
+    var members = _groupMembers(p);
+    if (members.length > 1) showGallery(wrap, p, m, members);
+    else showDetail(wrap, p, m, false);
     return wrap;
   }
-  function showGallery(wrap, g, m) {
+  function showGallery(wrap, focusedPhoto, m, members) {
     wrap.innerHTML = '';
     var t = document.createElement('div');
     t.className = 'gp-pop-meta';
-    t.textContent = g.photos.length + ' photos at this location — tap one';
+    var gid = focusedPhoto.asset_group_id;
+    t.innerHTML = members.length + ' photos in this <span style="color:' +
+      _groupColor(gid) + ';font-weight:700">asset group</span> — tap one';
     var gal = document.createElement('div');
     gal.className = 'gp-pop-gallery';
-    g.photos.forEach(function (p) {
+    members.forEach(function (p) {
       var im = document.createElement('img');
       im.className = 'gp-pop-thumb';
       im.src = p.dataUrl;
       im.title = p.description || '';
+      if (p.id === focusedPhoto.id) im.style.borderColor = _groupColor(gid);
       im.addEventListener('click', function () {
-        showDetail(wrap, p, g, m, true);
+        showDetail(wrap, p, m, true);
         var pop = m.getPopup(); if (pop) pop.update();
       });
       gal.appendChild(im);
@@ -31221,18 +31369,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     wrap.appendChild(t);
     wrap.appendChild(gal);
   }
-  function showDetail(wrap, p, g, m, fromGallery) {
+  function showDetail(wrap, p, m, fromGallery) {
     wrap.innerHTML = '';
-    if (fromGallery) {
+    var members = _groupMembers(p);
+    if (fromGallery || members.length > 1) {
       var back = document.createElement('button');
       back.className = 'gp-pop-back';
-      back.textContent = '‹ All photos';
+      back.textContent = '‹ All photos in this group';
       back.addEventListener('click', function () {
-        showGallery(wrap, g, m);
+        showGallery(wrap, p, m, _groupMembers(p));
         var pop = m.getPopup(); if (pop) pop.update();
       });
       wrap.appendChild(back);
     }
+
     var box = document.createElement('div');
     box.className = 'gp-pop';
     var img = document.createElement('img');
@@ -31247,10 +31397,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     meta.className = 'gp-pop-meta';
     meta.textContent = p.lat.toFixed(6) + ', ' + p.lng.toFixed(6) +
       (p.bearing != null && isFinite(p.bearing) ? '  ·  bearing ' + Math.round(p.bearing) + '°' : '');
+
+    // Status line for current link/group state.
+    var status = _statusLine(p);
+
     var ta = document.createElement('textarea');
     ta.className = 'gp-pop-desc';
     ta.placeholder = 'Add a description…';
     ta.value = p.description || '';
+
     var btns = document.createElement('div');
     btns.className = 'gp-pop-btns';
     var save = document.createElement('button');
@@ -31262,7 +31417,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     save.addEventListener('click', function () {
       p.description = ta.value.trim();
       dbPut(p).then(function () {
-        m.setTooltipContent(tipFor(g));
+        m.setTooltipContent(tipFor(p));
         save.textContent = 'Saved ✓';
         setTimeout(function () { save.textContent = 'Save'; }, 1200);
       });
@@ -31278,12 +31433,203 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     btns.appendChild(save);
     btns.appendChild(del);
+
+    // --- Asset-tagging actions ----------------------------------------
+    var actions = document.createElement('div');
+    actions.className = 'gp-pop-actions';
+    var tagBtn = document.createElement('button');
+    tagBtn.textContent = '🔗 Tag to nearby pin';
+    var groupBtn = document.createElement('button');
+    groupBtn.textContent = '👥 Group with another photo';
+    actions.appendChild(tagBtn);
+    actions.appendChild(groupBtn);
+    if (p.linked_pin_id) {
+      var unTagBtn = document.createElement('button');
+      unTagBtn.className = 'muted';
+      unTagBtn.textContent = '✕ Unlink pin';
+      unTagBtn.addEventListener('click', function () { untagPhoto(p, m); });
+      actions.appendChild(unTagBtn);
+    }
+    if (p.asset_group_id) {
+      var unGrpBtn = document.createElement('button');
+      unGrpBtn.className = 'muted';
+      unGrpBtn.textContent = '✕ Leave group';
+      unGrpBtn.addEventListener('click', function () { ungroupPhoto(p, m); });
+      actions.appendChild(unGrpBtn);
+    }
+
+    // Picker container — populated when the user taps "Tag to nearby pin".
+    var picker = document.createElement('div');
+    picker.style.display = 'none';
+
+    tagBtn.addEventListener('click', function () {
+      if (picker.style.display === 'block') { picker.style.display = 'none'; return; }
+      _populateTagPicker(picker, p, m);
+      picker.style.display = 'block';
+      var pop = m.getPopup(); if (pop) pop.update();
+    });
+    groupBtn.addEventListener('click', function () {
+      _enterGroupMode(p, m);
+    });
+
     box.appendChild(img);
     box.appendChild(meta);
+    if (status) box.appendChild(status);
     box.appendChild(ta);
     box.appendChild(btns);
+    box.appendChild(actions);
+    box.appendChild(picker);
     wrap.appendChild(box);
   }
+
+  // Renders a tiny info chip block above the description showing the
+  // photo's current link / group state.
+  function _statusLine(p) {
+    if (!p.linked_pin_id && !p.asset_group_id) return null;
+    var el = document.createElement('div');
+    el.className = 'gp-pop-status';
+    var parts = [];
+    if (p.linked_pin_id) {
+      var resolved = _resolveLink(p.linked_pin_id);
+      var label = resolved
+        ? '<span class="gp-link-chip">' + escapeHtml((resolved.pin.kind || 'pin').toUpperCase()) + '</span>' +
+          escapeHtml(resolved.pin.id) +
+          (resolved.pin.attrs && resolved.pin.attrs.notes
+            ? ' — ' + escapeHtml(String(resolved.pin.attrs.notes).slice(0, 40))
+            : '')
+        : '<span class="gp-link-chip">PIN</span>' + escapeHtml(p.linked_pin_id) +
+          ' <span style="color:#c25a00">(not found on this device)</span>';
+      parts.push('Linked: ' + label);
+    }
+    if (p.asset_group_id) {
+      var n = _groupMembers(p).length;
+      parts.push('<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' +
+        _groupColor(p.asset_group_id) + ';vertical-align:-1px;margin-right:4px"></span>' +
+        'Group · ' + n + ' photo' + (n === 1 ? '' : 's'));
+    }
+    el.innerHTML = parts.join('<br>');
+    return el;
+  }
+
+  // Build the nearby-pin chooser inside the popup.
+  function _populateTagPicker(host, p, m) {
+    host.className = 'gp-tag-picker';
+    host.innerHTML = '';
+    var cands = _pinsNearby(p.lat, p.lng, 60);   // ≤60 ft is "nearby"
+    if (!cands.length) {
+      var empty = document.createElement('div');
+      empty.className = 'gp-tag-empty';
+      empty.textContent = 'No pins within 60 ft. Zoom in on the map and tap a pin separately, or use Group with another photo to start a fresh asset group.';
+      host.appendChild(empty);
+      return;
+    }
+    cands.slice(0, 12).forEach(function (c) {
+      var b = document.createElement('button');
+      b.className = 'gp-tag-row';
+      var kind = (c.pin.kind || '').replace(/^pt_|^ln_|^pg_/, '');
+      b.innerHTML =
+        '<span class="gp-tag-kind">' + escapeHtml(kind) + '</span>' +
+        '<span>' + escapeHtml(c.pin.id) +
+          (c.pin.attrs && c.pin.attrs.notes
+            ? ' — ' + escapeHtml(String(c.pin.attrs.notes).slice(0, 32))
+            : '') + '</span>' +
+        '<span class="gp-tag-dist">' + Math.round(c.dist_ft) + ' ft</span>';
+      b.addEventListener('click', function () { tagPhotoToPin(p, c.sec, c.pin, m); });
+      host.appendChild(b);
+    });
+  }
+
+  // Persist a link from photo p → pin (sec.id::pin.id).
+  function tagPhotoToPin(p, sec, pin, m) {
+    p.linked_pin_id = sec.id + '::' + pin.id;
+    dbPut(p).then(function () {
+      if (m) m.closePopup();
+      render();
+    });
+  }
+  function untagPhoto(p, m) {
+    delete p.linked_pin_id;
+    dbPut(p).then(function () {
+      if (m) m.closePopup();
+      render();
+    });
+  }
+  function ungroupPhoto(p, m) {
+    delete p.asset_group_id;
+    dbPut(p).then(function () {
+      if (m) m.closePopup();
+      render();
+    });
+  }
+
+  /* ===================== grouping mode ===================== */
+  function _enterGroupMode(p, m) {
+    _groupingFrom = p;
+    if (m) m.closePopup();
+    var banner = document.getElementById('gp-group-banner');
+    var msg    = document.getElementById('gp-group-banner-msg');
+    if (msg) msg.textContent = 'Tap another photo to group it with this one. ESC to cancel.';
+    if (banner) banner.style.display = 'flex';
+    // Add a pulsing class to every other photo marker.
+    if (photoLayer) {
+      photoLayer.eachLayer(function (mk) {
+        if (mk._gpPhotoId && mk._gpPhotoId !== p.id) {
+          var el = mk.getElement();
+          if (el) el.classList.add('gp-grouping-target');
+          _groupingMarkers.push(mk);
+        }
+      });
+    }
+  }
+  function _exitGroupMode() {
+    _groupingFrom = null;
+    var banner = document.getElementById('gp-group-banner');
+    if (banner) banner.style.display = 'none';
+    _groupingMarkers.forEach(function (mk) {
+      var el = mk.getElement();
+      if (el) el.classList.remove('gp-grouping-target');
+    });
+    _groupingMarkers = [];
+  }
+  function _finishGroupWith(target) {
+    var src = _groupingFrom;
+    _exitGroupMode();
+    if (!src || !target || src.id === target.id) return;
+    // Decide which group_id to use: keep the one that already exists, else
+    // mint a new one. If BOTH already have group ids, merge — take src's id
+    // and rewrite target's whole group to that id.
+    var srcGid = src.asset_group_id;
+    var tgtGid = target.asset_group_id;
+    var gid;
+    if (srcGid && tgtGid) {
+      if (srcGid === tgtGid) return;   // already in the same group
+      gid = srcGid;
+      // Re-stamp every photo currently in tgtGid → gid.
+      var promises = [];
+      PHOTOS.forEach(function (x) {
+        if (x.asset_group_id === tgtGid) {
+          x.asset_group_id = gid;
+          promises.push(dbPut(x));
+        }
+      });
+      Promise.all(promises).then(function () { render(); });
+      return;
+    }
+    if (srcGid)      gid = srcGid;
+    else if (tgtGid) gid = tgtGid;
+    else             gid = _newGroupId();
+    src.asset_group_id    = gid;
+    target.asset_group_id = gid;
+    Promise.all([dbPut(src), dbPut(target)]).then(function () { render(); });
+  }
+  // Wire the banner + ESC key once.
+  (function () {
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && _groupingFrom) _exitGroupMode();
+    });
+    var cancel = document.getElementById('gp-group-banner-cancel');
+    if (cancel) cancel.addEventListener('click', _exitGroupMode);
+  })();
 
   /* ===================== upload ===================== */
   function updateCount() {
