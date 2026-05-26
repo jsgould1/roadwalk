@@ -17267,14 +17267,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _lane.className = 'strip-photo-lane';
         inner.appendChild(_lane);
         var _allPhotos = window._RW.geophotos.list() || [];
-        var _added = 0;
+        var _added = 0, _withGps = 0, _outOfRange = 0;
         _allPhotos.forEach(function (p) {
           if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
-          var proj = projectOntoAlignment([p.lat, p.lng], sec.alignment);
+          _withGps++;
+          // projectOntoAlignment expects a Leaflet-LatLng-shaped object with
+          // .lat / .lng — NOT an array. Passing an array silently produced
+          // NaN dot-products and rejected every photo. (Bug in phase A.)
+          var proj = projectOntoAlignment({ lat: p.lat, lng: p.lng }, sec.alignment);
           if (!proj) return;
           var staFt = proj[0], perpFt = proj[1];
-          if (perpFt > 300) return;
-          if (staFt < 0 || staFt > totalFt) return;
+          if (perpFt > 300 || staFt < 0 || staFt > totalFt) { _outOfRange++; return; }
           var im = document.createElement('img');
           im.className = 'strip-photo-thumb' +
             (p.asset_group_id ? ' grouped' : '') +
@@ -17296,9 +17299,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           _added++;
         });
         if (!_added) {
+          // Tell the user WHY there's nothing — common cases: no photos
+          // at all, photos without GPS, or photos in the project but far
+          // from THIS section's alignment.
           var _empty = document.createElement('div');
           _empty.className = 'strip-photo-lane-empty';
-          _empty.textContent = 'No photos within 300 ft of this section';
+          var _total = _allPhotos.length;
+          if (!_total)                _empty.textContent = 'No photos in the project yet';
+          else if (!_withGps)         _empty.textContent = 'No photos with GPS (of ' + _total + ' total)';
+          else if (!_outOfRange)      _empty.textContent = _withGps + ' photo' + (_withGps === 1 ? '' : 's') + ' with GPS, none near this section';
+          else                        _empty.textContent = '0 / ' + _total + ' photos matched · ' + _withGps + ' GPS · ' + _outOfRange + ' > 300 ft off';
           _lane.appendChild(_empty);
         }
       }
