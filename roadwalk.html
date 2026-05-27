@@ -9962,7 +9962,7 @@ body.mobile-mode #app {
           <button class="tg-type" data-type="parking">Parking</button>
           <button class="tg-type" data-type="edge_drop">Edge drop</button>
           <button class="tg-type" data-type="sidewalk">Sidewalk</button>
-          <button class="tg-type" data-type="culvert">Culvert</button>
+          <button class="tg-type" data-type="culvert">Drainage</button>
           <button class="tg-type" data-type="other">Other</button>
         </div>
         <div class="tg-action-final">
@@ -10032,7 +10032,7 @@ body.mobile-mode #app {
         <div class="tk-type-row" id="tk-type-row">
           <button class="tk-type" data-type="sign"         style="--tk-tag-color:#27A04B">Sign</button>
           <button class="tk-type" data-type="mile_marker"  style="--tk-tag-color:#666">Mile&nbsp;Marker</button>
-          <button class="tk-type" data-type="culvert"      style="--tk-tag-color:#0B3D66">Culvert</button>
+          <button class="tk-type" data-type="culvert"      style="--tk-tag-color:#0B3D66">Drainage</button>
           <button class="tk-type" data-type="pavement"     style="--tk-tag-color:#9CA3AF">Pavement</button>
           <button class="tk-type" data-type="gate"         style="--tk-tag-color:#B33A2F">Gate</button>
           <button class="tk-type" data-type="swale"        style="--tk-tag-color:#2563A8">Swale</button>
@@ -26300,7 +26300,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   var PHOTO_TYPE_DEFS = [
     { type: 'sign',         label: 'Signs',         color: '#27A04B' },
     { type: 'mile_marker',  label: 'Mile Markers',  color: '#666'    },
-    { type: 'culvert',      label: 'Culverts',      color: '#0B3D66' },
+    { type: 'culvert',      label: 'Drainage',      color: '#0B3D66' },
     { type: 'pavement',     label: 'Pavement',      color: '#9CA3AF' },
     { type: 'gate',         label: 'Gates',         color: '#B33A2F' },
     { type: 'swale',        label: 'Swales',        color: '#2563A8' },
@@ -33468,7 +33468,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   var TYPE_LABELS = {
     sign: 'SIGN', guardrail: 'GUARD', wall: 'WALL', swale: 'SWALE',
     mile_marker: 'MILE', parking: 'PARK', edge_drop: 'EDGE',
-    sidewalk: 'SIDEWLK', culvert: 'CULV', other: 'OTHER',
+    sidewalk: 'SIDEWLK', culvert: 'DRAIN', other: 'OTHER',
   };
   // Best-fit pin kind for each tag type. Line/polygon kinds become POINT
   // pt_misc_other pins for now; the user can promote them via vertex edit.
@@ -34037,7 +34037,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   var TYPE_LABELS = {
     sign: 'SIGN', guardrail: 'GUARD', wall: 'WALL', swale: 'SWALE',
     mile_marker: 'MILE', parking: 'PARK', edge_drop: 'EDGE',
-    sidewalk: 'SIDEWLK', culvert: 'CULV',
+    sidewalk: 'SIDEWLK', culvert: 'DRAIN',
     pavement: 'PAVE', gate: 'GATE', curb: 'CURB', curb_gutter: 'C&G',
     bridge: 'BRG', other: 'OTHER',
   };
@@ -34598,19 +34598,49 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
   }
 
+  /* Expand the current selection to include every photo that belongs to any
+     EXISTING asset group containing a selected photo. Without this, merging
+     two visually-collapsed groups only re-stamps the selected reps + bin
+     mates and leaves the rest of each group orphaned under the old IDs. */
+  function _expandSelectionToFullGroups() {
+    var A = api(); if (!A) return [];
+    var all = A.list();
+    var srcGroupIds = new Set();
+    all.forEach(function (p) {
+      if (selectedIds.has(p.id) && p.asset_group_id) srcGroupIds.add(p.asset_group_id);
+    });
+    return all.filter(function (p) {
+      return selectedIds.has(p.id) ||
+        (p.asset_group_id && srcGroupIds.has(p.asset_group_id));
+    });
+  }
+
   function groupSelected() {
     var A = api(); if (!A || !selectedIds.size) return;
-    var sel = A.list().filter(function (p) { return selectedIds.has(p.id); });
+    var sel = _expandSelectionToFullGroups();
     if (!sel.length) return;
     var gids = new Set();
     sel.forEach(function (p) { if (p.asset_group_id) gids.add(p.asset_group_id); });
+    // ≥2 existing groups → merge; 1 existing group + ungrouped → fold into
+    // that one; nothing pre-existing → mint a brand new id.
     var gid = gids.size === 1 ? gids.values().next().value : A.newGroupId();
     sel.forEach(function (p) { p.asset_group_id = gid; });
-    A.saveMany(sel).then(function () { A.refresh(); renderTracks(); });
+    var nGroups = gids.size;
+    A.saveMany(sel).then(function () {
+      A.refresh();
+      renderTracks();
+      var ct = $g('tk-sel-count');
+      if (ct) {
+        ct.textContent = nGroups >= 2
+          ? '✓ Merged ' + nGroups + ' groups into one (' + sel.length + ' photos)'
+          : '✓ Grouped ' + sel.length + ' photo' + (sel.length === 1 ? '' : 's');
+        setTimeout(function () { updateActionBar(); }, 1800);
+      }
+    });
   }
   function tagSelectedAs(type) {
     var A = api(); if (!A || !selectedIds.size) return;
-    var sel = A.list().filter(function (p) { return selectedIds.has(p.id); });
+    var sel = _expandSelectionToFullGroups();
     if (!sel.length) return;
     var gids = new Set();
     sel.forEach(function (p) { if (p.asset_group_id) gids.add(p.asset_group_id); });
