@@ -11199,8 +11199,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           const text    = await file.text();
           const parsed  = JSON.parse(text);
 
-          // Detect a full RoadWalk export (roadwalk-export-v1) vs a raw prewalk bundle
-          const isExport = parsed._export_meta && parsed._export_meta.version === 'roadwalk-export-v1';
+          // Detect a full RoadWalk export (any roadwalk-export-v* version) vs
+          // a raw prewalk bundle. v2 added the geophotos block + streamed
+          // output; older v1 files restore the same way (missing fields are
+          // tolerated by the per-store guards below).
+          const isExport = parsed._export_meta
+            && /^roadwalk-export-v\d+$/.test(parsed._export_meta.version || '');
           const bundle   = isExport ? parsed.bundle : parsed;
           if (!bundle || !bundle.sections) throw new Error('Not a valid project file (missing "sections")');
 
@@ -25887,19 +25891,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (save) { save.disabled = true; save.textContent = 'Building…'; }
     try {
       const scan = await _scanExportData(function () {});
-      const json = await _buildExportJSON(scan, true, function () {});
       const project  = window.PROJECT || {};
       const safeName = (project.name || 'roadwalk-project')
         .replace(/[^a-z0-9_\-\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
         .slice(0, 40);
       const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-      const res = await _saveJsonFile(json, safeName + '-backup-' + stamp + '.json');
+      const filename = safeName + '-backup-' + stamp + '.json';
+      // Stream-write the JSON. The legacy _buildExportJSON path would throw
+      // "Invalid string length" on projects with thousands of field photos
+      // because the pretty-printed JSON exceeded V8's max string length.
+      const res = await _saveExportStreamed(scan, true, filename,
+        function (pct) {
+          if (save) save.textContent = 'Building… ' + pct + '%';
+        });
       if (res.method === 'cancelled') {
         // User backed out of the save dialog — leave the prompt up to retry.
         if (save) { save.disabled = false; save.textContent = 'Save snapshot'; }
         return;
       }
-      if (msg)  msg.textContent = '✓ Snapshot saved — ' + _fmtBytes(json.length) + '.';
+      if (msg)  msg.textContent = '✓ Snapshot saved — ' + _fmtBytes(res.bytes || 0) + '.';
       if (save) save.style.display = 'none';
       setTimeout(_hideBackupPrompt, 4000);
     } catch (err) {
@@ -27390,6 +27400,165 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   /**
+   * Stream-write the export as JSON in chunks via a generic writer.
+   * Built record-by-record so no single string ever approaches V8's
+   * ~512 MB max — required for projects with thousands of field photos,
+   * which previously threw "Invalid string length" out of JSON.stringify.
+   *
+   * @param {Object}   scanResult     — from _scanExportData()
+   * @param {boolean}  includePhotos  — when true, photos[] and geophotos[]
+   *                                    are written; when false, both null.
+   * @param {Function} writeFn        — async (chunkString) => void. Either
+   *                                    a FileSystemWritableFileStream wrapper
+   *                                    (streams to disk) or a Blob-parts
+   *                                    accumulator (memory-bound but no
+   *                                    string limit because the final Blob
+   *                                    is built from many strings).
+   * @param {Function} onProgress     — called with (pct 0-100)
+   */
+  async function _streamExport(scanResult, includePhotos, writeFn, onProgress) {
+    const w = (s) => writeFn(s);
+    onProgress(2);
+
+    // ── Top-level open + small fields written eagerly ─────────────────────
+    await w('{\n');
+    await w('"_export_meta":' + JSON.stringify({
+      version:      'roadwalk-export-v2',
+      exported_at:  new Date().toISOString(),
+      app:          'RoadWalk v0.2',
+      project_name: window.PROJECT?.name || (scanResult.bundle?.name) || 'Unknown',
+    }) + ',\n');
+    await w('"bundle":'    + JSON.stringify(scanResult.bundle) + ',\n');
+    await w('"field_data":' + JSON.stringify({
+      inspections:    scanResult.inspections,
+      daily_logs:     scanResult.daily_logs,
+      safety:         scanResult.safety,
+      pin_statuses:   scanResult.pin_statuses,
+      layers_vis:     scanResult.layers_vis,
+      settings:       scanResult.settings,
+      feature_styles: scanResult.feature_styles,
+    }) + ',\n');
+    onProgress(15);
+
+    // ── photos[] (legacy per-pin photos in RoadWalkDB) ───────────────────
+    if (!includePhotos) {
+      await w('"photos":null,\n');
+    } else {
+      await w('"photos":[\n');
+      const photos = scanResult.photos || [];
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        let dataUrl = null;
+        if (photo.blob instanceof Blob) {
+          try { dataUrl = await _blobToDataURL(photo.blob); } catch (_) {}
+        } else if (typeof photo.data_url === 'string') {
+          dataUrl = photo.data_url;
+        }
+        const rec = {
+          photo_id: photo.photo_id,
+          pin_id:   photo.pin_id,
+          caption:  photo.caption  || '',
+          taken_at: photo.taken_at || null,
+          data_url: dataUrl,
+        };
+        await w((i ? ',\n' : '') + JSON.stringify(rec));
+        // photos contribute the first half of the progress bar (15-50%)
+        onProgress(15 + Math.round(35 * (i + 1) / Math.max(photos.length, 1)));
+      }
+      await w('\n],\n');
+    }
+
+    // ── geophotos[] (field photos in RoadWalkGeoPhotos_v1) ────────────────
+    // These are the BIG records — each has its own ~100-300 KB base64
+    // dataUrl. Streaming them is what makes the whole snapshot fit.
+    if (!includePhotos) {
+      await w('"geophotos":null\n');
+    } else {
+      await w('"geophotos":[\n');
+      const gp = scanResult.geophotos || [];
+      for (let i = 0; i < gp.length; i++) {
+        const g = gp[i];
+        const rec = {
+          id:               g.id,
+          dataUrl:          g.dataUrl || null,
+          lat:              g.lat,
+          lng:              g.lng,
+          bearing:          (g.bearing == null) ? null : g.bearing,
+          description:      g.description || '',
+          ts:               g.ts || null,
+          asset_group_id:   g.asset_group_id || null,
+          group_type:       g.group_type || null,
+          linked_pin_id:    g.linked_pin_id || null,
+          is_group_cover:   g.is_group_cover === true,
+        };
+        await w((i ? ',\n' : '') + JSON.stringify(rec));
+        // geophotos take the second half (50-99%)
+        onProgress(50 + Math.round(49 * (i + 1) / Math.max(gp.length, 1)));
+      }
+      await w('\n]\n');
+    }
+
+    await w('}\n');
+    onProgress(100);
+  }
+
+  /**
+   * Save a streamed export to a file, picking the best available transport.
+   *  • File System Access (Chrome/Edge): streams JSON straight to disk.
+   *  • Anywhere else (iPad Safari, Firefox): assembles chunks into a Blob
+   *    and triggers a download. Blobs have no string-length limit.
+   * Returns { method, name, bytes } — method 'cancelled' when the user
+   * dismisses the save dialog.
+   */
+  async function _saveExportStreamed(scanResult, includePhotos, filename, onProgress) {
+    // Prefer FSA — streams direct to disk, no in-memory buffer at all.
+    if (typeof window.showSaveFilePicker === 'function') {
+      let handle;
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'RoadWalk project JSON',
+                    accept: { 'application/json': ['.json'] } }],
+        });
+      } catch (err) {
+        if (err && err.name === 'AbortError') return { method: 'cancelled' };
+        // FSA failed for some other reason — fall through to Blob path.
+        console.warn('[RoadWalk] Save picker failed, using Blob fallback:', err);
+        handle = null;
+      }
+      if (handle) {
+        const writable = await handle.createWritable();
+        let bytes = 0;
+        try {
+          await _streamExport(scanResult, includePhotos, async (s) => {
+            bytes += s.length;
+            await writable.write(s);
+          }, onProgress);
+          await writable.close();
+        } catch (err) {
+          try { await writable.abort(); } catch (_) {}
+          throw err;
+        }
+        return { method: 'picker', name: handle.name || filename, bytes };
+      }
+    }
+    // Blob fallback — collect chunks into an array, then Blob([...]). The
+    // browser can spill the Blob to disk; no single JS string is built.
+    const parts = [];
+    await _streamExport(scanResult, includePhotos, (s) => { parts.push(s); }, onProgress);
+    const blob = new Blob(parts, { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return { method: 'download', name: filename, bytes: blob.size };
+  }
+
+  /**
    * Trigger a file download from a string of content.
    * @param {string} content  — file content
    * @param {string} filename — suggested filename
@@ -27493,20 +27662,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       scanEl.hidden = false;
       scanEl.textContent = 'Building export file…';
 
-      _buildExportJSON(_scanResult, includePhotos, function (pct) {
+      const project  = window.PROJECT || {};
+      const safeName = (project.name || 'roadwalk-project')
+        .replace(/[^a-z0-9_\-\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
+        .slice(0, 40);
+      const dateStr  = new Date().toISOString().slice(0, 10);
+      const filename = safeName + '-export-' + dateStr + '.json';
+      // Stream the export so 3,000+ photo projects don't hit V8's max string
+      // length the way the old in-memory JSON.stringify path did.
+      _saveExportStreamed(_scanResult, includePhotos, filename, function (pct) {
         progressEl.style.width = pct + '%';
-      }).then(function (json) {
-        const project  = window.PROJECT || {};
-        const safeName = (project.name || 'roadwalk-project')
-          .replace(/[^a-z0-9_\-\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
-          .slice(0, 40);
-        const dateStr  = new Date().toISOString().slice(0, 10);
-        const filename = safeName + '-export-' + dateStr + '.json';
-        _triggerDownload(json, filename, 'application/json');
-        // Reset button
+      }).then(function (res) {
         dlBtn.textContent = 'Download →';
         dlBtn.disabled    = false;
-        scanEl.textContent = '✓ Download started — ' + _fmtBytes(json.length);
+        if (res.method === 'cancelled') {
+          scanEl.textContent = 'Save dialog cancelled — pick a folder to retry.';
+          return;
+        }
+        scanEl.textContent = '✓ Saved ' + _fmtBytes(res.bytes || 0) + ' — ' + res.name;
         progressEl.style.width = '100%';
       }).catch(function (err) {
         dlBtn.textContent = 'Download →';
