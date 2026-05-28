@@ -30371,8 +30371,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _signFlagBlock('post_damage', post.post_damage, postDmg) +
         _textareaRow('Notes', 'notes', post.notes) +
         // Per-post mini photo row — photos scoped to this post's ulid.
-        // Dir = 'post' since posts live in the post column.
-        _photoBlockScoped('post', post.ulid || '', 'post') +
+        _photoBlockScoped('post', post.ulid || '') +
       '</div>';
     }).join('');
 
@@ -30463,28 +30462,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<div class="sign-photos">' + rest + '</div>';
     }
     // Per-panel / per-post photo row: compact 3-button row + dropzone.
-    // scope is 'panel' or 'post'; ulid is the target's stable id. Photos
-    // added here are tagged with the appropriate ulid AND the column dir
-    // so they still belong to the right direction column.
-    function _photoBlockScoped(scope, ulid, dirKey) {
+    // scope is 'panel' or 'post'; ulid is the target's stable id.
+    //
+    // Direction handling:
+    //  • Post scope: dir='post' is always correct (posts only live in the
+    //    POST INFORMATION column).
+    //  • Panel scope: dir is intentionally LEFT BLANK. A single panel often
+    //    has photos shot from multiple angles (front, back, sides). The
+    //    panel_ulid is the binding — dir would only be misleading if we
+    //    auto-set it from the panel's facing direction.
+    function _photoBlockScoped(scope, ulid) {
       var list = scope === 'panel'
         ? _photoListForPanel(ulid)
         : _photoListForPost(ulid);
       var thumbs = list.map(function (x) { return _photoThumb(x.ph, x.i); }).join('');
+      var dirAttr = (scope === 'post') ? ' data-dir="post"' : '';
+      var ulidAttr = ' data-' + scope + '-ulid="' + _esc(ulid) + '"';
       return '<div class="sign-photos-mini">' +
         '<div class="sign-photo-row sign-photo-row-mini">' +
-          '<button class="sign-ph-take" data-sign-photo ' +
-                  'data-dir="' + dirKey + '" data-' + scope + '-ulid="' + _esc(ulid) + '">📷</button>' +
-          '<button class="sign-ph-up" data-sign-upload ' +
-                  'data-dir="' + dirKey + '" data-' + scope + '-ulid="' + _esc(ulid) + '">⬆</button>' +
-          '<button class="sign-ph-sel" data-sign-select ' +
-                  'data-dir="' + dirKey + '" data-' + scope + '-ulid="' + _esc(ulid) + '" ' +
-                  'title="Pick GPS-located photos for this ' + scope + '">📍</button>' +
-          '<span class="sign-photo-row-lbl">photos</span>' +
+          '<button class="sign-ph-take" data-sign-photo' + dirAttr + ulidAttr + '>📷</button>' +
+          '<button class="sign-ph-up" data-sign-upload' + dirAttr + ulidAttr + '>⬆</button>' +
+          '<button class="sign-ph-sel" data-sign-select' + dirAttr + ulidAttr +
+                  ' title="Pick GPS-located photos for this ' + scope + '">📍</button>' +
+          '<span class="sign-photo-row-lbl">photos · ' + scope + '</span>' +
         '</div>' +
-        '<div class="rw-dropzone rw-dropzone-mini sign-photo-drop" ' +
-             'data-sign-drop-dir="' + dirKey + '" ' +
-             'data-' + scope + '-ulid="' + _esc(ulid) + '">' +
+        '<div class="rw-dropzone rw-dropzone-mini sign-photo-drop"' +
+             (scope === 'post' ? ' data-sign-drop-dir="post"' : '') +
+             ulidAttr + '>' +
           '<span class="rw-dropzone-ico">⬇</span>' +
           '<span class="rw-dropzone-lbl">drop</span>' +
         '</div>' +
@@ -30530,8 +30534,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _condRow('Rater 2', 'retro_night_r2', p.retro_night_r2, retroRatings, 'data-panel-field') +
         _textareaRow('Retro notes', 'retro_notes', p.retro_notes) +
         _textareaRow('Notes', 'notes', p.notes) +
-        // Per-panel mini photo row — dir comes from this panel's facing.
-        _photoBlockScoped('panel', p.ulid || '', String(p.facing_degrees || 0)) +
+        // Per-panel mini photo row — panel_ulid is the binding. Dir is
+        // intentionally left blank so the panel can hold photos shot from
+        // multiple sides (front / back / sides / detail) without forcing
+        // each into a particular direction column.
+        _photoBlockScoped('panel', p.ulid || '') +
       '</div>';
     }
     function _dirCol(D, lbl, ci) {
@@ -31854,8 +31861,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           var dir       = b.dataset.dir || null;
           var panelUlid = b.dataset.panelUlid || null;
           var postUlid  = b.dataset.postUlid  || null;
-          var scopeTitle = panelUlid ? 'panel'
-            : postUlid  ? 'post'
+          // Panel/post photos can be from any side — the title makes that
+          // clear so the user doesn't think they need to filter to a side.
+          var scopeTitle = panelUlid ? 'panel (any angle)'
+            : postUlid  ? 'post (any angle)'
             : (dir === 'post' ? 'post column'
               : dir ? dir + '° column' : 'sign');
           picker({
