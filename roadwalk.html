@@ -3093,6 +3093,114 @@ a { color: inherit; text-decoration: none; }
   box-shadow: inset 0 0 0 2px rgba(200, 90, 43, 0.18);
 }
 .rw-dropzone.rw-drop-active .rw-dropzone-ico { font-size: 18px; opacity: 1; }
+
+/* "📍 Select Nearby" picker modal — browse GPS-located field photos within
+   a radius of the current feature instead of digging through an OS file
+   picker. Reuses the modal pattern (backdrop + card + footer). */
+.rw-nbp-modal[hidden] { display: none; }
+.rw-nbp-modal {
+  position: fixed; inset: 0; z-index: 9500;
+  display: flex; align-items: center; justify-content: center;
+}
+.rw-nbp-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+.rw-nbp-card {
+  position: relative; z-index: 1;
+  width: min(900px, 96vw); max-height: 92vh;
+  background: #fff; border-radius: 6px;
+  display: flex; flex-direction: column;
+  border: 2px solid var(--blue, #2563A8);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+.rw-nbp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--blue, #2563A8); color: #fff; border-radius: 4px 4px 0 0;
+}
+.rw-nbp-title { font: 700 13px 'IBM Plex Sans', sans-serif; }
+.rw-nbp-close {
+  background: transparent; border: 0; color: #fff;
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+}
+.rw-nbp-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 14px; border-bottom: 1px solid var(--rule, #d8dde2);
+  background: #f5f0e8;
+  font: 600 11px 'IBM Plex Sans', sans-serif;
+}
+.rw-nbp-toolbar label { display: inline-flex; align-items: center; gap: 6px; }
+.rw-nbp-radius {
+  width: 70px; padding: 4px 6px; font: inherit;
+  border: 1px solid var(--rule, #d8dde2); border-radius: 3px;
+}
+.rw-nbp-toolbar button {
+  font: 700 10.5px 'IBM Plex Mono', monospace;
+  background: #fff; border: 1px solid var(--rule, #d8dde2); color: var(--ink-2);
+  padding: 5px 9px; border-radius: 3px; cursor: pointer;
+}
+.rw-nbp-toolbar button:hover { border-color: var(--blue, #2563A8); color: var(--blue, #2563A8); }
+.rw-nbp-status { margin-left: auto; color: var(--ink-3); font: 500 10.5px 'IBM Plex Sans', sans-serif; }
+.rw-nbp-grid {
+  flex: 1 1 auto; overflow-y: auto; padding: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px; min-height: 200px;
+}
+.rw-nbp-tile {
+  position: relative; cursor: pointer;
+  border: 2px solid var(--rule, #d8dde2); border-radius: 4px;
+  background: #fff; overflow: hidden;
+  aspect-ratio: 4 / 3;
+  transition: border-color 100ms, transform 80ms;
+}
+.rw-nbp-tile:hover { border-color: var(--blue, #2563A8); transform: scale(1.02); }
+.rw-nbp-tile.selected {
+  border-color: var(--orange, #C85A2B); border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(200,90,43,0.18);
+}
+.rw-nbp-tile.already-linked::after {
+  content: '🔗 linked';
+  position: absolute; top: 4px; left: 4px;
+  background: rgba(0,0,0,0.7); color: #fff;
+  font: 600 9px 'IBM Plex Sans', sans-serif;
+  padding: 2px 5px; border-radius: 2px;
+  pointer-events: none;
+}
+.rw-nbp-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.rw-nbp-tile-meta {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.7); color: #fff;
+  font: 600 10px 'IBM Plex Mono', monospace;
+  padding: 3px 6px; text-align: center; line-height: 1.3;
+}
+.rw-nbp-tile-chk {
+  position: absolute; top: 6px; right: 6px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--orange, #C85A2B); color: #fff;
+  display: none; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.rw-nbp-tile.selected .rw-nbp-tile-chk { display: flex; }
+.rw-nbp-empty {
+  grid-column: 1 / -1; text-align: center;
+  padding: 40px 20px; color: var(--ink-3);
+  font: 500 12px 'IBM Plex Sans', sans-serif;
+}
+.rw-nbp-foot {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 10px 14px; border-top: 1px solid var(--rule, #d8dde2);
+  background: #faf8f4;
+}
+.rw-nbp-cancel {
+  font: 700 11px 'IBM Plex Sans', sans-serif;
+  background: #fff; border: 1px solid var(--rule, #d8dde2); color: var(--ink-2);
+  padding: 8px 14px; border-radius: 4px; cursor: pointer;
+}
+.rw-nbp-add {
+  font: 700 11px 'IBM Plex Sans', sans-serif;
+  background: var(--blue, #2563A8); border: 1px solid var(--blue, #2563A8); color: #fff;
+  padding: 8px 16px; border-radius: 4px; cursor: pointer;
+}
+.rw-nbp-add:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; }
 .ff-scroll { flex: 1; overflow-y: auto; }
 .ff-body { padding: 2px 14px 8px; }
 .ff-foot { display: flex; border-top: 1px solid var(--line, #d8dde2); }
@@ -10369,7 +10477,11 @@ body.mobile-mode #app {
         <button class="ff-photo"  id="ff-photo"  type="button">📷 Take Photo</button>
         <button class="ff-upload" id="ff-upload" type="button">⬆ Upload</button>
       </div>
-      <div class="rw-dropzone" data-rw-drop-target="ff-upload-input" style="margin:0 14px 8px;">
+      <div class="ff-photo-row" style="margin-top:6px;">
+        <button class="ff-upload" id="ff-select-nearby" type="button"
+                style="background:var(--blue);" title="Pick from photos you've already taken, sorted by distance from this feature">📍 Select Nearby Photos</button>
+      </div>
+      <div class="rw-dropzone" data-rw-drop-target="ff-upload-input" style="margin:6px 14px 8px;">
         <span class="rw-dropzone-ico">⬇</span>
         <span class="rw-dropzone-lbl">…or drop photos here</span>
       </div>
@@ -14634,6 +14746,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                         .then(refresh).catch(refresh);
       });
     }
+    // Select Nearby — pick from already-taken field photos (GPS-located)
+    // within a radius of this feature. Way faster than uploading from disk.
+    const _ffSelBtn = document.getElementById('ff-select-nearby');
+    if (_ffSelBtn) {
+      _ffSelBtn.addEventListener('click', () => {
+        const pin = _ffPin, sec = _ffSec;
+        if (!pin || !sec) return;
+        const picker = window._RW && window._RW.openNearbyPhotoPicker;
+        if (!picker) return;
+        picker({
+          pin, secId: sec.id, maxFt: 100,
+          title: 'Select nearby photos for ' + (pin.id || 'this feature'),
+          onPick: (photos) => {
+            if (!pin.attrs) pin.attrs = {};
+            if (!Array.isArray(pin.attrs.photos)) pin.attrs.photos = [];
+            photos.forEach((p) => {
+              pin.attrs.photos.push({
+                dataUrl: p.dataUrl,
+                captured_at: p.ts ? new Date(p.ts).toISOString() : new Date().toISOString(),
+                source_geophoto_id: p.id,   // back-reference for traceability
+                lat: p.lat, lng: p.lng,
+              });
+            });
+            if (_ffPin === pin) _ffRenderPhotos(pin);
+          },
+        });
+      });
+    }
     // Left-edge drag handle — resize the panel width.
     (function () {
       const handle = document.getElementById('ff-resize');
@@ -14927,6 +15067,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       ${galleryHtml}
       <div class="row" style="margin-top: 12px; display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn alt" id="pin-add-photo"  style="flex:1; min-width:120px;">＋ Add Photo</button>
+        <button class="btn" id="pin-select-nearby" style="flex:1; min-width:140px; background:var(--blue); color:#fff;" title="Pick from photos you've already taken, sorted by distance from this pin">📍 Select Nearby</button>
         <button class="btn alt" id="pin-sv-capture" style="flex:1; min-width:120px;" title="Open Street View at this pin and capture the current view as a photo">📷 Capture SV</button>
         <button class="btn alt" id="pin-streetview" style="flex:1; min-width:120px;">Street View</button>
         ${pathwebUrl ? `<a href="${pathwebUrl}" target="_blank" rel="noopener" class="btn alt" style="flex:1; min-width:120px; display:flex; align-items:center; justify-content:center; text-decoration:none;">Pathweb ↗</a>` : ''}
@@ -15049,6 +15190,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // array, and re-render the sheet so the new thumbnail appears.
     const photoInput = $('#pin-add-photo-input');
     $('#pin-add-photo')?.addEventListener('click', () => { if (photoInput) window._RW.cameraCapture(photoInput); });
+    // "📍 Select Nearby" — pick from GPS-located field photos within
+    // 100 ft of this pin instead of uploading from disk.
+    $('#pin-select-nearby')?.addEventListener('click', () => {
+      const picker = window._RW && window._RW.openNearbyPhotoPicker;
+      if (!picker) return;
+      picker({
+        pin, secId: sec.id, maxFt: 100,
+        title: 'Select nearby photos for ' + (pin.id || 'this pin'),
+        onPick: (photos) => {
+          pin._added_photos = pin._added_photos || [];
+          photos.forEach((p) => {
+            pin._added_photos.push({
+              dataUrl: p.dataUrl,
+              label: 'Field',
+              captured_at: p.ts ? new Date(p.ts).toISOString() : new Date().toISOString(),
+              source_geophoto_id: p.id,
+            });
+          });
+          // Re-open the sheet so the gallery shows the new thumbs.
+          openPinSheet(pin, sec);
+        },
+      });
+    });
     photoInput?.addEventListener('change', (e) => {
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
@@ -26675,6 +26839,198 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }, true);
   })();
 
+  /* ===================== Nearby photo picker =========================
+     Replaces "upload from disk → file picker" with "pick from photos
+     you've already taken in the field". Field photos are GPS-located
+     (stored in RoadWalkGeoPhotos_v1 via window._RW.geophotos), so we
+     can show only those within a configurable radius of the current
+     feature, sorted by distance — no scrolling through 3,000+ photos.
+
+     Usage:
+       window._RW.openNearbyPhotoPicker({
+         pin: <feature pin>,    // OR { lat, lng }
+         secId: 'A',            // section id, for setting linked_pin_id
+         maxFt: 100,            // default radius in feet (~30 m)
+         title: 'Select nearby photos',
+         onPick: function (photos) { ... },
+       });
+
+     The picker stamps linked_pin_id on every picked photo so Tracks,
+     SLD, and map all show them as "linked" afterward. The onPick
+     callback receives the picked geophoto records — each form's
+     handler is responsible for copying dataUrls into the form's own
+     gallery storage (pin.attrs.photos / pin._added_photos / etc).  */
+  (function () {
+    var R_FT = 20902231;
+    function havFt(a, b) {
+      var la1 = a[0] * Math.PI / 180, la2 = b[0] * Math.PI / 180;
+      var dla = (b[0] - a[0]) * Math.PI / 180;
+      var dlo = (b[1] - a[1]) * Math.PI / 180;
+      var h = Math.sin(dla/2)*Math.sin(dla/2) +
+              Math.cos(la1)*Math.cos(la2)*Math.sin(dlo/2)*Math.sin(dlo/2);
+      return 2 * R_FT * Math.asin(Math.sqrt(h));
+    }
+    function pinCenter(pin) {
+      if (!pin || !pin.geometry) return null;
+      var g = pin.geometry, c = g.coordinates;
+      if (!c) return null;
+      if (g.type === 'Point') return { lat: c[1], lng: c[0] };
+      if (g.type === 'LineString' && c.length) {
+        var mid = c[Math.floor(c.length / 2)];
+        return { lat: mid[1], lng: mid[0] };
+      }
+      if (g.type === 'Polygon' && c[0] && c[0].length) {
+        var slat = 0, slng = 0, n = 0;
+        c[0].forEach(function (v) { slng += v[0]; slat += v[1]; n++; });
+        return { lat: slat/n, lng: slng/n };
+      }
+      return null;
+    }
+
+    function ensureModal() {
+      var m = document.getElementById('rw-nbp-modal');
+      if (m) return m;
+      m = document.createElement('div');
+      m.id = 'rw-nbp-modal';
+      m.className = 'rw-nbp-modal';
+      m.hidden = true;
+      m.innerHTML =
+        '<div class="rw-nbp-backdrop"></div>' +
+        '<div class="rw-nbp-card">' +
+          '<div class="rw-nbp-head">' +
+            '<span class="rw-nbp-title">Select nearby photos</span>' +
+            '<button class="rw-nbp-close" type="button" aria-label="Close">✕</button>' +
+          '</div>' +
+          '<div class="rw-nbp-toolbar">' +
+            '<label>Within <input type="number" class="rw-nbp-radius" min="10" max="2000" step="10" value="100"> ft</label>' +
+            '<button class="rw-nbp-allbtn" type="button">Select all</button>' +
+            '<button class="rw-nbp-nonebtn" type="button">Clear</button>' +
+            '<span class="rw-nbp-status"></span>' +
+          '</div>' +
+          '<div class="rw-nbp-grid"></div>' +
+          '<div class="rw-nbp-foot">' +
+            '<button class="rw-nbp-cancel" type="button">Cancel</button>' +
+            '<button class="rw-nbp-add" type="button" disabled>Add 0 photos</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(m);
+      return m;
+    }
+
+    function open(opts) {
+      opts = opts || {};
+      var center = (opts.lat != null && opts.lng != null)
+        ? { lat: opts.lat, lng: opts.lng }
+        : (opts.pin ? pinCenter(opts.pin) : null);
+      if (!center) {
+        window.alert('This feature has no GPS location yet — save it on the map first so we know where to search.');
+        return;
+      }
+      var api = window._RW && window._RW.geophotos;
+      if (!api || !api.list) {
+        window.alert('Field-photo library not ready.');
+        return;
+      }
+      var modal = ensureModal();
+      modal.querySelector('.rw-nbp-title').textContent = opts.title || 'Select nearby photos';
+      var radiusEl = modal.querySelector('.rw-nbp-radius');
+      var grid     = modal.querySelector('.rw-nbp-grid');
+      var addBtn   = modal.querySelector('.rw-nbp-add');
+      var statusEl = modal.querySelector('.rw-nbp-status');
+      var selectedIds = new Set();
+      var currentCands = [];
+
+      if (opts.maxFt) radiusEl.value = opts.maxFt;
+
+      function updateAddBtn() {
+        var n = selectedIds.size;
+        addBtn.disabled = n === 0;
+        addBtn.textContent = 'Add ' + n + ' photo' + (n !== 1 ? 's' : '');
+      }
+      function render() {
+        var maxFt = parseFloat(radiusEl.value) || 100;
+        var photos = api.list();
+        currentCands = [];
+        photos.forEach(function (p) {
+          if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+          var d = havFt([center.lat, center.lng], [p.lat, p.lng]);
+          if (d <= maxFt) currentCands.push({ p: p, d: d });
+        });
+        currentCands.sort(function (a, b) { return a.d - b.d; });
+        grid.innerHTML = '';
+        if (!currentCands.length) {
+          var empty = document.createElement('div');
+          empty.className = 'rw-nbp-empty';
+          empty.innerHTML = 'No photos within ' + Math.round(maxFt) + ' ft of this feature.<br>' +
+                            '<small>Try widening the radius above.</small>';
+          grid.appendChild(empty);
+        } else {
+          currentCands.forEach(function (c) {
+            var p = c.p;
+            var tile = document.createElement('div');
+            tile.className = 'rw-nbp-tile' + (selectedIds.has(p.id) ? ' selected' : '');
+            if (p.linked_pin_id) tile.classList.add('already-linked');
+            var dt = p.ts ? new Date(p.ts) : null;
+            var time = dt ? dt.toLocaleString([], {
+              month: 'short', day: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+            }) : '';
+            tile.innerHTML =
+              '<img src="' + p.dataUrl + '" alt="" loading="lazy">' +
+              '<div class="rw-nbp-tile-meta">' + Math.round(c.d) + ' ft' +
+                (time ? ' · ' + time : '') + '</div>' +
+              '<div class="rw-nbp-tile-chk">✓</div>';
+            tile.addEventListener('click', function () {
+              if (selectedIds.has(p.id)) selectedIds.delete(p.id);
+              else                       selectedIds.add(p.id);
+              tile.classList.toggle('selected');
+              updateAddBtn();
+            });
+            grid.appendChild(tile);
+          });
+        }
+        statusEl.textContent = currentCands.length + ' in range';
+      }
+
+      radiusEl.oninput = render;
+      modal.querySelector('.rw-nbp-allbtn').onclick = function () {
+        currentCands.forEach(function (c) { selectedIds.add(c.p.id); });
+        render(); updateAddBtn();
+      };
+      modal.querySelector('.rw-nbp-nonebtn').onclick = function () {
+        selectedIds.clear(); render(); updateAddBtn();
+      };
+      function close() { modal.hidden = true; }
+      modal.querySelector('.rw-nbp-cancel').onclick = close;
+      modal.querySelector('.rw-nbp-close').onclick  = close;
+      modal.querySelector('.rw-nbp-backdrop').onclick = close;
+
+      addBtn.onclick = function () {
+        var picked = currentCands
+          .filter(function (c) { return selectedIds.has(c.p.id); })
+          .map(function (c) { return c.p; });
+        close();
+        if (!picked.length || typeof opts.onPick !== 'function') return;
+        // Stamp linked_pin_id on the source geophotos so they read as
+        // "linked" in Tracks / SLD / map afterwards. Skipped if the caller
+        // didn't give us a section id (e.g. lat/lng-only call).
+        if (opts.pin && opts.pin.id && opts.secId && api.save) {
+          var link = opts.secId + '::' + opts.pin.id;
+          picked.forEach(function (p) { p.linked_pin_id = link; });
+          (api.saveMany ? api.saveMany(picked) : Promise.all(picked.map(api.save)))
+            .then(function () { if (api.refresh) api.refresh(); });
+        }
+        opts.onPick(picked);
+      };
+
+      render(); updateAddBtn();
+      modal.hidden = false;
+    }
+
+    window._RW = window._RW || {};
+    window._RW.openNearbyPhotoPicker = open;
+  })();
+
   // Also expose doAutoSave so other modules can trigger a save after writes.
   window.RWAutoSave = doAutoSave;
 
@@ -29912,9 +30268,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     '</div>' +
     '<input type="file" id="ds-sign-photo-input" accept="image/*" capture="environment" style="display:none">' +
     '<input type="file" id="ds-sign-upload-input" accept="image/*" multiple style="display:none">' +
-    '<div class="rw-dropzone" data-rw-drop-target="ds-sign-upload-input" style="margin:10px 12px;">' +
-      '<span class="rw-dropzone-ico">⬇</span>' +
-      '<span class="rw-dropzone-lbl">…or drop photos here to add to this sign</span>' +
+    '<div style="display:flex;gap:8px;margin:10px 12px;align-items:stretch;">' +
+      '<button type="button" id="ds-sign-select-nearby" ' +
+              'style="flex:0 0 auto;background:var(--blue);color:#fff;border:none;' +
+                     'padding:8px 14px;border-radius:4px;cursor:pointer;' +
+                     'font:700 11px IBM Plex Sans,sans-serif;" ' +
+              'title="Pick from GPS-located field photos near this sign">' +
+        '📍 Select Nearby Photos</button>' +
+      '<div class="rw-dropzone" data-rw-drop-target="ds-sign-upload-input" style="flex:1 1 auto;margin:0;">' +
+        '<span class="rw-dropzone-ico">⬇</span>' +
+        '<span class="rw-dropzone-lbl">…or drop photos here</span>' +
+      '</div>' +
     '</div>';
   }
 
@@ -30306,8 +30670,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<div style="padding:10px 12px;">' +
           '<button type="button" class="df-photo-btn df-photo-btn-take" id="df-misc-take-photo">📷 Take Photo</button>' +
           '<input type="file" id="df-misc-photo-input" accept="image/*" capture="environment" style="display:none">' +
-          '<div class="df-photo-btns" style="margin-top:6px;">' +
+          '<div class="df-photo-btns" style="margin-top:6px;display:flex;gap:6px;">' +
             '<button type="button" class="df-photo-btn" id="df-misc-upload-photo">↑ Upload</button>' +
+            '<button type="button" class="df-photo-btn" id="df-misc-select-nearby" ' +
+                    'style="background:var(--blue);color:#fff;border-color:var(--blue);" ' +
+                    'title="Pick from GPS-located field photos near this feature">📍 Select Nearby</button>' +
           '</div>' +
           '<input type="file" id="df-misc-upload-input" accept="image/*" multiple style="display:none">' +
           '<div class="rw-dropzone" data-rw-drop-target="df-misc-upload-input" style="margin-top:8px;">' +
@@ -30753,8 +31120,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var rightCol =
       '<button type="button" class="df-photo-btn df-photo-btn-take" id="df-misc-take-photo">📷 Take Photo</button>' +
       '<input type="file" id="df-misc-photo-input" accept="image/*" capture="environment" style="display:none">' +
-      '<div class="df-photo-btns">' +
+      '<div class="df-photo-btns" style="display:flex;gap:6px;">' +
         '<button type="button" class="df-photo-btn" id="df-misc-upload-photo">↑ Upload</button>' +
+        '<button type="button" class="df-photo-btn" id="df-misc-select-nearby" ' +
+                'style="background:var(--blue);color:#fff;border-color:var(--blue);" ' +
+                'title="Pick from GPS-located field photos near this feature">📍 Select Nearby</button>' +
       '</div>' +
       '<input type="file" id="df-misc-upload-input" accept="image/*" multiple style="display:none">' +
       '<div class="rw-dropzone" data-rw-drop-target="df-misc-upload-input" style="margin-top:8px;">' +
@@ -31180,6 +31550,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _addSignPhotos(_signUploadInput.files, false);
         _signUploadInput.value = '';
       });
+      // "📍 Select Nearby" — pull from already-taken field photos within
+      // 100 ft instead of uploading from disk.
+      var _signSelBtn = document.getElementById('ds-sign-select-nearby');
+      if (_signSelBtn) _signSelBtn.addEventListener('click', function () {
+        var picker = window._RW && window._RW.openNearbyPhotoPicker;
+        if (!picker) return;
+        picker({
+          pin: pin, secId: (_dataState.sec ? _dataState.sec.id : null), maxFt: 100,
+          title: 'Select nearby photos for ' + (pin.id || 'this sign'),
+          onPick: function (photos) {
+            if (!Array.isArray(a.photos)) a.photos = [];
+            photos.forEach(function (p) {
+              a.photos.push({
+                dataUrl: p.dataUrl,
+                captured_at: p.ts ? new Date(p.ts).toISOString() : new Date().toISOString(),
+                source_geophoto_id: p.id,
+                dir: null,   // no direction-column tag — user can re-categorize
+              });
+            });
+            _dataState.dirty = true;
+            _renderFormBody();
+          },
+        });
+      });
       scroll.querySelectorAll('[data-photo-del]').forEach(function (b) {
         b.addEventListener('click', function () {
           var i = Number(b.dataset.photoDel);
@@ -31347,6 +31741,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         uploadInput.value = '';
       });
     }
+    // "📍 Select Nearby" — pick from already-taken GPS field photos.
+    var selBtn = document.getElementById('df-misc-select-nearby');
+    if (selBtn) selBtn.addEventListener('click', function () {
+      var picker = window._RW && window._RW.openNearbyPhotoPicker;
+      if (!picker) return;
+      picker({
+        pin: pin, secId: (_dataState.sec ? _dataState.sec.id : null), maxFt: 100,
+        title: 'Select nearby photos for ' + (pin.id || 'this feature'),
+        onPick: function (photos) {
+          var arr = _ensurePhotos();
+          photos.forEach(function (p) {
+            arr.push({
+              dataUrl: p.dataUrl,
+              captured_at: p.ts ? new Date(p.ts).toISOString() : new Date().toISOString(),
+              source_geophoto_id: p.id,
+            });
+          });
+          _dataState.dirty = true;
+          _renderFormBody();
+        },
+      });
+    });
 
     // Delete a photo thumbnail (✕ button)
     scroll.querySelectorAll('button.df-photo-del[data-photo-idx]').forEach(function (btn) {
