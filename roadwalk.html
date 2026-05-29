@@ -11636,21 +11636,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         fileIn.value = '';
         // Detect the import shape:
         //   • 1 file, .json → legacy single-file snapshot (current path)
-        //   • 2 files, one .json + one .ndjson → split format (large project)
+        //   • 1 .json + N .ndjson (chunked split format)
         //   • anything else → reject
-        let mainFile = null, ndjsonFile = null;
+        let mainFile = null;
+        const ndjsonFiles = [];
         for (const f of files) {
           const lc = (f.name || '').toLowerCase();
-          if (lc.endsWith('.ndjson')) ndjsonFile = f;
+          if (lc.endsWith('.ndjson')) ndjsonFiles.push(f);
           else if (lc.endsWith('.json')) mainFile = f;
         }
+        // Sort NDJSON chunks by their .NNN. ordinal so records arrive in
+        // insertion order (cosmetic — each line is self-contained, order
+        // doesn't affect correctness).
+        ndjsonFiles.sort((a, b) => {
+          const ra = /\.(\d+)\.ndjson$/i.exec(a.name);
+          const rb = /\.(\d+)\.ndjson$/i.exec(b.name);
+          if (ra && rb) return parseInt(ra[1], 10) - parseInt(rb[1], 10);
+          return a.name.localeCompare(b.name);
+        });
         if (!mainFile) {
           status.textContent = '⚠ No .json file selected';
           status.className   = 'pp-status pp-err';
           return;
         }
-        status.textContent = ndjsonFile
-          ? `Reading ${mainFile.name} + ${ndjsonFile.name}…`
+        status.textContent = ndjsonFiles.length
+          ? `Reading ${mainFile.name} + ${ndjsonFiles.length} photo chunk${ndjsonFiles.length === 1 ? '' : 's'}…`
           : `Reading ${mainFile.name}…`;
         status.className   = 'pp-status';
         try {
@@ -11792,16 +11802,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   } catch (gerr) {
                     console.warn('[RoadWalk] geophoto import failed', gerr);
                   }
-                } else if (ndjsonFile) {
-                  // Stream the companion NDJSON: ReadableStream + TextDecoder,
-                  // split on '\n', JSON.parse each line, batch-import every
-                  // 200 records so the user sees steady progress instead of
-                  // a single end-of-import flush.
+                } else if (ndjsonFiles.length) {
+                  // Stream every companion NDJSON file in sequence. Records
+                  // are self-contained so the order across chunks doesn't
+                  // affect the final IDB state — we still process them in
+                  // .NNN. ordinal order for predictable progress UI.
                   try {
-                    status.textContent = 'Streaming ' + ndjsonFile.name + '…';
-                    const reader  = ndjsonFile.stream().getReader();
-                    const decoder = new TextDecoder('utf-8');
-                    let buf = '', batch = [], totalImported = 0;
+                    let batch = [], totalImported = 0;
                     const BATCH_SIZE = 200;
                     async function flushBatch() {
                       if (!batch.length) return;
@@ -11811,33 +11818,41 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                       status.textContent = 'Streaming photos: ' +
                         totalImported.toLocaleString() + ' restored…';
                     }
-                    // Read chunks until end
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) break;
-                      buf += decoder.decode(value, { stream: true });
-                      // Process complete lines; the last (possibly partial)
-                      // line stays in buf for the next chunk.
-                      let nl;
-                      while ((nl = buf.indexOf('\n')) !== -1) {
-                        const line = buf.slice(0, nl).trim();
-                        buf = buf.slice(nl + 1);
-                        if (!line) continue;
-                        try { batch.push(JSON.parse(line)); }
-                        catch (lerr) {
-                          console.warn('[RoadWalk] skipped malformed NDJSON line:', lerr.message);
+                    for (let fi = 0; fi < ndjsonFiles.length; fi++) {
+                      const nf = ndjsonFiles[fi];
+                      status.textContent = 'Streaming chunk ' + (fi + 1) +
+                        '/' + ndjsonFiles.length + ': ' + nf.name + '…';
+                      const reader  = nf.stream().getReader();
+                      const decoder = new TextDecoder('utf-8');
+                      let buf = '';
+                      while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buf += decoder.decode(value, { stream: true });
+                        let nl;
+                        while ((nl = buf.indexOf('\n')) !== -1) {
+                          const line = buf.slice(0, nl).trim();
+                          buf = buf.slice(nl + 1);
+                          if (!line) continue;
+                          try { batch.push(JSON.parse(line)); }
+                          catch (lerr) {
+                            console.warn('[RoadWalk] skipped malformed NDJSON line in',
+                                         nf.name, ':', lerr.message);
+                          }
+                          if (batch.length >= BATCH_SIZE) await flushBatch();
                         }
-                        if (batch.length >= BATCH_SIZE) await flushBatch();
+                      }
+                      // Trailing partial line in this chunk's tail
+                      const tail = (buf + decoder.decode()).trim();
+                      if (tail) {
+                        try { batch.push(JSON.parse(tail)); }
+                        catch (_) {}
                       }
                     }
-                    // Final flush (any trailing line without a newline + remaining batch)
-                    const tail = (buf + decoder.decode()).trim();
-                    if (tail) {
-                      try { batch.push(JSON.parse(tail)); }
-                      catch (_) {}
-                    }
+                    // Final flush for any remaining records in the buffer
                     await flushBatch();
-                    console.log('[RoadWalk] Streamed', totalImported, 'field photos from NDJSON.');
+                    console.log('[RoadWalk] Streamed', totalImported,
+                                'field photos from', ndjsonFiles.length, 'chunk(s).');
                   } catch (sterr) {
                     console.warn('[RoadWalk] NDJSON stream import failed', sterr);
                   }
@@ -29162,18 +29177,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return false;
   }
 
+  // Target size per geophotos chunk. Below ~250 MB the files are easy to
+  // transfer (USB, cloud sync, Slack, etc.); above this we rotate to a
+  // new file. Each chunk gets a zero-padded ordinal so they sort right.
+  const _EXPORT_CHUNK_BYTES = 250 * 1024 * 1024;
+
   /**
-   * Save a split-format export — main.json + .geophotos.ndjson — into a
-   * user-picked directory. Falls back to two consecutive Blob downloads on
-   * browsers without showDirectoryPicker.
+   * Save a split-format export into a user-picked directory:
+   *   <base>.main.json                — bundle + field_data + legacy photos
+   *   <base>.geophotos.001.ndjson      — first ≤250 MB of geophoto records
+   *   <base>.geophotos.002.ndjson      — next chunk … etc.
+   * Falls back to consecutive Blob downloads on browsers without
+   * showDirectoryPicker (iPad Safari).
    */
   async function _saveExportSplit(scanResult, includePhotos, filename, onProgress) {
     const base = filename.replace(/\.json$/i, '');
     const mainName = base + '.main.json';
-    const ndName   = base + '.geophotos.ndjson';
+    function chunkName(idx) {
+      return base + '.geophotos.' + String(idx).padStart(3, '0') + '.ndjson';
+    }
 
-    // Preferred path: directory picker (Chrome/Edge). One prompt, both
-    // files land in the chosen folder.
+    // Preferred path: directory picker (Chrome/Edge). One prompt, all
+    // chunk files land in the chosen folder.
     if (typeof window.showDirectoryPicker === 'function') {
       let dirHandle;
       try {
@@ -29184,44 +29209,73 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         dirHandle = null;
       }
       if (dirHandle) {
+        // ── Main file writer ─────────────────────────────────────────────
         const mainHandle = await dirHandle.getFileHandle(mainName, { create: true });
-        const ndHandle   = await dirHandle.getFileHandle(ndName,   { create: true });
         const mainW = await mainHandle.createWritable();
-        const ndW   = await ndHandle.createWritable();
-        let mainBytes = 0, ndBytes = 0;
+        // ── NDJSON rotator: opens a new chunk file whenever the current
+        //    one passes _EXPORT_CHUNK_BYTES. Tracks all writers so the
+        //    final await Promise.all(closes) flushes every chunk.
+        const chunks = [];   // [{ name, writer, bytes }]
+        let curIdx = 0, curWriter = null, curBytes = 0;
+        async function getChunkWriter() {
+          if (curWriter && curBytes < _EXPORT_CHUNK_BYTES) return curWriter;
+          if (curWriter) await curWriter.close();
+          curIdx++;
+          const name = chunkName(curIdx);
+          const handle = await dirHandle.getFileHandle(name, { create: true });
+          curWriter = await handle.createWritable();
+          curBytes = 0;
+          chunks.push({ name, writer: curWriter, bytes: 0 });
+          return curWriter;
+        }
+        async function chunkWrite(s) {
+          const w = await getChunkWriter();
+          await w.write(s);
+          curBytes += s.length;
+          chunks[chunks.length - 1].bytes += s.length;
+        }
+        let mainBytes = 0;
         try {
           await _streamExport(scanResult, includePhotos, async (s) => {
             mainBytes += s.length;
             await mainW.write(s);
-          }, onProgress, {
-            ndjsonWriteFn: async (s) => {
-              ndBytes += s.length;
-              await ndW.write(s);
-            },
-          });
+          }, onProgress, { ndjsonWriteFn: chunkWrite });
           await mainW.close();
-          await ndW.close();
+          if (curWriter) await curWriter.close();
         } catch (err) {
           try { await mainW.abort(); } catch (_) {}
-          try { await ndW.abort();   } catch (_) {}
+          if (curWriter) { try { await curWriter.abort(); } catch (_) {} }
           throw err;
         }
+        const totalBytes = mainBytes + chunks.reduce((a, c) => a + c.bytes, 0);
         return {
           method: 'split-directory',
-          name: dirHandle.name + ' → ' + mainName + ' + ' + ndName,
-          bytes: mainBytes + ndBytes,
+          name: dirHandle.name + ' → ' + mainName + ' + ' +
+                chunks.length + ' chunk' + (chunks.length === 1 ? '' : 's'),
+          bytes: totalBytes,
+          chunks: chunks.length,
         };
       }
     }
 
-    // Fallback path: two Blob downloads. The user gets two files in their
-    // default download folder. Both must travel together for import.
-    const mainParts = [], ndParts = [];
+    // Fallback path: Blob downloads. Multi-file is awkward with the
+    // anchor-click pattern but iPad Safari will accept N downloads if
+    // we space them out by ~600 ms each.
+    const mainParts = [];
+    const chunkParts = [[]];   // [[blob1Parts], [blob2Parts], ...]
+    let curChunkBytes = 0;
+    function blobChunkWrite(s) {
+      if (curChunkBytes >= _EXPORT_CHUNK_BYTES) {
+        chunkParts.push([]);
+        curChunkBytes = 0;
+      }
+      chunkParts[chunkParts.length - 1].push(s);
+      curChunkBytes += s.length;
+    }
     await _streamExport(scanResult, includePhotos, (s) => { mainParts.push(s); }, onProgress, {
-      ndjsonWriteFn: (s) => { ndParts.push(s); },
+      ndjsonWriteFn: blobChunkWrite,
     });
     const mainBlob = new Blob(mainParts, { type: 'application/json' });
-    const ndBlob   = new Blob(ndParts,   { type: 'application/x-ndjson' });
     function _dl(blob, name) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -29230,14 +29284,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
     _dl(mainBlob, mainName);
-    // Small delay so iOS Safari doesn't reject the second download as
-    // an automated multi-file save.
-    await new Promise(r => setTimeout(r, 600));
-    _dl(ndBlob, ndName);
+    let totalBytes = mainBlob.size;
+    for (let i = 0; i < chunkParts.length; i++) {
+      await new Promise(r => setTimeout(r, 600));
+      const blob = new Blob(chunkParts[i], { type: 'application/x-ndjson' });
+      _dl(blob, chunkName(i + 1));
+      totalBytes += blob.size;
+    }
     return {
       method: 'split-download',
-      name: mainName + ' + ' + ndName,
-      bytes: mainBlob.size + ndBlob.size,
+      name: mainName + ' + ' + chunkParts.length + ' chunk' + (chunkParts.length === 1 ? '' : 's'),
+      bytes: totalBytes,
+      chunks: chunkParts.length,
     };
   }
 
