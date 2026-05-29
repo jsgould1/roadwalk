@@ -11631,13 +11631,40 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
       // --- File picker — use onchange assignment to prevent handler stacking ---
       fileIn.onchange = async e => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
         fileIn.value = '';
-        status.textContent = `Reading ${file.name}…`;
+        // Detect the import shape:
+        //   • 1 file, .json → legacy single-file snapshot (current path)
+        //   • 2 files, one .json + one .ndjson → split format (large project)
+        //   • anything else → reject
+        let mainFile = null, ndjsonFile = null;
+        for (const f of files) {
+          const lc = (f.name || '').toLowerCase();
+          if (lc.endsWith('.ndjson')) ndjsonFile = f;
+          else if (lc.endsWith('.json')) mainFile = f;
+        }
+        if (!mainFile) {
+          status.textContent = '⚠ No .json file selected';
+          status.className   = 'pp-status pp-err';
+          return;
+        }
+        status.textContent = ndjsonFile
+          ? `Reading ${mainFile.name} + ${ndjsonFile.name}…`
+          : `Reading ${mainFile.name}…`;
         status.className   = 'pp-status';
         try {
-          const text    = await file.text();
+          // Defensive: warn if user picked a single >500 MB JSON file. V8's
+          // max-string-length will silently truncate the read and JSON.parse
+          // will throw "Unexpected end of JSON input". Suggest splitting.
+          if (!ndjsonFile && mainFile.size > 500 * 1024 * 1024) {
+            throw new Error(
+              'This snapshot is ' + (mainFile.size / 1048576).toFixed(0) + ' MB, ' +
+              'which is too large for a single-string read. Use data/split_snapshot.py ' +
+              'to split it into main.json + .geophotos.ndjson, then re-import both.'
+            );
+          }
+          const text    = await mainFile.text();
           const parsed  = JSON.parse(text);
 
           // Detect a full RoadWalk export (any roadwalk-export-v* version) vs
@@ -11746,14 +11773,72 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               // API rather than the RWIdb transaction above. Importing
               // these is what makes asset groups, link-to-pin, and cover
               // photos survive a hand-off between users.
-              if (Array.isArray(parsed.geophotos) && parsed.geophotos.length
-                  && window._RW && window._RW.geophotos
+              //
+              // Two import paths:
+              //   1. Embedded — parsed.geophotos is an inline array (small
+              //      projects, classic single-file format).
+              //   2. Companion NDJSON — projects too large to fit in one
+              //      JSON string ship their geophotos in a separate
+              //      <name>.geophotos.ndjson file (one record per line).
+              //      We stream it line-by-line so memory stays bounded.
+              if (window._RW && window._RW.geophotos
                   && typeof window._RW.geophotos.importBulk === 'function') {
-                try {
-                  const n = await window._RW.geophotos.importBulk(parsed.geophotos);
-                  console.log('[RoadWalk] Restored', n, 'field photos.');
-                } catch (gerr) {
-                  console.warn('[RoadWalk] geophoto import failed', gerr);
+                if (Array.isArray(parsed.geophotos) && parsed.geophotos.length) {
+                  try {
+                    const n = await window._RW.geophotos.importBulk(parsed.geophotos);
+                    console.log('[RoadWalk] Restored', n, 'field photos.');
+                  } catch (gerr) {
+                    console.warn('[RoadWalk] geophoto import failed', gerr);
+                  }
+                } else if (ndjsonFile) {
+                  // Stream the companion NDJSON: ReadableStream + TextDecoder,
+                  // split on '\n', JSON.parse each line, batch-import every
+                  // 200 records so the user sees steady progress instead of
+                  // a single end-of-import flush.
+                  try {
+                    status.textContent = 'Streaming ' + ndjsonFile.name + '…';
+                    const reader  = ndjsonFile.stream().getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buf = '', batch = [], totalImported = 0;
+                    const BATCH_SIZE = 200;
+                    async function flushBatch() {
+                      if (!batch.length) return;
+                      await window._RW.geophotos.importBulk(batch);
+                      totalImported += batch.length;
+                      batch = [];
+                      status.textContent = 'Streaming photos: ' +
+                        totalImported.toLocaleString() + ' restored…';
+                    }
+                    // Read chunks until end
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) break;
+                      buf += decoder.decode(value, { stream: true });
+                      // Process complete lines; the last (possibly partial)
+                      // line stays in buf for the next chunk.
+                      let nl;
+                      while ((nl = buf.indexOf('\n')) !== -1) {
+                        const line = buf.slice(0, nl).trim();
+                        buf = buf.slice(nl + 1);
+                        if (!line) continue;
+                        try { batch.push(JSON.parse(line)); }
+                        catch (lerr) {
+                          console.warn('[RoadWalk] skipped malformed NDJSON line:', lerr.message);
+                        }
+                        if (batch.length >= BATCH_SIZE) await flushBatch();
+                      }
+                    }
+                    // Final flush (any trailing line without a newline + remaining batch)
+                    const tail = (buf + decoder.decode()).trim();
+                    if (tail) {
+                      try { batch.push(JSON.parse(tail)); }
+                      catch (_) {}
+                    }
+                    await flushBatch();
+                    console.log('[RoadWalk] Streamed', totalImported, 'field photos from NDJSON.');
+                  } catch (sterr) {
+                    console.warn('[RoadWalk] NDJSON stream import failed', sterr);
+                  }
                 }
               }
             }
@@ -24649,7 +24734,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     </div>
   </div>
   <!-- Hidden file input — triggered by pp-file-btn -->
-  <input type="file" id="project-file-input" accept=".json" style="display:none">
+  <!-- accept both single-file (.json) and the two-file split format
+       (main.json + .geophotos.ndjson) used for projects > ~500 MB -->
+  <input type="file" id="project-file-input" accept=".json,.ndjson" multiple style="display:none">
 
 
 <script>
