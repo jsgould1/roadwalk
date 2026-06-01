@@ -12,146 +12,1554 @@
     {
       "type": "Feature",
       "properties": {
-        "OBJECTID": 215,
+        "OBJECTID": 295,
         "ROAD": "Newfound Gap Road, SD    RT 0010B",
-        "FMSS_ASSET": "154677",
+        "FMSS_ASSET": "147994",
         "FMSS_LOCATION": "55724",
-        "LABEL": "Blue Ridge PW",
-        "NOTES": "Blue Ridge PW",
-        "ELEVATION": 2039,
-        "X_COORD": 291478,
-        "Y_COORD": 3931275,
-        "LAT": 35.50318,
-        "LON": -83.29907,
+        "LABEL": "Congested Area",
+        "NOTES": "Congested Area",
+        "ELEVATION": 2119,
+        "X_COORD": 290825,
+        "Y_COORD": 3932898,
+        "LAT": 35.51765,
+        "LON": -83.30688,
         "DATAACCESS": "Unrestricted",
         "MAPMETHOD": "Feature Extraction",
         "SOURCEDATE": null,
         "XYACCURACY": ">=5m and <14m",
         "VALID_RESULT": "Raw",
-        "GlobalID": "fa5b51e2-2d98-41c1-9b6b-0a01b5899505",
-        "_section": "C",
-        "_sta_ft": 0.0,
-        "_sta": "0+00.00",
-        "_dist_from_alignment_ft": 167.4,
+        "GlobalID": "022f7c35-9daf-4bc4-8fe2-430acf830f83",
+        "_section": "E",
+        "_sta_ft": 1817.0,
+        "_sta": "18+17.02",
+        "_dist_from_alignment_ft": 0.0,
         "_reported_in": [
-          "NPS-GIS",
-          "RIP-C5",
-          "RIP-C6"
+          "NPS-GIS"
         ],
-        "_report_cross_refs": {
-          "RIP-C5": {
-            "pages_by_route": {
-              "0010S": [
-                8,
-                9,
-                10,
-                11,
-                13,
-                15,
-                17,
-                25,
-                26,
-                27,
-                51,
-                52,
-                57,
-                63,
-                87,
-                117,
-                118,
-                119,
-                120,
-                143,
-                144,
-                145,
-                146,
-                164,
-                165,
-                166,
-                167,
-                255,
-                260,
-                261,
-                262,
-                263,
-                264,
-                265,
-                266,
-                267,
-                268,
-                313
-              ]
-            }
-          },
-          "RIP-C6": {
-            "pages_by_route": {
-              "0010S": [
-                8,
-                9,
-                11,
-                13,
-                14,
-                17,
-                28,
-                29,
-                30,
-                50,
-                55,
-                56,
-                63,
-                71,
-                72,
-                89,
-                124,
-                125,
-                126,
-                127,
-                147,
-                148,
-                149,
-                150,
-                355,
-                356,
-                357,
-                358,
-                359,
-                360,
-                361,
-                362,
-                363,
-                364,
-                365,
-                366,
-                367,
-                368,
-                369,
-                370,
-                371,
-                372,
-                374,
-                375,
-                376,
-                546,
-                644,
-                662,
-                663,
-                664,
-                674,
-                685,
-                686,
-                691,
-                692,
-                703
-              ]
-            }
-          }
-        }
+        "_report_cross_refs": {}
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -83.2990934300014,
-          35.5031743874637
+          -83.3067107590874,
+          35.5176548441805
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1498,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "147995",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Speed 35 MPH",
+        "NOTES": "Speed 35 MPH",
+        "ELEVATION": 2119,
+        "X_COORD": 290825,
+        "Y_COORD": 3932898,
+        "LAT": 35.51765,
+        "LON": -83.30688,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "18c70a68-2490-4994-84f4-e7fc07f6effa",
+        "_section": "E",
+        "_sta_ft": 1817.0,
+        "_sta": "18+17.02",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067107590874,
+          35.5176548441805
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 793,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "147998",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Job Corps Center",
+        "NOTES": "Job Corps Center",
+        "ELEVATION": 2107,
+        "X_COORD": 290820,
+        "Y_COORD": 3932794,
+        "LAT": 35.51672,
+        "LON": -83.30678,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "fc946847-0ef2-4974-bd68-53170eb45b32",
+        "_section": "E",
+        "_sta_ft": 2159.2,
+        "_sta": "21+59.21",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067361450398,
+          35.5167174149843
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 792,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148001",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Job Corps Center",
+        "NOTES": "Job Corps Center",
+        "ELEVATION": 2107,
+        "X_COORD": 290814,
+        "Y_COORD": 3932703,
+        "LAT": 35.5159,
+        "LON": -83.3068,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "15a7e87a-c302-4f91-9a52-e1fe9ef067f6",
+        "_section": "E",
+        "_sta_ft": 2458.1,
+        "_sta": "24+58.10",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.306775064003,
+          35.5158987788123
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 851,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148002",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Left Turn Icon",
+        "NOTES": "Left Turn Icon",
+        "ELEVATION": 2100,
+        "X_COORD": 290810,
+        "Y_COORD": 3932606,
+        "LAT": 35.51503,
+        "LON": -83.30688,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "07558977-11dd-4934-8c9b-66c3f49e8e5c",
+        "_section": "E",
+        "_sta_ft": 2776.2,
+        "_sta": "27+76.18",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3068025229598,
+          35.5150271716297
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 172,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148011",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Auto Tour Marker",
+        "NOTES": "Auto Tour Marker",
+        "ELEVATION": 2092,
+        "X_COORD": 290806,
+        "Y_COORD": 3932537,
+        "LAT": 35.5144,
+        "LON": -83.30687,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "06533d04-5662-4e5b-a1c8-1b372586c40c",
+        "_section": "E",
+        "_sta_ft": 3006.0,
+        "_sta": "30+05.97",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.306830370931,
+          35.5143977514975
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1075,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148008",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "OC Visitor Cente",
+        "NOTES": "OC Visitor Cente",
+        "ELEVATION": 2092,
+        "X_COORD": 290806,
+        "Y_COORD": 3932537,
+        "LAT": 35.5144,
+        "LON": -83.30687,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "42d798ca-6ef8-440b-995a-a439b456dbce",
+        "_section": "E",
+        "_sta_ft": 3006.0,
+        "_sta": "30+05.97",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.306830370931,
+          35.5143977514975
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 615,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "288231",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Elk Crossing",
+        "NOTES": "Elk Crossing",
+        "ELEVATION": 2088,
+        "X_COORD": 290799,
+        "Y_COORD": 3932463,
+        "LAT": 35.51374,
+        "LON": -83.30692,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "79bf6b3e-ba00-4df4-95aa-7dd64b91bccf",
+        "_section": "E",
+        "_sta_ft": 3248.2,
+        "_sta": "32+48.21",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3068891999094,
+          35.5137356473573
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 618,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "288230",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Elk Icon",
+        "NOTES": "Elk Icon",
+        "ELEVATION": 2088,
+        "X_COORD": 290799,
+        "Y_COORD": 3932463,
+        "LAT": 35.51374,
+        "LON": -83.30692,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "e3dc020d-d709-4fac-9da2-a7a82bc8bcca",
+        "_section": "E",
+        "_sta_ft": 3248.2,
+        "_sta": "32+48.21",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3068891999094,
+          35.5137356473573
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 272,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148466",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Cherokee Gatlinb",
+        "NOTES": "Cherokee Gatlinb",
+        "ELEVATION": 2090,
+        "X_COORD": 290796,
+        "Y_COORD": 3932444,
+        "LAT": 35.51357,
+        "LON": -83.307,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "d78a2a5c-516e-4735-b11e-99efa0b64b17",
+        "_section": "E",
+        "_sta_ft": 3313.5,
+        "_sta": "33+13.50",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069144459063,
+          35.5135578483193
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 450,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148470",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Divided Hwy Icon",
+        "NOTES": "Divided Hwy Icon",
+        "ELEVATION": 2094,
+        "X_COORD": 290791,
+        "Y_COORD": 3932410,
+        "LAT": 35.51325,
+        "LON": -83.30693,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "fc2cbf60-9999-4482-9410-b1ef8115eb11",
+        "_section": "E",
+        "_sta_ft": 3425.2,
+        "_sta": "34+25.22",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069618039023,
+          35.5132541072541
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 487,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148476",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2087,
+        "X_COORD": 290786,
+        "Y_COORD": 3932369,
+        "LAT": 35.51288,
+        "LON": -83.30697,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "50eeb668-5099-4826-8fb2-5473a1ef7206",
+        "_section": "E",
+        "_sta_ft": 3560.8,
+        "_sta": "35+60.79",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.307007468894,
+          35.5128843411754
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 271,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148479",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Cherokee Gatlinb",
+        "NOTES": "Cherokee Gatlinb",
+        "ELEVATION": 2086,
+        "X_COORD": 290782,
+        "Y_COORD": 3932338,
+        "LAT": 35.51262,
+        "LON": -83.30718,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "96cda5a5-a8ab-4947-89cc-6794169b1b81",
+        "_section": "E",
+        "_sta_ft": 3662.3,
+        "_sta": "36+62.26",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3070377968866,
+          35.5126073271165
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1111,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148482",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "One Way",
+        "NOTES": "One Way",
+        "ELEVATION": 2086,
+        "X_COORD": 290782,
+        "Y_COORD": 3932338,
+        "LAT": 35.51262,
+        "LON": -83.30718,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "c5d2f2f3-89e9-40f0-8010-5d6a03ef4fcd",
+        "_section": "E",
+        "_sta_ft": 3662.3,
+        "_sta": "36+62.26",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3070377968866,
+          35.5126073271165
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1109,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148486",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "One Way",
+        "NOTES": "One Way",
+        "ELEVATION": 2068,
+        "X_COORD": 290791,
+        "Y_COORD": 3932334,
+        "LAT": 35.51257,
+        "LON": -83.30693,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "71018348-f87e-4bd8-9bb0-d25b8328fdd4",
+        "_section": "E",
+        "_sta_ft": 3673.5,
+        "_sta": "36+73.47",
+        "_dist_from_alignment_ft": 31.6,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.306934169854,
+          35.5125703731129
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 485,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148492",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2067,
+        "X_COORD": 290790,
+        "Y_COORD": 3932323,
+        "LAT": 35.51247,
+        "LON": -83.30693,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "893e130e-260c-406a-8974-9353c7f26176",
+        "_section": "E",
+        "_sta_ft": 3709.8,
+        "_sta": "37+09.76",
+        "_dist_from_alignment_ft": 31.6,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069430358508,
+          35.5124711650918
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 957,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148484",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "No Feed Wildlife",
+        "NOTES": "No Feed Wildlife",
+        "ELEVATION": 2067,
+        "X_COORD": 290800,
+        "Y_COORD": 3932272,
+        "LAT": 35.51202,
+        "LON": -83.30683,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "0b3b8c25-665b-452b-b68b-5e8fab4c7276",
+        "_section": "E",
+        "_sta_ft": 3879.3,
+        "_sta": "38+79.26",
+        "_dist_from_alignment_ft": 74.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3068277007898,
+          35.512008369
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1509,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148497",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Speed 45 MPH",
+        "NOTES": "Speed 45 MPH",
+        "ELEVATION": 2087,
+        "X_COORD": 290787,
+        "Y_COORD": 3932267,
+        "LAT": 35.51197,
+        "LON": -83.30702,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "55c64eb4-46d5-43a7-a2d8-a475be617763",
+        "_section": "E",
+        "_sta_ft": 3894.9,
+        "_sta": "38+94.89",
+        "_dist_from_alignment_ft": 33.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069672948284,
+          35.5119683949862
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 452,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148495",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Divided Hwy Icon",
+        "NOTES": "NFG Road SD",
+        "ELEVATION": 2089,
+        "X_COORD": 290786,
+        "Y_COORD": 3932258,
+        "LAT": 35.51188,
+        "LON": -83.30697,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "d95a0cf3-4e4e-4d9d-a893-3dd18a606179",
+        "_section": "E",
+        "_sta_ft": 3927.1,
+        "_sta": "39+27.15",
+        "_dist_from_alignment_ft": 33.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.306969986824,
+          35.5118799999677
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 171,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148506",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Auto Tour Marker",
+        "NOTES": "Auto Tour Marker",
+        "ELEVATION": 2086,
+        "X_COORD": 290787,
+        "Y_COORD": 3932186,
+        "LAT": 35.51125,
+        "LON": -83.3068,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "e98ce615-33ac-410b-b15c-fb3875f57585",
+        "_section": "E",
+        "_sta_ft": 4166.7,
+        "_sta": "41+66.68",
+        "_dist_from_alignment_ft": 37.7,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069439027784,
+          35.5112348758343
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1074,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148502",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "OC Visitor Cente",
+        "NOTES": "OC Visitor Cente",
+        "ELEVATION": 2085,
+        "X_COORD": 290787,
+        "Y_COORD": 3932184,
+        "LAT": 35.51123,
+        "LON": -83.30685,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "80452e4f-5841-43c6-88ca-e94d81750cc8",
+        "_section": "E",
+        "_sta_ft": 4172.0,
+        "_sta": "41+72.02",
+        "_dist_from_alignment_ft": 37.7,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069423697771,
+          35.5112202918314
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 293,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148508",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Congested Area",
+        "NOTES": "Congested Area",
+        "ELEVATION": 2076,
+        "X_COORD": 290799,
+        "Y_COORD": 3932091,
+        "LAT": 35.5104,
+        "LON": -83.30673,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "cd29c20f-33af-40a7-8bd7-f0427e7641a7",
+        "_section": "E",
+        "_sta_ft": 4486.7,
+        "_sta": "44+86.65",
+        "_dist_from_alignment_ft": 42.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067863636822,
+          35.5103840296633
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1493,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148510",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Speed 35 MPH",
+        "NOTES": "Speed 35 MPH",
+        "ELEVATION": 2076,
+        "X_COORD": 290799,
+        "Y_COORD": 3932091,
+        "LAT": 35.5104,
+        "LON": -83.30673,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "596d4de0-ff6c-4683-921c-d9fd1c4d9353",
+        "_section": "E",
+        "_sta_ft": 4486.7,
+        "_sta": "44+86.65",
+        "_dist_from_alignment_ft": 42.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067863636822,
+          35.5103840296633
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 216,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "148512",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Blue Ridge PW",
+        "NOTES": "Blue Ridge PW",
+        "ELEVATION": 2062,
+        "X_COORD": 291011,
+        "Y_COORD": 3931687,
+        "LAT": 35.50665,
+        "LON": -83.30445,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "dbf23e3c-cb06-4557-980d-f4763a620ac4",
+        "_section": "E",
+        "_sta_ft": 6024.4,
+        "_sta": "60+24.36",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3043474397552,
+          35.5067880080101
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1898,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154609",
+        "FMSS_LOCATION": "55724",
+        "LABEL": " ",
+        "NOTES": "??",
+        "ELEVATION": 2034,
+        "X_COORD": 291058,
+        "Y_COORD": 3931669,
+        "LAT": 35.50668,
+        "LON": -83.3038,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "efa45f2b-15e0-4505-b274-162966611372",
+        "_section": "E",
+        "_sta_ft": 6182.4,
+        "_sta": "61+82.37",
+        "_dist_from_alignment_ft": 51.9,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3038268725935,
+          35.5066347569986
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 614,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "288229",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Elk Crossing",
+        "NOTES": "Elk Crossing",
+        "ELEVATION": 2041,
+        "X_COORD": 291101,
+        "Y_COORD": 3931639,
+        "LAT": 35.5064,
+        "LON": -83.30333,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "aa0e2a73-af26-480a-a06d-c800da460bbe",
+        "_section": "E",
+        "_sta_ft": 6358.4,
+        "_sta": "63+58.40",
+        "_dist_from_alignment_ft": 51.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3033455264367,
+          35.5063698789623
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 617,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "288228",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Elk Icon",
+        "NOTES": "Elk Icon",
+        "ELEVATION": 2041,
+        "X_COORD": 291101,
+        "Y_COORD": 3931639,
+        "LAT": 35.5064,
+        "LON": -83.30333,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "f4bb9a3f-ca39-4a67-8be7-6cb02fbe4e6b",
+        "_section": "E",
+        "_sta_ft": 6358.4,
+        "_sta": "63+58.40",
+        "_dist_from_alignment_ft": 51.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3033455264367,
+          35.5063698789623
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1505,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154613",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Speed 45 MPH",
+        "NOTES": "Speed 45 MPH",
+        "ELEVATION": 2047,
+        "X_COORD": 291126,
+        "Y_COORD": 3931623,
+        "LAT": 35.50623,
+        "LON": -83.30307,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "610cbeef-d7e1-4778-bf14-03f89f7c7f73",
+        "_section": "E",
+        "_sta_ft": 6455.5,
+        "_sta": "64+55.45",
+        "_dist_from_alignment_ft": 51.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3030695133476,
+          35.5062309729443
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1781,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154618",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Variable Msg",
+        "NOTES": "Variable Msg",
+        "ELEVATION": 2051,
+        "X_COORD": 291141,
+        "Y_COORD": 3931613,
+        "LAT": 35.50618,
+        "LON": -83.30288,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "456a5b6f-a380-4101-96d9-1cfb85784b34",
+        "_section": "E",
+        "_sta_ft": 6515.7,
+        "_sta": "65+15.67",
+        "_dist_from_alignment_ft": 51.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.302897422292,
+          35.5061448639331
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1883,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154630",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Yield Triangle",
+        "NOTES": "Yield Triangle",
+        "ELEVATION": 2035,
+        "X_COORD": 291266,
+        "Y_COORD": 3931534,
+        "LAT": 35.5055,
+        "LON": -83.30148,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "b980340c-377e-49af-9007-defc0d7cce9a",
+        "_section": "E",
+        "_sta_ft": 7000.1,
+        "_sta": "70+00.12",
+        "_dist_from_alignment_ft": 51.3,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3014977468413,
+          35.5054638998462
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 488,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154627",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2034,
+        "X_COORD": 291276,
+        "Y_COORD": 3931510,
+        "LAT": 35.50528,
+        "LON": -83.30137,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "ac329aa5-0c8e-42a3-a68b-6ed71cabd081",
+        "_section": "E",
+        "_sta_ft": 7069.7,
+        "_sta": "70+69.67",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3013865547959,
+          35.505245063805
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1110,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154649",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "One Way",
+        "NOTES": "One Way",
+        "ELEVATION": 2040,
+        "X_COORD": 291288,
+        "Y_COORD": 3931502,
+        "LAT": 35.50508,
+        "LON": -83.3013,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "316b7043-4f72-440a-9e9f-602555c5562f",
+        "_section": "E",
+        "_sta_ft": 7115.9,
+        "_sta": "71+15.91",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3012519967527,
+          35.505181301797
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 758,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154643",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Info 441 Cheroke",
+        "NOTES": "Info 441 Cheroke",
+        "ELEVATION": 2040,
+        "X_COORD": 291289,
+        "Y_COORD": 3931501,
+        "LAT": 35.5051,
+        "LON": -83.30127,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "59041f14-c5c4-4665-8cfe-a2eb8b9add0c",
+        "_section": "E",
+        "_sta_ft": 7121.7,
+        "_sta": "71+21.67",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3012352367473,
+          35.505173360796
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1591,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154632",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Stop",
+        "NOTES": "Stop",
+        "ELEVATION": 2028,
+        "X_COORD": 291298,
+        "Y_COORD": 3931514,
+        "LAT": 35.50538,
+        "LON": -83.3011,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "0c6cdfbb-13e8-4ec5-9a89-69c8238da123",
+        "_section": "E",
+        "_sta_ft": 7123.9,
+        "_sta": "71+23.91",
+        "_dist_from_alignment_ft": 51.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3011418987268,
+          35.5052916868243
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 484,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154640",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2048,
+        "X_COORD": 291305,
+        "Y_COORD": 3931492,
+        "LAT": 35.50515,
+        "LON": -83.30103,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "6faad512-853d-4dd7-bbf2-22d5d6c6306d",
+        "_section": "E",
+        "_sta_ft": 7182.4,
+        "_sta": "71+82.37",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3010586016905,
+          35.5050896487855
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 483,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154636",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2036,
+        "X_COORD": 291314,
+        "Y_COORD": 3931505,
+        "LAT": 35.5055,
+        "LON": -83.30083,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "ee1430c9-b7e6-4fa9-b66b-d36e8539a6fa",
+        "_section": "E",
+        "_sta_ft": 7183.7,
+        "_sta": "71+83.75",
+        "_dist_from_alignment_ft": 51.2,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3009677256709,
+          35.505209203814
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 829,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154653",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Lane Ends Mrg",
+        "NOTES": "Lane Ends Mrg",
+        "ELEVATION": 2047,
+        "X_COORD": 291362,
+        "Y_COORD": 3931451,
+        "LAT": 35.50465,
+        "LON": -83.30047,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "f0d015d4-42ba-4175-a43f-c4e6f7de7074",
+        "_section": "E",
+        "_sta_ft": 7412.9,
+        "_sta": "74+12.94",
+        "_dist_from_alignment_ft": 0.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3004177404816,
+          35.5047337057366
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 721,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154659",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "GRSM/ BLRI",
+        "NOTES": "GRSM/ BLRI",
+        "ELEVATION": 2037,
+        "X_COORD": 291400,
+        "Y_COORD": 3931435,
+        "LAT": 35.50462,
+        "LON": -83.29998,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "450bf0ed-d573-41ac-b899-225701d790b7",
+        "_section": "E",
+        "_sta_ft": 7536.0,
+        "_sta": "75+36.04",
+        "_dist_from_alignment_ft": 47.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2999965133501,
+          35.5046001957253
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 828,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154662",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Lane Ends Icon",
+        "NOTES": "Lane Ends Icon",
+        "ELEVATION": 2047,
+        "X_COORD": 291416,
+        "Y_COORD": 3931393,
+        "LAT": 35.50412,
+        "LON": -83.29992,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "18918dc3-2f93-40de-a935-ba9e3db51abf",
+        "_section": "E",
+        "_sta_ft": 7673.7,
+        "_sta": "76+73.69",
+        "_dist_from_alignment_ft": 0.2,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.299809205273,
+          35.5042213406537
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 254,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154663",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Camping Regs",
+        "NOTES": "Camping Regs",
+        "ELEVATION": 2046,
+        "X_COORD": 291453,
+        "Y_COORD": 3931356,
+        "LAT": 35.50393,
+        "LON": -83.29933,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "8c31badc-8562-430a-bb82-49238f789f4e",
+        "_section": "E",
+        "_sta_ft": 7838.3,
+        "_sta": "78+38.35",
+        "_dist_from_alignment_ft": 39.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2993924241314,
+          35.5038934406018
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 451,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154666",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Divided Hwy Icon",
+        "NOTES": "Divided Hwy Icon",
+        "ELEVATION": 2038,
+        "X_COORD": 291456,
+        "Y_COORD": 3931322,
+        "LAT": 35.50355,
+        "LON": -83.29943,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "09cea1a6-1023-4a32-9512-0d637f7d3c35",
+        "_section": "E",
+        "_sta_ft": 7940.5,
+        "_sta": "79+40.49",
+        "_dist_from_alignment_ft": 0.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.299356257103,
+          35.5035916695403
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 1818,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154673",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Wrong Way",
+        "NOTES": "Wrong Way",
+        "ELEVATION": 2038,
+        "X_COORD": 291456,
+        "Y_COORD": 3931322,
+        "LAT": 35.50355,
+        "LON": -83.29943,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "455b459b-021c-4f98-adbb-806dc55a0407",
+        "_section": "E",
+        "_sta_ft": 7940.5,
+        "_sta": "79+40.49",
+        "_dist_from_alignment_ft": 0.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.299356257103,
+          35.5035916695403
         ]
       }
     },
@@ -176,9 +1584,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "ecb56b00-882e-41e5-8fe0-aff02806ee55",
         "_section": "C",
-        "_sta_ft": 0.0,
-        "_sta": "0+00.00",
-        "_dist_from_alignment_ft": 283.0,
+        "_sta_ft": 7990.8,
+        "_sta": "79+90.77",
+        "_dist_from_alignment_ft": 0.1,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -304,6 +1712,43 @@
     {
       "type": "Feature",
       "properties": {
+        "OBJECTID": 486,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154674",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Do Not Enter",
+        "NOTES": "Do Not Enter",
+        "ELEVATION": 2037,
+        "X_COORD": 291461,
+        "Y_COORD": 3931308,
+        "LAT": 35.50347,
+        "LON": -83.29928,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "ecb56b00-882e-41e5-8fe0-aff02806ee55",
+        "_section": "E",
+        "_sta_ft": 7990.8,
+        "_sta": "79+90.77",
+        "_dist_from_alignment_ft": 0.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2992904540763,
+          35.5034647015165
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "OBJECTID": 802,
         "ROAD": "Newfound Gap Road, SD    RT 0010B",
         "FMSS_ASSET": "154676",
@@ -322,9 +1767,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "9f40381e-cc41-4c84-8c53-e96a72f18909",
         "_section": "C",
-        "_sta_ft": 0.0,
-        "_sta": "0+00.00",
-        "_dist_from_alignment_ft": 262.8,
+        "_sta_ft": 8015.1,
+        "_sta": "80+15.09",
+        "_dist_from_alignment_ft": 27.9,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -450,6 +1895,226 @@
     {
       "type": "Feature",
       "properties": {
+        "OBJECTID": 802,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154676",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Keep Right",
+        "NOTES": "Keep Right",
+        "ELEVATION": 2036,
+        "X_COORD": 291472,
+        "Y_COORD": 3931304,
+        "LAT": 35.50342,
+        "LON": -83.2992,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "9f40381e-cc41-4c84-8c53-e96a72f18909",
+        "_section": "E",
+        "_sta_ft": 8015.1,
+        "_sta": "80+15.09",
+        "_dist_from_alignment_ft": 27.9,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2991723340395,
+          35.5034295415137
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 215,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154677",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Blue Ridge PW",
+        "NOTES": "Blue Ridge PW",
+        "ELEVATION": 2039,
+        "X_COORD": 291478,
+        "Y_COORD": 3931275,
+        "LAT": 35.50318,
+        "LON": -83.29907,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "fa5b51e2-2d98-41c1-9b6b-0a01b5899505",
+        "_section": "C",
+        "_sta_ft": 8109.2,
+        "_sta": "81+09.21",
+        "_dist_from_alignment_ft": 20.4,
+        "_reported_in": [
+          "NPS-GIS",
+          "RIP-C5",
+          "RIP-C6"
+        ],
+        "_report_cross_refs": {
+          "RIP-C5": {
+            "pages_by_route": {
+              "0010S": [
+                8,
+                9,
+                10,
+                11,
+                13,
+                15,
+                17,
+                25,
+                26,
+                27,
+                51,
+                52,
+                57,
+                63,
+                87,
+                117,
+                118,
+                119,
+                120,
+                143,
+                144,
+                145,
+                146,
+                164,
+                165,
+                166,
+                167,
+                255,
+                260,
+                261,
+                262,
+                263,
+                264,
+                265,
+                266,
+                267,
+                268,
+                313
+              ]
+            }
+          },
+          "RIP-C6": {
+            "pages_by_route": {
+              "0010S": [
+                8,
+                9,
+                11,
+                13,
+                14,
+                17,
+                28,
+                29,
+                30,
+                50,
+                55,
+                56,
+                63,
+                71,
+                72,
+                89,
+                124,
+                125,
+                126,
+                127,
+                147,
+                148,
+                149,
+                150,
+                355,
+                356,
+                357,
+                358,
+                359,
+                360,
+                361,
+                362,
+                363,
+                364,
+                365,
+                366,
+                367,
+                368,
+                369,
+                370,
+                371,
+                372,
+                374,
+                375,
+                376,
+                546,
+                644,
+                662,
+                663,
+                664,
+                674,
+                685,
+                686,
+                691,
+                692,
+                703
+              ]
+            }
+          }
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2990934300014,
+          35.5031743874637
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 215,
+        "ROAD": "Newfound Gap Road, SD    RT 0010B",
+        "FMSS_ASSET": "154677",
+        "FMSS_LOCATION": "55724",
+        "LABEL": "Blue Ridge PW",
+        "NOTES": "Blue Ridge PW",
+        "ELEVATION": 2039,
+        "X_COORD": 291478,
+        "Y_COORD": 3931275,
+        "LAT": 35.50318,
+        "LON": -83.29907,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Feature Extraction",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=5m and <14m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "fa5b51e2-2d98-41c1-9b6b-0a01b5899505",
+        "_section": "E",
+        "_sta_ft": 8109.2,
+        "_sta": "81+09.21",
+        "_dist_from_alignment_ft": 20.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.2990934300014,
+          35.5031743874637
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "OBJECTID": 692,
         "ROAD": "Newfound Gap Road, SD    RT 0010B",
         "FMSS_ASSET": "154682",
@@ -468,8 +2133,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "962c664f-b702-48e7-8a96-601213f50d16",
         "_section": "C",
-        "_sta_ft": 446.0,
-        "_sta": "4+46.04",
+        "_sta_ft": 8720.1,
+        "_sta": "87+20.10",
         "_dist_from_alignment_ft": 2.7,
         "_reported_in": [
           "NPS-GIS",
@@ -614,8 +2279,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "b19e96fa-db29-4552-9625-f15a961a0d3b",
         "_section": "C",
-        "_sta_ft": 446.0,
-        "_sta": "4+46.04",
+        "_sta_ft": 8720.1,
+        "_sta": "87+20.10",
         "_dist_from_alignment_ft": 2.7,
         "_reported_in": [
           "NPS-GIS",
@@ -760,9 +2425,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "32eb736a-ca31-442d-b2cd-524bccf7972f",
         "_section": "C",
-        "_sta_ft": 642.3,
-        "_sta": "6+42.30",
-        "_dist_from_alignment_ft": 3.1,
+        "_sta_ft": 8916.4,
+        "_sta": "89+16.36",
+        "_dist_from_alignment_ft": 3.0,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -906,9 +2571,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "d22279f5-ec28-468d-bd2a-581c9ce78a12",
         "_section": "C",
-        "_sta_ft": 642.3,
-        "_sta": "6+42.30",
-        "_dist_from_alignment_ft": 3.1,
+        "_sta_ft": 8916.4,
+        "_sta": "89+16.36",
+        "_dist_from_alignment_ft": 3.0,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -1052,8 +2717,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "6d0541df-e252-40c0-8bea-1460d726f522",
         "_section": "C",
-        "_sta_ft": 1371.4,
-        "_sta": "13+71.42",
+        "_sta_ft": 9645.5,
+        "_sta": "96+45.48",
         "_dist_from_alignment_ft": 2.9,
         "_reported_in": [
           "NPS-GIS",
@@ -1198,8 +2863,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "9d26188d-ef16-489f-9ad3-e6de51d69a2b",
         "_section": "C",
-        "_sta_ft": 1385.9,
-        "_sta": "13+85.94",
+        "_sta_ft": 9660.0,
+        "_sta": "96+60.00",
         "_dist_from_alignment_ft": 2.8,
         "_reported_in": [
           "NPS-GIS",
@@ -1344,8 +3009,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "93fe41c3-eea9-47a8-b7be-063d8430d2e0",
         "_section": "C",
-        "_sta_ft": 1589.3,
-        "_sta": "15+89.30",
+        "_sta_ft": 9863.4,
+        "_sta": "98+63.35",
         "_dist_from_alignment_ft": 2.5,
         "_reported_in": [
           "NPS-GIS",
@@ -1490,9 +3155,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "75d32ba2-a892-423b-92fc-e44e595ea6a2",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -1636,9 +3301,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "1fe1d9ff-5103-42e6-b343-41c8a2a19e0d",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -1782,9 +3447,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "7991087d-e9aa-4e07-ad0f-62d5f6f89013",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -1928,9 +3593,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "bc565ba2-7c8f-4b6f-9421-66a59f92e7d3",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2074,9 +3739,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "331b6548-ad54-4852-b425-2005e71dc9e9",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2220,9 +3885,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "5ef14ba3-5059-4ea2-b326-e785ce5fb883",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2366,9 +4031,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "b0e57587-7a07-4315-8838-4b1caa22ceb5",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2512,9 +4177,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "6b41b62f-7d9a-4f00-af4c-89e86f123dde",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2658,9 +4323,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "2d78b99a-34b7-41e2-aa63-a4118b421dd8",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2804,9 +4469,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "9c6e4393-c95f-468e-b17d-7ac356fc4dfe",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -2950,9 +4615,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "bb7913cc-0957-43d6-bae0-d936995a68df",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3096,9 +4761,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "d589a99d-baa3-4a48-ae91-d9562ee0ec48",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3242,9 +4907,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "94c4288f-552f-452e-bef7-9d14b16f26b9",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3388,9 +5053,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "7a9cfa4f-0b55-4247-99ca-1316ea3bdca9",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3534,9 +5199,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "98141295-6ebd-463f-bd09-580131fc2358",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3680,9 +5345,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "ed0c5137-f4cd-445e-9de2-e939e8675f08",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3826,9 +5491,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "0ff1e366-2e2f-4138-8d9b-24d940270cd6",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -3972,9 +5637,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "fc88e708-dcbc-4cc4-addc-4e7e9fb27bb0",
         "_section": "C",
-        "_sta_ft": 1639.8,
-        "_sta": "16+39.82",
-        "_dist_from_alignment_ft": 234.1,
+        "_sta_ft": 9913.9,
+        "_sta": "99+13.88",
+        "_dist_from_alignment_ft": 233.6,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4118,9 +5783,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "d2cfe0ff-e029-4ad9-b98e-c4c62ee9e8df",
         "_section": "C",
-        "_sta_ft": 1666.8,
-        "_sta": "16+66.81",
-        "_dist_from_alignment_ft": 227.8,
+        "_sta_ft": 9940.9,
+        "_sta": "99+40.87",
+        "_dist_from_alignment_ft": 227.3,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4264,9 +5929,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "147aa6ab-56d9-4f6a-9c7f-a8c10438c701",
         "_section": "C",
-        "_sta_ft": 1666.8,
-        "_sta": "16+66.81",
-        "_dist_from_alignment_ft": 227.8,
+        "_sta_ft": 9940.9,
+        "_sta": "99+40.87",
+        "_dist_from_alignment_ft": 227.3,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4410,9 +6075,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "bef71deb-2c71-42fe-b0f7-10a993bf11ca",
         "_section": "C",
-        "_sta_ft": 1666.8,
-        "_sta": "16+66.81",
-        "_dist_from_alignment_ft": 227.8,
+        "_sta_ft": 9940.9,
+        "_sta": "99+40.87",
+        "_dist_from_alignment_ft": 227.3,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4556,9 +6221,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "7a4c7f4a-63db-4c9f-98f8-fb96fc66ffa2",
         "_section": "C",
-        "_sta_ft": 1666.8,
-        "_sta": "16+66.81",
-        "_dist_from_alignment_ft": 227.8,
+        "_sta_ft": 9940.9,
+        "_sta": "99+40.87",
+        "_dist_from_alignment_ft": 227.3,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4702,9 +6367,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "bf588757-0ead-46ee-a1da-702f8c2d9edd",
         "_section": "C",
-        "_sta_ft": 1781.5,
-        "_sta": "17+81.47",
-        "_dist_from_alignment_ft": 58.1,
+        "_sta_ft": 10055.5,
+        "_sta": "100+55.53",
+        "_dist_from_alignment_ft": 57.9,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -4848,8 +6513,8 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "6711e99c-acc7-41ec-bb12-f09ced0b380a",
         "_section": "C",
-        "_sta_ft": 1789.6,
-        "_sta": "17+89.64",
+        "_sta_ft": 10063.7,
+        "_sta": "100+63.70",
         "_dist_from_alignment_ft": 23.4,
         "_reported_in": [
           "NPS-GIS",
@@ -4994,9 +6659,9 @@
         "VALID_RESULT": "Raw",
         "GlobalID": "7e71eabd-f4cd-46d5-b5cd-c4da3f9116b0",
         "_section": "C",
-        "_sta_ft": 2048.5,
-        "_sta": "20+48.54",
-        "_dist_from_alignment_ft": 2.1,
+        "_sta_ft": 10324.6,
+        "_sta": "103+24.61",
+        "_dist_from_alignment_ft": 0.7,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",

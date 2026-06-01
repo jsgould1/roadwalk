@@ -8,5 +8,50 @@
     "tolerance_ft": 300.0,
     "source": "NPS GRSM ArcGIS Hub opendata"
   },
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 172,
+        "LOC_NAME": null,
+        "KEY_": null,
+        "CLOSURE": null,
+        "NOTES": null,
+        "FMSS_LOC": null,
+        "FMSS_ASSET": null,
+        "ROAD": "Newfound Gap Road South",
+        "TRAIL": "Oconaluftee River Trail",
+        "ELEVATION": 2023,
+        "X_COORD": 291336,
+        "Y_COORD": 3931563,
+        "LON": -83.30073222,
+        "LAT": 35.50573358,
+        "DMSLAT": "35 30 20.66553696N",
+        "DMSLON": "083 18 02.65033668W",
+        "DDMLAT": "35 30.34442562N",
+        "DDMLON": "083 18.04417228W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": null,
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Certified",
+        "GlobalID": "cdfa3d76-69fb-46a4-939e-98f590f25f52",
+        "_section": "E",
+        "_sta_ft": 7145.6,
+        "_sta": "71+45.62",
+        "_dist_from_alignment_ft": 252.8,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3007362006342,
+          35.5057404299337
+        ]
+      }
+    }
+  ]
 }

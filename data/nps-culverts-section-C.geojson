@@ -8,9 +8,490 @@
     "count": 1,
     "geometry_note": "Culverts rendered as perpendicular LineStrings synthesized from GIS points + road tangent.",
     "perpendicular_length_ft": 40.0,
-    "endpoint_role_assignment": "unassigned — field walk determines inlet vs outlet"
+    "endpoint_role_assignment": "unassigned \u2014 field walk determines inlet vs outlet"
   },
   "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 793,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162377",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2098,
+        "X_COORD": 290825,
+        "Y_COORD": 3932896,
+        "LON": -83.3067064,
+        "LAT": 35.5176357,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "2d99580f-1e35-41ae-ae57-97858cf730ae",
+        "_section": "E",
+        "_sta_ft": 1821.5,
+        "_sta": "18+21.51",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067103860866,
+          35.5176425481779
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 796,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162381",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2230,
+        "X_COORD": 290814,
+        "Y_COORD": 3932703,
+        "LON": -83.306771,
+        "LAT": 35.5158929,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "955f3982-c8af-4392-9ecc-177194cd6dee",
+        "_section": "E",
+        "_sta_ft": 2457.7,
+        "_sta": "24+57.74",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3067749860031,
+          35.5158997498124
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 799,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162382",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2107,
+        "X_COORD": 290793,
+        "Y_COORD": 3932428,
+        "LON": -83.3069314,
+        "LAT": 35.5134106,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "3c70c663-6423-4b2d-b093-619b03234af7",
+        "_section": "E",
+        "_sta_ft": 3365.1,
+        "_sta": "33+65.10",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069353859042,
+          35.5134174502892
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 797,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162389",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2230,
+        "X_COORD": 290789,
+        "Y_COORD": 3932302,
+        "LON": -83.3069517,
+        "LAT": 35.5122748,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "8aa65925-eaa8-4210-aa8f-f7bbae6a4665",
+        "_section": "E",
+        "_sta_ft": 3779.0,
+        "_sta": "37+78.99",
+        "_dist_from_alignment_ft": 32.8,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3069556888433,
+          35.5122816500518
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 801,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162386",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2379,
+        "X_COORD": 290779,
+        "Y_COORD": 3932302,
+        "LON": -83.3070634,
+        "LAT": 35.5122685,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "79d8e76c-798d-49cb-8d9c-c5bd8e39a391",
+        "_section": "E",
+        "_sta_ft": 3783.7,
+        "_sta": "37+83.68",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3070673878758,
+          35.5122753470462
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 800,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162395",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2097,
+        "X_COORD": 290777,
+        "Y_COORD": 3932163,
+        "LON": -83.3070454,
+        "LAT": 35.5110153,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "35d7c159-477a-4383-b38d-90c7ccf55f79",
+        "_section": "E",
+        "_sta_ft": 4241.3,
+        "_sta": "42+41.34",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3070493867968,
+          35.5110221477859
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 790,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162403",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2076,
+        "X_COORD": 290847,
+        "Y_COORD": 3931906,
+        "LON": -83.3062055,
+        "LAT": 35.5087174,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "b51946d2-1a57-442c-9071-26b50c9d77cd",
+        "_section": "E",
+        "_sta_ft": 5121.7,
+        "_sta": "51+21.68",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3062094864154,
+          35.5087242463402
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 789,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162406",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2107,
+        "X_COORD": 290862,
+        "Y_COORD": 3931910,
+        "LON": -83.3060447,
+        "LAT": 35.5087569,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "b59c6a63-3e51-42e5-80bf-0b6f92886bb5",
+        "_section": "E",
+        "_sta_ft": 5131.5,
+        "_sta": "51+31.49",
+        "_dist_from_alignment_ft": 48.9,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3060486873705,
+          35.5087637453548
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 785,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162411",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2362,
+        "X_COORD": 290912,
+        "Y_COORD": 3931797,
+        "LON": -83.3054585,
+        "LAT": 35.5077502,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "3c2f9425-d023-4cfd-b496-26f62a898ec7",
+        "_section": "E",
+        "_sta_ft": 5539.1,
+        "_sta": "55+39.14",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3054624871394,
+          35.5077570451681
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 783,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162412",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2058,
+        "X_COORD": 290925,
+        "Y_COORD": 3931806,
+        "LON": -83.3053174,
+        "LAT": 35.5078313,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "b773c0b7-8230-4f94-ae62-b59fa90f61c5",
+        "_section": "E",
+        "_sta_ft": 5541.1,
+        "_sta": "55+41.10",
+        "_dist_from_alignment_ft": 51.2,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3053213841027,
+          35.5078381491906
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 778,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162417",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2186,
+        "X_COORD": 291004,
+        "Y_COORD": 3931716,
+        "LON": -83.304431,
+        "LAT": 35.5070402,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "e222cd67-62a3-42bf-be54-06ad3216d4ae",
+        "_section": "E",
+        "_sta_ft": 5941.4,
+        "_sta": "59+41.44",
+        "_dist_from_alignment_ft": 52.1,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3044349847962,
+          35.5070470460606
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 779,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162415",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2186,
+        "X_COORD": 290993,
+        "Y_COORD": 3931704,
+        "LON": -83.3045465,
+        "LAT": 35.5069321,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "f838dbee-16f2-4ec5-832a-309468544318",
+        "_section": "E",
+        "_sta_ft": 5942.7,
+        "_sta": "59+42.70",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3045504868237,
+          35.5069389450336
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 756,
+        "LOC_NAME": "Newfound Gap Road, SD    RT 0010B",
+        "CULVERTMATERIAL": "Reforced Concret",
+        "FMSS_LOC": "55724",
+        "FMSS_ASSET": "162420",
+        "FMSS_CULVERT_TYPE": "Cross Drainage",
+        "ROAD": "Newfound Gap Road South",
+        "NOTES": null,
+        "ELEVATION": 2037,
+        "X_COORD": 291294,
+        "Y_COORD": 3931517,
+        "LON": -83.3011769,
+        "LAT": 35.5053034,
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "XYACCURACY": "Unknown",
+        "GlobalID": "172ebd13-de1a-4a03-98a3-9c6df54688a0",
+        "_section": "E",
+        "_sta_ft": 7110.5,
+        "_sta": "71+10.50",
+        "_dist_from_alignment_ft": 51.2,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3011808827393,
+          35.5053102478267
+        ]
+      }
+    },
     {
       "type": "Feature",
       "properties": {
@@ -155,7 +636,10 @@
           "role": "unassigned (inlet or outlet)",
           "headwall": null,
           "flange_end_section": null
-        }
+        },
+        "_sta_ft": 10038.8,
+        "_sta": "100+38.81",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",

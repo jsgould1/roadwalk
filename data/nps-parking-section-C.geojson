@@ -12,6 +12,241 @@
     {
       "type": "Feature",
       "properties": {
+        "OBJECTID": 228,
+        "LOC_NAME": "Oconaluftee River Pullout Parking #14",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": 8,
+        "PRKSPACE_OBS": 8,
+        "AREA_FMSS": 3710,
+        "FMSS_LOC": "60530",
+        "NOTES": null,
+        "ROAD": "Oconaluftee River Pullout Parking #14",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2100,
+        "X_COORD": 290825,
+        "Y_COORD": 3932795,
+        "LON": -83.30668163,
+        "LAT": 35.51672335,
+        "DMSLAT": "35\u00b0 31' 0.2\" N",
+        "DMSLON": "083\u00b0 18' 24.05\" W",
+        "DDMLAT": "35\u00b0 31.003' N",
+        "DDMLON": "083\u00b0 18.401' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Digitized",
+        "SOURCEDATE": "2022-03-16T19:27:44Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Certified",
+        "GlobalID": "373efdad-0369-4eab-9c12-968b5b466299",
+        "_section": "E",
+        "_sta_ft": 2153.8,
+        "_sta": "21+53.83",
+        "_dist_from_alignment_ft": 14.7,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3066856160257,
+          35.5167302019889
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 573,
+        "LOC_NAME": "South District Maintenance Parking A",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": null,
+        "PRKSPACE_OBS": 14,
+        "AREA_FMSS": null,
+        "FMSS_LOC": null,
+        "NOTES": "South District Maintenance Parking A. Visitors might park here.",
+        "ROAD": "Oconaluftee Maintenance Area",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2121,
+        "X_COORD": 290888,
+        "Y_COORD": 3932676,
+        "LON": -83.3059505,
+        "LAT": 35.51566541,
+        "DMSLAT": "35\u00b0 30' 56.4\" N",
+        "DMSLON": "083\u00b0 18' 21.42\" W",
+        "DDMLAT": "35\u00b0 30.94' N",
+        "DDMLON": "083\u00b0 18.357' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": "2022-03-16T19:09:16Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": null,
+        "GlobalID": "04ec913e-e46d-4c96-b0f7-efe05bfd982d",
+        "_section": "E",
+        "_sta_ft": 2535.2,
+        "_sta": "25+35.22",
+        "_dist_from_alignment_ft": 245.6,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3059544897489,
+          35.5156722577973
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 567,
+        "LOC_NAME": "Old Ocanaluftee Visitor Center Parking",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": null,
+        "PRKSPACE_OBS": 18,
+        "AREA_FMSS": null,
+        "FMSS_LOC": null,
+        "NOTES": "18 spots; 8 of these are for oversized vehicles, and 1 for of these is for electric vehicle charging ",
+        "ROAD": "Oconaluftee Visitor Center Parking A",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 1920,
+        "X_COORD": 290825,
+        "Y_COORD": 3932535,
+        "LON": -83.30660911,
+        "LAT": 35.51438269,
+        "DMSLAT": "35\u00b0 30' 51.78\" N",
+        "DMSLON": "083\u00b0 18' 23.79\" W",
+        "DDMLAT": "35\u00b0 30.863' N",
+        "DDMLON": "083\u00b0 18.397' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": "2022-03-16T18:56:34Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": null,
+        "GlobalID": "cf9f7c59-3df5-4815-8ad2-fb23f742bb8b",
+        "_section": "E",
+        "_sta_ft": 3006.0,
+        "_sta": "30+05.99",
+        "_dist_from_alignment_ft": 64.4,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3066130968668,
+          35.5143895355044
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 230,
+        "LOC_NAME": "Oconaluftee Visitor Center EMile Postloyee Parking",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": null,
+        "PRKSPACE_OBS": null,
+        "AREA_FMSS": 5526,
+        "FMSS_LOC": "103444",
+        "NOTES": "Half of parking lot is gravel. Official Employee Parking. Can fit at least 10 cars",
+        "ROAD": "Oconaluftee Visitor Center Employee Parking",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2058,
+        "X_COORD": 290863,
+        "Y_COORD": 3932469,
+        "LON": -83.30618028,
+        "LAT": 35.5137905,
+        "DMSLAT": "35\u00b0 30' 49.65\" N",
+        "DMSLON": "083\u00b0 18' 22.25\" W",
+        "DDMLAT": "35\u00b0 30.827' N",
+        "DDMLON": "083\u00b0 18.371' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Digitized",
+        "SOURCEDATE": "2022-03-16T18:58:53Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Certified",
+        "GlobalID": "3216caec-4645-4294-ac0e-ba4c6ccfc43d",
+        "_section": "E",
+        "_sta_ft": 3205.1,
+        "_sta": "32+05.10",
+        "_dist_from_alignment_ft": 205.3,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3061842647061,
+          35.5137973503979
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 231,
+        "LOC_NAME": "Oconaluftee Visitor Center Parking C",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": null,
+        "PRKSPACE_OBS": 81,
+        "AREA_FMSS": 32501,
+        "FMSS_LOC": "103446",
+        "NOTES": "Main Visitor Center Parking. 4 Handicap spots",
+        "ROAD": "Oconaluftee Visitor Center Parking C",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2046,
+        "X_COORD": 290842,
+        "Y_COORD": 3932400,
+        "LON": -83.3063894,
+        "LAT": 35.5131693,
+        "DMSLAT": "35\u00b0 30' 47.41\" N",
+        "DMSLON": "083\u00b0 18' 23.0\" W",
+        "DDMLAT": "35\u00b0 30.79' N",
+        "DDMLON": "083\u00b0 18.383' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Digitized",
+        "SOURCEDATE": "2022-03-16T18:45:45Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Certified",
+        "GlobalID": "f1da4239-6fb9-4d03-836d-947c0f5f46ab",
+        "_section": "E",
+        "_sta_ft": 3435.9,
+        "_sta": "34+35.86",
+        "_dist_from_alignment_ft": 170.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3063933867309,
+          35.5131761432603
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "OBJECTID": 570,
         "LOC_NAME": "Blue Ridge Parkway Pull-off Sign",
         "TYPE": null,
@@ -29,10 +264,10 @@
         "Y_COORD": 3931242,
         "LON": -83.29897676,
         "LAT": 35.50287204,
-        "DMSLAT": "35° 30' 10.34\" N",
-        "DMSLON": "083° 17' 56.32\" W",
-        "DDMLAT": "35° 30.172' N",
-        "DDMLON": "083° 17.939' W",
+        "DMSLAT": "35\u00b0 30' 10.34\" N",
+        "DMSLON": "083\u00b0 17' 56.32\" W",
+        "DDMLAT": "35\u00b0 30.172' N",
+        "DDMLON": "083\u00b0 17.939' W",
         "DATAACCESS": "Unrestricted",
         "MAPMETHOD": "Unknown",
         "SOURCEDATE": "2022-03-16T18:41:47Z",
@@ -40,9 +275,9 @@
         "VALID_RESULT": null,
         "GlobalID": "0eca50b8-866f-45f2-ab92-a0a5e3ea7c77",
         "_section": "C",
-        "_sta_ft": 0.0,
-        "_sta": "0+00.00",
-        "_dist_from_alignment_ft": 60.4,
+        "_sta_ft": 8219.6,
+        "_sta": "82+19.60",
+        "_dist_from_alignment_ft": 26.5,
         "_reported_in": [
           "NPS-GIS",
           "RIP-C5",
@@ -168,6 +403,53 @@
     {
       "type": "Feature",
       "properties": {
+        "OBJECTID": 570,
+        "LOC_NAME": "Blue Ridge Parkway Pull-off Sign",
+        "TYPE": null,
+        "SURFACE": "Asphalt",
+        "ESTIMATE_SPOTS": null,
+        "PRKSPACE_FMSS": null,
+        "PRKSPACE_OBS": null,
+        "AREA_FMSS": null,
+        "FMSS_LOC": null,
+        "NOTES": "Wide pull off area before Luftee",
+        "ROAD": "South Entrance Turnaround",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2044,
+        "X_COORD": 291488,
+        "Y_COORD": 3931242,
+        "LON": -83.29897676,
+        "LAT": 35.50287204,
+        "DMSLAT": "35\u00b0 30' 10.34\" N",
+        "DMSLON": "083\u00b0 17' 56.32\" W",
+        "DDMLAT": "35\u00b0 30.172' N",
+        "DDMLON": "083\u00b0 17.939' W",
+        "DATAACCESS": "Unrestricted",
+        "MAPMETHOD": "Unknown",
+        "SOURCEDATE": "2022-03-16T18:41:47Z",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": null,
+        "GlobalID": "0eca50b8-866f-45f2-ab92-a0a5e3ea7c77",
+        "_section": "E",
+        "_sta_ft": 8219.6,
+        "_sta": "82+19.60",
+        "_dist_from_alignment_ft": 26.5,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.298980740951,
+          35.5028788904066
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "OBJECTID": 232,
         "LOC_NAME": "South Entrance (cherokee) Sign Pullout Parking",
         "TYPE": null,
@@ -185,10 +467,10 @@
         "Y_COORD": 3930922,
         "LON": -83.30060623,
         "LAT": 35.49995809,
-        "DMSLAT": "35° 29' 59.85\" N",
-        "DMSLON": "083° 18' 2.18\" W",
-        "DDMLAT": "35° 29.997' N",
-        "DDMLON": "083° 18.036' W",
+        "DMSLAT": "35\u00b0 29' 59.85\" N",
+        "DMSLON": "083\u00b0 18' 2.18\" W",
+        "DDMLAT": "35\u00b0 29.997' N",
+        "DDMLON": "083\u00b0 18.036' W",
         "DATAACCESS": "Unrestricted",
         "MAPMETHOD": "Digitized",
         "SOURCEDATE": "2022-03-16T18:38:20Z",
@@ -196,8 +478,8 @@
         "VALID_RESULT": "Certified",
         "GlobalID": "2e9085dc-29be-49bf-99c1-4c648ca081b9",
         "_section": "C",
-        "_sta_ft": 1157.1,
-        "_sta": "11+57.13",
+        "_sta_ft": 9431.2,
+        "_sta": "94+31.19",
         "_dist_from_alignment_ft": 13.5,
         "_reported_in": [
           "NPS-GIS",

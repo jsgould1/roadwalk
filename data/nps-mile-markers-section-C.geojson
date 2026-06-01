@@ -8,5 +8,50 @@
     "tolerance_ft": 300.0,
     "source": "NPS GRSM ArcGIS Hub opendata"
   },
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "OBJECTID": 267,
+        "LOC_NAME": null,
+        "MILE_LABEL": "31",
+        "TYPE": "Road Mile Marker",
+        "NOTES": null,
+        "ROAD": "Newfound Gap Road South",
+        "COUNTY": "Swain",
+        "STATE": "North Carolina",
+        "PARKDISTRICT": "South District",
+        "ELEVATION": 2053,
+        "Y_COORD": 3931855,
+        "X_COORD": 290874,
+        "LAT": 35.5082671,
+        "LON": -83.30589691,
+        "DDMLAT": null,
+        "DDMLON": null,
+        "DMSLAT": "35.5082671008089",
+        "DMSLON": "-83.3058969120598",
+        "DATAACCESS": "Unrestricted",
+        "SOURCEDATE": null,
+        "MAPMETHOD": "Autonomous GPS",
+        "XYACCURACY": ">=1m and <5m",
+        "VALID_RESULT": "Raw",
+        "GlobalID": "96ec5716-fa80-445e-9622-6453dc820db5",
+        "_section": "E",
+        "_sta_ft": 5309.8,
+        "_sta": "53+09.80",
+        "_dist_from_alignment_ft": 0.0,
+        "_reported_in": [
+          "NPS-GIS"
+        ],
+        "_report_cross_refs": {}
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.3059008982984,
+          35.5082739482586
+        ]
+      }
+    }
+  ]
 }
