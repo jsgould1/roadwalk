@@ -52,7 +52,10 @@
         "photos": [
           "0012ZZ-0.195-L-2.jpg",
           "0012ZZ-0.195-L.jpg"
-        ]
+        ],
+        "_sta_ft": 944.9,
+        "_sta": "9+44.92",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -172,7 +175,10 @@
         "photos": [
           "0012ZZ-0.201-R-2.jpg",
           "0012ZZ-0.201-R.jpg"
-        ]
+        ],
+        "_sta_ft": 975.3,
+        "_sta": "9+75.31",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -279,7 +285,10 @@
         "type": "Gravity Mortared Stone",
         "wall_function": "Head Wall",
         "rating": 83,
-        "repair_cost": "$0.00"
+        "repair_cost": "$0.00",
+        "_sta_ft": 1709.7,
+        "_sta": "17+09.70",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -393,7 +402,10 @@
         "type": "Gravity Mortared Stone",
         "wall_function": "Head Wall",
         "rating": 83,
-        "repair_cost": "$330.00"
+        "repair_cost": "$330.00",
+        "_sta_ft": 1765.4,
+        "_sta": "17+65.41",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -521,7 +533,10 @@
         "wall_function": "Head Wall",
         "rating": 83,
         "repair_cost": "$375.00",
-        "photo": "0012ZZ-0.553-R.jpg"
+        "photo": "0012ZZ-0.553-R.jpg",
+        "_sta_ft": 2758.1,
+        "_sta": "27+58.11",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -620,7 +635,10 @@
         "wall_function": "Head Wall",
         "rating": 80,
         "repair_cost": "$6,267.00",
-        "photo": "0012ZZ-0.674-R.jpg"
+        "photo": "0012ZZ-0.674-R.jpg",
+        "_sta_ft": 3371.0,
+        "_sta": "33+70.95",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -724,7 +742,10 @@
         "wall_function": "Head Wall",
         "rating": 85,
         "repair_cost": "$781.00",
-        "photo": "0012ZZ-0.846-R.jpg"
+        "photo": "0012ZZ-0.846-R.jpg",
+        "_sta_ft": 4242.1,
+        "_sta": "42+42.09",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -808,7 +829,10 @@
         "wall_function": "Head Wall",
         "rating": 76,
         "repair_cost": "$1,795.00",
-        "photo": "0012ZZ-1.027-R.jpg"
+        "photo": "0012ZZ-1.027-R.jpg",
+        "_sta_ft": 5158.8,
+        "_sta": "51+58.82",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -902,7 +926,10 @@
         "type": "Gravity Mortared Stone",
         "wall_function": "Head Wall",
         "rating": 76,
-        "repair_cost": "$1,664.00"
+        "repair_cost": "$1,664.00",
+        "_sta_ft": 5751.4,
+        "_sta": "57+51.40",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -986,7 +1013,10 @@
             ],
             "source_pdf": "GRSM_WIPReport.pdf"
           }
-        }
+        },
+        "_sta_ft": 10725.0,
+        "_sta": "107+25.02",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -1132,7 +1162,10 @@
         "type": "Crib Concrete",
         "wall_function": "Fill Wall",
         "rating": 83,
-        "repair_cost": "$1,555.00"
+        "repair_cost": "$1,555.00",
+        "_sta_ft": 10785.8,
+        "_sta": "107+85.80",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -2260,7 +2293,10 @@
             ],
             "source_pdf": "GRSM_WIPReport.pdf"
           }
-        }
+        },
+        "_sta_ft": 11555.6,
+        "_sta": "115+55.64",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -2410,7 +2446,10 @@
         "type": "Crib Concrete",
         "wall_function": "Fill Wall",
         "rating": 97,
-        "repair_cost": "$1,850.00"
+        "repair_cost": "$1,850.00",
+        "_sta_ft": 11611.4,
+        "_sta": "116+11.36",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -3094,7 +3133,10 @@
             ],
             "source_pdf": "GRSM_WIPReport.pdf"
           }
-        }
+        },
+        "_sta_ft": 13252.3,
+        "_sta": "132+52.35",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -3236,7 +3278,10 @@
         "type": "Crib Concrete",
         "wall_function": "Cut Wall",
         "rating": 87,
-        "repair_cost": "$0.00"
+        "repair_cost": "$0.00",
+        "_sta_ft": 13303.0,
+        "_sta": "133+02.99",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -4624,7 +4669,10 @@
             ],
             "source_pdf": "GRSM_WIPReport.pdf"
           }
-        }
+        },
+        "_sta_ft": 16078.5,
+        "_sta": "160+78.50",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -4774,7 +4822,10 @@
         "type": "Gravity Mortared Stone",
         "wall_function": "Head Wall",
         "rating": 87,
-        "repair_cost": "$0.00"
+        "repair_cost": "$0.00",
+        "_sta_ft": 16144.3,
+        "_sta": "161+44.34",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -4850,7 +4901,10 @@
             ],
             "source_pdf": "GRSM_WIPReport.pdf"
           }
-        }
+        },
+        "_sta_ft": 16635.6,
+        "_sta": "166+35.62",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
@@ -5000,7 +5054,10 @@
         "type": "Gravity Mortared Stone",
         "wall_function": "Head Wall",
         "rating": 80,
-        "repair_cost": "$1,320.00"
+        "repair_cost": "$1,320.00",
+        "_sta_ft": 17248.5,
+        "_sta": "172+48.46",
+        "_dist_from_alignment_ft": 20.0
       },
       "geometry": {
         "type": "LineString",
