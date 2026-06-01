@@ -1,6 +1,6 @@
 {
  "version": "v2",
- "generated_at": "2026-06-01T13:18:45Z",
+ "generated_at": "2026-06-01T13:25:16Z",
  "description": "RoadWalk pre-walk dataset for GRSM -- schema v2 (ULID + new kinds)",
  "sections": [
   {
@@ -1352,16 +1352,24 @@
      35.698552
     ],
     [
-     -83.530306,
-     35.696322
+     -83.5303254469567,
+     35.69633128166612
     ],
     [
-     -83.530377,
-     35.696089
+     -83.53038981845438,
+     35.6960933031282
     ],
     [
-     -83.530494,
-     35.69571
+     -83.53042334515588,
+     35.69593156709454
+    ],
+    [
+     -83.53045285385913,
+     35.69575185382345
+    ],
+    [
+     -83.53047229379987,
+     35.695423992623496
     ]
    ],
    "sub_alignments": [
@@ -1588,8 +1596,8 @@
        35.7262743031756
       ]
      },
-     "sta_ft": -272.2,
-     "sta": "-2+72.20",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -1614,8 +1622,8 @@
        35.7260493971483
       ]
      },
-     "sta_ft": -110.8,
-     "sta": "-1+10.83",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -3238,8 +3246,8 @@
        ]
       ]
      },
-     "sta_ft": -62.4,
-     "sta": "-0+62.41",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -3482,8 +3490,8 @@
       },
       "road_bearing_deg": 135.6
      },
-     "sta_ft": -43.8,
-     "sta": "-0+43.78"
+     "sta_ft": 0.0,
+     "sta": "0+00.00"
     },
     {
      "id": "A-CUL-002",
@@ -3715,8 +3723,8 @@
       },
       "road_bearing_deg": 135.6
      },
-     "sta_ft": -43.8,
-     "sta": "-0+43.78"
+     "sta_ft": 0.0,
+     "sta": "0+00.00"
     },
     {
      "id": "A-GAT-001",
@@ -5742,8 +5750,8 @@
      "attrs": {
       "length_ft": 436.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.072608,
-      "mp_end": 0.155692,
+      "mp_start": 0.072266,
+      "mp_end": 0.154889,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -5800,8 +5808,8 @@
      "attrs": {
       "length_ft": 266.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.073564,
-      "mp_end": 0.124733,
+      "mp_start": 0.073216,
+      "mp_end": 0.124102,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -7460,8 +7468,8 @@
      "attrs": {
       "length_ft": 137.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.13534,
-      "mp_end": 0.161735,
+      "mp_start": 0.13465,
+      "mp_end": 0.160899,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -7522,8 +7530,8 @@
      "attrs": {
       "length_ft": 113.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.137265,
-      "mp_end": 0.158799,
+      "mp_start": 0.136565,
+      "mp_end": 0.157979,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -7584,8 +7592,8 @@
      "attrs": {
       "length_ft": 124.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.14306,
-      "mp_end": 0.16669,
+      "mp_start": 0.142328,
+      "mp_end": 0.165826,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITH BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -7647,8 +7655,8 @@
      "attrs": {
       "length_ft": 440.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.20387,
-      "mp_end": 0.287722,
+      "mp_start": 0.2028,
+      "mp_end": 0.286187,
       "side": "R",
       "rpt_type": "STONE MASONRY WITH CONCRETE CORE WALL",
       "inspection_date": "9/14/2010"
@@ -7697,8 +7705,8 @@
      "attrs": {
       "length_ft": 78.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.203871,
-      "mp_end": 0.218738,
+      "mp_start": 0.202801,
+      "mp_end": 0.217585,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010"
@@ -7750,8 +7758,8 @@
      "attrs": {
       "length_ft": 188.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.232819,
-      "mp_end": 0.268645,
+      "mp_start": 0.231589,
+      "mp_end": 0.267215,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -7796,8 +7804,8 @@
      "attrs": {
       "length_ft": 35.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.24633,
-      "mp_end": 0.252999,
+      "mp_start": 0.245024,
+      "mp_end": 0.251656,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -7850,8 +7858,8 @@
      "attrs": {
       "length_ft": 28.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.252122,
-      "mp_end": 0.257457,
+      "mp_start": 0.250784,
+      "mp_end": 0.25609,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8015,8 +8023,8 @@
      "attrs": {
       "length_ft": 1030.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.384358,
-      "mp_end": 0.58064,
+      "mp_start": 0.382287,
+      "mp_end": 0.57748,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -8066,8 +8074,8 @@
      "attrs": {
       "length_ft": 33.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.392076,
-      "mp_end": 0.398363,
+      "mp_start": 0.389962,
+      "mp_end": 0.396214,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8118,8 +8126,8 @@
      "attrs": {
       "length_ft": 40.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.402688,
-      "mp_end": 0.410311,
+      "mp_start": 0.400515,
+      "mp_end": 0.408096,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8167,8 +8175,8 @@
      "attrs": {
       "length_ft": 25.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.591869,
-      "mp_end": 0.596631,
+      "mp_start": 0.588646,
+      "mp_end": 0.593382,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8434,8 +8442,8 @@
      "attrs": {
       "length_ft": 28.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.708665,
-      "mp_end": 0.714003,
+      "mp_start": 0.704795,
+      "mp_end": 0.710103,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8524,8 +8532,8 @@
      "attrs": {
       "length_ft": 530.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.759815,
-      "mp_end": 0.860816,
+      "mp_start": 0.755661,
+      "mp_end": 0.856101,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -8571,8 +8579,8 @@
      "attrs": {
       "length_ft": 17.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 0.874667,
-      "mp_end": 0.877907,
+      "mp_start": 0.869875,
+      "mp_end": 0.873098,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8835,8 +8843,8 @@
      "attrs": {
       "length_ft": 24.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.049361,
-      "mp_end": 1.053933,
+      "mp_start": 1.043601,
+      "mp_end": 1.048147,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -8884,8 +8892,8 @@
      "attrs": {
       "length_ft": 20.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.162294,
-      "mp_end": 1.166099,
+      "mp_start": 1.155907,
+      "mp_end": 1.159691,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -9423,8 +9431,8 @@
      "attrs": {
       "length_ft": 416.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.281966,
-      "mp_end": 1.361244,
+      "mp_start": 1.274915,
+      "mp_end": 1.353753,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -9747,8 +9755,8 @@
      "attrs": {
       "length_ft": 230.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.395873,
-      "mp_end": 1.439699,
+      "mp_start": 1.38819,
+      "mp_end": 1.431772,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -10043,8 +10051,8 @@
      "attrs": {
       "length_ft": 221.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.403587,
-      "mp_end": 1.4457,
+      "mp_start": 1.395861,
+      "mp_end": 1.437741,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -10591,8 +10599,8 @@
      "attrs": {
       "length_ft": 115.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.47791,
-      "mp_end": 1.499823,
+      "mp_start": 1.469771,
+      "mp_end": 1.491564,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010",
@@ -10687,8 +10695,8 @@
      "attrs": {
       "length_ft": 396.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.480809,
-      "mp_end": 1.55627,
+      "mp_start": 1.472655,
+      "mp_end": 1.547697,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010"
@@ -10759,8 +10767,8 @@
      "attrs": {
       "length_ft": 225.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.507829,
-      "mp_end": 1.550706,
+      "mp_start": 1.499525,
+      "mp_end": 1.542164,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/13/2010"
@@ -11534,8 +11542,8 @@
      "attrs": {
       "length_ft": 483.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.622686,
-      "mp_end": 1.714726,
+      "mp_start": 1.613745,
+      "mp_end": 1.705274,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -12063,8 +12071,8 @@
      "attrs": {
       "length_ft": 359.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.722101,
-      "mp_end": 1.790517,
+      "mp_start": 1.712608,
+      "mp_end": 1.780644,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -12112,8 +12120,8 @@
      "attrs": {
       "length_ft": 100.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 1.73754,
-      "mp_end": 1.756594,
+      "mp_start": 1.727962,
+      "mp_end": 1.746909,
       "side": "R"
      }
     },
@@ -12167,8 +12175,8 @@
      "attrs": {
       "length_ft": 175.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.73754,
-      "mp_end": 1.770888,
+      "mp_start": 1.727962,
+      "mp_end": 1.761125,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -15617,8 +15625,8 @@
      "attrs": {
       "length_ft": 838.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 1.830194,
-      "mp_end": 1.989886,
+      "mp_start": 1.820101,
+      "mp_end": 1.978907,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -17315,8 +17323,8 @@
      "attrs": {
       "length_ft": 257.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.090793,
-      "mp_end": 2.139768,
+      "mp_start": 2.079254,
+      "mp_end": 2.127958,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -17360,8 +17368,8 @@
      "attrs": {
       "length_ft": 50.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 2.110099,
-      "mp_end": 2.119624,
+      "mp_start": 2.098454,
+      "mp_end": 2.107926,
       "side": "L"
      }
     },
@@ -17672,8 +17680,8 @@
      "attrs": {
       "length_ft": 547.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.121686,
-      "mp_end": 2.225926,
+      "mp_start": 2.109976,
+      "mp_end": 2.213638,
       "side": "L",
       "rpt_type": "Crib Concrete",
       "wall_function": "Fill Wall",
@@ -17792,8 +17800,8 @@
      "attrs": {
       "length_ft": 658.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.193109,
-      "mp_end": 2.318503,
+      "mp_start": 2.181003,
+      "mp_end": 2.305702,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -18514,8 +18522,8 @@
      "attrs": {
       "length_ft": 50.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 2.268401,
-      "mp_end": 2.277931,
+      "mp_start": 2.255877,
+      "mp_end": 2.265354,
       "side": "L"
      }
     },
@@ -18601,8 +18609,8 @@
      "attrs": {
       "length_ft": 310.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.279014,
-      "mp_end": 2.338095,
+      "mp_start": 2.266432,
+      "mp_end": 2.325185,
       "side": "L",
       "rpt_type": "Crib Concrete",
       "wall_function": "Fill Wall",
@@ -18681,8 +18689,8 @@
      "attrs": {
       "length_ft": 215.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.283838,
-      "mp_end": 2.324812,
+      "mp_start": 2.271228,
+      "mp_end": 2.311975,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -21135,8 +21143,8 @@
      "attrs": {
       "length_ft": 50.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 2.591739,
-      "mp_end": 2.601264,
+      "mp_start": 2.577421,
+      "mp_end": 2.586893,
       "side": "R"
      }
     },
@@ -21214,8 +21222,8 @@
      "attrs": {
       "length_ft": 690.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.601381,
-      "mp_end": 2.732872,
+      "mp_start": 2.58701,
+      "mp_end": 2.717772,
       "side": "R",
       "rpt_type": "Crib Concrete",
       "wall_function": "Cut Wall",
@@ -21266,8 +21274,8 @@
      "attrs": {
       "length_ft": 224.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.638067,
-      "mp_end": 2.68075,
+      "mp_start": 2.623492,
+      "mp_end": 2.665939,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -21416,8 +21424,8 @@
      "attrs": {
       "length_ft": 803.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.682469,
-      "mp_end": 2.835494,
+      "mp_start": 2.667648,
+      "mp_end": 2.819824,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -21502,8 +21510,8 @@
      "attrs": {
       "length_ft": 214.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.878387,
-      "mp_end": 2.919173,
+      "mp_start": 2.862479,
+      "mp_end": 2.903039,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -21568,8 +21576,8 @@
      "attrs": {
       "length_ft": 260.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.878393,
-      "mp_end": 2.927939,
+      "mp_start": 2.862485,
+      "mp_end": 2.911756,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22084,8 +22092,8 @@
      "attrs": {
       "length_ft": 325.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.947891,
-      "mp_end": 3.009824,
+      "mp_start": 2.931598,
+      "mp_end": 2.993187,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22152,8 +22160,8 @@
      "attrs": {
       "length_ft": 185.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.996142,
-      "mp_end": 3.031397,
+      "mp_start": 2.979581,
+      "mp_end": 3.01464,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010"
@@ -22201,8 +22209,8 @@
      "attrs": {
       "length_ft": 161.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.037645,
-      "mp_end": 3.068326,
+      "mp_start": 3.020854,
+      "mp_end": 3.051364,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22246,8 +22254,8 @@
      "attrs": {
       "length_ft": 100.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 3.09846,
-      "mp_end": 3.117516,
+      "mp_start": 3.081331,
+      "mp_end": 3.100282,
       "side": "R"
      }
     },
@@ -22293,8 +22301,8 @@
      "attrs": {
       "length_ft": 179.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.09846,
-      "mp_end": 3.132569,
+      "mp_start": 3.081331,
+      "mp_end": 3.11525,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22344,8 +22352,8 @@
      "attrs": {
       "length_ft": 179.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.100382,
-      "mp_end": 3.134497,
+      "mp_start": 3.083243,
+      "mp_end": 3.117168,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22389,8 +22397,8 @@
      "attrs": {
       "length_ft": 50.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 3.130299,
-      "mp_end": 3.13983,
+      "mp_start": 3.112994,
+      "mp_end": 3.122472,
       "side": "R"
      }
     },
@@ -22432,8 +22440,8 @@
      "attrs": {
       "length_ft": 16.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.142859,
-      "mp_end": 3.145908,
+      "mp_start": 3.125484,
+      "mp_end": 3.128516,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -22480,8 +22488,8 @@
      "attrs": {
       "length_ft": 149.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.157326,
-      "mp_end": 3.185718,
+      "mp_start": 3.139871,
+      "mp_end": 3.168105,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010",
@@ -22747,8 +22755,8 @@
      "attrs": {
       "length_ft": 50.0,
       "length_source": "estimated_pending_ocr",
-      "mp_start": 3.236467,
-      "mp_end": 3.245994,
+      "mp_start": 3.218572,
+      "mp_end": 3.228047,
       "side": "R"
      }
     },
@@ -22771,8 +22779,8 @@
        ]
       ]
      },
-     "sta_ft": 17538.5,
-     "sta": "175+38.47",
+     "sta_ft": 17538.6,
+     "sta": "175+38.62",
      "reported_in": [
       "WIP"
      ],
@@ -22790,8 +22798,8 @@
      "attrs": {
       "length_ft": 48.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.353262,
-      "mp_end": 3.362415,
+      "mp_start": 3.334748,
+      "mp_end": 3.343849,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -22823,8 +22831,8 @@
        ]
       ]
      },
-     "sta_ft": 18029.8,
-     "sta": "180+29.78",
+     "sta_ft": 18029.9,
+     "sta": "180+29.91",
      "reported_in": [
       "GIP"
      ],
@@ -22843,8 +22851,8 @@
      "attrs": {
       "length_ft": 264.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.446889,
-      "mp_end": 3.497199,
+      "mp_start": 3.427852,
+      "mp_end": 3.47786,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/14/2010"
@@ -22863,8 +22871,8 @@
        35.695116411216
       ]
      },
-     "sta_ft": 18604.4,
-     "sta": "186+04.43",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -23077,8 +23085,8 @@
        35.695116411216
       ]
      },
-     "sta_ft": 18604.4,
-     "sta": "186+04.43",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -23291,8 +23299,8 @@
        35.6951468801865
       ]
      },
-     "sta_ft": 18658.6,
-     "sta": "186+58.55",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -23542,8 +23550,8 @@
       "object_id": "1889",
       "_csv_match_dist_m": 19.45
      },
-     "sta_ft": 18693.8,
-     "sta": "186+93.80"
+     "sta_ft": 18563.6,
+     "sta": "185+63.64"
     },
     {
      "id": "A-CUL-022",
@@ -23783,8 +23791,8 @@
       "object_id": "1889",
       "_csv_match_dist_m": 16.4
      },
-     "sta_ft": 18725.0,
-     "sta": "187+24.98"
+     "sta_ft": 18563.6,
+     "sta": "185+63.64"
     },
     {
      "id": "A-BRI-004",
@@ -23829,8 +23837,8 @@
        ]
       ]
      },
-     "sta_ft": 18817.9,
-     "sta": "188+17.92",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -23856,8 +23864,8 @@
        35.6945883270695
       ]
      },
-     "sta_ft": 18858.6,
-     "sta": "188+58.61",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -24285,8 +24293,8 @@
       },
       "road_bearing_deg": 183.7
      },
-     "sta_ft": 18859.6,
-     "sta": "188+59.64"
+     "sta_ft": 18563.6,
+     "sta": "185+63.64"
     },
     {
      "id": "A-SIG-030",
@@ -24301,8 +24309,8 @@
        35.6944024620381
       ]
      },
-     "sta_ft": 18911.5,
-     "sta": "189+11.48",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -24515,8 +24523,8 @@
        35.6940549699259
       ]
      },
-     "sta_ft": 19107.3,
-     "sta": "191+07.31",
+     "sta_ft": 18563.6,
+     "sta": "185+63.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -24756,8 +24764,80 @@
      35.611516
     ],
     [
-     -83.4280395,
-     35.6107052
+     -83.42535564936489,
+     35.61122911167462
+    ],
+    [
+     -83.42544436394029,
+     35.61120291113657
+    ],
+    [
+     -83.42553824429314,
+     35.61118981875879
+    ],
+    [
+     -83.42561870752624,
+     35.611198549349965
+    ],
+    [
+     -83.42570188334157,
+     35.61122688663176
+    ],
+    [
+     -83.42581454887693,
+     35.61131848348334
+    ],
+    [
+     -83.42592452795103,
+     35.61141662084582
+    ],
+    [
+     -83.42607205552147,
+     35.61153220984213
+    ],
+    [
+     -83.42618733522995,
+     35.61159978594067
+    ],
+    [
+     -83.42631079520741,
+     35.611632540396556
+    ],
+    [
+     -83.42644482729537,
+     35.61166520419987
+    ],
+    [
+     -83.42658696068209,
+     35.611658842543655
+    ],
+    [
+     -83.42670500460711,
+     35.61162595184731
+    ],
+    [
+     -83.42680692551238,
+     35.611564898831496
+    ],
+    [
+     -83.4270402855937,
+     35.61141879383882
+    ],
+    [
+     -83.42743459097264,
+     35.61116583857434
+    ],
+    [
+     -83.42763036428742,
+     35.61101974337871
+    ],
+    [
+     -83.4278315506173,
+     35.610864897407325
+    ],
+    [
+     -83.42804879132358,
+     35.610725365140695
     ],
     [
      -83.4282214,
@@ -27132,8 +27212,8 @@
      35.5985983
     ],
     [
-     -83.402369,
-     35.598489
+     -83.4023451750443,
+     35.59851517817371
     ]
    ],
    "sub_alignments": [],
@@ -27150,8 +27230,8 @@
        35.6102699417
       ]
      },
-     "sta_ft": 571.9,
-     "sta": "5+71.89",
+     "sta_ft": 366.4,
+     "sta": "3+66.39",
      "attrs": {
       "pid": "FB2493",
       "name": "DISK",
@@ -27181,8 +27261,8 @@
        35.61
       ]
      },
-     "sta_ft": 700.0,
-     "sta": "7+00.05",
+     "sta_ft": 393.1,
+     "sta": "3+93.13",
      "attrs": {
       "pid": "DG4378",
       "name": "SWA 2",
@@ -27214,8 +27294,8 @@
        35.6112223978814
       ]
      },
-     "sta_ft": 833.9,
-     "sta": "8+33.86",
+     "sta_ft": 975.1,
+     "sta": "9+75.14",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -27348,8 +27428,8 @@
        35.6108955697951
       ]
      },
-     "sta_ft": 999.2,
-     "sta": "9+99.23",
+     "sta_ft": 1159.0,
+     "sta": "11+59.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -27482,8 +27562,8 @@
        35.6108955697951
       ]
      },
-     "sta_ft": 999.2,
-     "sta": "9+99.23",
+     "sta_ft": 1159.0,
+     "sta": "11+59.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -27616,8 +27696,8 @@
        35.6108955697951
       ]
      },
-     "sta_ft": 999.2,
-     "sta": "9+99.23",
+     "sta_ft": 1159.0,
+     "sta": "11+59.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -27750,8 +27830,8 @@
        35.6108955697951
       ]
      },
-     "sta_ft": 999.2,
-     "sta": "9+99.23",
+     "sta_ft": 1159.0,
+     "sta": "11+59.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -27872,408 +27952,6 @@
      }
     },
     {
-     "id": "B-SIG-001",
-     "ulid": "01KRJMG174D3N391PR14W8KR1S",
-     "kind": "sign",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4278736261331,
-       35.6108113087724
-      ]
-     },
-     "sta_ft": 1044.9,
-     "sta": "10+44.87",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         10,
-         11,
-         13,
-         15,
-         17,
-         25,
-         26,
-         27,
-         51,
-         52,
-         57,
-         63,
-         87,
-         117,
-         118,
-         119,
-         120,
-         143,
-         144,
-         145,
-         146,
-         164,
-         165,
-         166,
-         167,
-         255,
-         260,
-         261,
-         262,
-         263,
-         264,
-         265,
-         266,
-         267,
-         268,
-         313
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         11,
-         13,
-         14,
-         17,
-         28,
-         29,
-         30,
-         50,
-         55,
-         56,
-         63,
-         71,
-         72,
-         89,
-         124,
-         125,
-         126,
-         127,
-         147,
-         148,
-         149,
-         150,
-         355,
-         356,
-         357,
-         358,
-         359,
-         360,
-         361,
-         362,
-         363,
-         364,
-         365,
-         366,
-         367,
-         368,
-         369,
-         370,
-         371,
-         372,
-         374,
-         375,
-         376,
-         546,
-         644,
-         662,
-         663,
-         664,
-         674,
-         685,
-         686,
-         691,
-         692,
-         703
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "road": "Clingmans Dome Access Road, SD    RT 0017",
-      "fmss_asset": "191894",
-      "notes": "Clingmans Dome, Info Sign"
-     }
-    },
-    {
-     "id": "B-SIG-007",
-     "ulid": "01KRJMG174P5676550J9S3FDA7",
-     "kind": "sign",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4278736261331,
-       35.6108113087724
-      ]
-     },
-     "sta_ft": 1044.9,
-     "sta": "10+44.87",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         10,
-         11,
-         13,
-         15,
-         17,
-         25,
-         26,
-         27,
-         51,
-         52,
-         57,
-         63,
-         87,
-         117,
-         118,
-         119,
-         120,
-         143,
-         144,
-         145,
-         146,
-         164,
-         165,
-         166,
-         167,
-         255,
-         260,
-         261,
-         262,
-         263,
-         264,
-         265,
-         266,
-         267,
-         268,
-         313
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         11,
-         13,
-         14,
-         17,
-         28,
-         29,
-         30,
-         50,
-         55,
-         56,
-         63,
-         71,
-         72,
-         89,
-         124,
-         125,
-         126,
-         127,
-         147,
-         148,
-         149,
-         150,
-         355,
-         356,
-         357,
-         358,
-         359,
-         360,
-         361,
-         362,
-         363,
-         364,
-         365,
-         366,
-         367,
-         368,
-         369,
-         370,
-         371,
-         372,
-         374,
-         375,
-         376,
-         546,
-         644,
-         662,
-         663,
-         664,
-         674,
-         685,
-         686,
-         691,
-         692,
-         703
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "road": "Clingmans Dome Access Road, SD    RT 0017",
-      "fmss_asset": "191918",
-      "notes": "Clingmans Dome, Info Sign"
-     }
-    },
-    {
-     "id": "B-SIG-008",
-     "ulid": "01KRJMG174FWPBF789V9BDWECZ",
-     "kind": "sign",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4278736261331,
-       35.6108113087724
-      ]
-     },
-     "sta_ft": 1044.9,
-     "sta": "10+44.87",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         10,
-         11,
-         13,
-         15,
-         17,
-         25,
-         26,
-         27,
-         51,
-         52,
-         57,
-         63,
-         87,
-         117,
-         118,
-         119,
-         120,
-         143,
-         144,
-         145,
-         146,
-         164,
-         165,
-         166,
-         167,
-         255,
-         260,
-         261,
-         262,
-         263,
-         264,
-         265,
-         266,
-         267,
-         268,
-         313
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         11,
-         13,
-         14,
-         17,
-         28,
-         29,
-         30,
-         50,
-         55,
-         56,
-         63,
-         71,
-         72,
-         89,
-         124,
-         125,
-         126,
-         127,
-         147,
-         148,
-         149,
-         150,
-         355,
-         356,
-         357,
-         358,
-         359,
-         360,
-         361,
-         362,
-         363,
-         364,
-         365,
-         366,
-         367,
-         368,
-         369,
-         370,
-         371,
-         372,
-         374,
-         375,
-         376,
-         546,
-         644,
-         662,
-         663,
-         664,
-         674,
-         685,
-         686,
-         691,
-         692,
-         703
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "road": "Newfound Gap Road, SD    RT 0010B",
-      "fmss_asset": "139107",
-      "notes": "Information"
-     }
-    },
-    {
      "id": "B-SIG-009",
      "ulid": "01KRJMG174QG0WZQMWDRCGNKTR",
      "kind": "sign",
@@ -28286,8 +27964,8 @@
        35.6108463187785
       ]
      },
-     "sta_ft": 1050.4,
-     "sta": "10+50.44",
+     "sta_ft": 1207.2,
+     "sta": "12+07.17",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -28420,8 +28098,8 @@
        35.6108463187785
       ]
      },
-     "sta_ft": 1050.4,
-     "sta": "10+50.44",
+     "sta_ft": 1207.2,
+     "sta": "12+07.17",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -28542,6 +28220,408 @@
      }
     },
     {
+     "id": "B-SIG-001",
+     "ulid": "01KRJMG174D3N391PR14W8KR1S",
+     "kind": "sign",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4278736261331,
+       35.6108113087724
+      ]
+     },
+     "sta_ft": 1207.8,
+     "sta": "12+07.76",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         10,
+         11,
+         13,
+         15,
+         17,
+         25,
+         26,
+         27,
+         51,
+         52,
+         57,
+         63,
+         87,
+         117,
+         118,
+         119,
+         120,
+         143,
+         144,
+         145,
+         146,
+         164,
+         165,
+         166,
+         167,
+         255,
+         260,
+         261,
+         262,
+         263,
+         264,
+         265,
+         266,
+         267,
+         268,
+         313
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         11,
+         13,
+         14,
+         17,
+         28,
+         29,
+         30,
+         50,
+         55,
+         56,
+         63,
+         71,
+         72,
+         89,
+         124,
+         125,
+         126,
+         127,
+         147,
+         148,
+         149,
+         150,
+         355,
+         356,
+         357,
+         358,
+         359,
+         360,
+         361,
+         362,
+         363,
+         364,
+         365,
+         366,
+         367,
+         368,
+         369,
+         370,
+         371,
+         372,
+         374,
+         375,
+         376,
+         546,
+         644,
+         662,
+         663,
+         664,
+         674,
+         685,
+         686,
+         691,
+         692,
+         703
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "road": "Clingmans Dome Access Road, SD    RT 0017",
+      "fmss_asset": "191894",
+      "notes": "Clingmans Dome, Info Sign"
+     }
+    },
+    {
+     "id": "B-SIG-007",
+     "ulid": "01KRJMG174P5676550J9S3FDA7",
+     "kind": "sign",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4278736261331,
+       35.6108113087724
+      ]
+     },
+     "sta_ft": 1207.8,
+     "sta": "12+07.76",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         10,
+         11,
+         13,
+         15,
+         17,
+         25,
+         26,
+         27,
+         51,
+         52,
+         57,
+         63,
+         87,
+         117,
+         118,
+         119,
+         120,
+         143,
+         144,
+         145,
+         146,
+         164,
+         165,
+         166,
+         167,
+         255,
+         260,
+         261,
+         262,
+         263,
+         264,
+         265,
+         266,
+         267,
+         268,
+         313
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         11,
+         13,
+         14,
+         17,
+         28,
+         29,
+         30,
+         50,
+         55,
+         56,
+         63,
+         71,
+         72,
+         89,
+         124,
+         125,
+         126,
+         127,
+         147,
+         148,
+         149,
+         150,
+         355,
+         356,
+         357,
+         358,
+         359,
+         360,
+         361,
+         362,
+         363,
+         364,
+         365,
+         366,
+         367,
+         368,
+         369,
+         370,
+         371,
+         372,
+         374,
+         375,
+         376,
+         546,
+         644,
+         662,
+         663,
+         664,
+         674,
+         685,
+         686,
+         691,
+         692,
+         703
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "road": "Clingmans Dome Access Road, SD    RT 0017",
+      "fmss_asset": "191918",
+      "notes": "Clingmans Dome, Info Sign"
+     }
+    },
+    {
+     "id": "B-SIG-008",
+     "ulid": "01KRJMG174FWPBF789V9BDWECZ",
+     "kind": "sign",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4278736261331,
+       35.6108113087724
+      ]
+     },
+     "sta_ft": 1207.8,
+     "sta": "12+07.76",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         10,
+         11,
+         13,
+         15,
+         17,
+         25,
+         26,
+         27,
+         51,
+         52,
+         57,
+         63,
+         87,
+         117,
+         118,
+         119,
+         120,
+         143,
+         144,
+         145,
+         146,
+         164,
+         165,
+         166,
+         167,
+         255,
+         260,
+         261,
+         262,
+         263,
+         264,
+         265,
+         266,
+         267,
+         268,
+         313
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         11,
+         13,
+         14,
+         17,
+         28,
+         29,
+         30,
+         50,
+         55,
+         56,
+         63,
+         71,
+         72,
+         89,
+         124,
+         125,
+         126,
+         127,
+         147,
+         148,
+         149,
+         150,
+         355,
+         356,
+         357,
+         358,
+         359,
+         360,
+         361,
+         362,
+         363,
+         364,
+         365,
+         366,
+         367,
+         368,
+         369,
+         370,
+         371,
+         372,
+         374,
+         375,
+         376,
+         546,
+         644,
+         662,
+         663,
+         664,
+         674,
+         685,
+         686,
+         691,
+         692,
+         703
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "road": "Newfound Gap Road, SD    RT 0010B",
+      "fmss_asset": "139107",
+      "notes": "Information"
+     }
+    },
+    {
      "id": "B-SIG-004",
      "ulid": "01KRJMG17460QZ0KGQ9192KHPS",
      "kind": "sign",
@@ -28554,8 +28634,8 @@
        35.6108922007856
       ]
      },
-     "sta_ft": 1063.2,
-     "sta": "10+63.17",
+     "sta_ft": 1210.8,
+     "sta": "12+10.82",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -28688,8 +28768,8 @@
        35.6108922007856
       ]
      },
-     "sta_ft": 1063.2,
-     "sta": "10+63.17",
+     "sta_ft": 1210.8,
+     "sta": "12+10.82",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -28822,8 +28902,8 @@
        35.6108922007856
       ]
      },
-     "sta_ft": 1063.2,
-     "sta": "10+63.17",
+     "sta_ft": 1210.8,
+     "sta": "12+10.82",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -28956,8 +29036,8 @@
        35.6108922007856
       ]
      },
-     "sta_ft": 1063.2,
-     "sta": "10+63.17",
+     "sta_ft": 1210.8,
+     "sta": "12+10.82",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29090,8 +29170,8 @@
        35.611010616802
       ]
      },
-     "sta_ft": 1102.6,
-     "sta": "11+02.65",
+     "sta_ft": 1231.6,
+     "sta": "12+31.64",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29222,8 +29302,8 @@
        35.6110459218004
       ]
      },
-     "sta_ft": 1121.9,
-     "sta": "11+21.87",
+     "sta_ft": 1271.2,
+     "sta": "12+71.22",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29356,8 +29436,8 @@
        35.6110459218004
       ]
      },
-     "sta_ft": 1121.9,
-     "sta": "11+21.87",
+     "sta_ft": 1271.2,
+     "sta": "12+71.22",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29490,8 +29570,8 @@
        35.6110459218004
       ]
      },
-     "sta_ft": 1121.9,
-     "sta": "11+21.87",
+     "sta_ft": 1271.2,
+     "sta": "12+71.22",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29624,8 +29704,8 @@
        35.6110459218004
       ]
      },
-     "sta_ft": 1121.9,
-     "sta": "11+21.87",
+     "sta_ft": 1271.2,
+     "sta": "12+71.22",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29758,8 +29838,8 @@
        35.6110472758003
       ]
      },
-     "sta_ft": 1124.0,
-     "sta": "11+23.97",
+     "sta_ft": 1273.1,
+     "sta": "12+73.08",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -29892,8 +29972,8 @@
        35.6110472758003
       ]
      },
-     "sta_ft": 1124.0,
-     "sta": "11+23.97",
+     "sta_ft": 1273.1,
+     "sta": "12+73.08",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30026,8 +30106,8 @@
        35.6110665657985
       ]
      },
-     "sta_ft": 1156.1,
-     "sta": "11+56.05",
+     "sta_ft": 1301.5,
+     "sta": "13+01.54",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30160,8 +30240,8 @@
        35.6110665657985
       ]
      },
-     "sta_ft": 1156.1,
-     "sta": "11+56.05",
+     "sta_ft": 1301.5,
+     "sta": "13+01.54",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30294,8 +30374,8 @@
        35.6110665657985
       ]
      },
-     "sta_ft": 1156.1,
-     "sta": "11+56.05",
+     "sta_ft": 1301.5,
+     "sta": "13+01.54",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30428,8 +30508,8 @@
        35.6110665657985
       ]
      },
-     "sta_ft": 1156.1,
-     "sta": "11+56.05",
+     "sta_ft": 1301.5,
+     "sta": "13+01.54",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30562,8 +30642,8 @@
        35.6105567887006
       ]
      },
-     "sta_ft": 1210.5,
-     "sta": "12+10.55",
+     "sta_ft": 1378.1,
+     "sta": "13+78.10",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30696,8 +30776,8 @@
        35.6105567887006
       ]
      },
-     "sta_ft": 1210.5,
-     "sta": "12+10.55",
+     "sta_ft": 1378.1,
+     "sta": "13+78.10",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30830,8 +30910,8 @@
        35.6105567887006
       ]
      },
-     "sta_ft": 1210.5,
-     "sta": "12+10.55",
+     "sta_ft": 1378.1,
+     "sta": "13+78.10",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -30964,8 +31044,8 @@
        35.6110646587836
       ]
      },
-     "sta_ft": 1303.4,
-     "sta": "13+03.45",
+     "sta_ft": 1471.0,
+     "sta": "14+70.99",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31098,8 +31178,8 @@
        35.6110646587836
       ]
      },
-     "sta_ft": 1303.4,
-     "sta": "13+03.45",
+     "sta_ft": 1471.0,
+     "sta": "14+70.99",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31377,8 +31457,8 @@
       "object_id": "1193",
       "_csv_match_dist_m": 0.07
      },
-     "sta_ft": 1334.0,
-     "sta": "13+33.96"
+     "sta_ft": 1501.5,
+     "sta": "15+01.51"
     },
     {
      "id": "B-PAR-001",
@@ -31393,8 +31473,8 @@
        35.6110404417681
       ]
      },
-     "sta_ft": 1381.1,
-     "sta": "13+81.14",
+     "sta_ft": 1548.7,
+     "sta": "15+48.69",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31533,8 +31613,8 @@
        35.610356636634
       ]
      },
-     "sta_ft": 1412.7,
-     "sta": "14+12.66",
+     "sta_ft": 1580.2,
+     "sta": "15+80.21",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31667,8 +31747,8 @@
        35.6105827656545
       ]
      },
-     "sta_ft": 1539.9,
-     "sta": "15+39.85",
+     "sta_ft": 1707.4,
+     "sta": "17+07.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31801,8 +31881,8 @@
        35.6105827656545
       ]
      },
-     "sta_ft": 1539.9,
-     "sta": "15+39.85",
+     "sta_ft": 1707.4,
+     "sta": "17+07.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -31935,8 +32015,8 @@
        35.6105789616536
       ]
      },
-     "sta_ft": 1541.5,
-     "sta": "15+41.48",
+     "sta_ft": 1709.0,
+     "sta": "17+09.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32069,8 +32149,8 @@
        35.6105789616536
       ]
      },
-     "sta_ft": 1541.5,
-     "sta": "15+41.48",
+     "sta_ft": 1709.0,
+     "sta": "17+09.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32203,8 +32283,8 @@
        35.6105789616536
       ]
      },
-     "sta_ft": 1541.5,
-     "sta": "15+41.48",
+     "sta_ft": 1709.0,
+     "sta": "17+09.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32337,8 +32417,8 @@
        35.6105789616536
       ]
      },
-     "sta_ft": 1541.5,
-     "sta": "15+41.48",
+     "sta_ft": 1709.0,
+     "sta": "17+09.03",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32471,8 +32551,8 @@
        35.6101683495764
       ]
      },
-     "sta_ft": 1567.0,
-     "sta": "15+67.00",
+     "sta_ft": 1734.5,
+     "sta": "17+34.54",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32605,8 +32685,8 @@
        35.6101523025718
       ]
      },
-     "sta_ft": 1578.4,
-     "sta": "15+78.36",
+     "sta_ft": 1745.9,
+     "sta": "17+45.91",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32739,8 +32819,8 @@
        35.6101523025718
       ]
      },
-     "sta_ft": 1578.4,
-     "sta": "15+78.36",
+     "sta_ft": 1745.9,
+     "sta": "17+45.91",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -32873,8 +32953,8 @@
        35.6099289125098
       ]
      },
-     "sta_ft": 1720.3,
-     "sta": "17+20.33",
+     "sta_ft": 1887.9,
+     "sta": "18+87.88",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33007,8 +33087,8 @@
        35.6100792505261
       ]
      },
-     "sta_ft": 1798.2,
-     "sta": "17+98.24",
+     "sta_ft": 1965.8,
+     "sta": "19+65.79",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33039,8 +33119,8 @@
        ]
       ]
      },
-     "sta_ft": 1805.7,
-     "sta": "18+05.73",
+     "sta_ft": 1973.3,
+     "sta": "19+73.28",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33065,8 +33145,8 @@
        35.6096149364076
       ]
      },
-     "sta_ft": 2022.8,
-     "sta": "20+22.79",
+     "sta_ft": 2190.3,
+     "sta": "21+90.34",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33344,8 +33424,8 @@
       "object_id": "1208",
       "_csv_match_dist_m": 0.01
      },
-     "sta_ft": 2158.2,
-     "sta": "21+58.20"
+     "sta_ft": 2325.7,
+     "sta": "23+25.74"
     },
     {
      "id": "B-SIG-041",
@@ -33360,8 +33440,8 @@
        35.6093778663308
       ]
      },
-     "sta_ft": 2246.1,
-     "sta": "22+46.14",
+     "sta_ft": 2413.7,
+     "sta": "24+13.69",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33639,8 +33719,8 @@
       "object_id": "1210",
       "_csv_match_dist_m": 0.09
      },
-     "sta_ft": 2379.5,
-     "sta": "23+79.54"
+     "sta_ft": 2547.1,
+     "sta": "25+47.09"
     },
     {
      "id": "B-CUL-004",
@@ -33800,8 +33880,8 @@
       "object_id": "1215",
       "_csv_match_dist_m": 0.2
      },
-     "sta_ft": 2769.3,
-     "sta": "27+69.33"
+     "sta_ft": 2936.9,
+     "sta": "29+36.87"
     },
     {
      "id": "B-SIG-042",
@@ -33816,8 +33896,8 @@
        35.6088463151532
       ]
      },
-     "sta_ft": 2789.9,
-     "sta": "27+89.90",
+     "sta_ft": 2957.5,
+     "sta": "29+57.45",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -33935,146 +34015,6 @@
       "road": "Newfound Gap Road, SD    RT 0010B",
       "fmss_asset": "139505",
       "notes": "Mileage > CC/SM"
-     }
-    },
-    {
-     "id": "B-PAR-002",
-     "ulid": "01KRJMG17NXX96RPQJ5276XZPT",
-     "kind": "parking",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4342325508906,
-       35.6090012521449
-      ]
-     },
-     "sta_ft": 2919.5,
-     "sta": "29+19.49",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         10,
-         11,
-         13,
-         15,
-         17,
-         25,
-         26,
-         27,
-         51,
-         52,
-         57,
-         63,
-         87,
-         117,
-         118,
-         119,
-         120,
-         143,
-         144,
-         145,
-         146,
-         164,
-         165,
-         166,
-         167,
-         255,
-         260,
-         261,
-         262,
-         263,
-         264,
-         265,
-         266,
-         267,
-         268,
-         313
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010S": [
-         8,
-         9,
-         11,
-         13,
-         14,
-         17,
-         28,
-         29,
-         30,
-         50,
-         55,
-         56,
-         63,
-         71,
-         72,
-         89,
-         124,
-         125,
-         126,
-         127,
-         147,
-         148,
-         149,
-         150,
-         355,
-         356,
-         357,
-         358,
-         359,
-         360,
-         361,
-         362,
-         363,
-         364,
-         365,
-         366,
-         367,
-         368,
-         369,
-         370,
-         371,
-         372,
-         374,
-         375,
-         376,
-         546,
-         644,
-         662,
-         663,
-         664,
-         674,
-         685,
-         686,
-         691,
-         692,
-         703
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "loc_name": "Kuwohi Rd Pull Off #2 At Mile Marker 0.43",
-      "road": "Kuwohi Pullout Parking At Milepost 0.43",
-      "type": "Public",
-      "fmss_loc": "0000",
-      "notes": "Could fit 3 cars ",
-      "material": "Asphalt",
-      "parking_spots": 3,
-      "rip_id": "GRSM-0010S",
-      "description": ""
      }
     },
     {
@@ -69665,6 +69605,146 @@
      "id": "B-PAV-001"
     },
     {
+     "id": "B-PAR-002",
+     "ulid": "01KRJMG17NXX96RPQJ5276XZPT",
+     "kind": "parking",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4342325508906,
+       35.6090012521449
+      ]
+     },
+     "sta_ft": 3087.0,
+     "sta": "30+87.04",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         10,
+         11,
+         13,
+         15,
+         17,
+         25,
+         26,
+         27,
+         51,
+         52,
+         57,
+         63,
+         87,
+         117,
+         118,
+         119,
+         120,
+         143,
+         144,
+         145,
+         146,
+         164,
+         165,
+         166,
+         167,
+         255,
+         260,
+         261,
+         262,
+         263,
+         264,
+         265,
+         266,
+         267,
+         268,
+         313
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010S": [
+         8,
+         9,
+         11,
+         13,
+         14,
+         17,
+         28,
+         29,
+         30,
+         50,
+         55,
+         56,
+         63,
+         71,
+         72,
+         89,
+         124,
+         125,
+         126,
+         127,
+         147,
+         148,
+         149,
+         150,
+         355,
+         356,
+         357,
+         358,
+         359,
+         360,
+         361,
+         362,
+         363,
+         364,
+         365,
+         366,
+         367,
+         368,
+         369,
+         370,
+         371,
+         372,
+         374,
+         375,
+         376,
+         546,
+         644,
+         662,
+         663,
+         664,
+         674,
+         685,
+         686,
+         691,
+         692,
+         703
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "loc_name": "Kuwohi Rd Pull Off #2 At Mile Marker 0.43",
+      "road": "Kuwohi Pullout Parking At Milepost 0.43",
+      "type": "Public",
+      "fmss_loc": "0000",
+      "notes": "Could fit 3 cars ",
+      "material": "Asphalt",
+      "parking_spots": 3,
+      "rip_id": "GRSM-0010S",
+      "description": ""
+     }
+    },
+    {
      "id": "B-GUA-001",
      "ulid": "01KRJMG1QAS2DNE6ZR3YQRVGG8",
      "kind": "guardrail",
@@ -71491,8 +71571,8 @@
        ]
       ]
      },
-     "sta_ft": 3071.7,
-     "sta": "30+71.71",
+     "sta_ft": 3239.3,
+     "sta": "32+39.26",
      "reported_in": [
       "GIP"
      ],
@@ -71510,8 +71590,8 @@
      "attrs": {
       "length_ft": 896.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 15.342899,
-      "mp_end": 15.516759,
+      "mp_start": 15.371887,
+      "mp_end": 15.544856,
       "side": "L",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/20/2010",
@@ -71530,8 +71610,8 @@
        35.6077777778
       ]
      },
-     "sta_ft": 3073.7,
-     "sta": "30+73.66",
+     "sta_ft": 3241.2,
+     "sta": "32+41.21",
      "attrs": {
       "pid": "DG4377",
       "name": "SWA 3",
@@ -73301,8 +73381,8 @@
        ]
       ]
      },
-     "sta_ft": 3156.1,
-     "sta": "31+56.14",
+     "sta_ft": 3323.7,
+     "sta": "33+23.69",
      "reported_in": [
       "WIP"
      ],
@@ -73321,8 +73401,8 @@
      "attrs": {
       "length_ft": 900.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 15.359111,
-      "mp_end": 15.525631,
+      "mp_start": 15.388016,
+      "mp_end": 15.553683,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Fill Wall",
@@ -73490,8 +73570,8 @@
       "object_id": "1228",
       "_csv_match_dist_m": 0.73
      },
-     "sta_ft": 3454.6,
-     "sta": "34+54.55"
+     "sta_ft": 3622.1,
+     "sta": "36+22.10"
     },
     {
      "id": "B-SIG-043",
@@ -73506,8 +73586,8 @@
        35.6079423418591
       ]
      },
-     "sta_ft": 3679.4,
-     "sta": "36+79.44",
+     "sta_ft": 3847.0,
+     "sta": "38+46.99",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -73640,8 +73720,8 @@
        35.6079181198472
       ]
      },
-     "sta_ft": 3713.9,
-     "sta": "37+13.93",
+     "sta_ft": 3881.5,
+     "sta": "38+81.47",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -73779,8 +73859,8 @@
        35.6075128840001
       ]
      },
-     "sta_ft": 3799.6,
-     "sta": "37+99.61",
+     "sta_ft": 3967.2,
+     "sta": "39+67.16",
      "attrs": {
       "loc_name": "Oconaluftee Overlook",
       "road": "Newfound Gap Road South",
@@ -73944,8 +74024,8 @@
       },
       "road_bearing_deg": 187.2
      },
-     "sta_ft": 3897.4,
-     "sta": "38+97.42"
+     "sta_ft": 4065.0,
+     "sta": "40+64.97"
     },
     {
      "id": "B-CUL-007",
@@ -74097,8 +74177,8 @@
       },
       "road_bearing_deg": 184.0
      },
-     "sta_ft": 3911.5,
-     "sta": "39+11.46"
+     "sta_ft": 4079.0,
+     "sta": "40+79.01"
     },
     {
      "id": "B-SIG-044",
@@ -74113,8 +74193,8 @@
        35.6072024737004
       ]
      },
-     "sta_ft": 3915.6,
-     "sta": "39+15.63",
+     "sta_ft": 4083.2,
+     "sta": "40+83.18",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -74247,8 +74327,8 @@
        35.6071679836931
       ]
      },
-     "sta_ft": 3928.1,
-     "sta": "39+28.10",
+     "sta_ft": 4095.7,
+     "sta": "40+95.65",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -74381,8 +74461,8 @@
        35.6070904506711
       ]
      },
-     "sta_ft": 3953.9,
-     "sta": "39+53.94",
+     "sta_ft": 4121.5,
+     "sta": "41+21.49",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -74515,8 +74595,8 @@
        35.6066092095892
       ]
      },
-     "sta_ft": 4156.5,
-     "sta": "41+56.46",
+     "sta_ft": 4324.0,
+     "sta": "43+24.01",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -74649,8 +74729,8 @@
        35.606464096566
       ]
      },
-     "sta_ft": 4230.6,
-     "sta": "42+30.56",
+     "sta_ft": 4398.1,
+     "sta": "43+98.11",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -75465,8 +75545,8 @@
        ]
       ]
      },
-     "sta_ft": 4243.7,
-     "sta": "42+43.70",
+     "sta_ft": 4411.2,
+     "sta": "44+11.25",
      "reported_in": [
       "GIP"
      ],
@@ -75484,8 +75564,8 @@
      "attrs": {
       "length_ft": 334.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 15.567969,
-      "mp_end": 15.633107,
+      "mp_start": 15.595804,
+      "mp_end": 15.660607,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -75505,8 +75585,8 @@
        35.6060245275034
       ]
      },
-     "sta_ft": 4499.6,
-     "sta": "44+99.56",
+     "sta_ft": 4667.1,
+     "sta": "46+67.11",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -75784,8 +75864,8 @@
       "object_id": "1218",
       "_csv_match_dist_m": 0.67
      },
-     "sta_ft": 4753.4,
-     "sta": "47+53.43"
+     "sta_ft": 4921.0,
+     "sta": "49+20.97"
     },
     {
      "id": "B-GUA-003",
@@ -77642,8 +77722,8 @@
        ]
       ]
      },
-     "sta_ft": 4849.6,
-     "sta": "48+49.56",
+     "sta_ft": 5017.1,
+     "sta": "50+17.11",
      "reported_in": [
       "GIP"
      ],
@@ -77662,8 +77742,8 @@
      "attrs": {
       "length_ft": 919.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 15.68432,
-      "mp_end": 15.86077,
+      "mp_start": 15.711558,
+      "mp_end": 15.887104,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -77828,8 +77908,8 @@
       "object_id": "1213",
       "_csv_match_dist_m": 0.68
      },
-     "sta_ft": 5314.9,
-     "sta": "53+14.91"
+     "sta_ft": 5482.5,
+     "sta": "54+82.46"
     },
     {
      "id": "B-CUL-010",
@@ -77989,8 +78069,8 @@
       "object_id": "1206",
       "_csv_match_dist_m": 0.64
      },
-     "sta_ft": 5730.4,
-     "sta": "57+30.41"
+     "sta_ft": 5898.0,
+     "sta": "58+97.95"
     },
     {
      "ulid": "01KRJME2QEAFWXMQGWQJJSM6HR",
@@ -78004,8 +78084,8 @@
        35.6052777778
       ]
      },
-     "sta_ft": 5864.3,
-     "sta": "58+64.29",
+     "sta_ft": 6031.8,
+     "sta": "60+31.84",
      "attrs": {
       "pid": "FB1215",
       "name": "X 56",
@@ -78037,8 +78117,8 @@
        35.6040394902761
       ]
      },
-     "sta_ft": 6067.0,
-     "sta": "60+66.95",
+     "sta_ft": 6234.5,
+     "sta": "62+34.50",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -78171,8 +78251,8 @@
        35.6037378632692
       ]
      },
-     "sta_ft": 6502.8,
-     "sta": "65+02.80",
+     "sta_ft": 6670.4,
+     "sta": "66+70.35",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -78305,8 +78385,8 @@
        35.6038620212974
       ]
      },
-     "sta_ft": 6506.9,
-     "sta": "65+06.88",
+     "sta_ft": 6674.4,
+     "sta": "66+74.43",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -78590,8 +78670,8 @@
       "object_id": "1192",
       "_csv_match_dist_m": 0.68
      },
-     "sta_ft": 6587.9,
-     "sta": "65+87.88"
+     "sta_ft": 6755.4,
+     "sta": "67+55.43"
     },
     {
      "id": "B-PAR-005",
@@ -78606,8 +78686,8 @@
        35.6021773010305
       ]
      },
-     "sta_ft": 7364.6,
-     "sta": "73+64.65",
+     "sta_ft": 7532.2,
+     "sta": "75+32.20",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -78891,8 +78971,8 @@
       "object_id": "1177",
       "_csv_match_dist_m": 0.51
      },
-     "sta_ft": 7949.9,
-     "sta": "79+49.88"
+     "sta_ft": 8117.4,
+     "sta": "81+17.43"
     },
     {
      "id": "B-SIG-051",
@@ -78907,8 +78987,8 @@
        35.6015236610006
       ]
      },
-     "sta_ft": 8196.0,
-     "sta": "81+95.96",
+     "sta_ft": 8363.5,
+     "sta": "83+63.51",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -79040,8 +79120,8 @@
        35.6015716694
       ]
      },
-     "sta_ft": 8196.8,
-     "sta": "81+96.84",
+     "sta_ft": 8364.4,
+     "sta": "83+64.38",
      "attrs": {
       "pid": "FB4122",
       "name": "NEWFOUND AZ MK",
@@ -79218,8 +79298,8 @@
       "object_id": "1159",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 8572.6,
-     "sta": "85+72.62"
+     "sta_ft": 8740.2,
+     "sta": "87+40.17"
     },
     {
      "id": "B-PAR-006",
@@ -79234,8 +79314,8 @@
        35.5993180055943
       ]
      },
-     "sta_ft": 9104.7,
-     "sta": "91+04.66",
+     "sta_ft": 9272.2,
+     "sta": "92+72.20",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -79373,8 +79453,8 @@
        35.5993111440001
       ]
      },
-     "sta_ft": 9107.4,
-     "sta": "91+07.39",
+     "sta_ft": 9274.9,
+     "sta": "92+74.94",
      "attrs": {
       "loc_name": "Deep Creek Valley Overlook",
       "road": "Newfound Gap Pullout Parking At Milepost 16.52",
@@ -79546,8 +79626,8 @@
       "object_id": "1151",
       "_csv_match_dist_m": 1.33
      },
-     "sta_ft": 9172.5,
-     "sta": "91+72.49"
+     "sta_ft": 9340.0,
+     "sta": "93+40.04"
     },
     {
      "id": "B-GUA-004",
@@ -80380,8 +80460,8 @@
        ]
       ]
      },
-     "sta_ft": 9398.5,
-     "sta": "93+98.46",
+     "sta_ft": 9566.0,
+     "sta": "95+66.01",
      "reported_in": [
       "GIP"
      ],
@@ -80399,8 +80479,8 @@
      "attrs": {
       "length_ft": 398.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 16.5579,
-      "mp_end": 16.635966,
+      "mp_start": 16.58066,
+      "mp_end": 16.658326,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -81874,8 +81954,8 @@
        ]
       ]
      },
-     "sta_ft": 9532.5,
-     "sta": "95+32.54",
+     "sta_ft": 9700.1,
+     "sta": "97+00.09",
      "reported_in": [
       "GIP"
      ],
@@ -81893,8 +81973,8 @@
      "attrs": {
       "length_ft": 725.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 16.583649,
-      "mp_end": 16.72283,
+      "mp_start": 16.606278,
+      "mp_end": 16.744746,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -81914,8 +81994,8 @@
        35.5980736373929
       ]
      },
-     "sta_ft": 9718.9,
-     "sta": "97+18.86",
+     "sta_ft": 9886.4,
+     "sta": "98+86.41",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -82052,8 +82132,8 @@
        35.5980667760001
       ]
      },
-     "sta_ft": 9721.2,
-     "sta": "97+21.19",
+     "sta_ft": 9888.7,
+     "sta": "98+88.74",
      "attrs": {
       "loc_name": "Deep Creek Valley Overlook",
       "road": "Deep Creek Valley Overlook #1",
@@ -82225,8 +82305,8 @@
       "object_id": "1141",
       "_csv_match_dist_m": 4.31
      },
-     "sta_ft": 9787.1,
-     "sta": "97+87.09"
+     "sta_ft": 9954.6,
+     "sta": "99+54.64"
     },
     {
      "id": "B-CUL-016",
@@ -82386,8 +82466,8 @@
       "object_id": "1129",
       "_csv_match_dist_m": 0.73
      },
-     "sta_ft": 10138.9,
-     "sta": "101+38.89"
+     "sta_ft": 10306.4,
+     "sta": "103+06.44"
     },
     {
      "id": "B-CUL-017",
@@ -82547,8 +82627,8 @@
       "object_id": "1120",
       "_csv_match_dist_m": 0.81
      },
-     "sta_ft": 10423.5,
-     "sta": "104+23.51"
+     "sta_ft": 10591.1,
+     "sta": "105+91.05"
     },
     {
      "id": "B-GUA-006",
@@ -83825,8 +83905,8 @@
        ]
       ]
      },
-     "sta_ft": 11121.7,
-     "sta": "111+21.68",
+     "sta_ft": 11289.2,
+     "sta": "112+89.22",
      "reported_in": [
       "GIP"
      ],
@@ -83844,8 +83924,8 @@
      "attrs": {
       "length_ft": 640.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 16.88883,
-      "mp_end": 17.00945,
+      "mp_start": 16.909895,
+      "mp_end": 17.029896,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -83865,8 +83945,8 @@
        35.5948734759103
       ]
      },
-     "sta_ft": 11530.6,
-     "sta": "115+30.58",
+     "sta_ft": 11698.1,
+     "sta": "116+98.13",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -84003,8 +84083,8 @@
        35.5948666150001
       ]
      },
-     "sta_ft": 11532.6,
-     "sta": "115+32.64",
+     "sta_ft": 11700.2,
+     "sta": "117+00.19",
      "attrs": {
       "loc_name": "Short Beech Ridge Overlook",
       "road": "Swinging Bridges Parking Areas (Deep Creek Valley Overlook # 2)",
@@ -84031,8 +84111,8 @@
        35.5950012279411
       ]
      },
-     "sta_ft": 11542.5,
-     "sta": "115+42.47",
+     "sta_ft": 11710.0,
+     "sta": "117+10.02",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -84165,8 +84245,8 @@
        35.5945282329585
       ]
      },
-     "sta_ft": 12429.8,
-     "sta": "124+29.81",
+     "sta_ft": 12597.4,
+     "sta": "125+97.36",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -84444,8 +84524,8 @@
       "object_id": "1086",
       "_csv_match_dist_m": 0.55
      },
-     "sta_ft": 12682.9,
-     "sta": "126+82.93"
+     "sta_ft": 12850.5,
+     "sta": "128+50.48"
     },
     {
      "id": "B-PAR-009",
@@ -84460,8 +84540,8 @@
        35.5942389249455
       ]
      },
-     "sta_ft": 12799.0,
-     "sta": "127+98.97",
+     "sta_ft": 12966.5,
+     "sta": "129+66.51",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -84599,8 +84679,8 @@
        35.594232064
       ]
      },
-     "sta_ft": 12800.8,
-     "sta": "128+00.83",
+     "sta_ft": 12968.4,
+     "sta": "129+68.38",
      "attrs": {
       "loc_name": "Swinging Bridges Overlook",
       "road": "Swinging Bridges Parking Areas (Deep Creek Valley Overlook # 2)",
@@ -86773,8 +86853,8 @@
        ]
       ]
      },
-     "sta_ft": 12899.5,
-     "sta": "128+99.52",
+     "sta_ft": 13067.1,
+     "sta": "130+67.07",
      "reported_in": [
       "GIP"
      ],
@@ -86793,8 +86873,8 @@
      "attrs": {
       "length_ft": 1062.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 17.230251,
-      "mp_end": 17.436119,
+      "mp_start": 17.249566,
+      "mp_end": 17.454379,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -88124,8 +88204,8 @@
        ]
       ]
      },
-     "sta_ft": 13053.5,
-     "sta": "130+53.47",
+     "sta_ft": 13221.0,
+     "sta": "132+21.02",
      "reported_in": [
       "GIP"
      ],
@@ -88144,8 +88224,8 @@
      "attrs": {
       "length_ft": 665.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 17.259816,
-      "mp_end": 17.385408,
+      "mp_start": 17.278979,
+      "mp_end": 17.403927,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -88165,8 +88245,8 @@
        35.5940310109415
       ]
      },
-     "sta_ft": 13102.4,
-     "sta": "131+02.39",
+     "sta_ft": 13269.9,
+     "sta": "132+69.94",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -88299,8 +88379,8 @@
        35.5939807689373
       ]
      },
-     "sta_ft": 13152.9,
-     "sta": "131+52.87",
+     "sta_ft": 13320.4,
+     "sta": "133+20.42",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -88578,8 +88658,8 @@
       "object_id": "1075",
       "_csv_match_dist_m": 0.64
      },
-     "sta_ft": 13273.8,
-     "sta": "132+73.77"
+     "sta_ft": 13441.3,
+     "sta": "134+41.32"
     },
     {
      "id": "B-CUL-020",
@@ -88739,8 +88819,8 @@
       "object_id": "1069",
       "_csv_match_dist_m": 0.82
      },
-     "sta_ft": 13730.7,
-     "sta": "137+30.72"
+     "sta_ft": 13898.3,
+     "sta": "138+98.27"
     },
     {
      "id": "B-PAR-010",
@@ -88755,8 +88835,8 @@
        35.5925225927168
       ]
      },
-     "sta_ft": 13986.1,
-     "sta": "139+86.13",
+     "sta_ft": 14153.7,
+     "sta": "141+53.68",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -88892,8 +88972,8 @@
        35.592515732
       ]
      },
-     "sta_ft": 13988.8,
-     "sta": "139+88.75",
+     "sta_ft": 14156.3,
+     "sta": "141+56.30",
      "attrs": {
       "loc_name": "Thomas Ridge Overlook",
       "road": "Newfound Gap Pullout Parking At Milepost 17.46",
@@ -89065,8 +89145,8 @@
       "object_id": "1063",
       "_csv_match_dist_m": 0.8
      },
-     "sta_ft": 14363.6,
-     "sta": "143+63.63"
+     "sta_ft": 14531.2,
+     "sta": "145+31.17"
     },
     {
      "id": "B-CUL-022",
@@ -89226,8 +89306,8 @@
       "object_id": "1056",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 14858.4,
-     "sta": "148+58.39"
+     "sta_ft": 15025.9,
+     "sta": "150+25.93"
     },
     {
      "id": "B-CUL-023",
@@ -89387,8 +89467,8 @@
       "object_id": "1046",
       "_csv_match_dist_m": 0.73
      },
-     "sta_ft": 15382.6,
-     "sta": "153+82.59"
+     "sta_ft": 15550.1,
+     "sta": "155+50.14"
     },
     {
      "id": "B-SIG-055",
@@ -89403,8 +89483,8 @@
        35.5889773291251
       ]
      },
-     "sta_ft": 15713.1,
-     "sta": "157+13.09",
+     "sta_ft": 15880.6,
+     "sta": "158+80.63",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -89682,8 +89762,8 @@
       "object_id": "1041",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 15721.6,
-     "sta": "157+21.61"
+     "sta_ft": 15889.2,
+     "sta": "158+89.16"
     },
     {
      "id": "B-PAR-011",
@@ -89698,8 +89778,8 @@
        35.5885084440285
       ]
      },
-     "sta_ft": 15878.5,
-     "sta": "158+78.45",
+     "sta_ft": 16046.0,
+     "sta": "160+46.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -89835,8 +89915,8 @@
        35.588501584
       ]
      },
-     "sta_ft": 15881.2,
-     "sta": "158+81.20",
+     "sta_ft": 16048.7,
+     "sta": "160+48.75",
      "attrs": {
       "loc_name": "Webb Overlook",
       "road": "Webb Overlook Parking",
@@ -90008,8 +90088,8 @@
       "object_id": "1039",
       "_csv_match_dist_m": 0.83
      },
-     "sta_ft": 16122.6,
-     "sta": "161+22.58"
+     "sta_ft": 16290.1,
+     "sta": "162+90.13"
     },
     {
      "id": "B-SIG-056",
@@ -90024,8 +90104,8 @@
        35.5877526298905
       ]
      },
-     "sta_ft": 16184.9,
-     "sta": "161+84.93",
+     "sta_ft": 16352.5,
+     "sta": "163+52.48",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -90158,8 +90238,8 @@
        35.5877125958828
       ]
      },
-     "sta_ft": 16200.2,
-     "sta": "162+00.16",
+     "sta_ft": 16367.7,
+     "sta": "163+67.71",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -90429,8 +90509,8 @@
       },
       "road_bearing_deg": 158.3
      },
-     "sta_ft": 16477.4,
-     "sta": "164+77.38"
+     "sta_ft": 16644.9,
+     "sta": "166+44.93"
     },
     {
      "id": "B-CUL-027",
@@ -90590,8 +90670,8 @@
       "object_id": "1030",
       "_csv_match_dist_m": 0.42
      },
-     "sta_ft": 16965.1,
-     "sta": "169+65.13"
+     "sta_ft": 17132.7,
+     "sta": "171+32.68"
     },
     {
      "id": "B-GUA-009",
@@ -92064,8 +92144,8 @@
        ]
       ]
      },
-     "sta_ft": 17046.2,
-     "sta": "170+46.17",
+     "sta_ft": 17213.7,
+     "sta": "172+13.72",
      "reported_in": [
       "GIP"
      ],
@@ -92085,8 +92165,8 @@
      "attrs": {
       "length_ft": 718.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.026583,
-      "mp_end": 18.166257,
+      "mp_start": 18.041816,
+      "mp_end": 18.180774,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -92106,8 +92186,8 @@
        35.5862642666571
       ]
      },
-     "sta_ft": 17080.3,
-     "sta": "170+80.31",
+     "sta_ft": 17247.9,
+     "sta": "172+47.86",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -92240,8 +92320,8 @@
        35.5862642666571
       ]
      },
-     "sta_ft": 17080.3,
-     "sta": "170+80.31",
+     "sta_ft": 17247.9,
+     "sta": "172+47.86",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -92519,8 +92599,8 @@
       "object_id": "1025",
       "_csv_match_dist_m": 0.2
      },
-     "sta_ft": 17226.9,
-     "sta": "172+26.93"
+     "sta_ft": 17394.5,
+     "sta": "173+94.48"
     },
     {
      "id": "B-MIL-004",
@@ -92535,8 +92615,8 @@
        35.58640694275
       ]
      },
-     "sta_ft": 17561.3,
-     "sta": "175+61.28",
+     "sta_ft": 17728.8,
+     "sta": "177+28.83",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -92814,8 +92894,8 @@
       "object_id": "1016",
       "_csv_match_dist_m": 0.62
      },
-     "sta_ft": 17735.5,
-     "sta": "177+35.54"
+     "sta_ft": 17903.1,
+     "sta": "179+03.09"
     },
     {
      "id": "B-GUA-010",
@@ -93968,8 +94048,8 @@
        ]
       ]
      },
-     "sta_ft": 17940.1,
-     "sta": "179+40.06",
+     "sta_ft": 18107.6,
+     "sta": "181+07.61",
      "reported_in": [
       "GIP"
      ],
@@ -93990,8 +94070,8 @@
      "attrs": {
       "length_ft": 584.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.198247,
-      "mp_end": 18.307172,
+      "mp_start": 18.2126,
+      "mp_end": 18.320967,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -94156,8 +94236,8 @@
       "object_id": "1010",
       "_csv_match_dist_m": 0.45
      },
-     "sta_ft": 18141.7,
-     "sta": "181+41.73"
+     "sta_ft": 18309.3,
+     "sta": "183+09.28"
     },
     {
      "id": "B-PAR-012",
@@ -94172,8 +94252,8 @@
        35.5858503347332
       ]
      },
-     "sta_ft": 18332.4,
-     "sta": "183+32.40",
+     "sta_ft": 18500.0,
+     "sta": "184+99.95",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -94456,8 +94536,8 @@
       "object_id": "1004",
       "_csv_match_dist_m": 0.23
      },
-     "sta_ft": 18650.1,
-     "sta": "186+50.07"
+     "sta_ft": 18817.6,
+     "sta": "188+17.62"
     },
     {
      "id": "B-CUL-032",
@@ -94617,8 +94697,8 @@
       "object_id": "1002",
       "_csv_match_dist_m": 0.6
      },
-     "sta_ft": 18945.4,
-     "sta": "189+45.39"
+     "sta_ft": 19112.9,
+     "sta": "191+12.94"
     },
     {
      "id": "B-CUL-033",
@@ -94778,8 +94858,8 @@
       "object_id": "1001",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 19337.0,
-     "sta": "193+36.98"
+     "sta_ft": 19504.5,
+     "sta": "195+04.52"
     },
     {
      "id": "B-GUA-011",
@@ -95724,8 +95804,8 @@
        ]
       ]
      },
-     "sta_ft": 19509.3,
-     "sta": "195+09.33",
+     "sta_ft": 19676.9,
+     "sta": "196+76.88",
      "reported_in": [
       "GIP"
      ],
@@ -95745,8 +95825,8 @@
      "attrs": {
       "length_ft": 472.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.499613,
-      "mp_end": 18.588611,
+      "mp_start": 18.512421,
+      "mp_end": 18.600964,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -96612,8 +96692,8 @@
        ]
       ]
      },
-     "sta_ft": 19519.3,
-     "sta": "195+19.26",
+     "sta_ft": 19686.8,
+     "sta": "196+86.81",
      "reported_in": [
       "GIP"
      ],
@@ -96633,8 +96713,8 @@
      "attrs": {
       "length_ft": 414.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.50152,
-      "mp_end": 18.58255,
+      "mp_start": 18.514319,
+      "mp_end": 18.594933,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -96799,8 +96879,8 @@
       "object_id": "1006",
       "_csv_match_dist_m": 0.76
      },
-     "sta_ft": 19782.1,
-     "sta": "197+82.15"
+     "sta_ft": 19949.7,
+     "sta": "199+49.70"
     },
     {
      "id": "B-SIG-060",
@@ -96815,8 +96895,8 @@
        35.5892446554466
       ]
      },
-     "sta_ft": 19948.9,
-     "sta": "199+48.87",
+     "sta_ft": 20116.4,
+     "sta": "201+16.42",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -97094,8 +97174,8 @@
       "object_id": "1008",
       "_csv_match_dist_m": 0.71
      },
-     "sta_ft": 20013.0,
-     "sta": "200+13.04"
+     "sta_ft": 20180.6,
+     "sta": "201+80.58"
     },
     {
      "ulid": "01KRJME25T1BCRJGSNZMN22NMJ",
@@ -97109,8 +97189,8 @@
        35.5896415080001
       ]
      },
-     "sta_ft": 20170.8,
-     "sta": "201+70.76",
+     "sta_ft": 20338.3,
+     "sta": "203+38.31",
      "attrs": {
       "loc_name": "History Exhibit Overlook",
       "road": "History Exhibit Parking",
@@ -97137,8 +97217,8 @@
        35.5896483685071
       ]
      },
-     "sta_ft": 20173.0,
-     "sta": "201+72.98",
+     "sta_ft": 20340.5,
+     "sta": "203+40.53",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -97421,8 +97501,8 @@
       "object_id": "1011",
       "_csv_match_dist_m": 0.69
      },
-     "sta_ft": 20387.4,
-     "sta": "203+87.39"
+     "sta_ft": 20554.9,
+     "sta": "205+54.94"
     },
     {
      "id": "B-GUA-013",
@@ -98075,8 +98155,8 @@
        ]
       ]
      },
-     "sta_ft": 20596.9,
-     "sta": "205+96.89",
+     "sta_ft": 20764.4,
+     "sta": "207+64.44",
      "reported_in": [
       "GIP"
      ],
@@ -98096,8 +98176,8 @@
      "attrs": {
       "length_ft": 315.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.708471,
-      "mp_end": 18.769298,
+      "mp_start": 18.720209,
+      "mp_end": 18.780724,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -98262,8 +98342,8 @@
       "object_id": "1014",
       "_csv_match_dist_m": 0.75
      },
-     "sta_ft": 20618.5,
-     "sta": "206+18.54"
+     "sta_ft": 20786.1,
+     "sta": "207+86.09"
     },
     {
      "id": "B-SIG-061",
@@ -98278,8 +98358,8 @@
        35.5903114425816
       ]
      },
-     "sta_ft": 20709.2,
-     "sta": "207+09.19",
+     "sta_ft": 20876.7,
+     "sta": "208+76.74",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -98412,8 +98492,8 @@
        35.5903273245841
       ]
      },
-     "sta_ft": 20717.8,
-     "sta": "207+17.84",
+     "sta_ft": 20885.4,
+     "sta": "208+85.39",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -100880,8 +100960,8 @@
        ]
       ]
      },
-     "sta_ft": 21123.3,
-     "sta": "211+23.29",
+     "sta_ft": 21290.8,
+     "sta": "212+90.84",
      "reported_in": [
       "GIP"
      ],
@@ -100901,8 +100981,8 @@
      "attrs": {
       "length_ft": 1147.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 18.809562,
-      "mp_end": 19.033178,
+      "mp_start": 18.820782,
+      "mp_end": 19.043252,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -101067,8 +101147,8 @@
       "object_id": "1024",
       "_csv_match_dist_m": 0.54
      },
-     "sta_ft": 21220.3,
-     "sta": "212+20.25"
+     "sta_ft": 21387.8,
+     "sta": "213+87.80"
     },
     {
      "id": "B-CUL-039",
@@ -101228,8 +101308,8 @@
       "object_id": "1029",
       "_csv_match_dist_m": 0.46
      },
-     "sta_ft": 21480.9,
-     "sta": "214+80.91"
+     "sta_ft": 21648.5,
+     "sta": "216+48.45"
     },
     {
      "id": "B-CUL-040",
@@ -101389,8 +101469,8 @@
       "object_id": "1033",
       "_csv_match_dist_m": 0.64
      },
-     "sta_ft": 21671.9,
-     "sta": "216+71.91"
+     "sta_ft": 21839.5,
+     "sta": "218+39.46"
     },
     {
      "id": "B-CUL-041",
@@ -101550,8 +101630,8 @@
       "object_id": "1036",
       "_csv_match_dist_m": 0.86
      },
-     "sta_ft": 22008.1,
-     "sta": "220+08.13"
+     "sta_ft": 22175.7,
+     "sta": "221+75.68"
     },
     {
      "id": "B-CUL-042",
@@ -101711,8 +101791,8 @@
       "object_id": "1037",
       "_csv_match_dist_m": 0.81
      },
-     "sta_ft": 22201.3,
-     "sta": "222+01.26"
+     "sta_ft": 22368.8,
+     "sta": "223+68.81"
     },
     {
      "id": "B-GUA-015",
@@ -102953,8 +103033,8 @@
        ]
       ]
      },
-     "sta_ft": 22359.8,
-     "sta": "223+59.84",
+     "sta_ft": 22527.4,
+     "sta": "225+27.39",
      "reported_in": [
       "GIP"
      ],
@@ -102974,8 +103054,8 @@
      "attrs": {
       "length_ft": 634.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 19.047031,
-      "mp_end": 19.164305,
+      "mp_start": 19.057034,
+      "mp_end": 19.173707,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -103140,8 +103220,8 @@
       "object_id": "1038",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 22516.0,
-     "sta": "225+16.01"
+     "sta_ft": 22683.6,
+     "sta": "226+83.56"
     },
     {
      "id": "B-MIL-005",
@@ -103156,8 +103236,8 @@
        35.5940588711799
       ]
      },
-     "sta_ft": 22825.3,
-     "sta": "228+25.32",
+     "sta_ft": 22992.9,
+     "sta": "229+92.87",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -103435,8 +103515,8 @@
       "object_id": "1044",
       "_csv_match_dist_m": 0.46
      },
-     "sta_ft": 22990.7,
-     "sta": "229+90.71"
+     "sta_ft": 23158.3,
+     "sta": "231+58.26"
     },
     {
      "id": "B-SIG-063",
@@ -103451,8 +103531,8 @@
        35.5942619311816
       ]
      },
-     "sta_ft": 23140.9,
-     "sta": "231+40.89",
+     "sta_ft": 23308.4,
+     "sta": "233+08.44",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -103585,8 +103665,8 @@
        35.5942619311816
       ]
      },
-     "sta_ft": 23140.9,
-     "sta": "231+40.89",
+     "sta_ft": 23308.4,
+     "sta": "233+08.44",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -103864,8 +103944,8 @@
       "object_id": "1049",
       "_csv_match_dist_m": 0.45
      },
-     "sta_ft": 23219.8,
-     "sta": "232+19.85"
+     "sta_ft": 23387.4,
+     "sta": "233+87.40"
     },
     {
      "id": "B-CUL-046",
@@ -104025,8 +104105,8 @@
       "object_id": "1052",
       "_csv_match_dist_m": 0.86
      },
-     "sta_ft": 23415.7,
-     "sta": "234+15.71"
+     "sta_ft": 23583.3,
+     "sta": "235+83.26"
     },
     {
      "id": "B-CUL-047",
@@ -104186,8 +104266,8 @@
       "object_id": "1058",
       "_csv_match_dist_m": 1.02
      },
-     "sta_ft": 23592.2,
-     "sta": "235+92.21"
+     "sta_ft": 23759.8,
+     "sta": "237+59.76"
     },
     {
      "id": "B-GUA-016",
@@ -105740,8 +105820,8 @@
        ]
       ]
      },
-     "sta_ft": 23760.3,
-     "sta": "237+60.27",
+     "sta_ft": 23927.8,
+     "sta": "239+27.81",
      "reported_in": [
       "GIP"
      ],
@@ -105761,8 +105841,8 @@
      "attrs": {
       "length_ft": 792.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 19.315972,
-      "mp_end": 19.463359,
+      "mp_start": 19.324596,
+      "mp_end": 19.471228,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -105927,8 +106007,8 @@
       "object_id": "1057",
       "_csv_match_dist_m": 0.75
      },
-     "sta_ft": 23912.1,
-     "sta": "239+12.09"
+     "sta_ft": 24079.6,
+     "sta": "240+79.63"
     },
     {
      "id": "B-CUL-049",
@@ -106088,8 +106168,8 @@
       "object_id": "1064",
       "_csv_match_dist_m": 0.62
      },
-     "sta_ft": 24321.6,
-     "sta": "243+21.57"
+     "sta_ft": 24489.1,
+     "sta": "244+89.12"
     },
     {
      "id": "B-CUL-050",
@@ -106249,8 +106329,8 @@
       "object_id": "1066",
       "_csv_match_dist_m": 0.66
      },
-     "sta_ft": 24546.0,
-     "sta": "245+45.98"
+     "sta_ft": 24713.5,
+     "sta": "247+13.53"
     },
     {
      "id": "B-GUA-017",
@@ -107135,8 +107215,8 @@
        ]
       ]
      },
-     "sta_ft": 24882.6,
-     "sta": "248+82.59",
+     "sta_ft": 25050.1,
+     "sta": "250+50.14",
      "reported_in": [
       "GIP"
      ],
@@ -107156,8 +107236,8 @@
      "attrs": {
       "length_ft": 438.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 19.531506,
-      "mp_end": 19.614499,
+      "mp_start": 19.539025,
+      "mp_end": 19.621593,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -107177,8 +107257,8 @@
        35.5978534487607
       ]
      },
-     "sta_ft": 25154.5,
-     "sta": "251+54.52",
+     "sta_ft": 25322.1,
+     "sta": "253+22.07",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -107456,8 +107536,8 @@
       "object_id": "1076",
       "_csv_match_dist_m": 0.69
      },
-     "sta_ft": 25228.6,
-     "sta": "252+28.64"
+     "sta_ft": 25396.2,
+     "sta": "253+96.19"
     },
     {
      "id": "B-GUA-018",
@@ -108290,8 +108370,8 @@
        ]
       ]
      },
-     "sta_ft": 25657.3,
-     "sta": "256+57.30",
+     "sta_ft": 25824.8,
+     "sta": "258+24.84",
      "reported_in": [
       "GIP"
      ],
@@ -108311,8 +108391,8 @@
      "attrs": {
       "length_ft": 400.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 19.680281,
-      "mp_end": 19.758342,
+      "mp_start": 19.687038,
+      "mp_end": 19.764699,
       "side": "R",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/20/2010",
@@ -108332,8 +108412,8 @@
        35.5989209589086
       ]
      },
-     "sta_ft": 25833.4,
-     "sta": "258+33.39",
+     "sta_ft": 26000.9,
+     "sta": "260+00.94",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -108469,8 +108549,8 @@
        35.5990804320001
       ]
      },
-     "sta_ft": 25891.9,
-     "sta": "258+91.85",
+     "sta_ft": 26059.4,
+     "sta": "260+59.40",
      "attrs": {
       "loc_name": "Beech Flats Overlook",
       "road": "Newfound Gap Road South",
@@ -108642,8 +108722,8 @@
       "object_id": "1088",
       "_csv_match_dist_m": 29.71
      },
-     "sta_ft": 25970.8,
-     "sta": "259+70.82"
+     "sta_ft": 26138.4,
+     "sta": "261+38.36"
     },
     {
      "id": "B-CUL-053",
@@ -108803,8 +108883,8 @@
       "object_id": "1088",
       "_csv_match_dist_m": 0.85
      },
-     "sta_ft": 26071.1,
-     "sta": "260+71.06"
+     "sta_ft": 26238.6,
+     "sta": "262+38.61"
     },
     {
      "id": "B-CUL-054",
@@ -108964,8 +109044,8 @@
       "object_id": "1092",
       "_csv_match_dist_m": 0.79
      },
-     "sta_ft": 26419.2,
-     "sta": "264+19.22"
+     "sta_ft": 26586.8,
+     "sta": "265+86.77"
     },
     {
      "id": "B-CUL-055",
@@ -109125,8 +109205,8 @@
       "object_id": "1093",
       "_csv_match_dist_m": 0.77
      },
-     "sta_ft": 26641.3,
-     "sta": "266+41.31"
+     "sta_ft": 26808.9,
+     "sta": "268+08.86"
     },
     {
      "id": "B-SIG-066",
@@ -109141,8 +109221,8 @@
        35.6007746212289
       ]
      },
-     "sta_ft": 26677.4,
-     "sta": "266+77.44",
+     "sta_ft": 26845.0,
+     "sta": "268+44.99",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -109275,8 +109355,8 @@
        35.6007746212289
       ]
      },
-     "sta_ft": 26677.4,
-     "sta": "266+77.44",
+     "sta_ft": 26845.0,
+     "sta": "268+44.99",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -109408,8 +109488,8 @@
        35.5997222222
       ]
      },
-     "sta_ft": 26738.2,
-     "sta": "267+38.16",
+     "sta_ft": 26905.7,
+     "sta": "269+05.70",
      "attrs": {
       "pid": "FB1216",
       "name": "Y 56",
@@ -109586,8 +109666,8 @@
       "object_id": "1100",
       "_csv_match_dist_m": 0.77
      },
-     "sta_ft": 26910.6,
-     "sta": "269+10.57"
+     "sta_ft": 27078.1,
+     "sta": "270+78.12"
     },
     {
      "id": "B-CUL-057",
@@ -109747,8 +109827,8 @@
       "object_id": "1106",
       "_csv_match_dist_m": 0.68
      },
-     "sta_ft": 27422.0,
-     "sta": "274+21.96"
+     "sta_ft": 27589.5,
+     "sta": "275+89.50"
     },
     {
      "id": "B-CUL-058",
@@ -109908,8 +109988,8 @@
       "object_id": "1105",
       "_csv_match_dist_m": 0.98
      },
-     "sta_ft": 27528.4,
-     "sta": "275+28.40"
+     "sta_ft": 27696.0,
+     "sta": "276+95.95"
     },
     {
      "id": "B-WAL-002",
@@ -109986,8 +110066,8 @@
        ]
       ]
      },
-     "sta_ft": 27882.1,
-     "sta": "278+82.08",
+     "sta_ft": 28049.6,
+     "sta": "280+49.63",
      "reported_in": [
       "WIP"
      ],
@@ -110006,8 +110086,8 @@
      "attrs": {
       "length_ft": 30.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.107534,
-      "mp_end": 20.112957,
+      "mp_start": 20.112102,
+      "mp_end": 20.117497,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -110100,8 +110180,8 @@
        ]
       ]
      },
-     "sta_ft": 27931.7,
-     "sta": "279+31.75",
+     "sta_ft": 28099.3,
+     "sta": "280+99.29",
      "reported_in": [
       "WIP"
      ],
@@ -110120,8 +110200,8 @@
      "attrs": {
       "length_ft": 30.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.117071,
-      "mp_end": 20.123331,
+      "mp_start": 20.12159,
+      "mp_end": 20.127817,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -110182,8 +110262,8 @@
        ]
       ]
      },
-     "sta_ft": 27991.3,
-     "sta": "279+91.34",
+     "sta_ft": 28158.9,
+     "sta": "281+58.89",
      "reported_in": [
       "WIP"
      ],
@@ -110202,8 +110282,8 @@
      "attrs": {
       "length_ft": 18.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.128516,
-      "mp_end": 20.131972,
+      "mp_start": 20.132975,
+      "mp_end": 20.136414,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -110260,8 +110340,8 @@
        ]
       ]
      },
-     "sta_ft": 27991.3,
-     "sta": "279+91.34",
+     "sta_ft": 28158.9,
+     "sta": "281+58.89",
      "reported_in": [
       "WIP"
      ],
@@ -110280,8 +110360,8 @@
      "attrs": {
       "length_ft": 14.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.128516,
-      "mp_end": 20.131204,
+      "mp_start": 20.132975,
+      "mp_end": 20.13565,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -110304,8 +110384,8 @@
        35.6028062106655
       ]
      },
-     "sta_ft": 28053.6,
-     "sta": "280+53.62",
+     "sta_ft": 28221.2,
+     "sta": "282+21.17",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -110438,8 +110518,8 @@
        35.6025042486153
       ]
      },
-     "sta_ft": 28198.7,
-     "sta": "281+98.71",
+     "sta_ft": 28366.3,
+     "sta": "283+66.25",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -110572,8 +110652,8 @@
        35.6025042486153
       ]
      },
-     "sta_ft": 28198.7,
-     "sta": "281+98.71",
+     "sta_ft": 28366.3,
+     "sta": "283+66.25",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -110851,8 +110931,8 @@
       "object_id": "1089",
       "_csv_match_dist_m": 0.84
      },
-     "sta_ft": 28402.6,
-     "sta": "284+02.56"
+     "sta_ft": 28570.1,
+     "sta": "285+70.11"
     },
     {
      "id": "B-SIG-070",
@@ -110867,8 +110947,8 @@
        35.6019357545142
       ]
      },
-     "sta_ft": 28442.2,
-     "sta": "284+42.22",
+     "sta_ft": 28609.8,
+     "sta": "286+09.77",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -111001,8 +111081,8 @@
        35.6014970404373
       ]
      },
-     "sta_ft": 28634.3,
-     "sta": "286+34.34",
+     "sta_ft": 28801.9,
+     "sta": "288+01.88",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -111135,8 +111215,8 @@
        35.601431092426
       ]
      },
-     "sta_ft": 28664.5,
-     "sta": "286+64.51",
+     "sta_ft": 28832.1,
+     "sta": "288+32.05",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -111414,8 +111494,8 @@
       "object_id": "1083",
       "_csv_match_dist_m": 0.78
      },
-     "sta_ft": 28803.8,
-     "sta": "288+03.77"
+     "sta_ft": 28971.3,
+     "sta": "289+71.32"
     },
     {
      "id": "B-WAL-006",
@@ -111504,8 +111584,8 @@
        ]
       ]
      },
-     "sta_ft": 28989.5,
-     "sta": "289+89.51",
+     "sta_ft": 29157.1,
+     "sta": "291+57.06",
      "reported_in": [
       "WIP"
      ],
@@ -111525,8 +111605,8 @@
      "attrs": {
       "length_ft": 36.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.320207,
-      "mp_end": 20.327121,
+      "mp_start": 20.323685,
+      "mp_end": 20.330563,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -111627,8 +111707,8 @@
        ]
       ]
      },
-     "sta_ft": 28999.4,
-     "sta": "289+99.45",
+     "sta_ft": 29167.0,
+     "sta": "291+66.99",
      "reported_in": [
       "WIP"
      ],
@@ -111648,8 +111728,8 @@
      "attrs": {
       "length_ft": 36.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.322115,
-      "mp_end": 20.329285,
+      "mp_start": 20.325582,
+      "mp_end": 20.332715,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -111817,8 +111897,8 @@
       "object_id": "1078",
       "_csv_match_dist_m": 0.58
      },
-     "sta_ft": 29243.0,
-     "sta": "292+43.03"
+     "sta_ft": 29410.6,
+     "sta": "294+10.58"
     },
     {
      "id": "B-CUL-062",
@@ -111978,8 +112058,8 @@
       "object_id": "1074",
       "_csv_match_dist_m": 0.53
      },
-     "sta_ft": 29415.1,
-     "sta": "294+15.13"
+     "sta_ft": 29582.7,
+     "sta": "295+82.68"
     },
     {
      "id": "B-WAL-008",
@@ -112028,8 +112108,8 @@
        ]
       ]
      },
-     "sta_ft": 29635.1,
-     "sta": "296+35.10",
+     "sta_ft": 29802.6,
+     "sta": "298+02.65",
      "reported_in": [
       "WIP"
      ],
@@ -112049,8 +112129,8 @@
      "attrs": {
       "length_ft": 15.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.444187,
-      "mp_end": 20.447068,
+      "mp_start": 20.447029,
+      "mp_end": 20.449895,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -112218,8 +112298,8 @@
       "object_id": "1070",
       "_csv_match_dist_m": 0.63
      },
-     "sta_ft": 29688.6,
-     "sta": "296+88.56"
+     "sta_ft": 29856.1,
+     "sta": "298+56.11"
     },
     {
      "id": "B-PAR-015",
@@ -112234,8 +112314,8 @@
        35.5999906432723
       ]
      },
-     "sta_ft": 29896.6,
-     "sta": "298+96.59",
+     "sta_ft": 30064.1,
+     "sta": "300+64.13",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -112517,8 +112597,8 @@
       "object_id": "1065",
       "_csv_match_dist_m": 0.71
      },
-     "sta_ft": 30033.9,
-     "sta": "300+33.85"
+     "sta_ft": 30201.4,
+     "sta": "302+01.40"
     },
     {
      "id": "B-CUL-065",
@@ -112678,8 +112758,8 @@
       "object_id": "1060",
       "_csv_match_dist_m": 0.7
      },
-     "sta_ft": 30256.7,
-     "sta": "302+56.70"
+     "sta_ft": 30424.2,
+     "sta": "304+24.25"
     },
     {
      "id": "B-CUL-066",
@@ -112839,8 +112919,8 @@
       "object_id": "1051",
       "_csv_match_dist_m": 0.61
      },
-     "sta_ft": 30522.5,
-     "sta": "305+22.47"
+     "sta_ft": 30690.0,
+     "sta": "306+90.01"
     },
     {
      "id": "B-CUL-067",
@@ -113000,8 +113080,8 @@
       "object_id": "1047",
       "_csv_match_dist_m": 0.5
      },
-     "sta_ft": 30725.2,
-     "sta": "307+25.21"
+     "sta_ft": 30892.8,
+     "sta": "308+92.76"
     },
     {
      "id": "B-CUL-068",
@@ -113161,8 +113241,8 @@
       "object_id": "1035",
       "_csv_match_dist_m": 0.27
      },
-     "sta_ft": 31356.4,
-     "sta": "313+56.41"
+     "sta_ft": 31524.0,
+     "sta": "315+23.96"
     },
     {
      "id": "B-CUL-069",
@@ -113322,8 +113402,8 @@
       "object_id": "1032",
       "_csv_match_dist_m": 0.42
      },
-     "sta_ft": 31602.8,
-     "sta": "316+02.84"
+     "sta_ft": 31770.4,
+     "sta": "317+70.39"
     },
     {
      "id": "B-WAL-009",
@@ -113384,8 +113464,8 @@
        ]
       ]
      },
-     "sta_ft": 31840.0,
-     "sta": "318+40.02",
+     "sta_ft": 32007.6,
+     "sta": "320+07.57",
      "reported_in": [
       "WIP"
      ],
@@ -113404,8 +113484,8 @@
      "attrs": {
       "length_ft": 22.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 20.867625,
-      "mp_end": 20.87185,
+      "mp_start": 20.868297,
+      "mp_end": 20.8725,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -113573,8 +113653,8 @@
       "object_id": "1026",
       "_csv_match_dist_m": 0.73
      },
-     "sta_ft": 31926.0,
-     "sta": "319+26.03"
+     "sta_ft": 32093.6,
+     "sta": "320+93.58"
     },
     {
      "id": "B-CUL-071",
@@ -113726,8 +113806,8 @@
       },
       "road_bearing_deg": 145.1
      },
-     "sta_ft": 32175.7,
-     "sta": "321+75.71"
+     "sta_ft": 32184.0,
+     "sta": "321+83.97"
     }
    ]
   },
@@ -113736,7 +113816,7 @@
    "name": "Newfound Gap Rd NC #2 SB (MP 30.00-31.96)",
    "project_code": "NC NP GRSM 10S(2)",
    "type": "linear",
-   "mp_start": 30.0,
+   "mp_start": 30,
    "mp_end": 31.96,
    "pathweb_refs": [
     {
@@ -114592,8 +114672,8 @@
      35.4995647
     ],
     [
-     -83.303516,
-     35.499606
+     -83.30353796968059,
+     35.4995656092904
     ]
    ],
    "sub_alignments": [],
@@ -120916,8 +120996,8 @@
        35.4995704335396
       ]
      },
-     "sta_ft": 10324.6,
-     "sta": "103+24.61",
+     "sta_ft": 10322.6,
+     "sta": "103+22.60",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -122265,8 +122345,8 @@
      35.6373707
     ],
     [
-     -83.495585,
-     35.637327
+     -83.49546876917861,
+     35.63730916127974
     ]
    ],
    "sub_alignments": [],
@@ -128219,8 +128299,8 @@
        ]
       ]
      },
-     "sta_ft": -3037.4,
-     "sta": "-30+37.38",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "attrs": {
       "loc_name": "SVC and Park Headquarters",
       "road": "Fighting Creek Gap Road",
@@ -128246,8 +128326,8 @@
        35.6837051996559
       ]
      },
-     "sta_ft": -188.2,
-     "sta": "-1+88.19",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -128370,8 +128450,8 @@
        35.6836693396531
       ]
      },
-     "sta_ft": -160.4,
-     "sta": "-1+60.43",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -128494,8 +128574,8 @@
        35.6836693396531
       ]
      },
-     "sta_ft": -160.4,
-     "sta": "-1+60.43",
+     "sta_ft": 0.0,
+     "sta": "0+00.00",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -130411,8 +130491,8 @@
      "attrs": {
       "length_ft": 20.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.177152,
-      "mp_end": 2.180858,
+      "mp_start": 2.176673,
+      "mp_end": 2.180373,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -130493,8 +130573,8 @@
      "attrs": {
       "length_ft": 16.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.179157,
-      "mp_end": 2.182228,
+      "mp_start": 2.178674,
+      "mp_end": 2.181742,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -131193,8 +131273,8 @@
      "attrs": {
       "length_ft": 52.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.434769,
-      "mp_end": 2.444753,
+      "mp_start": 2.433903,
+      "mp_end": 2.443872,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -131355,8 +131435,8 @@
      "attrs": {
       "length_ft": 58.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 2.435772,
-      "mp_end": 2.446907,
+      "mp_start": 2.434904,
+      "mp_end": 2.446023,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -137042,8 +137122,8 @@
      "attrs": {
       "length_ft": 41.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.34896,
-      "mp_end": 3.35658,
+      "mp_start": 3.346721,
+      "mp_end": 3.354329,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -137170,8 +137250,8 @@
      "attrs": {
       "length_ft": 37.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.34896,
-      "mp_end": 3.356317,
+      "mp_start": 3.346721,
+      "mp_end": 3.354067,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -137426,8 +137506,8 @@
      "attrs": {
       "length_ft": 41.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.376025,
-      "mp_end": 3.383675,
+      "mp_start": 3.373746,
+      "mp_end": 3.381384,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -138494,8 +138574,8 @@
      "attrs": {
       "length_ft": 17.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.598559,
-      "mp_end": 3.601822,
+      "mp_start": 3.595945,
+      "mp_end": 3.599204,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -138573,8 +138653,8 @@
      "attrs": {
       "length_ft": 15.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.599561,
-      "mp_end": 3.602441,
+      "mp_start": 3.596946,
+      "mp_end": 3.599821,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -140462,8 +140542,8 @@
      "attrs": {
       "length_ft": 860.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.668727,
-      "mp_end": 3.830843,
+      "mp_start": 3.666008,
+      "mp_end": 3.82788,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/15/2010",
@@ -141904,8 +141984,8 @@
      "attrs": {
       "length_ft": 118.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.955414,
-      "mp_end": 3.978097,
+      "mp_start": 3.952264,
+      "mp_end": 3.974913,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/15/2010",
@@ -141985,8 +142065,8 @@
      "attrs": {
       "length_ft": 18.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.97045,
-      "mp_end": 3.973906,
+      "mp_start": 3.967278,
+      "mp_end": 3.970729,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -142089,8 +142169,8 @@
      "attrs": {
       "length_ft": 26.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 3.97045,
-      "mp_end": 3.975442,
+      "mp_start": 3.967278,
+      "mp_end": 3.972262,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -144304,8 +144384,8 @@
      "attrs": {
       "length_ft": 30.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 4.449598,
-      "mp_end": 4.455358,
+      "mp_start": 4.445707,
+      "mp_end": 4.451458,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -144411,8 +144491,8 @@
      "attrs": {
       "length_ft": 30.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 4.449598,
-      "mp_end": 4.455358,
+      "mp_start": 4.445707,
+      "mp_end": 4.451458,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -146330,8 +146410,8 @@
      "attrs": {
       "length_ft": 13.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 4.83853,
-      "mp_end": 4.841026,
+      "mp_start": 4.834055,
+      "mp_end": 4.836547,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -146400,8 +146480,8 @@
      "attrs": {
       "length_ft": 11.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 4.83853,
-      "mp_end": 4.840642,
+      "mp_start": 4.834055,
+      "mp_end": 4.836164,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -148376,8 +148456,8 @@
      "attrs": {
       "length_ft": 32.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 5.417919,
-      "mp_end": 5.424063,
+      "mp_start": 5.412574,
+      "mp_end": 5.418708,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -148490,8 +148570,8 @@
      "attrs": {
       "length_ft": 32.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 5.418922,
-      "mp_end": 5.425065,
+      "mp_start": 5.413574,
+      "mp_end": 5.419709,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -150347,8 +150427,8 @@
      "attrs": {
       "length_ft": 167.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 5.955207,
-      "mp_end": 5.986923,
+      "mp_start": 5.949054,
+      "mp_end": 5.980723,
       "side": "L",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/15/2010",
@@ -150874,8 +150954,8 @@
      "attrs": {
       "length_ft": 167.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 5.988286,
-      "mp_end": 6.020143,
+      "mp_start": 5.982084,
+      "mp_end": 6.013893,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Fill Wall",
@@ -152616,259 +152696,6 @@
      }
     },
     {
-     "id": "E-MIL-006",
-     "ulid": "01KRJMG1SNYR657MKTVQYP50RA",
-     "kind": "mile_marker",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4946195473857,
-       35.639089312995
-      ]
-     },
-     "sta_ft": 22234.5,
-     "sta": "222+34.49",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010N": [
-         8,
-         9,
-         11,
-         13,
-         15,
-         18,
-         19,
-         23,
-         24,
-         25,
-         51,
-         54,
-         57,
-         87,
-         111,
-         115,
-         116,
-         117,
-         137,
-         141,
-         142,
-         143,
-         161,
-         162,
-         163,
-         259,
-         304,
-         305,
-         306,
-         307,
-         308
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010N": [
-         8,
-         9,
-         14,
-         16,
-         20,
-         26,
-         27,
-         28,
-         54,
-         58,
-         59,
-         63,
-         89,
-         121,
-         123,
-         124,
-         144,
-         145,
-         146,
-         334,
-         335,
-         336,
-         337,
-         338,
-         339,
-         340,
-         341,
-         342,
-         343,
-         344,
-         345,
-         346,
-         347,
-         348,
-         349,
-         350,
-         351,
-         352,
-         353,
-         354,
-         660,
-         661,
-         662,
-         663,
-         668,
-         669,
-         670,
-         671,
-         672,
-         674,
-         693,
-         702,
-         730
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "road": "Newfound Gap Road North",
-      "mile_label": "7",
-      "type": "Road Mile Marker"
-     }
-    },
-    {
-     "id": "E-PAR-023",
-     "ulid": "01KRJMG1T201CT63M50DZCQS8S",
-     "kind": "parking",
-     "source": "nps-gis",
-     "status": "pending",
-     "geometry": {
-      "type": "Point",
-      "coordinates": [
-       -83.4945713893605,
-       35.6389041779586
-      ]
-     },
-     "sta_ft": 22234.5,
-     "sta": "222+34.49",
-     "reported_in": [
-      "NPS-GIS",
-      "RIP-C5",
-      "RIP-C6"
-     ],
-     "report_refs": {
-      "RIP-C5": {
-       "pages_by_route": {
-        "0010N": [
-         8,
-         9,
-         11,
-         13,
-         15,
-         18,
-         19,
-         23,
-         24,
-         25,
-         51,
-         54,
-         57,
-         87,
-         111,
-         115,
-         116,
-         117,
-         137,
-         141,
-         142,
-         143,
-         161,
-         162,
-         163,
-         259,
-         304,
-         305,
-         306,
-         307,
-         308
-        ]
-       }
-      },
-      "RIP-C6": {
-       "pages_by_route": {
-        "0010N": [
-         8,
-         9,
-         14,
-         16,
-         20,
-         26,
-         27,
-         28,
-         54,
-         58,
-         59,
-         63,
-         89,
-         121,
-         123,
-         124,
-         144,
-         145,
-         146,
-         334,
-         335,
-         336,
-         337,
-         338,
-         339,
-         340,
-         341,
-         342,
-         343,
-         344,
-         345,
-         346,
-         347,
-         348,
-         349,
-         350,
-         351,
-         352,
-         353,
-         354,
-         660,
-         661,
-         662,
-         663,
-         668,
-         669,
-         670,
-         671,
-         672,
-         674,
-         693,
-         702,
-         730
-        ]
-       }
-      }
-     },
-     "attrs": {
-      "loc_name": "Pullout Parking At Mile Post 7.05",
-      "road": "Newfound Gap Pullout Parking At Milepost 7.05",
-      "type": "Public",
-      "fmss_loc": "0000",
-      "material": "Asphalt",
-      "parking_spots": 2,
-      "rip_id": "GRSM-0010N",
-      "description": ""
-     }
-    },
-    {
      "id": "E-PAR-025",
      "ulid": "01KRJMG1T2HCKRZ90842D9HVKT",
      "kind": "parking",
@@ -152998,6 +152825,259 @@
      }
     },
     {
+     "id": "E-MIL-006",
+     "ulid": "01KRJMG1SNYR657MKTVQYP50RA",
+     "kind": "mile_marker",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4946195473857,
+       35.639089312995
+      ]
+     },
+     "sta_ft": 22284.5,
+     "sta": "222+84.46",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010N": [
+         8,
+         9,
+         11,
+         13,
+         15,
+         18,
+         19,
+         23,
+         24,
+         25,
+         51,
+         54,
+         57,
+         87,
+         111,
+         115,
+         116,
+         117,
+         137,
+         141,
+         142,
+         143,
+         161,
+         162,
+         163,
+         259,
+         304,
+         305,
+         306,
+         307,
+         308
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010N": [
+         8,
+         9,
+         14,
+         16,
+         20,
+         26,
+         27,
+         28,
+         54,
+         58,
+         59,
+         63,
+         89,
+         121,
+         123,
+         124,
+         144,
+         145,
+         146,
+         334,
+         335,
+         336,
+         337,
+         338,
+         339,
+         340,
+         341,
+         342,
+         343,
+         344,
+         345,
+         346,
+         347,
+         348,
+         349,
+         350,
+         351,
+         352,
+         353,
+         354,
+         660,
+         661,
+         662,
+         663,
+         668,
+         669,
+         670,
+         671,
+         672,
+         674,
+         693,
+         702,
+         730
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "road": "Newfound Gap Road North",
+      "mile_label": "7",
+      "type": "Road Mile Marker"
+     }
+    },
+    {
+     "id": "E-PAR-023",
+     "ulid": "01KRJMG1T201CT63M50DZCQS8S",
+     "kind": "parking",
+     "source": "nps-gis",
+     "status": "pending",
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       -83.4945713893605,
+       35.6389041779586
+      ]
+     },
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
+     "reported_in": [
+      "NPS-GIS",
+      "RIP-C5",
+      "RIP-C6"
+     ],
+     "report_refs": {
+      "RIP-C5": {
+       "pages_by_route": {
+        "0010N": [
+         8,
+         9,
+         11,
+         13,
+         15,
+         18,
+         19,
+         23,
+         24,
+         25,
+         51,
+         54,
+         57,
+         87,
+         111,
+         115,
+         116,
+         117,
+         137,
+         141,
+         142,
+         143,
+         161,
+         162,
+         163,
+         259,
+         304,
+         305,
+         306,
+         307,
+         308
+        ]
+       }
+      },
+      "RIP-C6": {
+       "pages_by_route": {
+        "0010N": [
+         8,
+         9,
+         14,
+         16,
+         20,
+         26,
+         27,
+         28,
+         54,
+         58,
+         59,
+         63,
+         89,
+         121,
+         123,
+         124,
+         144,
+         145,
+         146,
+         334,
+         335,
+         336,
+         337,
+         338,
+         339,
+         340,
+         341,
+         342,
+         343,
+         344,
+         345,
+         346,
+         347,
+         348,
+         349,
+         350,
+         351,
+         352,
+         353,
+         354,
+         660,
+         661,
+         662,
+         663,
+         668,
+         669,
+         670,
+         671,
+         672,
+         674,
+         693,
+         702,
+         730
+        ]
+       }
+      }
+     },
+     "attrs": {
+      "loc_name": "Pullout Parking At Mile Post 7.05",
+      "road": "Newfound Gap Pullout Parking At Milepost 7.05",
+      "type": "Public",
+      "fmss_loc": "0000",
+      "material": "Asphalt",
+      "parking_spots": 2,
+      "rip_id": "GRSM-0010N",
+      "description": ""
+     }
+    },
+    {
      "ulid": "01KRJME23MT5GMMKS6VEGVTJCD",
      "kind": "overlook",
      "source": "nps-gis",
@@ -153009,8 +153089,8 @@
        35.638952375
       ]
      },
-     "sta_ft": 22234.5,
-     "sta": "222+34.49",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "attrs": {
       "loc_name": "Chimneys Overlook",
       "road": "Newfound Gap Pullout Parking At Milepost 7.05",
@@ -153037,8 +153117,8 @@
        35.6387946209491
       ]
      },
-     "sta_ft": 22256.4,
-     "sta": "222+56.40",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -153161,8 +153241,8 @@
        35.6387848599486
       ]
      },
-     "sta_ft": 22267.9,
-     "sta": "222+67.91",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -153284,8 +153364,8 @@
        35.6386960400001
       ]
      },
-     "sta_ft": 22333.9,
-     "sta": "223+33.85",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "attrs": {
       "loc_name": "Chimneys Overlook",
       "road": "Newfound Gap Pullout Parking At Milepost 7.09",
@@ -153312,8 +153392,8 @@
        35.6386979889396
       ]
      },
-     "sta_ft": 22340.4,
-     "sta": "223+40.37",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -153576,8 +153656,8 @@
       "object_id": "1534",
       "_csv_match_dist_m": 0.7
      },
-     "sta_ft": 22370.6,
-     "sta": "223+70.58"
+     "sta_ft": 22294.4,
+     "sta": "222+94.40"
     },
     {
      "id": "E-SIG-028",
@@ -153592,8 +153672,8 @@
        35.6371426395737
       ]
      },
-     "sta_ft": 22424.8,
-     "sta": "224+24.80",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -153716,8 +153796,8 @@
        35.6371426395737
       ]
      },
-     "sta_ft": 22424.8,
-     "sta": "224+24.80",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -155146,8 +155226,8 @@
        ]
       ]
      },
-     "sta_ft": 22466.0,
-     "sta": "224+65.99",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "GIP"
      ],
@@ -155167,8 +155247,8 @@
      "attrs": {
       "length_ft": 640.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.171372,
-      "mp_end": 6.230687,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "L",
       "rpt_type": "STEEL-BACKED TIMBER WITHOUT BLOCKOUT",
       "inspection_date": "9/15/2010",
@@ -155188,8 +155268,8 @@
        35.6379782167865
       ]
      },
-     "sta_ft": 22476.4,
-     "sta": "224+76.36",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -155312,8 +155392,8 @@
        35.6379782167865
       ]
      },
-     "sta_ft": 22476.4,
-     "sta": "224+76.36",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -155571,8 +155651,8 @@
       "object_id": "1530",
       "_csv_match_dist_m": 0.66
      },
-     "sta_ft": 22549.1,
-     "sta": "225+49.06"
+     "sta_ft": 22294.4,
+     "sta": "222+94.40"
     },
     {
      "id": "E-GUA-008",
@@ -155657,8 +155737,8 @@
        ]
       ]
      },
-     "sta_ft": 22601.4,
-     "sta": "226+01.39",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "GIP"
      ],
@@ -155676,8 +155756,8 @@
      "attrs": {
       "length_ft": 32.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.197369,
-      "mp_end": 6.191406,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "L",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/15/2010",
@@ -155807,8 +155887,8 @@
        ]
       ]
      },
-     "sta_ft": 22622.9,
-     "sta": "226+22.91",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "GIP"
      ],
@@ -155828,8 +155908,8 @@
      "attrs": {
       "length_ft": 54.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.2015,
-      "mp_end": 6.191199,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "R",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/14/2010",
@@ -156299,8 +156379,8 @@
        ]
       ]
      },
-     "sta_ft": 22753.4,
-     "sta": "227+53.36",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "WIP"
      ],
@@ -156320,8 +156400,8 @@
      "attrs": {
       "length_ft": 220.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.226547,
-      "mp_end": 6.239622,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Fill Wall",
@@ -156374,8 +156454,8 @@
        ]
       ]
      },
-     "sta_ft": 22760.8,
-     "sta": "227+60.84",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "WIP"
      ],
@@ -156395,8 +156475,8 @@
      "attrs": {
       "length_ft": 11.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.227983,
-      "mp_end": 6.226288,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "L",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -156489,8 +156569,8 @@
        ]
       ]
      },
-     "sta_ft": 22769.2,
-     "sta": "227+69.22",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "GIP"
      ],
@@ -156510,8 +156590,8 @@
      "attrs": {
       "length_ft": 33.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.229592,
-      "mp_end": 6.224821,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "L",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/15/2010",
@@ -156629,8 +156709,8 @@
        ]
       ]
      },
-     "sta_ft": 22776.3,
-     "sta": "227+76.32",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "GIP"
      ],
@@ -156649,8 +156729,8 @@
      "attrs": {
       "length_ft": 52.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.230954,
-      "mp_end": 6.222092,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "R",
       "rpt_type": "STONE MASONRY WITHOUT CONCRETE CORE WALL",
       "inspection_date": "9/15/2010",
@@ -156700,8 +156780,8 @@
        ]
       ]
      },
-     "sta_ft": 22780.5,
-     "sta": "227+80.51",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "WIP"
      ],
@@ -156721,8 +156801,8 @@
      "attrs": {
       "length_ft": 13.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.231759,
-      "mp_end": 6.229755,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -156745,8 +156825,8 @@
        35.6368384715629
       ]
      },
-     "sta_ft": 22803.2,
-     "sta": "228+03.22",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -156869,8 +156949,8 @@
        35.636838758563
       ]
      },
-     "sta_ft": 22803.5,
-     "sta": "228+03.46",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -156993,8 +157073,8 @@
        35.6373454196871
       ]
      },
-     "sta_ft": 22805.0,
-     "sta": "228+05.03",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -157019,8 +157099,8 @@
        35.6368469885661
       ]
      },
-     "sta_ft": 22810.1,
-     "sta": "228+10.11",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -158241,8 +158321,8 @@
        ]
       ]
      },
-     "sta_ft": 22842.6,
-     "sta": "228+42.60",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -158268,8 +158348,8 @@
        35.6368667785769
       ]
      },
-     "sta_ft": 22845.4,
-     "sta": "228+45.43",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -158428,8 +158508,8 @@
        ]
       ]
      },
-     "sta_ft": 22855.9,
-     "sta": "228+55.90",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "WIP"
      ],
@@ -158448,8 +158528,8 @@
      "attrs": {
       "length_ft": 18.0,
       "length_source": "pdf_text_layer",
-      "mp_start": 6.246233,
-      "mp_end": 6.247092,
+      "mp_start": 6.132,
+      "mp_end": 6.132,
       "side": "R",
       "rpt_type": "Gravity Mortared Stone",
       "wall_function": "Head Wall",
@@ -158599,8 +158679,8 @@
       },
       "road_bearing_deg": 40.4
      },
-     "sta_ft": 22865.3,
-     "sta": "228+65.25"
+     "sta_ft": 22294.4,
+     "sta": "222+94.40"
     },
     {
      "id": "E-SIG-033",
@@ -158615,8 +158695,8 @@
        35.6368009255675
       ]
      },
-     "sta_ft": 22885.4,
-     "sta": "228+85.36",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -158739,8 +158819,8 @@
        35.6367164155707
       ]
      },
-     "sta_ft": 23027.7,
-     "sta": "230+27.66",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -158863,8 +158943,8 @@
        35.6366909055768
       ]
      },
-     "sta_ft": 23101.2,
-     "sta": "231+01.20",
+     "sta_ft": 22294.4,
+     "sta": "222+94.40",
      "reported_in": [
       "NPS-GIS",
       "RIP-C5",
@@ -159011,20 +159091,20 @@
    "name": "Campbell Lead Rd Ramp (MP 0.00-0.05)",
    "type": "linear",
    "project_code": "TN NP GRSM 163BZ",
-   "mp_start": 0.0,
+   "mp_start": 0,
    "mp_end": 0.049,
    "alignment": [
     [
-     -83.5275640095275,
-     35.7141441482355
+     -83.52780282740393,
+     35.71398481800146
     ],
     [
-     -83.5272492554518,
-     35.7144208983053
+     -83.52727175244883,
+     35.7144356186762
     ],
     [
-     -83.5270990254157,
-     35.7145528593386
+     -83.52713495675175,
+     35.714540149872015
     ]
    ],
    "pathweb_refs": [
@@ -159049,8 +159129,8 @@
    "mp_end": 0.205,
    "alignment": [
     [
-     -83.5148010744378,
-     35.7250349119983
+     -83.51470825930215,
+     35.72486864715711
     ],
     [
      -83.5149450924916,
@@ -159081,16 +159161,8 @@
      35.7265228732406
     ],
     [
-     -83.5170460232206,
-     35.7271119033387
-    ],
-    [
-     -83.5171360692532,
-     35.7272158373566
-    ],
-    [
-     -83.5172250092881,
-     35.7273618883833
+     -83.51684863840494,
+     35.7269198170476
     ]
    ],
    "pathweb_refs": [
@@ -159111,21 +159183,9 @@
    "name": "Gatlinburg Bypass Ramp 0012BZ (MP 0.00-0.08)",
    "type": "linear",
    "project_code": "TN NP GRSM 12BZ",
-   "mp_start": 0.0,
+   "mp_start": 0,
    "mp_end": 0.075,
    "alignment": [
-    [
-     -83.5148010744378,
-     35.7250349119983
-    ],
-    [
-     -83.5148199319075,
-     35.7250849000853
-    ],
-    [
-     -83.5148335533936,
-     35.7251350600888
-    ],
     [
      -83.5148419389094,
      35.725185392057
@@ -159209,30 +159269,6 @@
     [
      -83.5139865734241,
      35.7258358761314
-    ],
-    [
-     -83.5139528165282,
-     35.7258560517093
-    ],
-    [
-     -83.5139230972307,
-     35.7258758482073
-    ],
-    [
-     -83.5138769684126,
-     35.7259109485569
-    ],
-    [
-     -83.5138339145992,
-     35.7259488257111
-    ],
-    [
-     -83.5137939358426,
-     35.725989479624
-    ],
-    [
-     -83.5137570321914,
-     35.7260329102464
     ]
    ],
    "pathweb_refs": [
