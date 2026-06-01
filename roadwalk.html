@@ -8865,6 +8865,46 @@ input.fs-slider::-webkit-slider-thumb {
 .rw-text-cursor { cursor: text; }
 /* Photo lightbox for annotation trigger */
 .df-photo-thumb { cursor: pointer; }
+
+/* Full-size photo lightbox — shared by the SLD photo action popup and
+   the geophoto-map pop-up. Replaces the old window.open('_blank') path
+   so the image stays inside the app shell (matters on the field iPad
+   where new tabs disrupt the workflow). */
+.rw-photo-lb {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.rw-photo-lb-img {
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+  object-fit: contain;
+  cursor: default;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}
+.rw-photo-lb-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+.rw-photo-lb-close:hover { background: rgba(0, 0, 0, 0.8); border-color: rgba(255, 255, 255, 0.7); }
 /* Collapsible Dimensions section */
 .df-dim-toggle {
   display: flex; align-items: center; gap: 6px;
@@ -17833,14 +17873,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var viewBtn = pop.querySelector('.spa-view');
     if (viewBtn) viewBtn.onclick = function () {
       pop.hidden = true;
-      var w = window.open('', '_blank');
-      if (w) w.document.write('<img src="' + photo.dataUrl + '" style="max-width:100%">');
+      _showPhotoLightbox(photo.dataUrl);
     };
   }
+
+  // Full-size photo lightbox — in-app modal (replaces window.open). Click
+  // anywhere on the dim backdrop, hit the X, or press Esc to close.
+  function _showPhotoLightbox(dataUrl) {
+    if (!dataUrl) return;
+    // Reuse a single overlay element so repeated opens don't pile up nodes.
+    var lb = document.getElementById('rw-photo-lb');
+    if (lb) try { lb.remove(); } catch (_) {}
+    lb = document.createElement('div');
+    lb.id = 'rw-photo-lb';
+    lb.className = 'rw-photo-lb';
+    var img = document.createElement('img');
+    img.className = 'rw-photo-lb-img';
+    img.src = dataUrl;
+    img.addEventListener('click', function (e) { e.stopPropagation(); });
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'rw-photo-lb-close';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close full-size photo');
+    closeBtn.textContent = '✕';
+    function dismiss() {
+      try { lb.remove(); } catch (_) {}
+      document.removeEventListener('keydown', onKey, true);
+    }
+    function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); dismiss(); } }
+    lb.addEventListener('click', dismiss);
+    closeBtn.addEventListener('click', function (e) { e.stopPropagation(); dismiss(); });
+    document.addEventListener('keydown', onKey, true);
+    lb.appendChild(closeBtn);
+    lb.appendChild(img);
+    document.body.appendChild(lb);
+  }
+
   // Exposed so other modules (e.g. the geophoto map layer click handler) can
   // reuse the same popup if we ever wire it up there.
   window._RW = window._RW || {};
   window._RW.showSldPhotoActions = _showSldPhotoActions;
+  window._RW.showPhotoLightbox   = _showPhotoLightbox;
 
   // ── SLD feature bars / pins as photo drop targets ───────────────────────
   // Drag a thumb from the SLD lane onto any feature bar or point pin in the
@@ -36628,8 +36701,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     img.src = p.dataUrl;
     img.title = 'Open full size';
     img.addEventListener('click', function () {
-      var w = window.open('', '_blank');
-      if (w) w.document.write('<img src="' + p.dataUrl + '" style="max-width:100%">');
+      // In-app lightbox — keeps the field workflow inside the app shell
+      // instead of pushing the user into a new browser tab.
+      if (window._RW && typeof window._RW.showPhotoLightbox === 'function') {
+        window._RW.showPhotoLightbox(p.dataUrl);
+      }
     });
     var meta = document.createElement('div');
     meta.className = 'gp-pop-meta';
