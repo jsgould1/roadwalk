@@ -11566,9 +11566,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         subAlignments:  subAlignmentsLL,
         pathwebRefs:    s.pathweb_refs,
         projectCode:    s.project_code,
+        mp_start:       s.mp_start,
+        mp_end:         s.mp_end,
         mpStart:        s.mp_start,
         mpEnd:          s.mp_end,
         pins:           s.pins || [],
+        // Carry through bundle-level extras so the in-memory model isn't a
+        // lossy subset. altStations drives the 1994 As-built secondary
+        // labels on Section A; without it the SLD silently dropped the
+        // alt-station strip on every fresh applyBundle.
+        altStations:    s.altStations || null,
+        project_code:   s.project_code,
+        _aerial_choice: s._aerial_choice || null,
+        _synthetic_alignment: s._synthetic_alignment || null,
       };
     });
     // Stamp every pre-walk bundle pin so it can be told apart from
