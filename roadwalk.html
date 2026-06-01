@@ -11920,40 +11920,53 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         card.appendChild(cancelBtn);
       }
 
-      // Reload button — re-reads the loaded project from its published bundle.
-      // Default behaviour keeps your field edits and merges any newly-published
-      // sections in. Hold Shift while clicking for a full reset (discard edits).
+      // Reload button — re-reads the loaded project from its published
+      // bundle and KEEPS your field edits (working-copy merge). Shift+click
+      // is still honored on desktop as a shortcut to the destructive
+      // variant, but the canonical UI for "discard edits + reset" is the
+      // separate pp-reset-btn below.
       const reloadBtn = $('#pp-reload-btn');
+      const resetBtn  = $('#pp-reset-btn');
+
+      async function _runReload(discardEdits, sourceBtn) {
+        const projName = (PROJECT && PROJECT.name) || 'this project';
+        const msg = discardEdits
+          ? 'RESET "' + projName + '" to published data?\n\n' +
+            'This DISCARDS your locally-stored edits for this project on ' +
+            'this device (including any field-added sections and pins) and ' +
+            're-reads the latest bundle.\n\n' +
+            'This cannot be undone.'
+          : 'Reload "' + projName + '" from published data?\n\n' +
+            'Your field edits on this device are KEPT. Any newly-published ' +
+            'sections (e.g. a freshly-added section) will appear after reload.';
+        if (!window.confirm(msg)) return;
+        status.textContent = discardEdits ? 'Resetting from published data…'
+                                          : 'Reloading from published data…';
+        status.className   = 'pp-status';
+        if (reloadBtn) reloadBtn.disabled = true;
+        if (resetBtn)  resetBtn.disabled  = true;
+        try {
+          await reloadProjectFromSource(discardEdits);
+          picker.hidden = true;
+          card.querySelector('.pp-cancel-btn')?.remove();
+          if (reloadBtn) reloadBtn.disabled = false;
+          if (resetBtn)  resetBtn.disabled  = false;
+          resolve(true);
+        } catch (err) {
+          status.textContent = '⚠ ' + err.message;
+          status.className   = 'pp-status pp-err';
+          if (reloadBtn) reloadBtn.disabled = false;
+          if (resetBtn)  resetBtn.disabled  = false;
+        }
+      }
+
       if (reloadBtn) {
         reloadBtn.hidden = !(PROJECT && PROJECT.id);
-        reloadBtn.onclick = async (evt) => {
-          const projName = (PROJECT && PROJECT.name) || 'this project';
-          const discardEdits = !!(evt && evt.shiftKey);
-          const msg = discardEdits
-            ? 'RESET "' + projName + '" to published data?\n\n' +
-              'Shift-click was held — this DISCARDS your locally-stored edits ' +
-              'for this project on this device and re-reads the latest bundle.'
-            : 'Reload "' + projName + '" from published data?\n\n' +
-              'Your field edits on this device are KEPT. Any newly-published ' +
-              'sections (e.g. a freshly-added section) will appear after reload.\n\n' +
-              '(Hold Shift while clicking for a full reset that discards edits.)';
-          if (!window.confirm(msg)) return;
-          status.textContent = discardEdits ? 'Resetting from published data…'
-                                            : 'Reloading from published data…';
-          status.className   = 'pp-status';
-          reloadBtn.disabled = true;
-          try {
-            await reloadProjectFromSource(discardEdits);
-            picker.hidden = true;
-            card.querySelector('.pp-cancel-btn')?.remove();
-            reloadBtn.disabled = false;
-            resolve(true);
-          } catch (err) {
-            status.textContent = '⚠ ' + err.message;
-            status.className   = 'pp-status pp-err';
-            reloadBtn.disabled = false;
-          }
-        };
+        reloadBtn.onclick = (evt) => _runReload(!!(evt && evt.shiftKey), reloadBtn);
+      }
+      if (resetBtn) {
+        resetBtn.hidden = !(PROJECT && PROJECT.id);
+        resetBtn.onclick = () => _runReload(true, resetBtn);
       }
 
       // --- Apply a loaded bundle from inside the picker ---
@@ -25880,6 +25893,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       <div class="pp-or">or</div>
       <button class="pp-file-btn" id="pp-file-btn">📂 Open project file from disk&hellip;</button>
       <button class="pp-file-btn" id="pp-reload-btn" hidden style="margin-top:8px">↻ Reload current project from published data</button>
+      <!-- Dedicated reset for touch devices that can't synthesize Shift+click
+           on the Reload button (Surface Tablet's on-screen keyboard has no
+           Shift key — only Caps Lock, which doesn't fire shiftKey). -->
+      <button class="pp-file-btn pp-reset-btn" id="pp-reset-btn" hidden
+              style="margin-top:6px;color:#c2410c;border-color:#c2410c;">⟲ Reset to published data (discard local edits)</button>
       <div class="pp-status" id="pp-status"></div>
     </div>
   </div>
@@ -29314,10 +29332,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       subEl.textContent = "No log started for " + new Date().toLocaleDateString(undefined, opts) + ".";
     }
 
+    // Per-day "skipped" flag in localStorage. Click "Skip" once and the
+    // modal stays muted on every page reload for the rest of today — the
+    // key includes today's date so tomorrow's session re-prompts cleanly.
+    const skipKey = 'rw_dlog_skipped_' + todayKey;
+    let alreadySkipped = false;
+    try { alreadySkipped = localStorage.getItem(skipKey) === '1'; } catch (_) {}
+
     // Check IDB for an existing log for today
     idbGet('daily_logs', todayKey).then(function (existing) {
       if (existing) {
         // Log already exists for today — do not show modal
+        return;
+      }
+      if (alreadySkipped) {
+        // User chose to skip earlier today — respect that until tomorrow.
         return;
       }
       // No log yet — show the reminder after a short delay (let map render first)
@@ -29327,9 +29356,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       console.warn('[RoadWalk] daily-log IDB check failed:', err);
     });
 
-    // Skip button: just close the modal
+    // Skip button: close the modal AND stamp the per-day flag so reloads
+    // for the rest of today don't re-prompt.
     skipBtn?.addEventListener('click', function () {
       modal.setAttribute('hidden', '');
+      try { localStorage.setItem(skipKey, '1'); } catch (_) {}
     });
 
     // Save button: write a log record to IDB, then close
