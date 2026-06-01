@@ -13661,7 +13661,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return sa - sb;
     });
     const autoName = /^[A-Z]+-\d+$/;
-    const oldIdsOfThisKind = matches.map(p => p.id).filter(Boolean);
+    // Capture old ids in lockstep with matches (no filtering — that would
+    // misalign indices for any pin that happened to have a null id).
+    const oldIdsOfThisKind = matches.map(p => p.id);
     matches.forEach((p, i) => {
       const num = String(i + 1).padStart(3, '0');
       const newId = `${prefix}-${num}`;
@@ -13671,6 +13673,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!p.attrs.name || autoName.test(p.attrs.name)) {
         p.attrs.name = newId;
       }
+    });
+    // Build an old->new id map for downstream consumers (data cache, geophoto
+    // links). Drop entries where the id didn't change or either side is missing.
+    const idMap = Object.create(null);
+    matches.forEach((p, i) => {
+      const oldId = oldIdsOfThisKind[i];
+      if (oldId && p.id && oldId !== p.id) idMap[oldId] = p.id;
     });
     // Resync the Data module's id-cache so future id-keyed lookups land
     // on the right record. The ulid-cache is canonical and untouched —
@@ -13682,6 +13691,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         window._RW.resyncDataCacheForRenumber(matches, oldIdsOfThisKind);
       }
     } catch (_) { /* non-fatal: ulid path still works without this */ }
+    // Update geophoto.linked_pin_id references whose pin_id half just got
+    // renumbered. The link format is "<sec_id>::<pin_id>" using the mutable
+    // pin_id, so without this rewrite a photo linked to "A::A-CV-001" before
+    // a renumber would silently appear linked to a DIFFERENT culvert (the
+    // new CV-001) afterward. Async save fires in the background; the
+    // in-memory PHOTOS array is updated synchronously so the UI sees it now.
+    try {
+      const idMapKeys = Object.keys(idMap);
+      if (idMapKeys.length
+          && window._RW && window._RW.geophotos
+          && typeof window._RW.geophotos.list === 'function'
+          && typeof window._RW.geophotos.saveMany === 'function') {
+        const photos = window._RW.geophotos.list();
+        const toUpdate = [];
+        photos.forEach(function (photo) {
+          if (!photo || !photo.linked_pin_id) return;
+          const parts = photo.linked_pin_id.split('::');
+          if (parts.length !== 2) return;
+          if (parts[0] !== sec.id) return;
+          const newPinId = idMap[parts[1]];
+          if (newPinId) {
+            photo.linked_pin_id = sec.id + '::' + newPinId;
+            toUpdate.push(photo);
+          }
+        });
+        if (toUpdate.length) {
+          window._RW.geophotos.saveMany(toUpdate).then(function () {
+            if (window._RW.geophotos.refresh) window._RW.geophotos.refresh();
+          });
+        }
+      }
+    } catch (_) { /* non-fatal: stale links can be re-linked manually */ }
   }
 
   // Per-kind editable schemas. Each kind's pin sheet renders these fields as
@@ -15962,6 +16003,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       $('#add-panel-btn')?.addEventListener('click', () => {
         pin.attrs.panels.push({
           panel_id: 'p' + Date.now(),
+          ulid: (typeof makeULID === 'function') ? makeULID() : null,
           position: pin.attrs.panels.length + 1,
           sign_code: '', facing_degrees: 0,
           sheeting_type: '', panel_condition: 'NA',
@@ -25036,19 +25078,37 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   // ── Panel factory ─────────────────────────────────────────────────────────
-  function buildPanels(){
+  // Re-uses existing ULIDs (and any saved data) when rebuilding from counts —
+  // keeps panel_ulid references on photos stable across wizard re-entry as
+  // long as the user doesn't shrink a direction's count below the photo'd
+  // panel's index. New panel slots get a fresh makeULID() so future
+  // photo->panel links survive a positional-id collision.
+  function buildPanels(prev){
     const dirs=[['N',swD.panel_count_n],['E',swD.panel_count_e],['S',swD.panel_count_s],
                 ['W',swD.panel_count_w],['OTHER',swD.panel_count_other]];
+    const prevByDir={};
+    (prev||[]).forEach(function(p){
+      const d=p&&p.direction; if(!d) return;
+      (prevByDir[d]=prevByDir[d]||[]).push(p);
+    });
     const panels=[];
     for(const [dir,cnt] of dirs){
+      const existingDir=prevByDir[dir]||[];
       for(let i=0;i<(cnt||0);i++){
-        panels.push({
-          direction:dir,sign_code:null,sides:'ONE_SIDED',
-          panel_size_in:'',mounting_height_in:swD.height_ft?(swD.height_ft*12):null,
-          sheeting_type:null,
-          ratings_front:{i1:{},i2:{}},ratings_back:{i1:{},i2:{}},
-          recommendation:null,reason_categories:[],reason_notes:'',
-        });
+        const existing=existingDir[i];
+        if(existing){
+          if(!existing.ulid&&typeof makeULID==='function') existing.ulid=makeULID();
+          panels.push(existing);
+        } else {
+          panels.push({
+            ulid:(typeof makeULID==='function')?makeULID():null,
+            direction:dir,sign_code:null,sides:'ONE_SIDED',
+            panel_size_in:'',mounting_height_in:swD.height_ft?(swD.height_ft*12):null,
+            sheeting_type:null,
+            ratings_front:{i1:{},i2:{}},ratings_back:{i1:{},i2:{}},
+            recommendation:null,reason_categories:[],reason_notes:'',
+          });
+        }
       }
     }
     return panels;
@@ -25233,7 +25293,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     `);
     setF(`<button class="sw-btn sw-btn-sec" id="sw-back">← Back</button><button class="sw-btn sw-btn-pri${!total?' disabled':''}" id="sw-next" ${!total?'disabled':''}>Continue →</button>`);
     wireFooter(()=>{ swStep='P3'; renderStep(); },()=>{
-      swD.panels=buildPanels(); swPanelIdx=0; swStep='P5'; renderStep();
+      swD.panels=buildPanels(swD.panels); swPanelIdx=0; swStep='P5'; renderStep();
     });
   }
 
@@ -31159,7 +31219,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var addBtn = document.getElementById('data-add-panel-btn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
-        _dataState.pin.attrs.panels.push({});
+        // Stamp a real ULID at birth — the positional backfill at
+        // render time can collide after delete+add (e.g. delete PNL2,
+        // add new panel, backfill assigns PNL2 again from array index).
+        // A fresh makeULID() keeps every panel uniquely addressable so
+        // photos tagged with panel_ulid never re-link to the wrong panel.
+        _dataState.pin.attrs.panels.push({
+          ulid: (typeof makeULID === 'function') ? makeULID() : null,
+        });
         _dataState.signSubTab = _dataState.pin.attrs.panels.length - 1;
         _dataState.dirty = true;
         _buildSignSubTabs();
@@ -31427,9 +31494,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!Array.isArray(a.posts) || !a.posts.length) a.posts = [{}];
     if (!Array.isArray(a.panels)) a.panels = [];
     if (!Array.isArray(a.photos)) a.photos = [];
+    // Backfill ULIDs on posts/panels that pre-date the add-button fix.
+    // Positional ids (base + '-P' + (i+1)) are readable, but if a slot ever
+    // gets the same id as a surviving sibling (possible only on legacy data
+    // where delete+add happened before the makeULID-at-push fix), we fall
+    // through to makeULID() so every post/panel is uniquely addressable.
     var base = pin.ulid || '';
-    a.posts.forEach(function (o, i)  { if (o && !o.ulid) o.ulid = base + '-P'   + (i + 1); });
-    a.panels.forEach(function (p, i) { if (p && !p.ulid) p.ulid = base + '-PNL' + (i + 1); });
+    var _used = Object.create(null);
+    a.posts.forEach(function (o)  { if (o && o.ulid) _used[o.ulid] = true; });
+    a.panels.forEach(function (p) { if (p && p.ulid) _used[p.ulid] = true; });
+    function _assignSlotUlid(slot, prefix, i) {
+      if (!slot || slot.ulid) return;
+      var candidate = base + prefix + (i + 1);
+      if (_used[candidate] && typeof makeULID === 'function') {
+        candidate = makeULID();
+      }
+      slot.ulid = candidate;
+      _used[candidate] = true;
+    }
+    a.posts.forEach(function (o, i)  { _assignSlotUlid(o, '-P',   i); });
+    a.panels.forEach(function (p, i) { _assignSlotUlid(p, '-PNL', i); });
 
     var conditions = (window._RW.conditionObjs ? window._RW.conditionObjs() : (window._RW.SIGN_CONDITIONS || []));
     var postDmg    = window._RW.SIGN_POST_DMG || [];
@@ -32925,7 +33009,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var addPostBtn = scroll.querySelector('[data-add-post]');
       if (addPostBtn) addPostBtn.addEventListener('click', function () {
         if (!Array.isArray(a.posts)) a.posts = [];
-        a.posts.push({});
+        // Stamp a real ULID at birth — same reasoning as panels above.
+        // Without this, a delete-P1-then-add sequence would assign the
+        // new post P1 again via the positional backfill, and any photo
+        // tagged with the old P1 post_ulid would silently re-link.
+        a.posts.push({
+          ulid: (typeof makeULID === 'function') ? makeULID() : null,
+        });
         _dataState.dirty = true;
         _renderFormBody();
       });
@@ -32944,7 +33034,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       scroll.querySelectorAll('[data-add-panel]').forEach(function (b) {
         b.addEventListener('click', function () {
           if (!Array.isArray(a.panels)) a.panels = [];
-          a.panels.push({ facing_degrees: Number(b.dataset.dir) });
+          // Real ULID at birth — see add-post above for rationale.
+          a.panels.push({
+            facing_degrees: Number(b.dataset.dir),
+            ulid: (typeof makeULID === 'function') ? makeULID() : null,
+          });
           _dataState.dirty = true;
           _renderFormBody();
         });
