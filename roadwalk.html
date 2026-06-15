@@ -13321,6 +13321,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       for (const pin of pins) {
         if (pin._editingVertices) continue;   // shown via the vertex-edit overlay
         if (pin.kind && _layersVis[LAYER_ALIAS[pin.kind] || pin.kind] === false) continue;   // hidden via Layers panel
+        // GPKG Imports meta-layer — hides anything stamped with an
+        // _import_batch_id (gpkg pipeline, AECOM Features Import) without
+        // touching the per-kind toggles, so the user can isolate imported
+        // pins from bundle pins of the same kind.
+        if (pin.attrs && pin.attrs._import_batch_id && _layersVis['__imported'] === false) continue;
         if (_hideBundle && _pinIsNonAecom(pin)) continue;            // non-AECOM data hidden
         const marker = buildPinLayer(pin);
         if (!marker) continue;
@@ -19390,8 +19395,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _sldHideBundle = !!_sldLs.hideBundle;
     } catch (_) { _sldLayersVis = {}; }
     const _sldKindVisible = k => _sldLayersVis[LAYER_ALIAS[k] || k] !== false;
+    // GPKG Imports meta-toggle mirrors the map-side check: hide any pin
+    // whose attrs carry _import_batch_id when the user disables this layer.
+    const _sldImportVisible = p =>
+      !(p && p.attrs && p.attrs._import_batch_id && _sldLayersVis['__imported'] === false);
     // Pin-aware visibility — also drops non-AECOM pins when that toggle is off.
-    const _sldPinVisible = p => _sldKindVisible(p.kind) && !(_sldHideBundle && _pinIsNonAecom(p));
+    const _sldPinVisible = p => _sldKindVisible(p.kind)
+      && _sldImportVisible(p)
+      && !(_sldHideBundle && _pinIsNonAecom(p));
 
     // ── Pre-pass: project sta_ft for any pin that doesn't have it yet ──────────
     // Covers point pins and cross-type line features that skip the trackPins path.
@@ -20142,6 +20153,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           _withGps++;
           if (window._RW && window._RW.photoFilter
               && !window._RW.photoFilter.apply(p)) return;
+          // Same GPKG Imports meta-toggle as the pin filter — a photo carrying
+          // _import_batch_id hides when the user turns the GPKG Imports layer
+          // off, even if it's geographically inside the section.
+          if (p._import_batch_id && _sldLayersVis['__imported'] === false) return;
           var proj = projectOntoAlignment({ lat: p.lat, lng: p.lng }, sec.alignment,
                                           { allowExtrapolation: true });
           if (!proj) return;
@@ -28728,6 +28743,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // line variant (ln_misc_other) — ln_misc_other is aliased to this row
     // via LAYER_ALIAS so a single toggle controls both.
     { label: 'Misc Other',    kind: 'pt_misc_other', color: '#C85A2B', active: true  },
+    // Meta-layer: pins (and their linked photos) carrying any
+    // pin.attrs._import_batch_id stamp — e.g. anything imported via the
+    // gpkg/AECOM Features pipeline. Hides them as a group without touching
+    // the per-kind toggles, so the user can flip the imported batch off
+    // while keeping bundle culverts/signs/etc. visible. The map and SLD
+    // filters check this layer key whenever a pin has _import_batch_id.
+    { label: 'GPKG Imports',  kind: '__imported',    color: '#9333EA', active: true  },
     // Drawn linear features — toggles key off the catalog `value` kind.
     { label: 'Paved Swales',  kind: 'ln_paved_swale',   color: '#2563A8', active: true },
     { label: 'Pvmt Widening', kind: 'ln_pvmt_widening', color: '#9CA3AF', active: true },
