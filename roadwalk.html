@@ -4761,7 +4761,16 @@ body.rw-sld-photo-dragging .strip-pin {
   display: flex; flex-direction: column; gap: 6px;
   align-items: flex-end; flex: 0 0 auto;
 }
-/* Per-card inset map — 1.6" sq, lazy-Leaflet-init on scroll. */
+/* Identity row — 2/3 info on the left, inset map fills the right 1/3. */
+.sr-identity-row {
+  display: flex; gap: 12px; align-items: stretch;
+}
+.sr-identity-left  { flex: 2 1 0; min-width: 0; }
+.sr-identity-right { flex: 1 1 0; display: flex; }
+.sr-identity-right .sr-card-map { width: 100%; height: 2.2in; }
+/* Identity grid narrows to 3 cols when sharing the row with the map. */
+.sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
+/* Per-card inset map — Leaflet lazy-init on scroll. */
 .sr-card-map {
   width: 1.6in; height: 1.6in;
   border: 1px solid var(--ink); background: #e7e3d6;
@@ -30530,13 +30539,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
       boxZoom: false, keyboard: false, touchZoom: false, tap: false,
     });
-    map.setView([lat, lng], 18);
+    map.setView([lat, lng], 16);
     var tileFn = window.offlineTileLayer || L.tileLayer;
     tileFn(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19 },
-      'esri_aerial'
+      'esri_street'
     ).addTo(map);
+    // Inactive sign markers — render every other sign as a hollow red
+    // ring so the user gets corridor context. Plot inactives first so the
+    // active marker stamps on top.
+    var pts = div._srAllSignPoints;
+    if (pts && pts.length) {
+      pts.forEach(function (p) {
+        if (p.isActive) return;
+        L.circleMarker([p.lat, p.lng], {
+          radius: 4, color: '#e11d48', weight: 1.5,
+          fillOpacity: 0,
+        }).addTo(map);
+      });
+    }
     L.circleMarker([lat, lng], {
       radius: 7, color: '#fff', weight: 2,
       fillColor: '#e11d48', fillOpacity: 1,
@@ -30917,13 +30939,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
               '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
             '</div>' +
-            '<div class="sr-card-hdr-right">' +
-              insetMap +
-              editBtn +
-            '</div>' +
+            '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
           '</div>' +
         '</header>' +
-        '<section class="sr-section"><div class="sr-sec-hdr">Identity</div>' + idBlock + '</section>' +
+        '<section class="sr-section">' +
+          '<div class="sr-sec-hdr">Identity</div>' +
+          '<div class="sr-identity-row">' +
+            '<div class="sr-identity-left">' + idBlock + '</div>' +
+            '<div class="sr-identity-right">' + insetMap + '</div>' +
+          '</div>' +
+        '</section>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
         '<section class="sr-section">' +
@@ -31039,8 +31064,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
 
     // ── Lazy-init the inset Leaflet map for each card on scroll ────
-    var obs = _srEnsureObserver();
+    // Build the shared point list once — each map then knows where
+    // every other sign sits and draws hollow markers for them so the
+    // reader sees the active sign in its corridor context.
+    var allPoints = [];
+    allSigns.forEach(function (r, i) {
+      var pg = r.pin.geometry && r.pin.geometry.coordinates;
+      if (Array.isArray(pg) && pg.length >= 2) {
+        var la = +pg[1], ln = +pg[0];
+        if (isFinite(la) && isFinite(ln)) {
+          allPoints.push({ lat: la, lng: ln, cardIdx: i });
+        }
+      }
+    });
     var insetDivs = list.querySelectorAll('.sr-card-map');
+    insetDivs.forEach(function (div) {
+      var card = div.closest('.sr-card');
+      if (!card) return;
+      var cardIdx = +card.dataset.signIdx;
+      div._srAllSignPoints = allPoints.map(function (p) {
+        return { lat: p.lat, lng: p.lng, isActive: p.cardIdx === cardIdx };
+      });
+    });
+    var obs = _srEnsureObserver();
     if (obs) {
       insetDivs.forEach(function (d) { obs.observe(d); });
     } else {
