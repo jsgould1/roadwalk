@@ -4719,6 +4719,12 @@ body.rw-sld-photo-dragging .strip-pin {
   background: var(--paper-2); border: 1px dashed var(--rule);
   font-size: 10px;
 }
+/* Panel notes sub-row — retro_notes / panel notes shown beneath the
+   main panel row when populated. Subtle so it reads as commentary. */
+.sr-tbl tbody tr.sr-panel-notes td {
+  background: var(--paper-2); color: var(--ink-2);
+  font-size: 8.5px; padding: 3px 6px;
+}
 
 .sr-photo-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
@@ -30886,36 +30892,49 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</tbody></table>'
         : '<div class="sr-tbl-empty">No post data entered.</div>';
 
-      // Panels table — each panel gets a row; damage flags joined with " · ".
+      // Panels table — one row per panel + an optional notes sub-row.
+      // Field names match what the data form actually saves: see the
+      // _inputRow / _selectRow calls in _panelBlock (sign form).
+      var panelCols = ['#','Sign Code','Description','Common Size','Install','Sheeting','Back','Mounting','Panel Cond.','Sheet Cond.','Damage','Day R1/R2','Night R1/R2'];
       var panelsTbl = panels.length
         ? '<table class="sr-tbl"><thead><tr>' +
-            ['#','Sign Code','Description','Size (in)','Mount Ht (in)','Sheeting','Panel Cond.','Sheet Cond.','Damage','Retro F','Retro B']
-              .map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+            panelCols.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
           '</tr></thead><tbody>' +
           panels.map(function (pn, i) {
             pn = pn || {};
             var dmg = Array.isArray(pn.damage_flags) ? pn.damage_flags.join(' · ') : pn.damage_flags;
-            function _retro(side) {
-              var r = pn['ratings_' + side];
-              if (!r) return '—';
-              var bits = [];
-              if (r.i1) bits.push('i1 ' + Object.values(r.i1).join('/'));
-              if (r.i2) bits.push('i2 ' + Object.values(r.i2).join('/'));
-              return bits.length ? bits.join(' ') : '—';
+            function _retroPair(r1Key, r2Key) {
+              var a = pn[r1Key], b = pn[r2Key];
+              if (!a && !b) return '—';
+              return (a || '—') + ' / ' + (b || '—');
             }
-            return '<tr>' +
+            var mainRow = '<tr>' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + _cell(pn.sign_code) + '</td>' +
-              '<td>' + _cell(pn.description || pn.sign_description) + '</td>' +
-              '<td>' + _cell(pn.panel_size_in) + '</td>' +
-              '<td>' + _cell(pn.mounting_height_in) + '</td>' +
+              '<td>' + _cell(pn.panel_description) + '</td>' +
+              '<td>' + _cell(pn.panel_size) + '</td>' +
+              '<td>' + _cell(pn.panel_install_date) + '</td>' +
               '<td>' + _cell(pn.sheeting_type) + '</td>' +
+              '<td>' + _cell(pn.back_panel) + '</td>' +
+              '<td>' + _cell(pn.mounting_hardware) + '</td>' +
               '<td>' + _cell(pn.panel_condition) + '</td>' +
               '<td>' + _cell(pn.sheeting_condition) + '</td>' +
               '<td>' + _cell(dmg) + '</td>' +
-              '<td>' + _retro('front') + '</td>' +
-              '<td>' + _retro('back') + '</td>' +
+              '<td>' + _retroPair('retro_day_r1', 'retro_day_r2') + '</td>' +
+              '<td>' + _retroPair('retro_night_r1', 'retro_night_r2') + '</td>' +
             '</tr>';
+            // Notes sub-row — collapses into one extra row only when
+            // retro_notes or panel notes are populated so the table
+            // stays compact for typical entries.
+            var notesBits = [];
+            if (pn.retro_notes) notesBits.push('<strong>Retro:</strong> ' + _esc(pn.retro_notes));
+            if (pn.notes)       notesBits.push('<strong>Notes:</strong> ' + _esc(pn.notes));
+            var notesRow = notesBits.length
+              ? '<tr class="sr-panel-notes"><td></td><td colspan="' + (panelCols.length - 1) + '">'
+                  + notesBits.join(' &nbsp;·&nbsp; ')
+                  + '</td></tr>'
+              : '';
+            return mainRow + notesRow;
           }).join('') +
           '</tbody></table>'
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
