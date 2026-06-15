@@ -4601,7 +4601,7 @@ body.rw-sld-photo-dragging .strip-pin {
    letter page when printed; the @media print rules at the bottom of
    this block hide chrome and force page breaks between cards.
    ════════════════════════════════════════════════════════════════════ */
-#mod-signs-report.active { flex-direction: column; overflow: hidden; }
+#mod-signs_report.active { flex-direction: column; overflow: hidden; }
 .sr-head {
   flex: 0 0 auto; padding: 8px 12px;
   border-bottom: 1px solid var(--rule); background: var(--paper);
@@ -4751,8 +4751,8 @@ body.rw-sld-photo-dragging .strip-pin {
   /* Hide everything except the signs-report module + its cards. */
   header, #app-tabs, #header-settings-btn, #app-header,
   .filters, .sr-head, .sr-pick-btn, #module-toolbar,
-  .module-view:not(#mod-signs-report) { display: none !important; }
-  #mod-signs-report.active { display: block !important; overflow: visible !important; }
+  .module-view:not(#mod-signs_report) { display: none !important; }
+  #mod-signs_report.active { display: block !important; overflow: visible !important; }
   .sr-list { background: #fff !important; padding: 0 !important; gap: 0 !important; }
   .sr-card {
     box-shadow: none !important; border: none !important;
@@ -10967,7 +10967,7 @@ body.mobile-mode #app {
          openNearbyPhotoPicker for grabbing field photos by proximity
          on a per-sign basis. Sign data is read from the merged pin
          (bundle attrs + IDB inspection record). -->
-    <div id="mod-signs-report" class="module-view">
+    <div id="mod-signs_report" class="module-view">
       <div class="sr-head">
         <div class="sr-head-row">
           <label class="sr-head-lbl">Section</label>
