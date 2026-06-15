@@ -4757,6 +4757,22 @@ body.rw-sld-photo-dragging .strip-pin {
   gap: 12px;
 }
 .sr-card-hdr-top .sr-card-title-wrap { flex: 1 1 auto; min-width: 0; }
+.sr-card-hdr-right {
+  display: flex; flex-direction: column; gap: 6px;
+  align-items: flex-end; flex: 0 0 auto;
+}
+/* Per-card inset map — 1.6" sq, lazy-Leaflet-init on scroll. */
+.sr-card-map {
+  width: 1.6in; height: 1.6in;
+  border: 1px solid var(--ink); background: #e7e3d6;
+  position: relative;
+}
+.sr-card-map.empty::after {
+  content: 'No location'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 9px 'IBM Plex Mono', monospace; color: var(--ink-3);
+}
+.sr-card-map .leaflet-container { background: #e7e3d6; }
 
 /* Source chips — multi-select filter. Default: all on. */
 .sr-chips { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -4816,6 +4832,11 @@ body.rw-sld-photo-dragging .strip-pin {
   .sr-card:last-child { page-break-after: auto; break-after: auto; }
   .sr-tbl { font-size: 8.5px; }
   .sr-photo figcaption { font-size: 7.5px; }
+  /* Force tile imagery to print rather than being dropped as a "background" */
+  .sr-card-map, .sr-card-map * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 .tk-head-row {
@@ -30485,6 +30506,70 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // doesn't have to re-walk SECTIONS on every click.
   var _srLastSrcCounts = {};
 
+  // Per-card inset Leaflet maps. Lazy-initialized as cards scroll into
+  // view (an IntersectionObserver flips them on). Print-button code
+  // force-initializes any uninitialized maps before opening the print
+  // dialog, then waits for tiles to load.
+  var _srInsetObserver = null;
+  var _srInsetMaps = [];
+  function _srTeardownInsetMaps() {
+    _srInsetMaps.forEach(function (m) { try { m.remove(); } catch (_) {} });
+    _srInsetMaps = [];
+  }
+  function _srInitInsetMap(div) {
+    if (!div || div._srInitialized || typeof L === 'undefined') return null;
+    div._srInitialized = true;
+    var lat = parseFloat(div.dataset.lat);
+    var lng = parseFloat(div.dataset.lng);
+    if (!isFinite(lat) || !isFinite(lng)) {
+      div.classList.add('empty');
+      return null;
+    }
+    var map = L.map(div, {
+      zoomControl: false, attributionControl: false,
+      dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false, touchZoom: false, tap: false,
+    });
+    map.setView([lat, lng], 18);
+    var tileFn = window.offlineTileLayer || L.tileLayer;
+    tileFn(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19 },
+      'esri_aerial'
+    ).addTo(map);
+    L.circleMarker([lat, lng], {
+      radius: 7, color: '#fff', weight: 2,
+      fillColor: '#e11d48', fillOpacity: 1,
+    }).addTo(map);
+    // Container was display:none for a beat during render — nudge size.
+    setTimeout(function () { try { map.invalidateSize(); } catch (_) {} }, 50);
+    _srInsetMaps.push(map);
+    return map;
+  }
+  function _srEnsureObserver() {
+    if (_srInsetObserver || typeof IntersectionObserver === 'undefined') {
+      return _srInsetObserver;
+    }
+    _srInsetObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          _srInitInsetMap(en.target);
+          _srInsetObserver.unobserve(en.target);
+        }
+      });
+    }, { rootMargin: '200px' });
+    return _srInsetObserver;
+  }
+  function _srForceInitAllMaps() {
+    document.querySelectorAll('#sr-list .sr-card-map').forEach(_srInitInsetMap);
+  }
+  // File → Print path (no print-button click). Synchronous force-init so
+  // every card has a map widget; tiles may not all have loaded though.
+  window.addEventListener('beforeprint', function () {
+    var mod = document.getElementById('mod-signs_report');
+    if (mod && mod.classList.contains('active')) _srForceInitAllMaps();
+  });
+
   function renderSignsReport() {
     var list = document.getElementById('sr-list');
     if (!list) return;
@@ -30513,7 +30598,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var printBtn = document.getElementById('sr-print-btn');
     if (printBtn && !printBtn._wired) {
       printBtn._wired = true;
-      printBtn.addEventListener('click', function () { window.print(); });
+      printBtn.addEventListener('click', function () {
+        // Force-init every inset map, give tiles time to load, then
+        // open the print dialog. Without this, only the cards that
+        // happened to be visible would have a populated inset map.
+        _srForceInitAllMaps();
+        if (typeof printBtn._tipNode === 'undefined') {
+          printBtn._tipNode = null;
+        }
+        var tip = document.createElement('div');
+        tip.textContent = 'Loading map tiles…';
+        tip.style.cssText = 'position:fixed;top:50%;left:50%;'
+          + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
+          + 'padding:10px 16px;font:600 12px monospace;z-index:99999;'
+          + 'border:1px solid #fff;border-radius:4px;';
+        document.body.appendChild(tip);
+        setTimeout(function () {
+          if (tip.parentNode) tip.parentNode.removeChild(tip);
+          window.print();
+        }, 2500);
+      });
     }
 
     // ── Collect every sign (unfiltered), tally sources for chip strip
@@ -30614,6 +30718,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var cntEl = document.getElementById('sr-count');
     if (cntEl) cntEl.textContent = allSigns.length + ' sign' + (allSigns.length === 1 ? '' : 's');
 
+    // Re-render — drop any inset Leaflet instances from the previous
+    // render before we wipe their host divs out of the DOM.
+    _srTeardownInsetMaps();
+
     if (!allSigns.length) {
       list.innerHTML = '<div class="sr-empty">No signs match the current filters.</div>';
       return;
@@ -30673,12 +30781,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var panels = Array.isArray(a.panels) ? a.panels : [];
       var photos = _photosForPin(pin, sec);
 
-      // Geometry coords (signs are point pins).
-      var lat = '—', lng = '—';
+      // Geometry coords (signs are point pins). nLat/nLng are kept as
+      // raw numbers so the inset map can read them from data-attrs.
+      var lat = '—', lng = '—', nLat = NaN, nLng = NaN;
       var g = pin.geometry && pin.geometry.coordinates;
       if (Array.isArray(g) && g.length >= 2) {
-        lng = (+g[0]).toFixed(6);
-        lat = (+g[1]).toFixed(6);
+        nLng = +g[0]; nLat = +g[1];
+        lng = nLng.toFixed(6);
+        lat = nLat.toFixed(6);
       }
 
       // Identity block.
@@ -30792,6 +30902,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var editBtn = '<button type="button" class="sr-edit-btn" '
                   + 'data-card-idx="' + idx + '">&#9998; Edit Data</button>';
 
+      // Inset map data-attrs — lazy-Leaflet-init on scroll (or pre-init
+      // before printing). Empty data-* fall through to a "No location"
+      // placeholder.
+      var insetAttrs = isFinite(nLat) && isFinite(nLng)
+        ? 'data-lat="' + nLat + '" data-lng="' + nLng + '"'
+        : '';
+      var insetMap = '<div class="sr-card-map" ' + insetAttrs + '></div>';
+
       return '<article class="sr-card" data-sign-idx="' + idx + '">' +
         '<header class="sr-card-hdr">' +
           '<div class="sr-card-hdr-top">' +
@@ -30799,7 +30917,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
               '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
             '</div>' +
-            '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
+            '<div class="sr-card-hdr-right">' +
+              insetMap +
+              editBtn +
+            '</div>' +
           '</div>' +
         '</header>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Identity</div>' + idBlock + '</section>' +
@@ -30916,6 +31037,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         }
       });
     });
+
+    // ── Lazy-init the inset Leaflet map for each card on scroll ────
+    var obs = _srEnsureObserver();
+    var insetDivs = list.querySelectorAll('.sr-card-map');
+    if (obs) {
+      insetDivs.forEach(function (d) { obs.observe(d); });
+    } else {
+      // No IntersectionObserver — init synchronously (rare; old browsers).
+      insetDivs.forEach(_srInitInsetMap);
+    }
   }
   window.renderSignsReport = renderSignsReport;
 
