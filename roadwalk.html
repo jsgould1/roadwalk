@@ -4595,6 +4595,176 @@ body.rw-sld-photo-dragging .strip-pin {
   flex: 0 0 auto; padding: 8px 12px;
   border-bottom: 1px solid var(--rule); background: var(--paper);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   SIGNS REPORT module — printable per-sign cards. One card = one US-
+   letter page when printed; the @media print rules at the bottom of
+   this block hide chrome and force page breaks between cards.
+   ════════════════════════════════════════════════════════════════════ */
+#mod-signs-report.active { flex-direction: column; overflow: hidden; }
+.sr-head {
+  flex: 0 0 auto; padding: 8px 12px;
+  border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.sr-head-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font: 400 11px 'IBM Plex Mono', monospace;
+}
+.sr-head-row + .sr-head-row { margin-top: 4px; }
+.sr-print-note { color: var(--ink-3); font-style: italic; }
+.sr-head-lbl { color: var(--ink-3); }
+.sr-head select, .sr-head input[type=text] {
+  font: 400 11px 'IBM Plex Mono', monospace;
+  padding: 3px 8px;
+  background: #fff; border: 1px solid var(--rule); color: var(--ink);
+}
+.sr-head input[type=text] { width: 240px; }
+.sr-count { color: var(--ink-2); font-weight: 700; }
+.sr-btn {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .5px; text-transform: uppercase;
+  padding: 5px 10px;
+  background: var(--paper); border: 1px solid var(--rule); color: var(--ink-2);
+  cursor: pointer;
+}
+.sr-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+.sr-list {
+  flex: 1 1 auto; overflow-y: auto;
+  background: var(--paper-2);
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 16px;
+  align-items: center;
+}
+.sr-empty {
+  padding: 60px 20px; text-align: center;
+  color: var(--ink-3); font: 400 12px/1.5 'IBM Plex Mono', monospace;
+  font-style: italic;
+}
+/* One card = one printable page. 8.5×11 in with 0.5 in margins. */
+.sr-card {
+  width: 8.5in; min-height: 10.5in;
+  background: #fff;
+  border: 1px solid var(--rule);
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  padding: 0.5in 0.5in 0.4in;
+  font: 400 10px/1.4 var(--sans, system-ui, sans-serif);
+  color: var(--ink);
+  display: flex; flex-direction: column;
+}
+.sr-card-hdr {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 6px; margin-bottom: 10px;
+}
+.sr-card-title {
+  font: 700 14px 'IBM Plex Mono', monospace;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink);
+}
+.sr-card-sub {
+  margin-top: 2px;
+  font: 400 11px 'IBM Plex Mono', monospace; color: var(--ink-2);
+}
+.sr-section {
+  margin-bottom: 12px;
+}
+.sr-sec-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .7px; text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 3px; margin-bottom: 6px;
+}
+.sr-id-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 16px;
+  margin-top: 4px;
+}
+.sr-id-grid > div { display: flex; flex-direction: column; }
+.sr-lbl {
+  font: 700 8px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.sr-val { font: 400 11px var(--sans, system-ui); color: var(--ink); }
+.sr-notes-row {
+  margin-top: 6px;
+  padding: 5px 8px;
+  background: var(--paper-2); border: 1px solid var(--rule-soft);
+}
+.sr-notes-row .sr-val { font-size: 10px; }
+
+.sr-tbl {
+  width: 100%; border-collapse: collapse;
+  font: 400 9px var(--sans, system-ui);
+}
+.sr-tbl thead th {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  padding: 4px 5px; text-align: left;
+  font: 700 8px 'IBM Plex Mono', monospace;
+  letter-spacing: .3px; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.sr-tbl tbody td {
+  border: 1px solid var(--rule);
+  padding: 3px 5px; vertical-align: top;
+}
+.sr-tbl-empty {
+  padding: 8px 10px; color: var(--ink-3); font-style: italic;
+  background: var(--paper-2); border: 1px dashed var(--rule);
+  font-size: 10px;
+}
+
+.sr-photo-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  margin-top: 4px;
+}
+.sr-photo {
+  margin: 0; padding: 0;
+  border: 1px solid var(--rule); background: #000;
+  display: flex; flex-direction: column;
+  break-inside: avoid;
+}
+.sr-photo img {
+  width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+}
+.sr-photo figcaption {
+  padding: 2px 4px; background: #f4f1ea;
+  font: 400 8px 'IBM Plex Mono', monospace; color: var(--ink-2);
+  border-top: 1px solid var(--rule);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sr-pick-btn {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 8px;
+  background: transparent; color: var(--blue);
+  border: 1px solid var(--blue); cursor: pointer;
+}
+.sr-pick-btn:hover { background: var(--blue); color: #fff; }
+
+/* ── Print rules — collapse chrome, one card per page ────────────── */
+@media print {
+  @page { size: letter; margin: 0; }
+  body { background: #fff !important; }
+  /* Hide everything except the signs-report module + its cards. */
+  header, #app-tabs, #header-settings-btn, #app-header,
+  .filters, .sr-head, .sr-pick-btn, #module-toolbar,
+  .module-view:not(#mod-signs-report) { display: none !important; }
+  #mod-signs-report.active { display: block !important; overflow: visible !important; }
+  .sr-list { background: #fff !important; padding: 0 !important; gap: 0 !important; }
+  .sr-card {
+    box-shadow: none !important; border: none !important;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .sr-card:last-child { page-break-after: auto; break-after: auto; }
+  .sr-tbl { font-size: 8.5px; }
+  .sr-photo figcaption { font-size: 7.5px; }
+}
+
 .tk-head-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
@@ -9236,6 +9406,9 @@ body.mobile-mode #app {
       <button class="app-tab" data-module="tracks" role="tab" aria-selected="false"
               title="Photo tracks — station &times; visit grid for grouping across passes">
         <span class="app-tab-icon">🎞</span><span class="app-tab-label">Tracks</span></button>
+      <button class="app-tab" data-module="signs_report" role="tab" aria-selected="false"
+              title="Sign inventory report — one printable page per sign">
+        <span class="app-tab-icon">🪧</span><span class="app-tab-label">Signs</span></button>
       <button class="app-tab app-tab-gear" id="header-styleguide-btn" type="button"
               title="Style Guide &amp; Labels" aria-label="Style Guide">
         <span class="app-tab-icon">◈</span><span class="app-tab-label">Style</span></button>
@@ -10781,6 +10954,38 @@ body.mobile-mode #app {
           <div class="tk-pp-sub" id="tk-pp-sub">Nearest pins to the selected photos' centroid:</div>
           <div class="tk-pp-list" id="tk-pp-list"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODULE: SIGNS REPORT — printable per-sign inventory
+         ============================================================
+         One scrollable column of "sign cards" — one card per sign in
+         the active project. Each card is sized to fit on a single US-
+         letter page so the user can hit File → Print → Save as PDF
+         and get a clean per-sign deliverable. Reuses the existing
+         openNearbyPhotoPicker for grabbing field photos by proximity
+         on a per-sign basis. Sign data is read from the merged pin
+         (bundle attrs + IDB inspection record). -->
+    <div id="mod-signs-report" class="module-view">
+      <div class="sr-head">
+        <div class="sr-head-row">
+          <label class="sr-head-lbl">Section</label>
+          <select id="sr-section"><option value="">(all)</option></select>
+          <label class="sr-head-lbl">Search</label>
+          <input type="text" id="sr-search" placeholder="id, name, code, notes…">
+          <span class="sr-count" id="sr-count">— signs</span>
+          <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
+          </span>
+        </div>
+        <div class="sr-head-row sr-print-note">
+          Tip: <strong>File → Print → Save as PDF</strong> for the deliverable.
+          Each sign starts on a new page automatically.
+        </div>
+      </div>
+      <div class="sr-list" id="sr-list">
+        <!-- Populated by renderSignsReport() once the module activates. -->
       </div>
     </div>
 
@@ -28924,7 +29129,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   function showModule(name) {
     // Guard: ignore unknown module names
-    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings', 'project', 'triage', 'tracks'];
+    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings', 'project', 'triage', 'tracks', 'signs_report'];
     if (!VALID.includes(name)) {
       console.warn('[RoadWalk] showModule: unknown module "' + name + '"');
       return;
@@ -28977,6 +29182,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       document.querySelectorAll('#dash-tabs .list-tab').forEach(function (t) {
         t.classList.toggle('active', t.dataset.dashTab === 'all');
       });
+    }
+
+    // ── Signs Report: rebuild on tab switch ─────────────────────
+    // Every reopen pulls a fresh _mergedPin so latest form edits
+    // appear immediately (the data form may have been saved between
+    // the last open and this one).
+    if (name === 'signs_report' && typeof window.renderSignsReport === 'function') {
+      window.renderSignsReport();
     }
 
     // ── Data module: refresh list + badges on tab switch ───────
@@ -30168,6 +30381,280 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   // Expose renderDashboard globally so the main IIFE can call it after bundle loads
   window.renderDashboard = renderDashboard;
+
+  /* ────────────────────────────────────────────────────────────────────
+     SIGNS REPORT — one printable card per sign feature
+     ────────────────────────────────────────────────────────────────────
+     Builds a long scrollable list of "sign cards" sized to fit on a
+     single US-letter page each (CSS @page rule pages them out at print
+     time). Each card pulls the latest merged-pin data (bundle attrs +
+     IDB inspection record so user edits show up immediately) and
+     renders:
+       • Identity row (section · pin id · STA · MP · lat/lng · side)
+       • Posts table — every entry from pin.attrs.posts[]
+       • Panels table — every entry from pin.attrs.panels[]
+       • Photo grid — pin.attrs.photos[] (embedded form captures) plus
+         every geophoto whose linked_pin_id matches this pin
+       • "📍 Select Nearby Photos" button reuses the existing
+         openNearbyPhotoPicker so the user can grab field photos by
+         proximity without leaving the report view.
+     ──────────────────────────────────────────────────────────────────── */
+  function renderSignsReport() {
+    var list = document.getElementById('sr-list');
+    if (!list) return;
+    var sections = window.SECTIONS || [];
+
+    // ── Populate Section dropdown once per render ─────────────────────
+    var secEl = document.getElementById('sr-section');
+    if (secEl && !secEl._populated) {
+      var opts = ['<option value="">(all sections)</option>']
+        .concat(sections.map(function (s) {
+          return '<option value="' + s.id + '">' + s.id + ' — ' + (s.name || '') + '</option>';
+        }));
+      secEl.innerHTML = opts.join('');
+      secEl._populated = true;
+      secEl.addEventListener('change', renderSignsReport);
+    }
+    var searchEl = document.getElementById('sr-search');
+    if (searchEl && !searchEl._wired) {
+      searchEl._wired = true;
+      var _qDeb;
+      searchEl.addEventListener('input', function () {
+        clearTimeout(_qDeb);
+        _qDeb = setTimeout(renderSignsReport, 120);
+      });
+    }
+    var printBtn = document.getElementById('sr-print-btn');
+    if (printBtn && !printBtn._wired) {
+      printBtn._wired = true;
+      printBtn.addEventListener('click', function () { window.print(); });
+    }
+
+    // ── Collect every sign across the selected section(s) ────────────
+    var fSec = (secEl && secEl.value) || '';
+    var fQ   = (searchEl && searchEl.value.trim().toLowerCase()) || '';
+    var allSigns = [];
+    sections.forEach(function (sec) {
+      if (fSec && sec.id !== fSec) return;
+      (sec.pins || []).forEach(function (p) {
+        if (p && (p.kind === 'sign' || p.kind === 'pt_sign')) {
+          allSigns.push({ sec: sec, pin: p });
+        }
+      });
+    });
+    if (fQ) {
+      allSigns = allSigns.filter(function (r) {
+        var a = r.pin.attrs || {};
+        var hay = [r.pin.id, a.name, a.notes, r.sec.id,
+                   (a.panels || []).map(function (pn) { return pn && pn.sign_code; }).join(' ')]
+          .filter(Boolean).join(' ').toLowerCase();
+        return hay.indexOf(fQ) !== -1;
+      });
+    }
+    allSigns.sort(function (a, b) {
+      if (a.sec.id !== b.sec.id) return a.sec.id < b.sec.id ? -1 : 1;
+      return (a.pin.sta_ft || 0) - (b.pin.sta_ft || 0);
+    });
+
+    var cntEl = document.getElementById('sr-count');
+    if (cntEl) cntEl.textContent = allSigns.length + ' sign' + (allSigns.length === 1 ? '' : 's');
+
+    if (!allSigns.length) {
+      list.innerHTML = '<div class="sr-empty">No signs match the current filters.</div>';
+      return;
+    }
+
+    // ── Photo lookup helper — combines embedded attrs.photos + linked
+    //    geophotos. Sorted by captured_at when available.
+    function _photosForPin(pin, sec) {
+      var out = [];
+      var emb = (pin.attrs && Array.isArray(pin.attrs.photos)) ? pin.attrs.photos : [];
+      emb.forEach(function (p, i) {
+        out.push({
+          src:        p.dataUrl || '',
+          caption:    p.caption || ('Form photo ' + (i + 1)),
+          captured_at: p.captured_at || null,
+        });
+      });
+      var prefix = sec.id + '::' + pin.id;
+      if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
+        window._RW.geophotos.list().forEach(function (gp) {
+          if (gp && gp.linked_pin_id === prefix) {
+            out.push({
+              src:        gp.dataUrl || '',
+              caption:    gp.description
+                          || (gp.captured_at ? new Date(gp.captured_at).toLocaleString() : 'Linked photo'),
+              captured_at: gp.captured_at || null,
+              _gp_id:     gp.id,
+            });
+          }
+        });
+      }
+      out.sort(function (a, b) {
+        if (!a.captured_at && !b.captured_at) return 0;
+        if (!a.captured_at) return 1;
+        if (!b.captured_at) return -1;
+        return a.captured_at < b.captured_at ? -1 : 1;
+      });
+      return out;
+    }
+
+    function _esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
+      });
+    }
+    function _cell(v) { return v == null || v === '' ? '—' : _esc(v); }
+
+    // ── Build one card per sign ──────────────────────────────────────
+    list.innerHTML = allSigns.map(function (r, idx) {
+      var sec = r.sec;
+      var pin = (window._RW && window._RW.mergedPin)
+              ? window._RW.mergedPin(r.pin)
+              : r.pin;
+      var a = pin.attrs || {};
+      var posts  = Array.isArray(a.posts)  ? a.posts  : [];
+      var panels = Array.isArray(a.panels) ? a.panels : [];
+      var photos = _photosForPin(pin, sec);
+
+      // Geometry coords (signs are point pins).
+      var lat = '—', lng = '—';
+      var g = pin.geometry && pin.geometry.coordinates;
+      if (Array.isArray(g) && g.length >= 2) {
+        lng = (+g[0]).toFixed(6);
+        lat = (+g[1]).toFixed(6);
+      }
+
+      // Identity block.
+      var idBlock =
+        '<div class="sr-id-grid">' +
+          '<div><span class="sr-lbl">Section</span><span class="sr-val">' + _cell(sec.id) + ' · ' + _cell(sec.name) + '</span></div>' +
+          '<div><span class="sr-lbl">Pin ID</span><span class="sr-val">' + _cell(pin.id) + '</span></div>' +
+          '<div><span class="sr-lbl">STA</span><span class="sr-val">' + _cell(pin.sta) + '</span></div>' +
+          '<div><span class="sr-lbl">MP</span><span class="sr-val">' + _cell(a.mp_start != null ? (+a.mp_start).toFixed(4) : '') + '</span></div>' +
+          '<div><span class="sr-lbl">Side</span><span class="sr-val">' + _cell(a.side) + '</span></div>' +
+          '<div><span class="sr-lbl">EOP Off</span><span class="sr-val">' + _cell(a.eop_offset) + (a.eop_offset != null ? ' ft' : '') + '</span></div>' +
+          '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cell(lat) + ', ' + _cell(lng) + '</span></div>' +
+          '<div><span class="sr-lbl">Asset ID</span><span class="sr-val">' + _cell(a.asset_id || a.fmss_asset) + '</span></div>' +
+        '</div>' +
+        (a.notes ? '<div class="sr-notes-row"><span class="sr-lbl">Description</span><span class="sr-val">' + _esc(a.notes) + '</span></div>' : '');
+
+      // Posts table.
+      var postsTbl = posts.length
+        ? '<table class="sr-tbl"><thead><tr>' +
+            ['#','Type','Count','Height (ft)','Foundation','Finish','Breakaway','Condition']
+              .map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+          '</tr></thead><tbody>' +
+          posts.map(function (po, i) {
+            po = po || {};
+            return '<tr>' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + _cell(po.type || po.post_type) + '</td>' +
+              '<td>' + _cell(po.count || po.post_count) + '</td>' +
+              '<td>' + _cell(po.height_ft || po.height) + '</td>' +
+              '<td>' + _cell(po.foundation) + '</td>' +
+              '<td>' + _cell(po.finish) + '</td>' +
+              '<td>' + _cell(po.breakaway) + '</td>' +
+              '<td>' + _cell(po.condition || po.post_condition) + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table>'
+        : '<div class="sr-tbl-empty">No post data entered.</div>';
+
+      // Panels table — each panel gets a row; damage flags joined with " · ".
+      var panelsTbl = panels.length
+        ? '<table class="sr-tbl"><thead><tr>' +
+            ['#','Sign Code','Description','Size (in)','Mount Ht (in)','Sheeting','Panel Cond.','Sheet Cond.','Damage','Retro F','Retro B']
+              .map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+          '</tr></thead><tbody>' +
+          panels.map(function (pn, i) {
+            pn = pn || {};
+            var dmg = Array.isArray(pn.damage_flags) ? pn.damage_flags.join(' · ') : pn.damage_flags;
+            function _retro(side) {
+              var r = pn['ratings_' + side];
+              if (!r) return '—';
+              var bits = [];
+              if (r.i1) bits.push('i1 ' + Object.values(r.i1).join('/'));
+              if (r.i2) bits.push('i2 ' + Object.values(r.i2).join('/'));
+              return bits.length ? bits.join(' ') : '—';
+            }
+            return '<tr>' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + _cell(pn.sign_code) + '</td>' +
+              '<td>' + _cell(pn.description || pn.sign_description) + '</td>' +
+              '<td>' + _cell(pn.panel_size_in) + '</td>' +
+              '<td>' + _cell(pn.mounting_height_in) + '</td>' +
+              '<td>' + _cell(pn.sheeting_type) + '</td>' +
+              '<td>' + _cell(pn.panel_condition) + '</td>' +
+              '<td>' + _cell(pn.sheeting_condition) + '</td>' +
+              '<td>' + _cell(dmg) + '</td>' +
+              '<td>' + _retro('front') + '</td>' +
+              '<td>' + _retro('back') + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table>'
+        : '<div class="sr-tbl-empty">No panel data entered.</div>';
+
+      // Photo grid.
+      var photoBlock = photos.length
+        ? '<div class="sr-photo-grid">' +
+            photos.map(function (ph, i) {
+              return '<figure class="sr-photo">' +
+                '<img src="' + _esc(ph.src) + '" alt="">' +
+                '<figcaption>' + _esc(ph.caption || ('Photo ' + (i + 1))) + '</figcaption>' +
+              '</figure>';
+            }).join('') +
+          '</div>'
+        : '<div class="sr-tbl-empty">No photos linked yet.</div>';
+
+      // Per-sign action: Select Nearby Photos
+      var actBtn = '<button type="button" class="sr-pick-btn" '
+                 + 'data-sec="' + _esc(sec.id) + '" data-ulid="' + _esc(pin.ulid || '') + '" '
+                 + 'data-pid="' + _esc(pin.id || '') + '">📍 Select Nearby Photos</button>';
+
+      return '<article class="sr-card" data-sign-idx="' + idx + '">' +
+        '<header class="sr-card-hdr">' +
+          '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
+          '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
+        '</header>' +
+        '<section class="sr-section"><div class="sr-sec-hdr">Identity</div>' + idBlock + '</section>' +
+        '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
+        '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
+        '<section class="sr-section">' +
+          '<div class="sr-sec-hdr">Photos (' + photos.length + ') ' + actBtn + '</div>' +
+          photoBlock +
+        '</section>' +
+      '</article>';
+    }).join('');
+
+    // ── Wire Select Nearby buttons ─────────────────────────────────
+    list.querySelectorAll('.sr-pick-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var secId = btn.dataset.sec;
+        var pinUlid = btn.dataset.ulid;
+        var sec = (window.SECTIONS || []).find(function (s) { return s.id === secId; });
+        if (!sec) return;
+        var pin = (sec.pins || []).find(function (p) { return p && p.ulid === pinUlid; });
+        if (!pin || !pin.geometry) return;
+        if (!(window._RW && typeof window._RW.openNearbyPhotoPicker === 'function')) {
+          alert('Nearby photo picker not available.');
+          return;
+        }
+        window._RW.openNearbyPhotoPicker({
+          pin: pin,
+          secId: sec.id,
+          maxFt: 150,
+          title: 'Nearby field photos — ' + pin.id,
+          onPick: function (photos) {
+            // Re-render the report so the newly-linked photos show up
+            // immediately in the card.
+            renderSignsReport();
+          },
+        });
+      });
+    });
+  }
+  window.renderSignsReport = renderSignsReport;
 
   /** Wire Dashboard tab buttons and the three action-bar buttons. */
   function initDashboard() {
