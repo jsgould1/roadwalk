@@ -4641,7 +4641,9 @@ body.rw-sld-photo-dragging .strip-pin {
   color: var(--ink-3); font: 400 12px/1.5 'IBM Plex Mono', monospace;
   font-style: italic;
 }
-/* One card = one printable page. 8.5×11 in with 0.5 in margins. */
+/* One card = one printable page. 8.5×11 in with 0.5 in margins. A
+   sign with too many photos to fit on a single page is rendered as
+   the first card plus one or more .sr-card-cont continuation cards. */
 .sr-card {
   width: 8.5in; min-height: 10.5in;
   background: #fff;
@@ -4652,6 +4654,8 @@ body.rw-sld-photo-dragging .strip-pin {
   color: var(--ink);
   display: flex; flex-direction: column;
 }
+.sr-card-cont .sr-card-title { font-size: 12px; }
+.sr-card-cont .sr-card-sub { color: var(--ink-3); font-style: italic; }
 .sr-card-hdr {
   border-bottom: 2px solid var(--ink);
   padding-bottom: 6px; margin-bottom: 10px;
@@ -30916,36 +30920,54 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</tbody></table>'
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
 
-      // Photo grid — each thumb gets ✎ Annotate (embedded only) and ✕
-      // Hide-from-report buttons. The ✕ marks the photo's stable key
-      // in pin.attrs.report_hidden_photos so it stops printing — the
-      // embedded photo is NOT deleted and the linked geophoto is NOT
-      // unlinked. The Restore button below clears the hide list.
-      var photoBlock = photos.length
-        ? '<div class="sr-photo-grid">' +
-            photos.map(function (ph, i) {
-              var acts = '';
-              if (ph._emb_idx != null) {
-                acts +=
-                  '<button type="button" class="sr-photo-act sr-photo-ann" '
-                    + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
-                    + 'title="Annotate">&#9998;</button>';
-              }
-              if (ph._hide_key) {
-                acts +=
-                  '<button type="button" class="sr-photo-act sr-photo-hide" '
-                    + 'data-card-idx="' + idx + '" '
-                    + 'data-hide-key="' + _esc(ph._hide_key) + '" '
-                    + 'title="Hide from printed report (photo is kept)">&times;</button>';
-              }
-              return '<figure class="sr-photo">' +
-                '<img src="' + _esc(ph.src) + '" alt="">' +
-                (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
-                '<figcaption>' + _esc(ph.caption || ('Photo ' + (i + 1))) + '</figcaption>' +
-              '</figure>';
-            }).join('') +
-          '</div>'
-        : '<div class="sr-tbl-empty">No photos linked yet.</div>';
+      // Photo paging: pack photos into chunks of one card each so the
+      // print engine paginates naturally. The first card carries the
+      // identity / posts / panels block and a smaller photo budget;
+      // continuation cards are header-only and can fit more.
+      var PHOTOS_PAGE_1 = 6;   // 2 rows × 3 cols on page 1
+      var PHOTOS_PAGE_N = 12;  // 4 rows × 3 cols on continuation pages
+      var photoChunks;
+      if (!photos.length) {
+        photoChunks = [[]];
+      } else {
+        photoChunks = [photos.slice(0, PHOTOS_PAGE_1)];
+        var rest = photos.slice(PHOTOS_PAGE_1);
+        while (rest.length) {
+          photoChunks.push(rest.slice(0, PHOTOS_PAGE_N));
+          rest = rest.slice(PHOTOS_PAGE_N);
+        }
+      }
+      var totalPages = photoChunks.length;
+
+      function _photoGridFor(chunk, startNum) {
+        if (!chunk.length) {
+          return '<div class="sr-tbl-empty">No photos linked yet.</div>';
+        }
+        return '<div class="sr-photo-grid">' +
+          chunk.map(function (ph, i) {
+            var acts = '';
+            if (ph._emb_idx != null) {
+              acts +=
+                '<button type="button" class="sr-photo-act sr-photo-ann" '
+                  + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
+                  + 'title="Annotate">&#9998;</button>';
+            }
+            if (ph._hide_key) {
+              acts +=
+                '<button type="button" class="sr-photo-act sr-photo-hide" '
+                  + 'data-card-idx="' + idx + '" '
+                  + 'data-hide-key="' + _esc(ph._hide_key) + '" '
+                  + 'title="Hide from printed report (photo is kept)">&times;</button>';
+            }
+            return '<figure class="sr-photo">' +
+              '<img src="' + _esc(ph.src) + '" alt="">' +
+              (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
+              '<figcaption>' + _esc(ph.caption || ('Photo ' + (startNum + i))) + '</figcaption>' +
+            '</figure>';
+          }).join('') +
+        '</div>';
+      }
+
       // Restore link — visible only when at least one photo is hidden.
       var restoreBtn = (photos._hiddenCount > 0)
         ? '<button type="button" class="sr-restore-btn" data-card-idx="' + idx + '">'
@@ -30971,30 +30993,55 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         : '';
       var insetMap = '<div class="sr-card-map" ' + insetAttrs + '></div>';
 
-      return '<article class="sr-card" data-sign-idx="' + idx + '">' +
-        '<header class="sr-card-hdr">' +
-          '<div class="sr-card-hdr-top">' +
-            '<div class="sr-card-title-wrap">' +
-              '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
-              '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
-            '</div>' +
-            '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
-          '</div>' +
-        '</header>' +
-        '<section class="sr-section">' +
-          '<div class="sr-sec-hdr">Identity</div>' +
-          '<div class="sr-identity-row">' +
-            '<div class="sr-identity-left">' + idBlock + '</div>' +
-            '<div class="sr-identity-right">' + insetMap + '</div>' +
-          '</div>' +
-        '</section>' +
-        '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
-        '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
-        '<section class="sr-section">' +
-          '<div class="sr-sec-hdr">Photos (' + photos.length + ') ' + actBtn + ' ' + restoreBtn + '</div>' +
-          photoBlock +
-        '</section>' +
-      '</article>';
+      return photoChunks.map(function (chunk, pi) {
+        var pageTag = totalPages > 1 ? ' · PAGE ' + (pi + 1) + ' OF ' + totalPages : '';
+        var startNum = pi === 0 ? 1 : PHOTOS_PAGE_1 + (pi - 1) * PHOTOS_PAGE_N + 1;
+        if (pi === 0) {
+          // First card — full content (identity / map / posts / panels)
+          // plus the first photo chunk.
+          var photoSecHdr = 'Photos (' + photos.length + ')'
+            + (totalPages > 1 ? ' — showing 1–' + chunk.length : '')
+            + ' ' + actBtn + ' ' + restoreBtn;
+          return '<article class="sr-card" data-sign-idx="' + idx + '">' +
+            '<header class="sr-card-hdr">' +
+              '<div class="sr-card-hdr-top">' +
+                '<div class="sr-card-title-wrap">' +
+                  '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + pageTag + '</div>' +
+                  '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
+                '</div>' +
+                '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
+              '</div>' +
+            '</header>' +
+            '<section class="sr-section">' +
+              '<div class="sr-sec-hdr">Identity</div>' +
+              '<div class="sr-identity-row">' +
+                '<div class="sr-identity-left">' + idBlock + '</div>' +
+                '<div class="sr-identity-right">' + insetMap + '</div>' +
+              '</div>' +
+            '</section>' +
+            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
+            '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
+            '<section class="sr-section">' +
+              '<div class="sr-sec-hdr">' + photoSecHdr + '</div>' +
+              _photoGridFor(chunk, startNum) +
+            '</section>' +
+          '</article>';
+        }
+        // Continuation card — sign-id header + photo grid only. No
+        // identity row, no inset map, no edit button. Range label
+        // shows which photos this page covers.
+        var endNum = startNum + chunk.length - 1;
+        return '<article class="sr-card sr-card-cont" data-sign-idx="' + idx + '">' +
+          '<header class="sr-card-hdr">' +
+            '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + pageTag + '</div>' +
+            '<div class="sr-card-sub">' + _esc(sec.id) + ' · Photos continued · ' + startNum + '–' + endNum + ' of ' + photos.length + '</div>' +
+          '</header>' +
+          '<section class="sr-section">' +
+            '<div class="sr-sec-hdr">Photos (continued)</div>' +
+            _photoGridFor(chunk, startNum) +
+          '</section>' +
+        '</article>';
+      }).join('');
     }).join('');
 
     // ── Wire Select Nearby buttons ─────────────────────────────────
