@@ -4743,6 +4743,14 @@ body.rw-sld-photo-dragging .strip-pin {
   border: 1px solid var(--blue); cursor: pointer;
 }
 .sr-pick-btn:hover { background: var(--blue); color: #fff; }
+.sr-restore-btn {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: none;
+  padding: 3px 8px;
+  background: transparent; color: var(--ink-2);
+  border: 1px solid var(--rule); cursor: pointer;
+}
+.sr-restore-btn:hover { border-color: var(--ink); color: var(--ink); }
 .sr-edit-btn {
   font: 700 9px 'IBM Plex Mono', monospace;
   letter-spacing: .4px; text-transform: uppercase;
@@ -4827,7 +4835,7 @@ body.rw-sld-photo-dragging .strip-pin {
   body { background: #fff !important; }
   /* Hide everything except the signs-report module + its cards. */
   header, #app-tabs, #header-settings-btn, #app-header,
-  .filters, .sr-head, .sr-pick-btn, .sr-edit-btn,
+  .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-restore-btn,
   .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
   #mod-signs_report.active { display: block !important; overflow: visible !important; }
@@ -30750,30 +30758,54 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // ── Photo lookup helper — combines embedded attrs.photos + linked
-    //    geophotos. Sorted by captured_at when available.
+    //    geophotos. Sorted by captured_at when available. Returns two
+    //    arrays: visible photos and hidden-key count so the caller can
+    //    show a "Restore" affordance. Photos are deduped by dataUrl so
+    //    if the same image got both embedded AND linked into the
+    //    gallery (e.g. nearby-picker imported a form photo), it shows
+    //    only once. Photos whose stable key is in
+    //    pin.attrs.report_hidden_photos are skipped — they exist but
+    //    don't print.
     function _photosForPin(pin, sec) {
       var out = [];
+      var seenSrc = Object.create(null);
+      var hiddenList = (pin.attrs && Array.isArray(pin.attrs.report_hidden_photos))
+        ? pin.attrs.report_hidden_photos : [];
+      var hidden = new Set(hiddenList);
+      var hiddenCount = 0;
+
       var emb = (pin.attrs && Array.isArray(pin.attrs.photos)) ? pin.attrs.photos : [];
       emb.forEach(function (p, i) {
+        var key = 'emb:' + i;
+        if (hidden.has(key)) { hiddenCount++; return; }
+        var src = p.dataUrl || '';
+        if (src && seenSrc[src]) return;
+        if (src) seenSrc[src] = true;
         out.push({
-          src:        p.dataUrl || '',
+          src:        src,
           caption:    p.caption || ('Form photo ' + (i + 1)),
           captured_at: p.captured_at || null,
-          _emb_idx:   i, // original index into pin.attrs.photos[] for splice/annotate
+          _emb_idx:   i, // original index into pin.attrs.photos[] for annotate
+          _hide_key:  key,
         });
       });
       var prefix = sec.id + '::' + pin.id;
       if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
         window._RW.geophotos.list().forEach(function (gp) {
-          if (gp && gp.linked_pin_id === prefix) {
-            out.push({
-              src:        gp.dataUrl || '',
-              caption:    gp.description
-                          || (gp.captured_at ? new Date(gp.captured_at).toLocaleString() : 'Linked photo'),
-              captured_at: gp.captured_at || null,
-              _gp_id:     gp.id,
-            });
-          }
+          if (!gp || gp.linked_pin_id !== prefix) return;
+          var key = 'gp:' + gp.id;
+          if (hidden.has(key)) { hiddenCount++; return; }
+          var src = gp.dataUrl || '';
+          if (src && seenSrc[src]) return;
+          if (src) seenSrc[src] = true;
+          out.push({
+            src:        src,
+            caption:    gp.description
+                        || (gp.captured_at ? new Date(gp.captured_at).toLocaleString() : 'Linked photo'),
+            captured_at: gp.captured_at || null,
+            _gp_id:     gp.id,
+            _hide_key:  key,
+          });
         });
       }
       out.sort(function (a, b) {
@@ -30782,6 +30814,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!b.captured_at) return -1;
         return a.captured_at < b.captured_at ? -1 : 1;
       });
+      out._hiddenCount = hiddenCount;
       return out;
     }
 
@@ -30884,25 +30917,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
 
       // Photo grid — each thumb gets ✎ Annotate (embedded only) and ✕
-      // Remove buttons. Embedded photos splice from pin.attrs.photos;
-      // linked geophotos clear their linked_pin_id back to null.
+      // Hide-from-report buttons. The ✕ marks the photo's stable key
+      // in pin.attrs.report_hidden_photos so it stops printing — the
+      // embedded photo is NOT deleted and the linked geophoto is NOT
+      // unlinked. The Restore button below clears the hide list.
       var photoBlock = photos.length
         ? '<div class="sr-photo-grid">' +
             photos.map(function (ph, i) {
               var acts = '';
               if (ph._emb_idx != null) {
-                acts =
+                acts +=
                   '<button type="button" class="sr-photo-act sr-photo-ann" '
                     + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
-                    + 'title="Annotate">&#9998;</button>' +
-                  '<button type="button" class="sr-photo-act sr-photo-del" '
-                    + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
-                    + 'title="Remove photo">&times;</button>';
-              } else if (ph._gp_id != null) {
-                acts =
-                  '<button type="button" class="sr-photo-act sr-photo-del" '
-                    + 'data-card-idx="' + idx + '" data-gp-id="' + _esc(ph._gp_id) + '" '
-                    + 'title="Unlink photo from this sign">&times;</button>';
+                    + 'title="Annotate">&#9998;</button>';
+              }
+              if (ph._hide_key) {
+                acts +=
+                  '<button type="button" class="sr-photo-act sr-photo-hide" '
+                    + 'data-card-idx="' + idx + '" '
+                    + 'data-hide-key="' + _esc(ph._hide_key) + '" '
+                    + 'title="Hide from printed report (photo is kept)">&times;</button>';
               }
               return '<figure class="sr-photo">' +
                 '<img src="' + _esc(ph.src) + '" alt="">' +
@@ -30912,6 +30946,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             }).join('') +
           '</div>'
         : '<div class="sr-tbl-empty">No photos linked yet.</div>';
+      // Restore link — visible only when at least one photo is hidden.
+      var restoreBtn = (photos._hiddenCount > 0)
+        ? '<button type="button" class="sr-restore-btn" data-card-idx="' + idx + '">'
+          + '↻ Restore (' + photos._hiddenCount + ' hidden)</button>'
+        : '';
 
       // Per-sign action: Select Nearby Photos
       var actBtn = '<button type="button" class="sr-pick-btn" '
@@ -30952,7 +30991,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
         '<section class="sr-section">' +
-          '<div class="sr-sec-hdr">Photos (' + photos.length + ') ' + actBtn + '</div>' +
+          '<div class="sr-sec-hdr">Photos (' + photos.length + ') ' + actBtn + ' ' + restoreBtn + '</div>' +
           photoBlock +
         '</section>' +
       '</article>';
@@ -31002,7 +31041,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     });
 
-    // ── Wire per-photo annotate / unlink / delete buttons ──────────
+    // ── Wire per-photo annotate / hide-from-report buttons ─────────
+    // ✎ Annotate opens the existing form annotation modal (embedded
+    //   photos only — geophotos don't have that flow yet).
+    // ✕ Hide marks the photo's stable key in
+    //   pin.attrs.report_hidden_photos so it stops appearing in the
+    //   printed report. The underlying photo is NOT deleted and the
+    //   linked geophoto is NOT unlinked — the gallery and the data
+    //   form still see it.
     list.querySelectorAll('.sr-photo-act').forEach(function (btn) {
       btn.addEventListener('click', function (ev) {
         ev.stopPropagation();
@@ -31010,12 +31056,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!r) return;
         var pin = r.pin;
         var attrs = pin.attrs || (pin.attrs = {});
-        var isAnnotate = btn.classList.contains('sr-photo-ann');
-        var embIdx = btn.dataset.embIdx != null ? +btn.dataset.embIdx : null;
-        var gpId = btn.dataset.gpId || null;
 
-        if (isAnnotate && embIdx != null) {
-          // Embedded photo annotation — reuse the form's annotation modal.
+        if (btn.classList.contains('sr-photo-ann')) {
+          var embIdx = +btn.dataset.embIdx;
+          if (!isFinite(embIdx)) return;
           if (!window._RW || typeof window._RW.openAnnotateModal !== 'function') {
             alert('Annotate not available.');
             return;
@@ -31029,37 +31073,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           return;
         }
 
-        if (embIdx != null) {
-          // Remove an embedded form photo entirely.
-          var emb = Array.isArray(attrs.photos) ? attrs.photos : null;
-          if (!emb || !emb[embIdx]) return;
-          if (!confirm('Remove this photo from this sign?\n\n(The embedded form photo is deleted permanently.)')) return;
-          emb.splice(embIdx, 1);
+        if (btn.classList.contains('sr-photo-hide')) {
+          var hideKey = btn.dataset.hideKey;
+          if (!hideKey) return;
+          var hidden = Array.isArray(attrs.report_hidden_photos)
+            ? attrs.report_hidden_photos.slice()
+            : [];
+          if (hidden.indexOf(hideKey) === -1) hidden.push(hideKey);
+          attrs.report_hidden_photos = hidden;
           if (window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
           renderSignsReport();
-          return;
         }
+      });
+    });
 
-        if (gpId) {
-          // Unlink a geophoto. Photo stays in the gallery; the
-          // linked_pin_id is just cleared so it stops appearing here.
-          if (!window._RW || !window._RW.geophotos
-              || typeof window._RW.geophotos.list !== 'function'
-              || typeof window._RW.geophotos.save !== 'function') {
-            alert('Geophoto store not available.');
-            return;
-          }
-          if (!confirm('Unlink this photo from this sign?\n\n(The photo is kept in the gallery; only the link is removed.)')) return;
-          var target = window._RW.geophotos.list().find(function (gp) { return gp && gp.id === gpId; });
-          if (!target) return;
-          target.linked_pin_id = null;
-          Promise.resolve(window._RW.geophotos.save(target)).then(function () {
-            if (window._RW.geophotos.refresh) window._RW.geophotos.refresh();
-            renderSignsReport();
-          });
+    // ── Wire per-card Restore buttons → clear the hidden-from-report
+    //    list so all linked / embedded photos reappear in the report.
+    list.querySelectorAll('.sr-restore-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = allSigns[+btn.dataset.cardIdx];
+        if (!r) return;
+        var attrs = r.pin.attrs || {};
+        attrs.report_hidden_photos = [];
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          window._RW.persistSections();
         }
+        renderSignsReport();
       });
     });
 
