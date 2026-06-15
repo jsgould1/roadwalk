@@ -30848,6 +30848,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           alert('Data form not available.');
           return;
         }
+        // The Data module owns the form-pane DOM nodes, so we have to
+        // switch to it first or openDataForm builds into a hidden tree
+        // and the user sees nothing happen.
+        if (typeof window.showModule === 'function') window.showModule('data');
         window.openDataForm(r.pin, r.sec, 'signs-report');
       });
     });
@@ -33729,6 +33733,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     _dataState.origin = null;
     if (origin === 'map' && typeof window.showModule === 'function') {
       window.showModule('map');
+    } else if (origin === 'signs-report' && typeof window.showModule === 'function') {
+      window.showModule('signs_report');
     }
   }
 
