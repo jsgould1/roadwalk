@@ -153,13 +153,25 @@ def main():
     pin_ulid_by_lf = {}        # (layer_id, feature_id) -> pin ulid
     far_warnings = []          # culverts > 500 ft from Section A
 
-    def add_culvert(name, desc, lng, lat, layer_id, feature_id, source_table):
+    # Pull the Avenza icon name out of OGR_STYLE so we can carry the
+    # pin color/style intent forward — e.g. "red_pin" likely meant
+    # "impaired" in the inspector's mental model.
+    OGR_ICON_RE = re.compile(r'avenza-(?:url-http[^,]+?/|file-)([A-Za-z0-9_-]+?)(?:[._]|,ogr-)')
+    def _parse_icon(style):
+        if not style: return None
+        m = OGR_ICON_RE.search(style)
+        return m.group(1) if m else None
+
+    def add_culvert(name, desc, lng, lat, layer_id, feature_id, source_table,
+                    collected_at=None, ogr_style=None):
         pin_ulid = make_ulid()
         sta_ft, perp_ft = project_onto([lng, lat], align)
         attrs = {
             'source': 'AECOM',
             'name': (name or '').strip() or None,
             'notes': (desc or '').strip() or None,
+            'collected_at': (collected_at or '').strip() or None,
+            'avenza_icon': _parse_icon(ogr_style),
             '_import_batch_id': batch_id,
             '_import_source': source_filename,
             '_import_at': now_iso,
@@ -187,15 +199,17 @@ def main():
         try:
             cur.execute(
                 f'SELECT geom, avenza_name, avenza_description, '
+                f'avenza_datetime, OGR_STYLE, '
                 f'avenza_layer_id, avenza_feature_id FROM "{t}";'
             )
         except sqlite3.Error as e:
             print(f'Skipping {t}: {e}'); continue
         n = 0
-        for geom_blob, name, desc, layer_id, feature_id in cur.fetchall():
+        for geom_blob, name, desc, dt, style, layer_id, feature_id in cur.fetchall():
             pt = parse_gpkg_point(geom_blob)
             if pt is None: continue
-            add_culvert(name, desc, pt[0], pt[1], layer_id, feature_id, t)
+            add_culvert(name, desc, pt[0], pt[1], layer_id, feature_id, t,
+                        collected_at=dt, ogr_style=style)
             n += 1
         print(f'  {t}: {n} culverts')
 
@@ -203,15 +217,17 @@ def main():
     try:
         cur.execute(
             f'SELECT geom, avenza_name, avenza_description, '
+            f'avenza_datetime, OGR_STYLE, '
             f'avenza_layer_id, avenza_feature_id FROM "{LIMITS_TABLE}";'
         )
         n_limits = 0
-        for geom_blob, name, desc, layer_id, feature_id in cur.fetchall():
+        for geom_blob, name, desc, dt, style, layer_id, feature_id in cur.fetchall():
             if not LIMITS_CULVERT_RE.search(((name or '') + ' ' + (desc or ''))):
                 continue
             pt = parse_gpkg_point(geom_blob)
             if pt is None: continue
-            add_culvert(name, desc, pt[0], pt[1], layer_id, feature_id, LIMITS_TABLE)
+            add_culvert(name, desc, pt[0], pt[1], layer_id, feature_id, LIMITS_TABLE,
+                        collected_at=dt, ogr_style=style)
             n_limits += 1
         print(f'  {LIMITS_TABLE}: {n_limits} culverts (filtered by keyword)')
     except sqlite3.Error as e:
@@ -248,7 +264,7 @@ def main():
     print(f'\nStreaming photos to NDJSON chunks (target {TARGET_CHUNK_BYTES // (1024*1024)} MB each):')
     cur.execute(
         'SELECT layer_id, feature_id, data, content_type, datetime, '
-        'PhotoLoc, PhotoOrien, PhotoName FROM avenza_media;'
+        'PhotoLoc, PhotoOrien, PhotoName, PhotoAlt, DeviceType FROM avenza_media;'
     )
     chunks_written = 0; photos_written = 0; photos_skipped = 0
     current_chunk = []; current_bytes = 0
@@ -267,7 +283,7 @@ def main():
               f'{os.path.getsize(chunk_path) / (1024*1024):.0f} MB')
         current_chunk.clear()
 
-    for layer_id, feature_id, blob, content_type, dt, photo_loc, photo_orien, photo_name in cur:
+    for layer_id, feature_id, blob, content_type, dt, photo_loc, photo_orien, photo_name, photo_alt, device_type in cur:
         pin_ulid = pin_ulid_by_lf.get((layer_id, feature_id))
         if not pin_ulid or not blob:
             photos_skipped += 1; continue
@@ -285,6 +301,17 @@ def main():
                 pass
         try: bearing = float(photo_orien) if photo_orien else None
         except ValueError: bearing = None
+        # PhotoAlt is "1370.41 ft" — strip the unit, keep the float.
+        altitude_ft = None
+        if photo_alt:
+            m = re.match(r'([-+]?\d+(?:\.\d+)?)', str(photo_alt).strip())
+            if m:
+                try: altitude_ft = float(m.group(1))
+                except ValueError: pass
+        # DeviceType is often the literal string 'None' rather than a NULL
+        # — drop those so we don't pollute the photo records.
+        dev = (device_type or '').strip() if device_type else ''
+        if dev.lower() in ('', 'none'): dev = None
         captured_at = None
         if dt:
             s = str(dt).strip()
@@ -303,6 +330,8 @@ def main():
             'captured_at':     captured_at,
             '_link_pin_ulid':  pin_ulid,    # in-app importer resolves this to linked_pin_id
             'bearing':         bearing,
+            'altitude_ft':     altitude_ft,
+            'device_type':     dev,
             'description':     (photo_name or '').strip() or None,
             '_import_batch_id': batch_id,
         }

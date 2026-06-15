@@ -714,7 +714,13 @@ function openDrawer(ulid) {
   if (!row) return;
   const drawer = $('#drawer');
   drawer.classList.add('open');
-  $('#drawer-id').textContent = row.pin.id + ' · ' + row.sec.id;
+  // pin.id is undefined for AECOM-features pins (the in-app import assigns
+  // one; pre-import the only stable handle is the ulid). Fall back to the
+  // human-typed name from attrs, then the first 8 chars of the ulid.
+  const nameOrId = row.pin.id
+    || (row.pin.attrs && row.pin.attrs.name)
+    || (row.pin.ulid ? row.pin.ulid.slice(0, 8) + '…' : '(no id)');
+  $('#drawer-id').textContent = nameOrId + ' · ' + row.sec.id;
   const a = row.pin.attrs || {};
   const fields = [
     ['name',          a.name, 'text'],
@@ -731,6 +737,11 @@ function openDrawer(ulid) {
     ['condition',     a.condition, 'text'],
     ['repair_action', a.repair_action, 'textarea'],
     ['notes',         a.notes, 'textarea'],
+    // Source-data fields from the Avenza preprocessor (read-only at the
+    // form level — they describe how/when the pin was captured, not what
+    // the inspector typed). Showing them surfaces the audit trail.
+    ['collected_at',  a.collected_at, 'text'],
+    ['avenza_icon',   a.avenza_icon, 'text'],
   ];
   const photoCards = photosFor(row).map((p, i) => `
     <div class="photo-thumb" data-photo-idx="${i}">
