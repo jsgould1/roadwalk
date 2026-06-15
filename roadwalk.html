@@ -4743,6 +4743,58 @@ body.rw-sld-photo-dragging .strip-pin {
   border: 1px solid var(--blue); cursor: pointer;
 }
 .sr-pick-btn:hover { background: var(--blue); color: #fff; }
+.sr-edit-btn {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 8px;
+  background: var(--blue); color: #fff;
+  border: 1px solid var(--blue); cursor: pointer;
+}
+.sr-edit-btn:hover { background: #0b62c4; border-color: #0b62c4; }
+.sr-card-hdr-actions { display: flex; gap: 6px; }
+.sr-card-hdr-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.sr-card-hdr-top .sr-card-title-wrap { flex: 1 1 auto; min-width: 0; }
+
+/* Source chips — multi-select filter. Default: all on. */
+.sr-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.sr-chip {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .3px;
+  padding: 3px 8px;
+  background: var(--paper); border: 1px solid var(--rule); color: var(--ink-3);
+  cursor: pointer; user-select: none;
+}
+.sr-chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.sr-chip:hover { border-color: var(--blue); }
+.sr-chip .sr-chip-count { opacity: .7; margin-left: 4px; }
+.sr-chip-all {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 8px;
+  background: transparent; color: var(--ink-2);
+  border: 1px dashed var(--rule); cursor: pointer;
+}
+.sr-chip-all:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Per-photo action buttons (annotate / unlink). On screen only — hidden in print. */
+.sr-photo { position: relative; }
+.sr-photo-actions {
+  position: absolute; top: 2px; right: 2px;
+  display: flex; gap: 3px; z-index: 2;
+}
+.sr-photo-act {
+  width: 22px; height: 22px;
+  border: 1px solid rgba(255,255,255,.85);
+  background: rgba(0,0,0,.55); color: #fff;
+  font: 700 13px/1 'IBM Plex Sans', system-ui, sans-serif;
+  cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sr-photo-act:hover { background: rgba(0,0,0,.85); }
+.sr-photo-act.sr-photo-del:hover { background: #c0392b; border-color: #c0392b; }
 
 /* ── Print rules — collapse chrome, one card per page ────────────── */
 @media print {
@@ -4750,7 +4802,8 @@ body.rw-sld-photo-dragging .strip-pin {
   body { background: #fff !important; }
   /* Hide everything except the signs-report module + its cards. */
   header, #app-tabs, #header-settings-btn, #app-header,
-  .filters, .sr-head, .sr-pick-btn, #module-toolbar,
+  .filters, .sr-head, .sr-pick-btn, .sr-edit-btn,
+  .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
   #mod-signs_report.active { display: block !important; overflow: visible !important; }
   .sr-list { background: #fff !important; padding: 0 !important; gap: 0 !important; }
@@ -10978,6 +11031,14 @@ body.mobile-mode #app {
           <span style="margin-left:auto;display:flex;gap:6px;">
             <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
           </span>
+        </div>
+        <div class="sr-head-row" id="sr-source-row">
+          <label class="sr-head-lbl">Sources</label>
+          <div class="sr-chips" id="sr-source-chips">
+            <!-- One chip per unique attrs.source. Toggled on click; multi-
+                 select. Persisted to localStorage as 'rw_sr_sources'. -->
+          </div>
+          <button type="button" class="sr-chip-all" id="sr-sources-all" title="Reset — show every source">All</button>
         </div>
         <div class="sr-head-row sr-print-note">
           Tip: <strong>File → Print → Save as PDF</strong> for the deliverable.
@@ -30399,6 +30460,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
          openNearbyPhotoPicker so the user can grab field photos by
          proximity without leaving the report view.
      ──────────────────────────────────────────────────────────────────── */
+  // Persisted source-chip selection. null = "all sources active". A Set
+  // means the explicit list of source keys the user wants to see — chips
+  // not in the set are hidden. Keys: pin.attrs.source string, or '' for
+  // pins without a source (legacy/bundle defaults).
+  var SR_SOURCE_KEY = 'rw_sr_sources';
+  function _srLoadSelectedSources() {
+    try {
+      var raw = localStorage.getItem(SR_SOURCE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      return new Set(parsed);
+    } catch (_) { return null; }
+  }
+  function _srSaveSelectedSources(set) {
+    try {
+      if (!set) localStorage.removeItem(SR_SOURCE_KEY);
+      else localStorage.setItem(SR_SOURCE_KEY, JSON.stringify(Array.from(set)));
+    } catch (_) {}
+  }
+  function _srSourceLabel(s) { return s ? String(s) : '(no source)'; }
+  // Last-seen source tally — read inside the chip click handler so it
+  // doesn't have to re-walk SECTIONS on every click.
+  var _srLastSrcCounts = {};
+
   function renderSignsReport() {
     var list = document.getElementById('sr-list');
     if (!list) return;
@@ -30430,17 +30516,86 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       printBtn.addEventListener('click', function () { window.print(); });
     }
 
-    // ── Collect every sign across the selected section(s) ────────────
+    // ── Collect every sign (unfiltered), tally sources for chip strip
     var fSec = (secEl && secEl.value) || '';
     var fQ   = (searchEl && searchEl.value.trim().toLowerCase()) || '';
-    var allSigns = [];
+    var allUnfilteredSigns = [];
     sections.forEach(function (sec) {
-      if (fSec && sec.id !== fSec) return;
       (sec.pins || []).forEach(function (p) {
         if (p && (p.kind === 'sign' || p.kind === 'pt_sign')) {
-          allSigns.push({ sec: sec, pin: p });
+          allUnfilteredSigns.push({ sec: sec, pin: p });
         }
       });
+    });
+    var srcCounts = {};
+    allUnfilteredSigns.forEach(function (r) {
+      var key = (r.pin.attrs && r.pin.attrs.source) || '';
+      srcCounts[key] = (srcCounts[key] || 0) + 1;
+    });
+    var srcKeys = Object.keys(srcCounts).sort();
+    // Clean stale entries out of persisted selection (a source that no
+    // longer exists in the current project just drops out).
+    var selSet = _srLoadSelectedSources();
+    if (selSet) {
+      var changed = false;
+      Array.from(selSet).forEach(function (k) {
+        if (!(k in srcCounts)) { selSet.delete(k); changed = true; }
+      });
+      if (selSet.size === 0) { selSet = null; changed = true; }
+      if (changed) _srSaveSelectedSources(selSet);
+    }
+
+    // ── Render source chips ─────────────────────────────────────────
+    var chipsEl = document.getElementById('sr-source-chips');
+    if (chipsEl) {
+      // Hide the whole row if there's only one possible source — chip
+      // would just be a label with no toggle utility.
+      var srcRow = document.getElementById('sr-source-row');
+      if (srcRow) srcRow.style.display = (srcKeys.length > 1) ? '' : 'none';
+      chipsEl.innerHTML = srcKeys.map(function (k) {
+        var active = !selSet || selSet.has(k);
+        return '<button type="button" class="sr-chip' + (active ? ' active' : '') + '" '
+          + 'data-source="' + _esc(k) + '">' + _esc(_srSourceLabel(k))
+          + '<span class="sr-chip-count"> ·' + srcCounts[k] + '</span></button>';
+      }).join('');
+      if (!chipsEl._wired) {
+        chipsEl._wired = true;
+        chipsEl.addEventListener('click', function (e) {
+          var btn = e.target.closest('.sr-chip');
+          if (!btn) return;
+          var key = btn.dataset.source;
+          var sel = _srLoadSelectedSources();
+          // null state = "all on". To turn one off we build an explicit
+          // set of every current source, then drop this one.
+          if (!sel) {
+            sel = new Set(Object.keys(_srLastSrcCounts || {}));
+          }
+          if (sel.has(key)) sel.delete(key); else sel.add(key);
+          _srSaveSelectedSources(sel);
+          renderSignsReport();
+        });
+      }
+    }
+    // Stash counts so the chip click handler (which runs later) can see
+    // the current set without re-tallying.
+    _srLastSrcCounts = srcCounts;
+    var allBtn = document.getElementById('sr-sources-all');
+    if (allBtn && !allBtn._wired) {
+      allBtn._wired = true;
+      allBtn.addEventListener('click', function () {
+        _srSaveSelectedSources(null);
+        renderSignsReport();
+      });
+    }
+
+    // ── Apply section / source / search filters ──────────────────────
+    var allSigns = allUnfilteredSigns.filter(function (r) {
+      if (fSec && r.sec.id !== fSec) return false;
+      if (selSet) {
+        var key = (r.pin.attrs && r.pin.attrs.source) || '';
+        if (!selSet.has(key)) return false;
+      }
+      return true;
     });
     if (fQ) {
       allSigns = allSigns.filter(function (r) {
@@ -30474,6 +30629,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           src:        p.dataUrl || '',
           caption:    p.caption || ('Form photo ' + (i + 1)),
           captured_at: p.captured_at || null,
+          _emb_idx:   i, // original index into pin.attrs.photos[] for splice/annotate
         });
       });
       var prefix = sec.id + '::' + pin.id;
@@ -30595,12 +30751,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</tbody></table>'
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
 
-      // Photo grid.
+      // Photo grid — each thumb gets ✎ Annotate (embedded only) and ✕
+      // Remove buttons. Embedded photos splice from pin.attrs.photos;
+      // linked geophotos clear their linked_pin_id back to null.
       var photoBlock = photos.length
         ? '<div class="sr-photo-grid">' +
             photos.map(function (ph, i) {
+              var acts = '';
+              if (ph._emb_idx != null) {
+                acts =
+                  '<button type="button" class="sr-photo-act sr-photo-ann" '
+                    + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
+                    + 'title="Annotate">&#9998;</button>' +
+                  '<button type="button" class="sr-photo-act sr-photo-del" '
+                    + 'data-card-idx="' + idx + '" data-emb-idx="' + ph._emb_idx + '" '
+                    + 'title="Remove photo">&times;</button>';
+              } else if (ph._gp_id != null) {
+                acts =
+                  '<button type="button" class="sr-photo-act sr-photo-del" '
+                    + 'data-card-idx="' + idx + '" data-gp-id="' + _esc(ph._gp_id) + '" '
+                    + 'title="Unlink photo from this sign">&times;</button>';
+              }
               return '<figure class="sr-photo">' +
                 '<img src="' + _esc(ph.src) + '" alt="">' +
+                (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
                 '<figcaption>' + _esc(ph.caption || ('Photo ' + (i + 1))) + '</figcaption>' +
               '</figure>';
             }).join('') +
@@ -30612,10 +30786,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                  + 'data-sec="' + _esc(sec.id) + '" data-ulid="' + _esc(pin.ulid || '') + '" '
                  + 'data-pid="' + _esc(pin.id || '') + '">📍 Select Nearby Photos</button>';
 
+      // Per-card action: Edit Data — opens the existing data form so
+      // the user can fix posts/panels/identity without leaving the
+      // report context.
+      var editBtn = '<button type="button" class="sr-edit-btn" '
+                  + 'data-card-idx="' + idx + '">&#9998; Edit Data</button>';
+
       return '<article class="sr-card" data-sign-idx="' + idx + '">' +
         '<header class="sr-card-hdr">' +
-          '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
-          '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
+          '<div class="sr-card-hdr-top">' +
+            '<div class="sr-card-title-wrap">' +
+              '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + '</div>' +
+              '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
+            '</div>' +
+            '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
+          '</div>' +
         '</header>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Identity</div>' + idBlock + '</section>' +
         '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
@@ -30651,6 +30836,80 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             renderSignsReport();
           },
         });
+      });
+    });
+
+    // ── Wire per-card Edit Data buttons → open existing data form ──
+    list.querySelectorAll('.sr-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = allSigns[+btn.dataset.cardIdx];
+        if (!r) return;
+        if (typeof window.openDataForm !== 'function') {
+          alert('Data form not available.');
+          return;
+        }
+        window.openDataForm(r.pin, r.sec, 'signs-report');
+      });
+    });
+
+    // ── Wire per-photo annotate / unlink / delete buttons ──────────
+    list.querySelectorAll('.sr-photo-act').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var r = allSigns[+btn.dataset.cardIdx];
+        if (!r) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+        var isAnnotate = btn.classList.contains('sr-photo-ann');
+        var embIdx = btn.dataset.embIdx != null ? +btn.dataset.embIdx : null;
+        var gpId = btn.dataset.gpId || null;
+
+        if (isAnnotate && embIdx != null) {
+          // Embedded photo annotation — reuse the form's annotation modal.
+          if (!window._RW || typeof window._RW.openAnnotateModal !== 'function') {
+            alert('Annotate not available.');
+            return;
+          }
+          window._RW.openAnnotateModal(embIdx, pin, function () {
+            if (window._RW && typeof window._RW.persistSections === 'function') {
+              window._RW.persistSections();
+            }
+            renderSignsReport();
+          });
+          return;
+        }
+
+        if (embIdx != null) {
+          // Remove an embedded form photo entirely.
+          var emb = Array.isArray(attrs.photos) ? attrs.photos : null;
+          if (!emb || !emb[embIdx]) return;
+          if (!confirm('Remove this photo from this sign?\n\n(The embedded form photo is deleted permanently.)')) return;
+          emb.splice(embIdx, 1);
+          if (window._RW && typeof window._RW.persistSections === 'function') {
+            window._RW.persistSections();
+          }
+          renderSignsReport();
+          return;
+        }
+
+        if (gpId) {
+          // Unlink a geophoto. Photo stays in the gallery; the
+          // linked_pin_id is just cleared so it stops appearing here.
+          if (!window._RW || !window._RW.geophotos
+              || typeof window._RW.geophotos.list !== 'function'
+              || typeof window._RW.geophotos.save !== 'function') {
+            alert('Geophoto store not available.');
+            return;
+          }
+          if (!confirm('Unlink this photo from this sign?\n\n(The photo is kept in the gallery; only the link is removed.)')) return;
+          var target = window._RW.geophotos.list().find(function (gp) { return gp && gp.id === gpId; });
+          if (!target) return;
+          target.linked_pin_id = null;
+          Promise.resolve(window._RW.geophotos.save(target)).then(function () {
+            if (window._RW.geophotos.refresh) window._RW.geophotos.refresh();
+            renderSignsReport();
+          });
+        }
       });
     });
   }
