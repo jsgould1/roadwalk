@@ -435,12 +435,38 @@ async function loadFiles(files) {
 
 function ingest(data) {
   STATE.raw = data;
-  // Accept either a full RoadWalk snapshot or a plain bundle.
-  // Snapshot shape: { bundle: {...}, field_data: { inspections, safety, ... } }
-  // Bundle shape:   { sections: [...] }
-  const bundle = (data && data.bundle) || data;
-  if (!bundle || !Array.isArray(bundle.sections)) {
-    throw new Error('Not a recognized RoadWalk snapshot or bundle.');
+  // Accept three input shapes:
+  //   A. AECOM Features export (roadwalk-aecom-features-v1) — flat
+  //      bundle_section_pins[] array. Pins carry _hint_section_id +
+  //      _hint_sta_ft from the preprocessor. Synthesize a sections list
+  //      keyed off those hints so the rest of the UI works unchanged.
+  //   B. Full RoadWalk snapshot — { bundle: {...}, field_data: {...} }
+  //   C. Bare bundle — { sections: [...] }
+  let bundle;
+  if (data && data._format === 'roadwalk-aecom-features-v1') {
+    const pins = Array.isArray(data.bundle_section_pins) ? data.bundle_section_pins : [];
+    const bySec = Object.create(null);
+    pins.forEach(p => {
+      const id = (p._hint_section_id || 'IMPORT');
+      (bySec[id] = bySec[id] || []).push(p);
+      // Promote the hint into the canonical sta_ft slot so the table sorts
+      // and displays correctly — _hint_sta_ft is what the preprocessor
+      // computed, and AECOM-features pins don't carry a normal sta_ft yet.
+      if (p._hint_sta_ft != null && p.sta_ft == null) p.sta_ft = p._hint_sta_ft;
+    });
+    bundle = {
+      _synthetic: true,
+      sections: Object.keys(bySec).sort().map(id => ({
+        id: id,
+        name: id === 'IMPORT' ? 'Imported (no section hint)' : ('Section ' + id),
+        pins: bySec[id],
+      })),
+    };
+  } else {
+    bundle = (data && data.bundle) || data;
+    if (!bundle || !Array.isArray(bundle.sections)) {
+      throw new Error('Not a recognized RoadWalk snapshot, bundle, or AECOM features export.');
+    }
   }
   STATE.bundle = bundle;
   STATE.rows = [];
@@ -482,25 +508,30 @@ function ingestPhotoNdjson(text) {
 
 function indexPhoto(p) {
   STATE.photos[p.id] = p;
-  const key = p.linked_pin_id;
-  if (!key) return;
-  (STATE.photosByPin[key] = STATE.photosByPin[key] || []).push(p);
+  // Index under every key shape the source might use:
+  //   - linked_pin_id "<sec>::<pin_id>" (RoadWalk snapshot photos)
+  //   - _link_pin_ulid "<ulid>" (AECOM-features NDJSON chunks, pre-import)
+  // Lookups try both, so the caller doesn't have to know which.
+  if (p.linked_pin_id) {
+    (STATE.photosByPin[p.linked_pin_id] = STATE.photosByPin[p.linked_pin_id] || []).push(p);
+  }
+  if (p._link_pin_ulid) {
+    const ukey = '__ulid__::' + p._link_pin_ulid;
+    (STATE.photosByPin[ukey] = STATE.photosByPin[ukey] || []).push(p);
+  }
 }
 
-function lookupPinKey(row) {
-  return row.sec.id + '::' + (row.pin.id || row.pin.ulid);
-}
-function countPhotosFor(row) {
-  // Try sec::pin_id first, fall back to embedded attrs.photos count.
-  const arr = STATE.photosByPin[lookupPinKey(row)] || [];
-  let n = arr.length;
-  if (row.pin.attrs && Array.isArray(row.pin.attrs.photos)) {
-    n += row.pin.attrs.photos.length;
-  }
-  return n;
+function pinKeysFor(row) {
+  const keys = [];
+  if (row.pin.id) keys.push(row.sec.id + '::' + row.pin.id);
+  if (row.pin.ulid) keys.push('__ulid__::' + row.pin.ulid);
+  return keys;
 }
 function photosFor(row) {
-  const ext = STATE.photosByPin[lookupPinKey(row)] || [];
+  const ext = [];
+  pinKeysFor(row).forEach(k => {
+    (STATE.photosByPin[k] || []).forEach(p => ext.push(p));
+  });
   const emb = (row.pin.attrs && Array.isArray(row.pin.attrs.photos))
     ? row.pin.attrs.photos.map(p => ({
         id: 'emb_' + Math.random(),
@@ -509,6 +540,9 @@ function photosFor(row) {
       }))
     : [];
   return ext.concat(emb);
+}
+function countPhotosFor(row) {
+  return photosFor(row).length;
 }
 
 function afterIngest() {
