@@ -30893,23 +30893,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         : '<div class="sr-tbl-empty">No post data entered.</div>';
 
       // Panels table — one row per panel + an optional notes sub-row.
+      // Sorted by facing_degrees (0/90/180/270) and then by original
+      // form index so the table reads top-to-bottom in the same order
+      // the user sees on the post: Front → Right → Back → Left.
       // Field names match what the data form actually saves: see the
       // _inputRow / _selectRow calls in _panelBlock (sign form).
-      var panelCols = ['#','Sign Code','Description','Common Size','Install','Sheeting','Back','Mounting','Panel Cond.','Sheet Cond.','Damage','Day R1/R2','Night R1/R2'];
-      var panelsTbl = panels.length
+      var panelCols = ['#','Facing','Sign Code','Description','Common Size','Install','Sheeting','Back','Mounting','Panel Cond.','Sheet Cond.','Damage','Day R1/R2','Night R1/R2'];
+      var _DIR_LABEL = { 0: '0° Front', 90: '90° Right', 180: '180° Back', 270: '270° Left' };
+      var panelsSorted = panels.map(function (pn, origIdx) {
+        return { pn: pn || {}, origIdx: origIdx };
+      }).sort(function (a, b) {
+        var fa = +(a.pn.facing_degrees || 0);
+        var fb = +(b.pn.facing_degrees || 0);
+        if (fa !== fb) return fa - fb;
+        return a.origIdx - b.origIdx;
+      });
+      var panelsTbl = panelsSorted.length
         ? '<table class="sr-tbl"><thead><tr>' +
             panelCols.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
           '</tr></thead><tbody>' +
-          panels.map(function (pn, i) {
-            pn = pn || {};
+          panelsSorted.map(function (entry, sortIdx) {
+            var pn = entry.pn;
             var dmg = Array.isArray(pn.damage_flags) ? pn.damage_flags.join(' · ') : pn.damage_flags;
+            var deg = +(pn.facing_degrees || 0);
+            var facingLbl = _DIR_LABEL[deg] || (pn.facing_degrees != null ? deg + '°' : '—');
             function _retroPair(r1Key, r2Key) {
               var a = pn[r1Key], b = pn[r2Key];
               if (!a && !b) return '—';
               return (a || '—') + ' / ' + (b || '—');
             }
             var mainRow = '<tr>' +
-              '<td>' + (i + 1) + '</td>' +
+              '<td>' + (sortIdx + 1) + '</td>' +
+              '<td>' + _esc(facingLbl) + '</td>' +
               '<td>' + _cell(pn.sign_code) + '</td>' +
               '<td>' + _cell(pn.panel_description) + '</td>' +
               '<td>' + _cell(pn.panel_size) + '</td>' +
