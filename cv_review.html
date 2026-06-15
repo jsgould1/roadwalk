@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoadWalk · CV Review</title>
+<style>
+  :root {
+    --paper:      #f8f5ee;
+    --paper-2:    #e8e1cf;
+    --ink:        #2a2a2a;
+    --ink-2:      #4a4a4a;
+    --ink-3:      #777;
+    --rule:       #d4cbb5;
+    --rule-soft:  #e0d9c4;
+    --blue:       #2563eb;
+    --blue-2:     #1e40af;
+    --orange:     #c2410c;
+    --green:      #15803d;
+    --red:        #b91c1c;
+    --mono:       'IBM Plex Mono', 'Consolas', 'Courier New', monospace;
+    --sans:       -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  *,*::before,*::after { box-sizing: border-box; }
+  html,body { height: 100%; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--paper); color: var(--ink);
+    font: 13px/1.4 var(--sans);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  h1 {
+    margin: 0;
+    font: 700 14px var(--mono);
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .hdr-stats { font: 400 11px var(--mono); color: var(--ink-3); }
+  .hdr-stats strong { color: var(--ink); }
+  .hdr-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn {
+    font: 700 10px var(--mono); letter-spacing: .5px; text-transform: uppercase;
+    padding: 6px 12px;
+    background: var(--paper); border: 1px solid var(--rule); color: var(--ink-2);
+    cursor: pointer; border-radius: 0;
+  }
+  .btn:hover { border-color: var(--ink-2); color: var(--ink); }
+  .btn--primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn--primary:hover { background: var(--blue-2); border-color: var(--blue-2); color: #fff; }
+  .btn--danger { color: var(--orange); border-color: var(--orange); }
+  .btn--danger:hover { background: var(--orange); color: #fff; }
+
+  /* Filter bar */
+  .filters {
+    flex: 0 0 auto;
+    padding: 8px 20px;
+    background: var(--paper); border-bottom: 1px solid var(--rule-soft);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font: 400 11px var(--mono);
+  }
+  .filters label { color: var(--ink-3); }
+  .filters select, .filters input[type=text] {
+    font: 400 11px var(--mono); padding: 4px 8px;
+    background: #fff; border: 1px solid var(--rule); color: var(--ink);
+  }
+  .filters input[type=text] { width: 220px; }
+  .filter-count { margin-left: auto; color: var(--ink-3); }
+  .filter-count strong { color: var(--ink); }
+
+  /* Main area */
+  main { flex: 1 1 auto; display: flex; overflow: hidden; }
+
+  /* Table */
+  .table-wrap {
+    flex: 1 1 auto; overflow: auto; padding: 0;
+    background: #fff;
+  }
+  table { width: 100%; border-collapse: collapse; font: 400 12px var(--sans); }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 10px; text-align: left;
+    font: 700 10px var(--mono); letter-spacing: .4px; text-transform: uppercase;
+    color: var(--ink-2);
+    cursor: pointer; user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--ink); }
+  thead th .sort-glyph { color: var(--ink-3); margin-left: 4px; }
+  tbody tr {
+    border-bottom: 1px solid var(--rule-soft);
+    cursor: pointer;
+  }
+  tbody tr:hover { background: rgba(37, 99, 235, 0.05); }
+  tbody tr.selected { background: rgba(37, 99, 235, 0.12); }
+  tbody tr.focused { background: rgba(37, 99, 235, 0.18); outline: 2px solid var(--blue); outline-offset: -2px; }
+  tbody td { padding: 6px 10px; vertical-align: top; }
+  tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .checkcell { width: 28px; padding-right: 0 !important; }
+  .photo-pill {
+    display: inline-block; padding: 1px 6px; border-radius: 8px;
+    background: var(--paper-2); font: 700 10px var(--mono); color: var(--ink-2);
+  }
+  .photo-pill.has { background: var(--green); color: #fff; }
+  .empty-row td { padding: 60px 20px; text-align: center; color: var(--ink-3); font-style: italic; }
+
+  /* Detail drawer */
+  .drawer {
+    flex: 0 0 480px; max-width: 50vw;
+    background: var(--paper);
+    border-left: 1px solid var(--rule);
+    overflow-y: auto;
+    display: none;
+  }
+  .drawer.open { display: block; }
+  .drawer-hdr {
+    padding: 12px 18px; background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .drawer-id { font: 700 13px var(--mono); color: var(--ink); }
+  .drawer-close {
+    border: none; background: transparent; font-size: 18px; cursor: pointer;
+    color: var(--ink-3); padding: 4px 8px;
+  }
+  .drawer-close:hover { color: var(--ink); }
+  .drawer-body { padding: 14px 18px; }
+  .field-row {
+    display: grid; grid-template-columns: 130px 1fr; gap: 8px;
+    padding: 5px 0; align-items: center;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .field-lbl {
+    font: 700 10px var(--mono); letter-spacing: .3px; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .field-val { font: 400 12px var(--sans); color: var(--ink); }
+  .field-val input, .field-val select, .field-val textarea {
+    width: 100%; font: inherit; padding: 4px 8px;
+    background: #fff; border: 1px solid var(--rule); color: var(--ink);
+  }
+  .field-val textarea { min-height: 60px; resize: vertical; }
+  .section-hdr {
+    margin: 14px 0 8px; padding-bottom: 4px;
+    font: 700 11px var(--mono); letter-spacing: .6px; text-transform: uppercase;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule);
+  }
+  .photo-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px; margin-top: 8px;
+  }
+  .photo-thumb {
+    aspect-ratio: 4/3; overflow: hidden; cursor: zoom-in;
+    border: 1px solid var(--rule); background: #000;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-meta {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,.6); color: #fff;
+    font: 400 9px var(--mono); padding: 2px 4px;
+  }
+  .no-photos {
+    padding: 14px; text-align: center; color: var(--ink-3); font-style: italic;
+    background: #fff; border: 1px dashed var(--rule);
+  }
+
+  /* Bulk action bar */
+  .bulk-bar {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: var(--ink); color: #fff;
+    padding: 10px 14px; border-radius: 4px;
+    display: flex; align-items: center; gap: 12px;
+    font: 400 12px var(--sans);
+    box-shadow: 0 4px 16px rgba(0,0,0,.45);
+    display: none; z-index: 10;
+  }
+  .bulk-bar.show { display: flex; }
+  .bulk-bar select, .bulk-bar input {
+    font: inherit; background: #333; color: #fff; border: 1px solid #555;
+    padding: 4px 8px;
+  }
+  .bulk-bar .btn {
+    background: var(--blue); color: #fff; border-color: var(--blue);
+  }
+  .bulk-bar .btn--danger { background: var(--orange); border-color: var(--orange); }
+  .bulk-bar .btn-cancel {
+    background: transparent; border-color: #666; color: #ccc;
+  }
+
+  /* Lightbox */
+  .lb {
+    position: fixed; inset: 0; background: rgba(0,0,0,.88);
+    display: none; align-items: center; justify-content: center; padding: 24px;
+    z-index: 100; cursor: zoom-out;
+  }
+  .lb.show { display: flex; }
+  .lb img { max-width: calc(100vw - 48px); max-height: calc(100vh - 48px); }
+  .lb-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.4);
+    background: rgba(0,0,0,.55); color: #fff;
+    font: 700 18px var(--mono); cursor: pointer;
+  }
+
+  /* Welcome screen */
+  .welcome {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 40px; text-align: center;
+  }
+  .welcome-card {
+    max-width: 520px; background: #fff; padding: 32px;
+    border: 1px solid var(--rule);
+  }
+  .welcome-card h2 {
+    margin: 0 0 8px; font: 700 16px var(--mono); letter-spacing: .8px;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .welcome-card p { color: var(--ink-2); line-height: 1.6; }
+  .welcome-card .btn { display: inline-block; margin-top: 12px; }
+  .file-drop {
+    margin-top: 16px; padding: 28px; border: 2px dashed var(--rule);
+    background: var(--paper-2); cursor: pointer;
+    font: 400 12px var(--mono); color: var(--ink-3);
+    transition: border-color .15s, background .15s;
+  }
+  .file-drop:hover, .file-drop.over {
+    border-color: var(--blue); background: rgba(37,99,235,.06); color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================================================================
+     CV REVIEW — desktop-optimized review/edit companion to the RoadWalk PWA
+     ========================================================================
+     Workflow:
+       1. Field walker exports a project snapshot from RoadWalk on the tablet
+          (Dashboard → Export). Sync to OneDrive → laptop.
+       2. Open this file in any modern browser (file:// or via Pages).
+       3. Load the snapshot JSON. Every pin renders as a row; click to edit
+          attrs; ✓ multi-select for bulk apply; photos open in a lightbox.
+       4. Hit Save → downloads a modified snapshot JSON. Re-import into
+          RoadWalk to push the edits back to the tablet.
+     v0 scope: read snapshot, table view + filters + sort + search, detail
+     drawer with editable fields, bulk apply, photo lightbox, save+download.
+     Future: Excel/Word report export (driven by templates), batch photo
+     annotation, attribute-rule validation. -->
+
+<header>
+  <h1>CV REVIEW</h1>
+  <span class="hdr-stats" id="hdr-stats">No snapshot loaded</span>
+  <div class="hdr-actions">
+    <button class="btn" id="btn-load">📂 Load Snapshot…</button>
+    <input type="file" id="file-in" accept=".json,application/json,.ndjson" multiple style="display:none">
+    <button class="btn" id="btn-save" disabled>💾 Save Modified…</button>
+  </div>
+</header>
+
+<div class="filters" id="filters" style="display:none">
+  <label>Section
+    <select id="f-section"><option value="">(all)</option></select>
+  </label>
+  <label>Kind
+    <select id="f-kind"><option value="">(all)</option></select>
+  </label>
+  <label>Condition
+    <select id="f-condition"><option value="">(all)</option></select>
+  </label>
+  <label>Photos
+    <select id="f-photos">
+      <option value="">(any)</option>
+      <option value="has">≥ 1</option>
+      <option value="none">0</option>
+    </select>
+  </label>
+  <label>Search
+    <input type="text" id="f-search" placeholder="name, notes, id…">
+  </label>
+  <span class="filter-count" id="filter-count"></span>
+</div>
+
+<main>
+  <div class="welcome" id="welcome">
+    <div class="welcome-card">
+      <h2>RoadWalk CV Review</h2>
+      <p>Desktop companion for the RoadWalk PWA. Loads a project snapshot exported
+      from the field, lets you review every culvert (and other pins) at full size
+      with editable attrs and photo viewer, then writes your changes back out as
+      a JSON you can re-import.</p>
+      <p>To get started, export a snapshot from the RoadWalk dashboard on your
+      tablet, sync to this machine, then drop the file below or use the button.</p>
+      <div class="file-drop" id="drop-zone">
+        Drop a snapshot JSON here, or click to pick one.
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap" id="table-wrap" style="display:none">
+    <table id="pins-table">
+      <thead><tr id="head-row"></tr></thead>
+      <tbody id="pins-body"></tbody>
+    </table>
+  </div>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-hdr">
+      <span class="drawer-id" id="drawer-id">—</span>
+      <button class="drawer-close" id="drawer-close" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+</main>
+
+<div class="bulk-bar" id="bulk-bar">
+  <span><strong id="bulk-count">0</strong> selected</span>
+  <span>Set</span>
+  <select id="bulk-field"></select>
+  <span>=</span>
+  <input type="text" id="bulk-value" placeholder="value">
+  <button class="btn" id="bulk-apply">Apply</button>
+  <button class="btn btn-cancel" id="bulk-clear">Clear selection</button>
+</div>
+
+<div class="lb" id="lightbox">
+  <button class="lb-close" id="lb-close" aria-label="Close">✕</button>
+  <img id="lb-img" alt="">
+</div>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════════════════════════════ */
+const STATE = {
+  raw:        null,                // the full snapshot JSON, unchanged
+  bundle:     null,                // bundle subset (sections, pins)
+  photos:     Object.create(null), // photo_id -> photo record
+  photosByPin:Object.create(null), // pin lookup_key -> [photo, ...]
+  inspections:Object.create(null), // ulid -> inspection record (merged into pins)
+  rows:       [],                  // flat array of { sec, pin } pairs for the table
+  filtered:   [],                  // post-filter view of rows
+  selected:   new Set(),           // pin ulids that are multi-selected
+  focused:    null,                // pin currently shown in the drawer
+  sortKey:    'sta_ft',
+  sortDir:    1,                   // 1 asc, -1 desc
+  dirty:      false,               // any edits pending save
+};
+
+const TABLE_COLS = [
+  { key: '__check',    label: '',          render: r => '' },
+  { key: 'sec_id',     label: 'Sec',       render: r => r.sec.id },
+  { key: 'pin_id',     label: 'Pin ID',    render: r => r.pin.id || '' },
+  { key: 'kind',       label: 'Kind',      render: r => r.pin.kind },
+  { key: 'sta',        label: 'STA',       render: r => r.pin.sta || '', cls: 'num' },
+  { key: 'sta_ft',     label: 'STA ft',    render: r => r.pin.sta_ft != null ? r.pin.sta_ft.toFixed(1) : '', cls: 'num', hide: true },
+  { key: 'name',       label: 'Name',      render: r => (r.pin.attrs && r.pin.attrs.name) || '' },
+  { key: 'material',   label: 'Material',  render: r => (r.pin.attrs && r.pin.attrs.material) || '' },
+  { key: 'shape',      label: 'Shape',     render: r => (r.pin.attrs && r.pin.attrs.shape) || '' },
+  { key: 'size_width', label: 'Size',      render: r => (r.pin.attrs && r.pin.attrs.size_width) || '' },
+  { key: 'condition',  label: 'Condition', render: r => (r.pin.attrs && r.pin.attrs.condition) || '' },
+  { key: 'notes',      label: 'Notes',     render: r => (r.pin.attrs && r.pin.attrs.notes) || '' },
+  { key: 'photos',     label: 'Photos',    render: r => {
+      const n = countPhotosFor(r);
+      return `<span class="photo-pill ${n ? 'has' : ''}">${n}</span>`;
+    } },
+];
+
+/* Bulk-apply field menu — what the user can edit for a multi-selection. */
+const BULK_FIELDS = [
+  'material', 'shape', 'size_width', 'condition', 'repair_action',
+  'side', 'status', 'notes',
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   FILE LOAD
+   ════════════════════════════════════════════════════════════════════════ */
+function $(sel) { return document.querySelector(sel); }
+
+$('#btn-load').addEventListener('click', () => $('#file-in').click());
+$('#file-in').addEventListener('change', e => loadFiles(Array.from(e.target.files || [])));
+
+(function wireDrop() {
+  const dz = $('#drop-zone');
+  if (!dz) return;
+  dz.addEventListener('click', () => $('#file-in').click());
+  ['dragenter', 'dragover'].forEach(ev =>
+    dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev =>
+    dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
+  dz.addEventListener('drop', e => {
+    const files = Array.from(e.dataTransfer?.files || []);
+    if (files.length) loadFiles(files);
+  });
+})();
+
+async function loadFiles(files) {
+  if (!files.length) return;
+  // Identify main JSON + any NDJSON chunks (photo streams from RoadWalk).
+  let mainFile = null;
+  const ndjsonFiles = [];
+  for (const f of files) {
+    const lc = (f.name || '').toLowerCase();
+    if (lc.endsWith('.ndjson')) ndjsonFiles.push(f);
+    else if (lc.endsWith('.json')) mainFile = f;
+  }
+  if (!mainFile) { alert('Pick a .json snapshot (and any .ndjson photo chunks).'); return; }
+  try {
+    const text = await mainFile.text();
+    const data = JSON.parse(text);
+    ingest(data);
+    // Photos may also live in NDJSON chunks. Stream them in.
+    for (const f of ndjsonFiles) {
+      const t = await f.text();
+      ingestPhotoNdjson(t);
+    }
+    afterIngest();
+  } catch (err) {
+    console.error(err);
+    alert('Load failed: ' + (err && err.message ? err.message : err));
+  }
+}
+
+function ingest(data) {
+  STATE.raw = data;
+  // Accept either a full RoadWalk snapshot or a plain bundle.
+  // Snapshot shape: { bundle: {...}, field_data: { inspections, safety, ... } }
+  // Bundle shape:   { sections: [...] }
+  const bundle = (data && data.bundle) || data;
+  if (!bundle || !Array.isArray(bundle.sections)) {
+    throw new Error('Not a recognized RoadWalk snapshot or bundle.');
+  }
+  STATE.bundle = bundle;
+  STATE.rows = [];
+  bundle.sections.forEach(sec => {
+    (sec.pins || []).forEach(pin => {
+      STATE.rows.push({ sec: sec, pin: pin });
+    });
+  });
+  // Merge inspections by ULID — overrides bundle attrs with field-collected ones.
+  const insp = (data && data.field_data && data.field_data.inspections) || [];
+  STATE.inspections = Object.create(null);
+  insp.forEach(rec => {
+    if (rec && rec.ulid) STATE.inspections[rec.ulid] = rec;
+  });
+  STATE.rows.forEach(r => {
+    const u = r.pin.ulid;
+    if (u && STATE.inspections[u]) {
+      const rec = STATE.inspections[u];
+      r.pin.attrs = Object.assign({}, r.pin.attrs || {}, rec.attrs || {});
+      r.pin.status = rec.status || r.pin.status;
+    }
+  });
+  // Photos from the snapshot (inline) — uncommon but supported.
+  const photos = (data && data.field_data && data.field_data.photos) || [];
+  STATE.photos = Object.create(null);
+  STATE.photosByPin = Object.create(null);
+  photos.forEach(p => indexPhoto(p));
+}
+
+function ingestPhotoNdjson(text) {
+  text.split(/\r?\n/).forEach(line => {
+    const t = line.trim(); if (!t) return;
+    try {
+      const p = JSON.parse(t);
+      if (p && p.id) indexPhoto(p);
+    } catch (_) {}
+  });
+}
+
+function indexPhoto(p) {
+  STATE.photos[p.id] = p;
+  const key = p.linked_pin_id;
+  if (!key) return;
+  (STATE.photosByPin[key] = STATE.photosByPin[key] || []).push(p);
+}
+
+function lookupPinKey(row) {
+  return row.sec.id + '::' + (row.pin.id || row.pin.ulid);
+}
+function countPhotosFor(row) {
+  // Try sec::pin_id first, fall back to embedded attrs.photos count.
+  const arr = STATE.photosByPin[lookupPinKey(row)] || [];
+  let n = arr.length;
+  if (row.pin.attrs && Array.isArray(row.pin.attrs.photos)) {
+    n += row.pin.attrs.photos.length;
+  }
+  return n;
+}
+function photosFor(row) {
+  const ext = STATE.photosByPin[lookupPinKey(row)] || [];
+  const emb = (row.pin.attrs && Array.isArray(row.pin.attrs.photos))
+    ? row.pin.attrs.photos.map(p => ({
+        id: 'emb_' + Math.random(),
+        dataUrl: p.dataUrl, captured_at: p.captured_at,
+        description: 'embedded',
+      }))
+    : [];
+  return ext.concat(emb);
+}
+
+function afterIngest() {
+  $('#welcome').style.display = 'none';
+  $('#filters').style.display = 'flex';
+  $('#table-wrap').style.display = 'block';
+  $('#btn-save').disabled = false;
+  populateFilterMenus();
+  renderTable();
+  $('#hdr-stats').innerHTML = `<strong>${STATE.bundle.sections.length}</strong> sections, ` +
+    `<strong>${STATE.rows.length}</strong> pins, ` +
+    `<strong>${Object.keys(STATE.photos).length}</strong> photos`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FILTERING + SORTING
+   ════════════════════════════════════════════════════════════════════════ */
+function populateFilterMenus() {
+  const secs = STATE.bundle.sections.map(s => s.id);
+  const kinds = Array.from(new Set(STATE.rows.map(r => r.pin.kind))).sort();
+  const conds = Array.from(new Set(STATE.rows.map(r => (r.pin.attrs || {}).condition).filter(Boolean))).sort();
+  function fill(sel, arr) {
+    const el = $(sel);
+    el.innerHTML = '<option value="">(all)</option>' +
+      arr.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    el.addEventListener('change', renderTable);
+  }
+  fill('#f-section', secs);
+  fill('#f-kind', kinds);
+  fill('#f-condition', conds);
+  $('#f-photos').addEventListener('change', renderTable);
+  $('#f-search').addEventListener('input', renderTable);
+
+  // Bulk-apply field menu.
+  $('#bulk-field').innerHTML = BULK_FIELDS.map(f =>
+    `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+}
+
+function applyFilters() {
+  const fSec  = $('#f-section').value;
+  const fKind = $('#f-kind').value;
+  const fCond = $('#f-condition').value;
+  const fPh   = $('#f-photos').value;
+  const fQ    = $('#f-search').value.trim().toLowerCase();
+  STATE.filtered = STATE.rows.filter(r => {
+    if (fSec  && r.sec.id !== fSec) return false;
+    if (fKind && r.pin.kind !== fKind) return false;
+    const a = r.pin.attrs || {};
+    if (fCond && a.condition !== fCond) return false;
+    if (fPh) {
+      const n = countPhotosFor(r);
+      if (fPh === 'has'  && n === 0) return false;
+      if (fPh === 'none' && n  >  0) return false;
+    }
+    if (fQ) {
+      const hay = [
+        r.pin.id, r.pin.kind, a.name, a.notes, a.material, a.shape,
+        r.sec.id, r.sec.name,
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(fQ)) return false;
+    }
+    return true;
+  });
+  // Sort.
+  const k = STATE.sortKey, dir = STATE.sortDir;
+  STATE.filtered.sort((a, b) => {
+    const va = sortValue(a, k), vb = sortValue(b, k);
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (va < vb) return -1 * dir;
+    if (va > vb) return  1 * dir;
+    return 0;
+  });
+}
+function sortValue(row, key) {
+  switch (key) {
+    case 'sec_id':   return row.sec.id;
+    case 'pin_id':   return row.pin.id || '';
+    case 'kind':     return row.pin.kind || '';
+    case 'sta_ft':   return row.pin.sta_ft != null ? row.pin.sta_ft : null;
+    case 'sta':      return row.pin.sta || '';
+    case 'photos':   return countPhotosFor(row);
+    default:         return (row.pin.attrs || {})[key] || '';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   TABLE RENDER
+   ════════════════════════════════════════════════════════════════════════ */
+function renderTable() {
+  applyFilters();
+  const head = $('#head-row');
+  head.innerHTML = TABLE_COLS.filter(c => !c.hide).map(c => {
+    if (c.key === '__check') return '<th class="checkcell"><input type="checkbox" id="check-all"></th>';
+    const glyph = STATE.sortKey === c.key
+      ? (STATE.sortDir === 1 ? '▲' : '▼')
+      : '';
+    return `<th data-key="${esc(c.key)}">${esc(c.label)}<span class="sort-glyph">${glyph}</span></th>`;
+  }).join('');
+  head.querySelectorAll('th[data-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.key;
+      if (STATE.sortKey === k) STATE.sortDir *= -1;
+      else { STATE.sortKey = k; STATE.sortDir = 1; }
+      renderTable();
+    });
+  });
+  $('#check-all')?.addEventListener('change', e => {
+    const on = e.target.checked;
+    STATE.selected.clear();
+    if (on) STATE.filtered.forEach(r => STATE.selected.add(r.pin.ulid));
+    renderTable();
+    updateBulkBar();
+  });
+
+  const body = $('#pins-body');
+  if (!STATE.filtered.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="' + TABLE_COLS.filter(c => !c.hide).length +
+      '">No pins match the current filters.</td></tr>';
+  } else {
+    body.innerHTML = STATE.filtered.map(r => {
+      const sel = STATE.selected.has(r.pin.ulid);
+      const foc = STATE.focused && STATE.focused === r.pin.ulid;
+      const cls = (sel ? 'selected ' : '') + (foc ? 'focused' : '');
+      return '<tr class="' + cls + '" data-ulid="' + esc(r.pin.ulid || '') + '">' +
+        TABLE_COLS.filter(c => !c.hide).map(c => {
+          if (c.key === '__check') {
+            return '<td class="checkcell"><input type="checkbox" data-check="' +
+              esc(r.pin.ulid) + '" ' + (sel ? 'checked' : '') + '></td>';
+          }
+          return '<td class="' + (c.cls || '') + '">' + (c.render(r) || '') + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+  }
+
+  body.querySelectorAll('tr[data-ulid]').forEach(tr => {
+    tr.addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT') return;   // checkbox handled separately
+      openDrawer(tr.dataset.ulid);
+    });
+  });
+  body.querySelectorAll('input[data-check]').forEach(cb => {
+    cb.addEventListener('click', e => e.stopPropagation());
+    cb.addEventListener('change', e => {
+      const u = e.target.dataset.check;
+      if (e.target.checked) STATE.selected.add(u);
+      else STATE.selected.delete(u);
+      renderTable();
+      updateBulkBar();
+    });
+  });
+
+  $('#filter-count').innerHTML = `Showing <strong>${STATE.filtered.length}</strong> of ${STATE.rows.length}`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DETAIL DRAWER
+   ════════════════════════════════════════════════════════════════════════ */
+$('#drawer-close').addEventListener('click', () => {
+  STATE.focused = null;
+  $('#drawer').classList.remove('open');
+  renderTable();
+});
+
+function openDrawer(ulid) {
+  STATE.focused = ulid;
+  const row = STATE.rows.find(r => r.pin.ulid === ulid);
+  if (!row) return;
+  const drawer = $('#drawer');
+  drawer.classList.add('open');
+  $('#drawer-id').textContent = row.pin.id + ' · ' + row.sec.id;
+  const a = row.pin.attrs || {};
+  const fields = [
+    ['name',          a.name, 'text'],
+    ['material',      a.material, 'text'],
+    ['shape',         a.shape, 'text'],
+    ['size_width',    a.size_width, 'text'],
+    ['size_height',   a.size_height, 'text'],
+    ['length_ft',     a.length_ft, 'number'],
+    ['num_barrels',   a.num_barrels, 'number'],
+    ['hw_upstream',   a.hw_upstream, 'text'],
+    ['hw_downstream', a.hw_downstream, 'text'],
+    ['side',          a.side, 'text'],
+    ['eop_offset',    a.eop_offset, 'number'],
+    ['condition',     a.condition, 'text'],
+    ['repair_action', a.repair_action, 'textarea'],
+    ['notes',         a.notes, 'textarea'],
+  ];
+  const photoCards = photosFor(row).map((p, i) => `
+    <div class="photo-thumb" data-photo-idx="${i}">
+      <img src="${esc(p.dataUrl || '')}" alt="">
+      <div class="photo-meta">${esc((p.description || p.captured_at || ('photo ' + (i+1))) + '')}</div>
+    </div>`).join('') ||
+    '<div class="no-photos">No photos linked to this pin.</div>';
+
+  $('#drawer-body').innerHTML =
+    '<div class="section-hdr">Identity</div>' +
+    `<div class="field-row"><div class="field-lbl">section</div><div class="field-val">${esc(row.sec.id + ' · ' + (row.sec.name || ''))}</div></div>` +
+    `<div class="field-row"><div class="field-lbl">kind</div><div class="field-val">${esc(row.pin.kind)}</div></div>` +
+    `<div class="field-row"><div class="field-lbl">sta</div><div class="field-val">${esc(row.pin.sta || '')}</div></div>` +
+    `<div class="field-row"><div class="field-lbl">ulid</div><div class="field-val" style="font:400 10px var(--mono);color:var(--ink-3)">${esc(row.pin.ulid || '')}</div></div>` +
+    '<div class="section-hdr">Attributes</div>' +
+    fields.map(f => fieldRow(f[0], f[1], f[2])).join('') +
+    '<div class="section-hdr">Photos</div>' +
+    `<div class="photo-grid">${photoCards}</div>`;
+
+  // Wire field edits.
+  $('#drawer-body').querySelectorAll('[data-attr]').forEach(input => {
+    input.addEventListener('change', () => {
+      const k = input.dataset.attr;
+      let v = input.value;
+      if (input.type === 'number' && v !== '') v = parseFloat(v);
+      if (v === '') v = null;
+      row.pin.attrs = row.pin.attrs || {};
+      if (v == null) delete row.pin.attrs[k];
+      else row.pin.attrs[k] = v;
+      STATE.dirty = true;
+      renderTable();
+    });
+  });
+  // Wire photo lightbox.
+  const photos = photosFor(row);
+  $('#drawer-body').querySelectorAll('.photo-thumb').forEach((el, i) => {
+    el.addEventListener('click', () => openLightbox(photos[i]?.dataUrl));
+  });
+  renderTable();
+}
+
+function fieldRow(key, val, type) {
+  let input;
+  if (type === 'textarea') {
+    input = `<textarea data-attr="${esc(key)}">${esc(val || '')}</textarea>`;
+  } else {
+    input = `<input type="${type}" data-attr="${esc(key)}" value="${esc(val ?? '')}">`;
+  }
+  return `<div class="field-row"><div class="field-lbl">${esc(key)}</div><div class="field-val">${input}</div></div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LIGHTBOX
+   ════════════════════════════════════════════════════════════════════════ */
+const lb = $('#lightbox');
+function openLightbox(dataUrl) {
+  if (!dataUrl) return;
+  $('#lb-img').src = dataUrl;
+  lb.classList.add('show');
+}
+lb.addEventListener('click', e => { if (e.target === lb || e.target === $('#lb-close')) lb.classList.remove('show'); });
+$('#lb-close').addEventListener('click', () => lb.classList.remove('show'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.classList.remove('show'); });
+
+/* ════════════════════════════════════════════════════════════════════════
+   BULK APPLY
+   ════════════════════════════════════════════════════════════════════════ */
+function updateBulkBar() {
+  const bar = $('#bulk-bar');
+  if (!STATE.selected.size) { bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+  $('#bulk-count').textContent = STATE.selected.size;
+}
+$('#bulk-clear').addEventListener('click', () => {
+  STATE.selected.clear();
+  renderTable();
+  updateBulkBar();
+});
+$('#bulk-apply').addEventListener('click', () => {
+  const field = $('#bulk-field').value;
+  let val = $('#bulk-value').value;
+  if (val === '') {
+    if (!confirm(`Clear "${field}" on ${STATE.selected.size} pin(s)?`)) return;
+    val = null;
+  } else if (!confirm(`Set "${field}" = "${val}" on ${STATE.selected.size} pin(s)?`)) {
+    return;
+  }
+  STATE.rows.forEach(r => {
+    if (!STATE.selected.has(r.pin.ulid)) return;
+    r.pin.attrs = r.pin.attrs || {};
+    if (val == null) delete r.pin.attrs[field];
+    else r.pin.attrs[field] = val;
+  });
+  STATE.dirty = true;
+  $('#bulk-value').value = '';
+  renderTable();
+  if (STATE.focused) openDrawer(STATE.focused);
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   SAVE
+   ════════════════════════════════════════════════════════════════════════ */
+$('#btn-save').addEventListener('click', () => {
+  if (!STATE.bundle) return;
+  // Merge the in-memory edits back into a fresh snapshot blob and download.
+  const out = STATE.raw ? JSON.parse(JSON.stringify(STATE.raw)) : { bundle: STATE.bundle };
+  // Find every pin in `out` by ulid and copy attrs from STATE.rows.
+  const byUlid = Object.create(null);
+  STATE.rows.forEach(r => { if (r.pin.ulid) byUlid[r.pin.ulid] = r.pin.attrs; });
+  const target = (out && out.bundle) || out;
+  if (target && Array.isArray(target.sections)) {
+    target.sections.forEach(sec => {
+      (sec.pins || []).forEach(p => {
+        if (p.ulid && byUlid[p.ulid]) p.attrs = byUlid[p.ulid];
+      });
+    });
+  }
+  out._cv_review_edited_at = new Date().toISOString();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const name = 'cv-review-edited-' + stamp + '.json';
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  STATE.dirty = false;
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+}
+
+window.addEventListener('beforeunload', e => {
+  if (STATE.dirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+</script>
+</body>
+</html>
