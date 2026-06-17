@@ -31259,6 +31259,35 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     });
 
+    // Keep the IDB inspection record's report_hidden_photos in sync
+    // with the bundle pin. _mergedPin overlays idb.attrs ON TOP of the
+    // bundle, so if we only wrote to the bundle a stale IDB list would
+    // mask hide/restore until the project reloaded. Writes touch both
+    // the in-memory cache (immediate effect on the next render) and
+    // the persistent IDB record.
+    function _srSyncHiddenToIdb(pin, list) {
+      if (!pin || !pin.ulid) return;
+      var rec = _dataState.idbCacheByUlid[pin.ulid]
+             || _dataState.idbCache[pin.id];
+      if (rec) {
+        if (!rec.attrs) rec.attrs = {};
+        rec.attrs.report_hidden_photos = list.slice();
+      }
+      if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function') return;
+      window.RWIdb.openDB().then(function (db) {
+        var tx = db.transaction('inspections', 'readwrite');
+        var store = tx.objectStore('inspections');
+        var getReq = store.get(pin.ulid);
+        getReq.onsuccess = function (ev) {
+          var dbRec = ev.target.result;
+          if (!dbRec) return;
+          if (!dbRec.attrs) dbRec.attrs = {};
+          dbRec.attrs.report_hidden_photos = list.slice();
+          store.put(dbRec);
+        };
+      }).catch(function () {});
+    }
+
     // ── Wire per-photo annotate / hide-from-report buttons ─────────
     // ✎ Annotate opens the existing form annotation modal (embedded
     //   photos only — geophotos don't have that flow yet).
@@ -31299,6 +31328,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             : [];
           if (hidden.indexOf(hideKey) === -1) hidden.push(hideKey);
           attrs.report_hidden_photos = hidden;
+          _srSyncHiddenToIdb(pin, hidden);
           if (window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
@@ -31309,12 +31339,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // ── Wire per-card Restore buttons → clear the hidden-from-report
     //    list so all linked / embedded photos reappear in the report.
+    //    Touches both the bundle pin AND the IDB inspection record so
+    //    the merged-pin overlay doesn't keep masking the change.
     list.querySelectorAll('.sr-restore-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var r = allSigns[+btn.dataset.cardIdx];
         if (!r) return;
-        var attrs = r.pin.attrs || {};
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
         attrs.report_hidden_photos = [];
+        _srSyncHiddenToIdb(pin, []);
         if (window._RW && typeof window._RW.persistSections === 'function') {
           window._RW.persistSections();
         }
