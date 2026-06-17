@@ -4726,6 +4726,49 @@ body.rw-sld-photo-dragging .strip-pin {
   font-size: 8.5px; padding: 3px 6px;
 }
 
+/* Per-post / per-panel card — each is its own bordered sub-section.
+   Replaces the older flat panels table so every field from the export
+   spec gets its own labeled slot. */
+.sr-post-card, .sr-panel-card {
+  border: 1px solid var(--rule);
+  padding: 5px 8px 6px;
+  margin-bottom: 5px;
+  break-inside: avoid; page-break-inside: avoid;
+}
+.sr-sub-hdr-row {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .6px; text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 3px; margin-bottom: 5px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px;
+}
+.sr-sub-ulid {
+  font: 400 7.5px 'IBM Plex Mono', monospace;
+  color: var(--ink-3); text-transform: none; letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 2.4in;
+}
+.sr-field-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px 14px;
+  font: 400 9.5px var(--sans, system-ui);
+}
+.sr-fld { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.sr-fld-full { grid-column: 1 / -1; }
+.sr-flbl {
+  font: 700 7.5px 'IBM Plex Mono', monospace;
+  letter-spacing: .35px; text-transform: uppercase;
+  color: var(--ink-3); flex: 0 0 84px;
+}
+.sr-fval {
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.sr-fval-wrap { white-space: normal; overflow: visible; }
+
 .sr-photo-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
   margin-top: 4px;
@@ -30870,35 +30913,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '</div>' +
         (a.notes ? '<div class="sr-notes-row"><span class="sr-lbl">Description</span><span class="sr-val">' + _esc(a.notes) + '</span></div>' : '');
 
-      // Posts table.
-      var postsTbl = posts.length
-        ? '<table class="sr-tbl"><thead><tr>' +
-            ['#','Type','Count','Height (ft)','Foundation','Finish','Breakaway','Condition']
-              .map(function (h) { return '<th>' + h + '</th>'; }).join('') +
-          '</tr></thead><tbody>' +
-          posts.map(function (po, i) {
-            po = po || {};
-            return '<tr>' +
-              '<td>' + (i + 1) + '</td>' +
-              '<td>' + _cell(po.type || po.post_type) + '</td>' +
-              '<td>' + _cell(po.count || po.post_count) + '</td>' +
-              '<td>' + _cell(po.height_ft || po.height) + '</td>' +
-              '<td>' + _cell(po.foundation) + '</td>' +
-              '<td>' + _cell(po.finish) + '</td>' +
-              '<td>' + _cell(po.breakaway) + '</td>' +
-              '<td>' + _cell(po.condition || po.post_condition) + '</td>' +
-            '</tr>';
-          }).join('') +
-          '</tbody></table>'
-        : '<div class="sr-tbl-empty">No post data entered.</div>';
-
-      // Panels table — one row per panel + an optional notes sub-row.
-      // Sorted by facing_degrees (0/90/180/270) and then by original
-      // form index so the table reads top-to-bottom in the same order
-      // the user sees on the post: Front → Right → Back → Left.
-      // Field names match what the data form actually saves: see the
-      // _inputRow / _selectRow calls in _panelBlock (sign form).
-      var panelCols = ['#','Facing','Sign Code','Description','Common Size','Install','Sheeting','Back','Mounting','Panel Cond.','Sheet Cond.','Damage','Day R1/R2','Night R1/R2'];
+      // Sort panels Front → Right → Back → Left so the cards read in
+      // the same order the user sees on the form.
       var _DIR_LABEL = { 0: '0° Front', 90: '90° Right', 180: '180° Back', 270: '270° Left' };
       var panelsSorted = panels.map(function (pn, origIdx) {
         return { pn: pn || {}, origIdx: origIdx };
@@ -30908,57 +30924,106 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (fa !== fb) return fa - fb;
         return a.origIdx - b.origIdx;
       });
-      var panelsTbl = panelsSorted.length
-        ? '<table class="sr-tbl"><thead><tr>' +
-            panelCols.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
-          '</tr></thead><tbody>' +
-          panelsSorted.map(function (entry, sortIdx) {
-            var pn = entry.pn;
-            var dmg = Array.isArray(pn.damage_flags) ? pn.damage_flags.join(' · ') : pn.damage_flags;
-            var deg = +(pn.facing_degrees || 0);
-            var facingLbl = _DIR_LABEL[deg] || (pn.facing_degrees != null ? deg + '°' : '—');
-            function _retroPair(r1Key, r2Key) {
-              var a = pn[r1Key], b = pn[r2Key];
-              if (!a && !b) return '—';
-              return (a || '—') + ' / ' + (b || '—');
-            }
-            var mainRow = '<tr>' +
-              '<td>' + (sortIdx + 1) + '</td>' +
-              '<td>' + _esc(facingLbl) + '</td>' +
-              '<td>' + _cell(pn.sign_code) + '</td>' +
-              '<td>' + _cell(pn.panel_description) + '</td>' +
-              '<td>' + _cell(pn.panel_size) + '</td>' +
-              '<td>' + _cell(pn.panel_install_date) + '</td>' +
-              '<td>' + _cell(pn.sheeting_type) + '</td>' +
-              '<td>' + _cell(pn.back_panel) + '</td>' +
-              '<td>' + _cell(pn.mounting_hardware) + '</td>' +
-              '<td>' + _cell(pn.panel_condition) + '</td>' +
-              '<td>' + _cell(pn.sheeting_condition) + '</td>' +
-              '<td>' + _cell(dmg) + '</td>' +
-              '<td>' + _retroPair('retro_day_r1', 'retro_day_r2') + '</td>' +
-              '<td>' + _retroPair('retro_night_r1', 'retro_night_r2') + '</td>' +
-            '</tr>';
-            // Notes sub-row — collapses into one extra row only when
-            // retro_notes or panel notes are populated so the table
-            // stays compact for typical entries.
-            var notesBits = [];
-            if (pn.retro_notes) notesBits.push('<strong>Retro:</strong> ' + _esc(pn.retro_notes));
-            if (pn.notes)       notesBits.push('<strong>Notes:</strong> ' + _esc(pn.notes));
-            var notesRow = notesBits.length
-              ? '<tr class="sr-panel-notes"><td></td><td colspan="' + (panelCols.length - 1) + '">'
-                  + notesBits.join(' &nbsp;·&nbsp; ')
-                  + '</td></tr>'
-              : '';
-            return mainRow + notesRow;
-          }).join('') +
-          '</tbody></table>'
+
+      // Label + value pair for the post/panel field grids. Arrays
+      // collapse with ' · '; null / empty render as '—'.
+      function _field(label, val, opts) {
+        opts = opts || {};
+        var display;
+        if (val == null || val === '') display = '—';
+        else if (Array.isArray(val)) display = val.length ? val.join(' · ') : '—';
+        else display = String(val);
+        var cls    = 'sr-fld' + (opts.full ? ' sr-fld-full' : '');
+        var valCls = 'sr-fval' + (opts.wrap ? ' sr-fval-wrap' : '');
+        return '<div class="' + cls + '">'
+          + '<span class="sr-flbl">' + _esc(label) + '</span>'
+          + '<span class="' + valCls + '">' + _esc(display) + '</span>'
+          + '</div>';
+      }
+
+      // Per-post card — matches the post_* fields in the export spec.
+      function _postCardHtml(po, i) {
+        po = po || {};
+        var damage = Array.isArray(po.post_damage)
+          ? po.post_damage.join(' · ')
+          : po.post_damage;
+        return '<div class="sr-post-card">' +
+          '<div class="sr-sub-hdr-row">' +
+            '<span>POST ' + (i + 1) + '</span>' +
+            (po.ulid ? '<span class="sr-sub-ulid">' + _esc(po.ulid) + '</span>' : '') +
+          '</div>' +
+          '<div class="sr-field-grid">' +
+            _field('Type',       po.post_type) +
+            _field('Count',      po.post_count) +
+            _field('Height (ft)', po.post_height_ft) +
+            _field('Foundation', po.post_foundation) +
+            _field('Finish',     po.post_finish) +
+            _field('Breakaway',  po.post_breakaway) +
+            _field('Condition',  po.post_condition) +
+            _field('Damage', damage, { full: true, wrap: true }) +
+            (po.notes ? _field('Notes', po.notes, { full: true, wrap: true }) : '') +
+          '</div>' +
+        '</div>';
+      }
+
+      // Per-panel card — matches the panel_*_* fields in the export
+      // spec. Header carries the panel number, facing direction, and
+      // sign code so the reader can pair it with the photo grid.
+      function _panelCardHtml(pn, displayIdx) {
+        pn = pn || {};
+        var deg = +(pn.facing_degrees || 0);
+        var facingLbl = _DIR_LABEL[deg]
+          || (pn.facing_degrees != null ? deg + '°' : '');
+        var dmg = Array.isArray(pn.damage_flags)
+          ? pn.damage_flags.join(' · ')
+          : pn.damage_flags;
+        var hdr = 'PANEL ' + (displayIdx + 1);
+        if (facingLbl) hdr += ' · ' + facingLbl;
+        if (pn.sign_code) hdr += ' · ' + pn.sign_code;
+        // Daytime retro — show both raters even if one is blank.
+        var retroBits = [];
+        if (pn.retro_day_r1) retroBits.push('R1 ' + pn.retro_day_r1);
+        if (pn.retro_day_r2) retroBits.push('R2 ' + pn.retro_day_r2);
+        var retroStr = retroBits.length ? retroBits.join(' · ') : null;
+        return '<div class="sr-panel-card">' +
+          '<div class="sr-sub-hdr-row">' +
+            '<span>' + _esc(hdr) + '</span>' +
+            (pn.ulid ? '<span class="sr-sub-ulid">' + _esc(pn.ulid) + '</span>' : '') +
+          '</div>' +
+          '<div class="sr-field-grid">' +
+            _field('Sign Code',     pn.sign_code) +
+            _field('Common Size',   pn.panel_size) +
+            _field('Install Date',  pn.panel_install_date) +
+            _field('Sheeting Type', pn.sheeting_type) +
+            _field('Panel Cond',    pn.panel_condition) +
+            _field('Sheet Cond',    pn.sheeting_condition) +
+            _field('Back Panel',    pn.back_panel) +
+            _field('Mounting',      pn.mounting_hardware) +
+            _field('Description', pn.panel_description, { full: true, wrap: true }) +
+            _field('Damage',      dmg,                  { full: true, wrap: true }) +
+            _field('Retro Day',   retroStr,             { full: true }) +
+            (pn.retro_notes ? _field('Retro Notes', pn.retro_notes, { full: true, wrap: true }) : '') +
+            (pn.notes       ? _field('Notes',       pn.notes,       { full: true, wrap: true }) : '') +
+          '</div>' +
+        '</div>';
+      }
+
+      var postsBlock = posts.length
+        ? posts.map(_postCardHtml).join('')
+        : '<div class="sr-tbl-empty">No post data entered.</div>';
+      var panelsBlock = panelsSorted.length
+        ? panelsSorted.map(function (entry, i) { return _panelCardHtml(entry.pn, i); }).join('')
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
 
       // Photo paging: pack photos into chunks of one card each so the
       // print engine paginates naturally. The first card carries the
       // identity / posts / panels block and a smaller photo budget;
-      // continuation cards are header-only and can fit more.
-      var PHOTOS_PAGE_1 = 6;   // 2 rows × 3 cols on page 1
+      // continuation cards are header-only and can fit more. Each
+      // panel beyond the first takes roughly one photo-row worth of
+      // vertical space, so the page-1 budget tapers down: 1 panel → 6
+      // photos, 2 → 3, 3+ → 0 (photos move to a continuation page).
+      var _extraPanels = Math.max(0, panels.length - 1);
+      var PHOTOS_PAGE_1 = Math.max(0, 6 - _extraPanels * 3);
       var PHOTOS_PAGE_N = 12;  // 4 rows × 3 cols on continuation pages
       var photoChunks;
       if (!photos.length) {
@@ -31032,10 +31097,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var startNum = pi === 0 ? 1 : PHOTOS_PAGE_1 + (pi - 1) * PHOTOS_PAGE_N + 1;
         if (pi === 0) {
           // First card — full content (identity / map / posts / panels)
-          // plus the first photo chunk.
-          var photoSecHdr = 'Photos (' + photos.length + ')'
-            + (totalPages > 1 ? ' — showing 1–' + chunk.length : '')
-            + ' ' + actBtn + ' ' + restoreBtn;
+          // plus the first photo chunk. If the budget collapsed to 0
+          // because of many panels, the chunk is empty and we point
+          // the reader at the continuation page instead of an empty
+          // grid.
+          var p1HasPhotos = chunk.length > 0;
+          var photoSecHdr;
+          if (p1HasPhotos) {
+            photoSecHdr = 'Photos (' + photos.length + ')'
+              + (totalPages > 1 ? ' — showing 1–' + chunk.length : '')
+              + ' ' + actBtn + ' ' + restoreBtn;
+          } else if (photos.length > 0) {
+            photoSecHdr = 'Photos (' + photos.length + ') — continued on next page '
+              + actBtn + ' ' + restoreBtn;
+          } else {
+            photoSecHdr = 'Photos (0) ' + actBtn + ' ' + restoreBtn;
+          }
           return '<article class="sr-card" data-sign-idx="' + idx + '">' +
             '<header class="sr-card-hdr">' +
               '<div class="sr-card-hdr-top">' +
@@ -31053,11 +31130,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 '<div class="sr-identity-right">' + insetMap + '</div>' +
               '</div>' +
             '</section>' +
-            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsTbl + '</section>' +
-            '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsTbl + '</section>' +
+            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsBlock + '</section>' +
+            '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsBlock + '</section>' +
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">' + photoSecHdr + '</div>' +
-              _photoGridFor(chunk, startNum) +
+              // Suppress the empty-grid placeholder when photos exist
+              // but were deferred to the continuation page.
+              (p1HasPhotos || photos.length === 0
+                ? _photoGridFor(chunk, startNum) : '') +
             '</section>' +
           '</article>';
         }
