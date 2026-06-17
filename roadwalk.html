@@ -4812,6 +4812,14 @@ body.rw-sld-photo-dragging .strip-pin {
   border: 1px solid var(--blue); cursor: pointer;
 }
 .sr-edit-btn:hover { background: #0b62c4; border-color: #0b62c4; }
+.sr-delete-btn {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 8px;
+  background: #fff; color: #b91c1c;
+  border: 1px solid #b91c1c; cursor: pointer;
+}
+.sr-delete-btn:hover { background: #b91c1c; color: #fff; }
 .sr-card-hdr-actions { display: flex; gap: 6px; }
 .sr-card-hdr-top {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -4888,8 +4896,8 @@ body.rw-sld-photo-dragging .strip-pin {
   body { background: #fff !important; }
   /* Hide everything except the signs-report module + its cards. */
   header, #app-tabs, #header-settings-btn, #app-header,
-  .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-restore-btn,
-  .sr-photo-actions, #module-toolbar,
+  .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-delete-btn,
+  .sr-restore-btn, .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
   #mod-signs_report.active { display: block !important; overflow: visible !important; }
   .sr-list { background: #fff !important; padding: 0 !important; gap: 0 !important; }
@@ -31083,6 +31091,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // report context.
       var editBtn = '<button type="button" class="sr-edit-btn" '
                   + 'data-card-idx="' + idx + '">&#9998; Edit Data</button>';
+      // Per-card action: Delete Sign — drops the pin from the
+      // inventory entirely. Confirms first since it's destructive.
+      var deleteBtn = '<button type="button" class="sr-delete-btn" '
+                    + 'data-card-idx="' + idx + '" '
+                    + 'title="Delete this sign from the inventory">'
+                    + '&#128465; Delete</button>';
 
       // Inset map data-attrs — lazy-Leaflet-init on scroll (or pre-init
       // before printing). Empty data-* fall through to a "No location"
@@ -31120,7 +31134,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + pageTag + '</div>' +
                   '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
                 '</div>' +
-                '<div class="sr-card-hdr-actions">' + editBtn + '</div>' +
+                '<div class="sr-card-hdr-actions">' + editBtn + deleteBtn + '</div>' +
               '</div>' +
             '</header>' +
             '<section class="sr-section">' +
@@ -31199,6 +31213,49 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // and the user sees nothing happen.
         if (typeof window.showModule === 'function') window.showModule('data');
         window.openDataForm(r.pin, r.sec, 'signs-report');
+      });
+    });
+
+    // ── Wire per-card Delete Sign buttons ──────────────────────────
+    // Mirrors the data form's asset-delete path (see _dfaDeleteBtn):
+    // splice the pin from sec.pins, drop the inspection record from
+    // IDB, persist sections, then refresh the report + map.
+    list.querySelectorAll('.sr-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = allSigns[+btn.dataset.cardIdx];
+        if (!r) return;
+        var sec = r.sec, pin = r.pin;
+        var label = pin.id || pin.ulid || 'this sign';
+        if (!window.confirm(
+              'Delete sign "' + label + '" from the inventory?\n\n'
+            + 'This removes it from the project entirely and cannot be undone.'
+        )) return;
+        // 1) Drop from in-memory section pins.
+        if (sec && Array.isArray(sec.pins)) {
+          for (var di = 0; di < sec.pins.length; di++) {
+            if (sec.pins[di] === pin
+                || sec.pins[di].id === pin.id
+                || (pin.ulid && sec.pins[di].ulid === pin.ulid)) {
+              sec.pins.splice(di, 1);
+              break;
+            }
+          }
+        }
+        // 2) Drop the inspection record from IDB if it was saved.
+        if (pin.ulid && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+          window.RWIdb.openDB().then(function (db) {
+            var tx = db.transaction('inspections', 'readwrite');
+            tx.objectStore('inspections').delete(pin.ulid);
+          }).catch(function () { /* never persisted — nothing to delete */ });
+        }
+        // 3) Persist sections, refresh map, refresh report.
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          window._RW.persistSections();
+        }
+        if (window._RW && typeof window._RW.rerender === 'function') {
+          window._RW.rerender();
+        }
+        renderSignsReport();
       });
     });
 
