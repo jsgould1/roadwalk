@@ -10746,6 +10746,19 @@ body.mobile-mode #app {
           Manage Imports
         </button>
 
+        <!-- Find Duplicates: scans every pin by ULID and surfaces any
+             buckets with > 1 entry — the typical fingerprint of a
+             round-trip AECOM Features re-import. Lets the user pick
+             which extras to drop. Wired by initDashboard(). -->
+        <button class="dash-action-btn" id="dash-dedupe-btn"
+                title="Find pins that share a ULID (round-trip re-import duplicates)">
+          <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+            <circle cx="9" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M13 13 L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Find Duplicates
+        </button>
+
         <!-- Clear Field Data: wipes inspection form data + photo→feature
              links while keeping every pin and photo file. Wired by
              initDashboard() → window._RW.clearFieldData(). -->
@@ -14837,11 +14850,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       sectionsAdded++;
     });
 
+    // Build a snapshot of every ULID already present so a round-trip
+    // re-import (export from coworker, re-import here) doesn't
+    // duplicate features. New ULIDs added during this import are
+    // accumulated into the same set so even a file with internal
+    // duplicates collapses to one copy.
+    var existingUlids = new Set();
+    (window.SECTIONS || []).forEach(function (sec) {
+      (sec.pins || []).forEach(function (p) {
+        if (p && p.ulid) existingUlids.add(p.ulid);
+      });
+    });
+
     // 2. Bundle pins — geospatial nearest-alignment assignment.
-    var pinsAssigned = 0, pinsFlagged = 0;
+    var pinsAssigned = 0, pinsFlagged = 0, pinsSkippedDup = 0;
     var flagged = [];
     var kindsTouchedBySec = {};   // { sec_id: { kind: true } }
     (data.bundle_section_pins || []).forEach(function (pinDef) {
+      if (pinDef.ulid && existingUlids.has(pinDef.ulid)) {
+        flagged.push({
+          ulid: pinDef.ulid, kind: pinDef.kind,
+          reason: 'duplicate ULID — already in project, skipped',
+        });
+        pinsSkippedDup++;
+        return;
+      }
       var pt = firstLngLat(pinDef.geometry);
       if (!pt) {
         flagged.push({ ulid: pinDef.ulid, kind: pinDef.kind, reason: 'no geometry' });
@@ -14870,6 +14903,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!pin.attrs.source) pin.attrs.source = 'AECOM';
       nearest.sec.pins = nearest.sec.pins || [];
       nearest.sec.pins.push(pin);
+      // Track this ULID for the rest of the loop so a file with
+      // internal duplicates still collapses to one.
+      if (pin.ulid) existingUlids.add(pin.ulid);
       if (!kindsTouchedBySec[nearest.sec.id]) kindsTouchedBySec[nearest.sec.id] = {};
       kindsTouchedBySec[nearest.sec.id][pin.kind] = true;
       pinsAssigned++;
@@ -14912,8 +14948,85 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       sections_added:    sectionsAdded,
       pins_assigned:     pinsAssigned,
       pins_flagged:      pinsFlagged,
+      pins_skipped_dup:  pinsSkippedDup,
       flagged_details:   flagged,
     };
+  }
+
+  // Walk every section and bucket pins by ULID. Any bucket with > 1
+  // entry is a duplicate group — usually the result of a round-trip
+  // AECOM Features re-import. Returns an array of
+  // { ulid, kind, instances: [{sec, pin, idx}, …] }.
+  function findDuplicatePins() {
+    var byUlid = Object.create(null);
+    (window.SECTIONS || []).forEach(function (sec) {
+      (sec.pins || []).forEach(function (pin, idx) {
+        if (!pin || !pin.ulid) return;
+        if (!byUlid[pin.ulid]) byUlid[pin.ulid] = [];
+        byUlid[pin.ulid].push({ sec: sec, pin: pin, idx: idx });
+      });
+    });
+    var groups = [];
+    Object.keys(byUlid).forEach(function (u) {
+      if (byUlid[u].length > 1) {
+        groups.push({
+          ulid:      u,
+          kind:      byUlid[u][0].pin.kind,
+          instances: byUlid[u],
+        });
+      }
+    });
+    return groups;
+  }
+
+  // Remove the extra copies of every duplicate group, keeping the
+  // copy that's the "most complete" — preference order:
+  //   1. has a pin.id (i.e. has been renumbered / printed)
+  //   2. has the longest attrs (loose proxy for inspection data)
+  //   3. earliest position in its section's pins array
+  // Drops the in-memory pin entry, the IDB inspection record (if
+  // any), then persists + rerenders. Returns
+  //   { groups_found, pins_removed }.
+  function removeDuplicatePins() {
+    var groups = findDuplicatePins();
+    var removed = 0;
+    var pendingIdb = [];
+    groups.forEach(function (group) {
+      var instances = group.instances.slice();
+      instances.sort(function (a, b) {
+        if (a.pin.id && !b.pin.id) return -1;
+        if (!a.pin.id && b.pin.id) return 1;
+        var la = Object.keys(a.pin.attrs || {}).length;
+        var lb = Object.keys(b.pin.attrs || {}).length;
+        if (la !== lb) return lb - la;
+        return a.idx - b.idx;
+      });
+      for (var i = 1; i < instances.length; i++) {
+        var inst = instances[i];
+        var sec  = inst.sec;
+        if (sec && Array.isArray(sec.pins)) {
+          var realIdx = sec.pins.indexOf(inst.pin);
+          if (realIdx >= 0) {
+            sec.pins.splice(realIdx, 1);
+            removed++;
+          }
+        }
+        if (inst.pin.ulid) pendingIdb.push(inst.pin.ulid);
+      }
+    });
+    if (pendingIdb.length && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+      window.RWIdb.openDB().then(function (db) {
+        var tx = db.transaction('inspections', 'readwrite');
+        var store = tx.objectStore('inspections');
+        pendingIdb.forEach(function (ulid) { try { store.delete(ulid); } catch (_) {} });
+      }).catch(function () {});
+    }
+    if (removed > 0) {
+      if (typeof persistSections === 'function') persistSections();
+      else if (window._RW && typeof window._RW.persistSections === 'function') window._RW.persistSections();
+      if (window._RW && typeof window._RW.rerender === 'function') window._RW.rerender();
+    }
+    return { groups_found: groups.length, pins_removed: removed };
   }
 
   // Stream-parse one NDJSON geophoto chunk (one record per line) and write
@@ -15093,6 +15206,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   window._RW.importAecomGeophotoChunk = importAecomGeophotoChunk;
   window._RW.listImportBatches        = listImportBatches;
   window._RW.deleteImportBatch        = deleteImportBatch;
+  window._RW.findDuplicatePins        = findDuplicatePins;
+  window._RW.removeDuplicatePins      = removeDuplicatePins;
 
   // ── Centerline export: dump every section's alignment so you can hand
   //    me your manual corrections without exporting the whole project.
@@ -31726,6 +31841,112 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         });
       });
+      document.body.appendChild(ov);
+    });
+
+    // ── Find Duplicates ──────────────────────────────────────────
+    // Scans every pin in SECTIONS, buckets by ULID, and surfaces any
+    // bucket with > 1 entry. Common cause: a coworker imported this
+    // user's AECOM features file on their machine, added their own
+    // features, exported, and then this user re-imported the result.
+    // The modal lets the user remove duplicates one group at a time
+    // (keeping the "most complete" copy — see removeDuplicatePins)
+    // or wipe all extras at once.
+    document.getElementById('dash-dedupe-btn')?.addEventListener('click', function () {
+      if (!window._RW || typeof window._RW.findDuplicatePins !== 'function') {
+        alert('Duplicate finder not available.');
+        return;
+      }
+      function _esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+          return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
+        });
+      }
+      var groups = window._RW.findDuplicatePins();
+      var existing = document.getElementById('rw-dup-overlay');
+      if (existing) { try { existing.remove(); } catch (_) {} }
+      var ov = document.createElement('div');
+      ov.id = 'rw-dup-overlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);'
+        + 'z-index:10001;display:flex;align-items:center;justify-content:center;padding:24px;';
+      function dismiss() { try { ov.remove(); } catch (_) {} }
+      ov.addEventListener('click', function (e) { if (e.target === ov) dismiss(); });
+
+      function renderCard() {
+        var total = groups.reduce(function (n, g) { return n + (g.instances.length - 1); }, 0);
+        var body;
+        if (!groups.length) {
+          body = '<div style="padding:40px 16px;text-align:center;color:#666;font-style:italic">'
+               + 'No duplicate ULIDs found across ' + (window.SECTIONS || []).length + ' section(s). 🎉'
+               + '</div>';
+        } else {
+          body = groups.map(function (g) {
+            var rows = g.instances.map(function (inst, i) {
+              var p = inst.pin, s = inst.sec;
+              var marker = i === 0 ? '✓ KEEP' : '✕ REMOVE';
+              var color  = i === 0 ? '#0a7f2e' : '#b91c1c';
+              return '<div style="font:400 11px IBM Plex Mono,monospace;color:#222;'
+                + 'padding:4px 8px;border-top:1px solid #eee;'
+                + 'display:flex;gap:10px;align-items:baseline">'
+                + '<span style="font-weight:700;color:' + color + ';min-width:70px">' + marker + '</span>'
+                + '<span style="min-width:60px">' + _esc(s.id) + '</span>'
+                + '<span style="min-width:70px">' + _esc(p.id || '—') + '</span>'
+                + '<span style="min-width:80px">STA ' + _esc(p.sta || '—') + '</span>'
+                + '<span style="color:#666">' + _esc(p.kind || '—') + '</span>'
+                + '</div>';
+            }).join('');
+            return '<div style="border:1px solid #ddd;margin-bottom:10px;background:#fff">'
+              + '<div style="padding:6px 10px;background:#f4f1ea;'
+              + 'font:700 10px IBM Plex Mono,monospace;letter-spacing:.4px;'
+              + 'border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center">'
+              + '<span>ULID ' + _esc(g.ulid) + ' · ' + g.instances.length + ' copies · ' + _esc(g.kind || '') + '</span>'
+              + '</div>'
+              + rows
+              + '</div>';
+          }).join('');
+        }
+        var hdr = '<div style="display:flex;justify-content:space-between;align-items:center;'
+          + 'padding:10px 14px;border-bottom:1px solid #ddd;background:#fafafa">'
+          + '<span style="font:700 13px IBM Plex Mono,monospace;letter-spacing:1px">FIND DUPLICATES</span>'
+          + '<button type="button" id="rw-dup-close" aria-label="Close" '
+          + 'style="background:none;border:none;font-size:18px;cursor:pointer">✕</button>'
+          + '</div>';
+        var summary = '<div style="padding:8px 14px;background:#fff;color:#222;'
+          + 'font:600 11px IBM Plex Mono,monospace;border-bottom:1px solid #eee;'
+          + 'display:flex;justify-content:space-between;align-items:center">'
+          + '<span>' + groups.length + ' duplicate group(s) · ' + total + ' extra pin(s) to remove</span>'
+          + (groups.length
+            ? '<button type="button" id="rw-dup-removeall" '
+              + 'style="background:#b91c1c;color:#fff;border:1px solid #b91c1c;'
+              + 'padding:5px 10px;font:700 10px IBM Plex Mono,monospace;cursor:pointer;'
+              + 'letter-spacing:.4px;text-transform:uppercase">Remove All Duplicates</button>'
+            : '')
+          + '</div>';
+        return '<div style="background:#f8f6f0;width:min(720px,100%);max-height:88vh;'
+          + 'display:flex;flex-direction:column;border:1px solid #999">'
+          + hdr + summary
+          + '<div style="overflow-y:auto;padding:10px 14px;background:#f8f6f0">' + body + '</div>'
+          + '</div>';
+      }
+      ov.innerHTML = renderCard();
+      ov.querySelector('#rw-dup-close').addEventListener('click', dismiss);
+      var removeBtn = ov.querySelector('#rw-dup-removeall');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+          var total = groups.reduce(function (n, g) { return n + (g.instances.length - 1); }, 0);
+          if (!window.confirm(
+                'Remove ' + total + ' duplicate pin(s) across ' + groups.length + ' group(s)?\n\n'
+              + 'For each duplicate ULID the most complete copy is kept (preferring one that '
+              + 'has a pin.id and the most attrs) and the rest are deleted. '
+              + 'This cannot be undone.')) return;
+          var res = window._RW.removeDuplicatePins();
+          alert('Removed ' + res.pins_removed + ' duplicate pin(s) from '
+              + res.groups_found + ' group(s).');
+          groups = window._RW.findDuplicatePins();
+          ov.innerHTML = renderCard();
+          ov.querySelector('#rw-dup-close').addEventListener('click', dismiss);
+        });
+      }
       document.body.appendChild(ov);
     });
 
