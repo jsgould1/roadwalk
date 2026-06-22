@@ -9176,7 +9176,105 @@ input.fs-slider::-webkit-slider-thumb {
 .dfa-btn.dfa-move:hover     { background: #eff6ff; border-color: var(--blue); color: var(--blue); }
 .dfa-btn.dfa-reassign:hover { background: #fef3c7; border-color: #b45309; color: #b45309; }
 .dfa-btn.dfa-delete:hover   { background: #fee2e2; border-color: #b91c1c;   color: #b91c1c; }
+.dfa-btn.dfa-streetview:hover { background: #f0f9ff; border-color: #0369a1; color: #0369a1; }
+.dfa-btn.dfa-reference:hover  { background: #fefce8; border-color: #a16207; color: #a16207; }
 .dfa-btn.active            { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Floating Sign Inventory reference panel — docked to right edge,
+   shows one preprocessed row at a time, "Apply to Form" merges values
+   into the open sign data form. Survives form open/close. */
+#rw-sref-panel {
+  position: fixed; top: 80px; right: 8px;
+  width: 360px; max-height: calc(100vh - 100px);
+  z-index: 9500;
+  background: var(--paper); border: 1px solid var(--ink);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  display: none; flex-direction: column;
+  font: 400 11px var(--sans, system-ui);
+}
+#rw-sref-panel.open { display: flex; }
+.rw-sref-hdr {
+  background: var(--ink); color: #fff;
+  padding: 6px 10px; display: flex; align-items: center; gap: 8px;
+  font: 700 11px 'IBM Plex Mono', monospace; letter-spacing: .8px;
+  text-transform: uppercase;
+  cursor: move; user-select: none;
+}
+.rw-sref-hdr-title { flex: 1 1 auto; }
+.rw-sref-hdr button {
+  background: transparent; color: #fff; border: 1px solid #fff;
+  font: 700 9px 'IBM Plex Mono', monospace;
+  padding: 2px 6px; cursor: pointer; letter-spacing: .4px;
+}
+.rw-sref-hdr button:hover { background: rgba(255,255,255,0.15); }
+.rw-sref-body {
+  padding: 8px 10px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.rw-sref-load-row { display: flex; gap: 6px; align-items: center; }
+.rw-sref-load-row input[type=file] { font-size: 10px; flex: 1 1 auto; }
+.rw-sref-empty {
+  padding: 20px; text-align: center; color: var(--ink-3);
+  font-style: italic; font-size: 11px;
+}
+.rw-sref-picker-row {
+  display: grid; grid-template-columns: 68px 1fr; gap: 4px 8px;
+  align-items: center; font: 400 11px 'IBM Plex Mono', monospace;
+}
+.rw-sref-picker-row select {
+  font: 400 11px 'IBM Plex Mono', monospace;
+  padding: 3px 6px; border: 1px solid var(--rule);
+  background: #fff; color: var(--ink);
+}
+.rw-sref-nav {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--paper-2); padding: 5px 8px; border: 1px solid var(--rule);
+}
+.rw-sref-nav button {
+  font: 700 11px 'IBM Plex Mono', monospace; padding: 3px 10px;
+  background: var(--paper); border: 1px solid var(--rule); color: var(--ink-2);
+  cursor: pointer;
+}
+.rw-sref-nav button:hover { border-color: var(--blue); color: var(--blue); }
+.rw-sref-nav button:disabled { opacity: .4; cursor: not-allowed; }
+.rw-sref-nav .rw-sref-counter {
+  flex: 1 1 auto; text-align: center;
+  font: 700 11px 'IBM Plex Mono', monospace; color: var(--ink);
+}
+.rw-sref-apply {
+  width: 100%; padding: 9px 12px;
+  background: var(--blue); color: #fff; border: 1px solid var(--blue);
+  font: 700 12px 'IBM Plex Mono', monospace; letter-spacing: .6px;
+  text-transform: uppercase; cursor: pointer;
+}
+.rw-sref-apply:hover { background: #0b62c4; border-color: #0b62c4; }
+.rw-sref-apply:disabled { opacity: .4; cursor: not-allowed; background: var(--ink-3); border-color: var(--ink-3); }
+.rw-sref-flash {
+  text-align: center; font: 700 10px 'IBM Plex Mono', monospace;
+  color: #15803d; padding: 2px; min-height: 14px;
+}
+.rw-sref-section {
+  border: 1px solid var(--rule); background: #fff;
+}
+.rw-sref-section-hdr {
+  background: var(--paper-2); padding: 4px 8px;
+  font: 700 9px 'IBM Plex Mono', monospace; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+}
+.rw-sref-fld-grid {
+  display: grid; grid-template-columns: 88px 1fr;
+  gap: 1px 8px; padding: 5px 8px;
+  font: 400 10.5px var(--sans, system-ui);
+}
+.rw-sref-flbl {
+  font: 700 8px 'IBM Plex Mono', monospace; letter-spacing: .3px;
+  text-transform: uppercase; color: var(--ink-3);
+  align-self: baseline;
+}
+.rw-sref-fval { color: var(--ink); word-break: break-word; }
+.rw-sref-fval.missing { color: var(--ink-3); font-style: italic; }
+.rw-sref-fval.raw { color: #b45309; font-style: italic; }
 /* Photo annotation modal */
 .rw-annotate-overlay {
   position: fixed; inset: 0; z-index: 9000;
@@ -10930,6 +11028,8 @@ body.mobile-mode #app {
               <button class="dfa-btn dfa-confirm"  id="dfa-confirm-btn"  title="Confirm Asset">✓</button>
               <button class="dfa-btn dfa-move"     id="dfa-move-btn"     title="Move Asset on Map">⊹</button>
               <button class="dfa-btn dfa-reassign" id="dfa-reassign-btn" title="Assign to Other Section">↪</button>
+              <button class="dfa-btn dfa-streetview" id="dfa-streetview-btn" title="Open Google Street View at this pin">🛣</button>
+              <button class="dfa-btn dfa-reference"  id="dfa-reference-btn"  title="Toggle Sign Inventory reference panel">📋</button>
               <button class="dfa-btn dfa-delete"   id="dfa-delete-btn"   title="Delete Asset">🗑</button>
             </div>
           </div>
@@ -34506,6 +34606,114 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
   }
 
+  // Apply one preprocessed row from sign_reference.json onto the
+  // currently-open sign form. Mutates _dataState.pin.attrs in place,
+  // marks the form dirty so the next save persists, and re-renders.
+  // Returns {ok, applied: [labels…]} or {ok:false, reason}.
+  //
+  // Behaviour:
+  //   • posts[0] is updated field-by-field — only fields where the
+  //     reference has a value are overwritten, so existing data the
+  //     user has already entered survives if the reference is silent.
+  //   • For each reference panel, the matching panels[i] slot is
+  //     merged the same way (ulid preserved). If posts/panels arrays
+  //     are shorter than the reference list, missing slots are added.
+  //   • side / eop_offset on the pin's attrs are set when present.
+  function applyReferenceRowToOpenForm(row) {
+    if (!row || typeof row !== 'object') {
+      return { ok: false, reason: 'no row' };
+    }
+    var pin = _dataState && _dataState.pin;
+    if (!pin) return { ok: false, reason: 'form not open' };
+    if (pin.kind !== 'sign' && pin.kind !== 'pt_sign') {
+      return { ok: false, reason: 'open form is not a sign' };
+    }
+    if (!pin.attrs) pin.attrs = {};
+    var applied = [];
+
+    // Top-level identity bits.
+    if (row.side != null && row.side !== '') {
+      pin.attrs.side = row.side;
+      applied.push('side');
+    }
+    if (row.eop_offset != null && row.eop_offset !== '') {
+      pin.attrs.eop_offset = row.eop_offset;
+      applied.push('EOP offset');
+    }
+
+    // Post — single entry. Skip empties so we don't blow away existing
+    // data with a sparse reference row.
+    if (row.post && typeof row.post === 'object') {
+      if (!Array.isArray(pin.attrs.posts) || !pin.attrs.posts.length) {
+        pin.attrs.posts = [{}];
+      }
+      var p0 = pin.attrs.posts[0];
+      var POST_KEYS = ['post_type','post_count','post_height_ft','post_foundation',
+                       'post_breakaway','post_condition'];
+      POST_KEYS.forEach(function (k) {
+        var v = row.post[k];
+        if (v != null && v !== '') {
+          p0[k] = v;
+          applied.push('post.' + k);
+        }
+      });
+      // post_damage is an array of enum codes — replace if reference
+      // detected any flags, otherwise leave the user's selections alone.
+      if (Array.isArray(row.post.post_damage) && row.post.post_damage.length) {
+        p0.post_damage = row.post.post_damage.slice();
+        applied.push('post.damage');
+      }
+      // Spreadsheet captured a condition note (e.g. "P (loose in ground)")
+      // — fold it into the post's notes field so it isn't lost.
+      if (row.post.post_condition_note) {
+        p0.notes = (p0.notes ? p0.notes + ' · ' : '') + row.post.post_condition_note;
+        applied.push('post.notes');
+      }
+    }
+
+    // Panels — merge by index. Existing panels keep their ulid.
+    if (Array.isArray(row.panels) && row.panels.length) {
+      if (!Array.isArray(pin.attrs.panels)) pin.attrs.panels = [];
+      var PANEL_KEYS = ['facing_degrees','panel_description','panel_size',
+                        'panel_condition','sheeting_condition','sheeting_type',
+                        'back_panel','mounting_hardware','retro_day_r1'];
+      row.panels.forEach(function (refPanel, i) {
+        if (!pin.attrs.panels[i]) pin.attrs.panels[i] = {};
+        var pn = pin.attrs.panels[i];
+        PANEL_KEYS.forEach(function (k) {
+          var v = refPanel[k];
+          if (v != null && v !== '') {
+            pn[k] = v;
+            applied.push('panel' + (i + 1) + '.' + k);
+          }
+        });
+        if (Array.isArray(refPanel.damage_flags) && refPanel.damage_flags.length) {
+          pn.damage_flags = refPanel.damage_flags.slice();
+          applied.push('panel' + (i + 1) + '.damage');
+        }
+        if (refPanel.notes) {
+          pn.notes = (pn.notes ? pn.notes + ' · ' : '') + refPanel.notes;
+          applied.push('panel' + (i + 1) + '.notes');
+        }
+        if (refPanel.damage_text && !(Array.isArray(refPanel.damage_flags) && refPanel.damage_flags.length)) {
+          // Free-text damage we couldn't match to a flag — note it.
+          pn.notes = (pn.notes ? pn.notes + ' · ' : '') + 'Damage: ' + refPanel.damage_text;
+        }
+      });
+    }
+
+    _dataState.dirty = true;
+    try { _renderFormBody(); } catch (_) {}
+    return { ok: true, applied: applied };
+  }
+  window._RW.applyReferenceRowToOpenForm = applyReferenceRowToOpenForm;
+  // Tiny helper the floating panel uses to know whether the form is
+  // open and on a sign pin.
+  window._RW.signFormIsOpen = function () {
+    return !!(_dataState && _dataState.pin
+      && (_dataState.pin.kind === 'sign' || _dataState.pin.kind === 'pt_sign'));
+  };
+
   // ── Form body renderer (dispatches by kind) ────────────────────────────────
   function _renderFormBody() {
     var scrollEl = document.getElementById('data-form-scroll');
@@ -40608,6 +40816,350 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   } else {
     initTracks();
   }
+})();
+</script>
+
+<!-- ====================================================================
+     Sign Inventory Reference Panel
+     Floating, dock-right panel that loads sign_reference.json (produced
+     by data/import_sign_inventory.py) and lets the user step through
+     pre-normalized post + panel rows. Apply to Form merges into the
+     open sign data form. Sheet / row pointer / dataset persist via
+     localStorage so the panel survives reloads and form open/close.
+     ==================================================================== -->
+<div id="rw-sref-panel" aria-label="Sign Inventory Reference Panel">
+  <div class="rw-sref-hdr" id="rw-sref-hdr">
+    <span class="rw-sref-hdr-title">📋 Sign Reference</span>
+    <button type="button" id="rw-sref-clear-btn" title="Forget the loaded reference data">Clear</button>
+    <button type="button" id="rw-sref-close-btn" aria-label="Close panel">✕</button>
+  </div>
+  <div class="rw-sref-body" id="rw-sref-body">
+    <!-- Body populated by initSignReference() -->
+  </div>
+</div>
+
+<script>
+/* Sign Inventory Reference Panel — owns its DOM. Reads/writes its
+   dataset and pointer to localStorage:
+     rw_sref_data    — full JSON payload (string)
+     rw_sref_sheet   — current sheet name
+     rw_sref_row     — current row index within sheet (0-based)
+     rw_sref_open    — '1' when the user wants the panel visible
+*/
+(function () {
+  'use strict';
+  var LS_DATA  = 'rw_sref_data';
+  var LS_SHEET = 'rw_sref_sheet';
+  var LS_ROW   = 'rw_sref_row';
+  var LS_OPEN  = 'rw_sref_open';
+
+  function _esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+    });
+  }
+  function _loadDataset() {
+    try { return JSON.parse(localStorage.getItem(LS_DATA) || 'null'); }
+    catch (_) { return null; }
+  }
+  function _saveDataset(d) {
+    try {
+      if (d) localStorage.setItem(LS_DATA, JSON.stringify(d));
+      else   localStorage.removeItem(LS_DATA);
+    } catch (e) { console.warn('[SignRef] localStorage write failed', e); }
+  }
+
+  // ── Panel show / hide ────────────────────────────────────────────
+  var panelEl  = document.getElementById('rw-sref-panel');
+  var bodyEl   = document.getElementById('rw-sref-body');
+  function isOpen() { return panelEl && panelEl.classList.contains('open'); }
+  function setOpen(want) {
+    if (!panelEl) return;
+    panelEl.classList.toggle('open', !!want);
+    try { localStorage.setItem(LS_OPEN, want ? '1' : '0'); } catch (_) {}
+    // Sync the toggle button's active state on the data form.
+    var btn = document.getElementById('dfa-reference-btn');
+    if (btn) btn.classList.toggle('active', !!want);
+    if (want) render();
+  }
+
+  // ── Renderer ─────────────────────────────────────────────────────
+  function render() {
+    var data = _loadDataset();
+    if (!data || !data.sheets || !Object.keys(data.sheets).length) {
+      bodyEl.innerHTML =
+        '<div class="rw-sref-load-row">'
+        + '<input type="file" id="rw-sref-file" accept="application/json,.json">'
+        + '</div>'
+        + '<div class="rw-sref-empty">No reference data loaded. Pick a '
+        + '<strong>sign_reference.json</strong> file produced by '
+        + '<code>data/import_sign_inventory.py</code>.</div>';
+      _wireFile();
+      return;
+    }
+    var sheetNames = Object.keys(data.sheets);
+    var curSheet = localStorage.getItem(LS_SHEET);
+    if (!curSheet || !data.sheets[curSheet]) curSheet = sheetNames[0];
+    var rows = (data.sheets[curSheet] || {}).rows || [];
+    var rowIdx = +localStorage.getItem(LS_ROW);
+    if (!isFinite(rowIdx) || rowIdx < 0 || rowIdx >= rows.length) rowIdx = 0;
+    var row = rows[rowIdx] || null;
+
+    var sheetOptions = sheetNames.map(function (sn) {
+      var n = (data.sheets[sn] && data.sheets[sn].row_count) || 0;
+      return '<option value="' + _esc(sn) + '"' + (sn === curSheet ? ' selected' : '')
+        + '>' + _esc(sn) + ' · ' + n + ' rows</option>';
+    }).join('');
+
+    bodyEl.innerHTML =
+      '<div class="rw-sref-load-row" style="font-size:10px;color:#666">'
+      + 'Loaded ' + _esc(data.source_file || 'reference') + ' · '
+      + data.total_rows + ' rows total'
+      + '</div>'
+      + '<div class="rw-sref-picker-row">'
+      +   '<label>Sheet</label>'
+      +   '<select id="rw-sref-sheet">' + sheetOptions + '</select>'
+      + '</div>'
+      + '<div class="rw-sref-nav">'
+      +   '<button type="button" id="rw-sref-prev" ' + (rowIdx <= 0 ? 'disabled' : '') + '>◀ Prev</button>'
+      +   '<span class="rw-sref-counter">Row ' + (rowIdx + 1) + ' of ' + rows.length
+      +     (row && row.row_label ? ' · ' + _esc(row.row_label) : '')
+      +   '</span>'
+      +   '<button type="button" id="rw-sref-next" ' + (rowIdx >= rows.length - 1 ? 'disabled' : '') + '>Next ▶</button>'
+      + '</div>'
+      + (row ? _rowHtml(row) : '<div class="rw-sref-empty">No rows in this sheet.</div>')
+      + '<button type="button" class="rw-sref-apply" id="rw-sref-apply"'
+      +   (row ? '' : ' disabled') + '>✓ Apply to Form</button>'
+      + '<div class="rw-sref-flash" id="rw-sref-flash"></div>';
+
+    document.getElementById('rw-sref-sheet').addEventListener('change', function (e) {
+      try {
+        localStorage.setItem(LS_SHEET, e.target.value);
+        localStorage.setItem(LS_ROW, '0');
+      } catch (_) {}
+      render();
+    });
+    document.getElementById('rw-sref-prev').addEventListener('click', function () {
+      try { localStorage.setItem(LS_ROW, String(rowIdx - 1)); } catch (_) {}
+      render();
+    });
+    document.getElementById('rw-sref-next').addEventListener('click', function () {
+      try { localStorage.setItem(LS_ROW, String(rowIdx + 1)); } catch (_) {}
+      render();
+    });
+    var applyBtn = document.getElementById('rw-sref-apply');
+    if (applyBtn && row) {
+      applyBtn.addEventListener('click', function () {
+        if (!window._RW || typeof window._RW.applyReferenceRowToOpenForm !== 'function') {
+          alert('Reference apply not wired in this build.');
+          return;
+        }
+        var res = window._RW.applyReferenceRowToOpenForm(row);
+        var flash = document.getElementById('rw-sref-flash');
+        if (res && res.ok) {
+          if (flash) {
+            flash.style.color = '#15803d';
+            flash.textContent = '✓ Applied ' + res.applied.length + ' field(s)';
+          }
+          // Auto-advance to the next row so the user can keep working.
+          if (rowIdx < rows.length - 1) {
+            try { localStorage.setItem(LS_ROW, String(rowIdx + 1)); } catch (_) {}
+            setTimeout(render, 350);
+          }
+        } else {
+          if (flash) {
+            flash.style.color = '#b91c1c';
+            flash.textContent = '✕ ' + (res && res.reason ? res.reason : 'apply failed');
+          }
+        }
+      });
+    }
+  }
+
+  // Renders the post / panel sections for one row.
+  function _rowHtml(row) {
+    function _fld(label, val, opts) {
+      opts = opts || {};
+      var cls = 'rw-sref-fval';
+      var display;
+      if (val == null || val === '' || (Array.isArray(val) && !val.length)) {
+        display = '—';
+        cls += ' missing';
+      } else if (Array.isArray(val)) {
+        display = val.join(' · ');
+      } else {
+        display = String(val);
+      }
+      if (opts.raw && val) cls += ' raw';
+      return '<div class="rw-sref-flbl">' + _esc(label) + '</div>'
+           + '<div class="' + cls + '">' + _esc(display) + '</div>';
+    }
+    var post = row.post || {};
+    var html =
+      '<div class="rw-sref-section">'
+      + '<div class="rw-sref-section-hdr">Identity</div>'
+      + '<div class="rw-sref-fld-grid">'
+      +   _fld('Side', row.side)
+      +   _fld('EOP Off (ft)', row.eop_offset)
+      + '</div></div>'
+      + '<div class="rw-sref-section">'
+      + '<div class="rw-sref-section-hdr">Post</div>'
+      + '<div class="rw-sref-fld-grid">'
+      +   _fld('Type', post.post_type)
+      +   (post.post_type_raw ? _fld('(raw)', post.post_type_raw, {raw:true}) : '')
+      +   _fld('Count', post.post_count)
+      +   _fld('Height (ft)', post.post_height_ft)
+      +   _fld('Foundation', post.post_foundation)
+      +   _fld('Breakaway', post.post_breakaway)
+      +   _fld('Condition', post.post_condition)
+      +   (post.post_condition_note ? _fld('Cond. Note', post.post_condition_note, {raw:true}) : '')
+      + '</div></div>';
+
+    (row.panels || []).forEach(function (pn, i) {
+      html += '<div class="rw-sref-section">'
+        + '<div class="rw-sref-section-hdr">Panel ' + (i + 1)
+        + (pn.facing_degrees != null ? ' · ' + pn.facing_degrees + '°' : '')
+        + '</div>'
+        + '<div class="rw-sref-fld-grid">'
+        +   _fld('Description', pn.panel_description)
+        +   _fld('Common Size', pn.panel_size)
+        +   _fld('Panel Cond', pn.panel_condition)
+        +   _fld('Sheet Cond', pn.sheeting_condition)
+        +   _fld('Sheeting',   pn.sheeting_type)
+        +   _fld('Back Panel', pn.back_panel)
+        +   _fld('Mounting',   pn.mounting_hardware)
+        +   _fld('Damage',     pn.damage_flags)
+        +   (pn.damage_text && !(pn.damage_flags && pn.damage_flags.length)
+              ? _fld('(raw)', pn.damage_text, {raw:true}) : '')
+        +   _fld('Retro Day',  pn.retro_day_r1)
+        +   (pn.notes ? _fld('Notes', pn.notes) : '')
+        + '</div></div>';
+    });
+    return html;
+  }
+
+  function _wireFile() {
+    var input = document.getElementById('rw-sref-file');
+    if (!input) return;
+    input.addEventListener('change', async function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        var text = await file.text();
+        var parsed = JSON.parse(text);
+        if (parsed._format !== 'roadwalk-sign-reference-v1') {
+          alert('Not a sign_reference.json file. Expected _format = '
+              + '"roadwalk-sign-reference-v1".');
+          return;
+        }
+        _saveDataset(parsed);
+        try {
+          localStorage.removeItem(LS_SHEET);
+          localStorage.setItem(LS_ROW, '0');
+        } catch (_) {}
+        render();
+      } catch (err) {
+        console.error('[SignRef] load failed:', err);
+        alert('Could not load that file: ' + (err && err.message ? err.message : err));
+      }
+    });
+  }
+
+  // ── Header dragging ──────────────────────────────────────────────
+  (function () {
+    var hdr = document.getElementById('rw-sref-hdr');
+    if (!hdr || !panelEl) return;
+    var sx, sy, sl, st, dragging = false;
+    hdr.addEventListener('pointerdown', function (e) {
+      if (e.target.tagName === 'BUTTON') return;
+      dragging = true;
+      sx = e.clientX; sy = e.clientY;
+      var r = panelEl.getBoundingClientRect();
+      sl = r.left; st = r.top;
+      panelEl.style.right = 'auto';
+      panelEl.style.left  = sl + 'px';
+      panelEl.style.top   = st + 'px';
+      hdr.setPointerCapture(e.pointerId);
+    });
+    hdr.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      panelEl.style.left = (sl + e.clientX - sx) + 'px';
+      panelEl.style.top  = Math.max(0, st + e.clientY - sy) + 'px';
+    });
+    hdr.addEventListener('pointerup', function () { dragging = false; });
+  })();
+
+  // ── Close button + Clear button ──────────────────────────────────
+  document.getElementById('rw-sref-close-btn')?.addEventListener('click', function () {
+    setOpen(false);
+  });
+  document.getElementById('rw-sref-clear-btn')?.addEventListener('click', function () {
+    if (!window.confirm('Forget the loaded sign reference data on this device?')) return;
+    _saveDataset(null);
+    try {
+      localStorage.removeItem(LS_SHEET);
+      localStorage.removeItem(LS_ROW);
+    } catch (_) {}
+    render();
+  });
+
+  // ── Toggle button on the data form ───────────────────────────────
+  document.getElementById('dfa-reference-btn')?.addEventListener('click', function () {
+    setOpen(!isOpen());
+  });
+
+  // ── Street View button on the data form ──────────────────────────
+  document.getElementById('dfa-streetview-btn')?.addEventListener('click', function () {
+    // The form is open on whatever pin _dataState owns — read its
+    // current coordinates via the merged pin we just rendered. We
+    // can't reach _dataState directly from here, so reach through
+    // the section's bundle pin: the data form's title carries the
+    // pin id. Easier: walk SECTIONS for the open pin by inspecting
+    // the form's hidden meta.
+    var pin = window._RW && typeof window._RW.signFormIsOpen === 'function' && window._RW.signFormIsOpen()
+      ? _openPin() : null;
+    if (!pin) {
+      alert('Open a sign in the Data form first, then tap the Street View button.');
+      return;
+    }
+    var g = pin.geometry && pin.geometry.coordinates;
+    if (!Array.isArray(g) || g.length < 2) {
+      alert('This pin has no coordinates yet, so Street View can\'t open at its location.');
+      return;
+    }
+    var lat = +g[1], lng = +g[0];
+    if (!isFinite(lat) || !isFinite(lng)) {
+      alert('Pin coordinates are invalid.');
+      return;
+    }
+    // Google Street View deep link.
+    var url = 'https://www.google.com/maps?q=&layer=c&cbll=' + lat + ',' + lng;
+    window.open(url, '_blank', 'noopener');
+  });
+
+  // Walk SECTIONS for whichever pin matches the currently-displayed
+  // form-header label. The label format is "<Type> — <id or '—'>".
+  function _openPin() {
+    var labelEl = document.getElementById('data-form-label');
+    if (!labelEl) return null;
+    var parts = labelEl.textContent.split(' — ');
+    var pinId = parts.length > 1 ? parts[parts.length - 1].trim() : '';
+    if (!pinId || pinId === '—') return null;
+    var secs = window.SECTIONS || [];
+    for (var s = 0; s < secs.length; s++) {
+      var pins = secs[s].pins || [];
+      for (var p = 0; p < pins.length; p++) {
+        if (pins[p].id === pinId) return pins[p];
+      }
+    }
+    return null;
+  }
+
+  // Restore "open" state on load if the user had it open before.
+  try {
+    if (localStorage.getItem(LS_OPEN) === '1') setOpen(true);
+    else render();   // pre-render so opening is instant
+  } catch (_) {}
 })();
 </script>
 
