@@ -30937,9 +30937,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         }
       });
     });
+    // Pins set `source` in two different places: Street View capture
+    // and AECOM Features import write it onto pin.attrs.source, while
+    // the Leaflet draw flow (placePoint) stamps it at the TOP level of
+    // the pin object as pin.source. Read from whichever exists so a
+    // Leaflet-placed sign isn't silently bucketed under '' and dropped
+    // by the chip filter.
+    function _srcOf(pin) {
+      return (pin.attrs && pin.attrs.source) || pin.source || '';
+    }
     var srcCounts = {};
     allUnfilteredSigns.forEach(function (r) {
-      var key = (r.pin.attrs && r.pin.attrs.source) || '';
+      var key = _srcOf(r.pin);
       srcCounts[key] = (srcCounts[key] || 0) + 1;
     });
     var srcKeys = Object.keys(srcCounts).sort();
@@ -31011,8 +31020,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var allSigns = allUnfilteredSigns.filter(function (r) {
       if (fSec && r.sec.id !== fSec) return false;
       if (selSet) {
-        var key = (r.pin.attrs && r.pin.attrs.source) || '';
-        if (!selSet.has(key)) return false;
+        if (!selSet.has(_srcOf(r.pin))) return false;
       }
       return true;
     });
