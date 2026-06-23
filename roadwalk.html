@@ -4643,13 +4643,17 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 /* One card = one printable page. 8.5×11 in with 0.5 in margins. A
    sign with too many photos to fit on a single page is rendered as
-   the first card plus one or more .sr-card-cont continuation cards. */
+   the first card plus one or more .sr-card-cont continuation cards.
+   position: relative so the absolutely-positioned footer can pin to
+   the bottom edge of every page even when the content above wraps
+   tighter or looser than expected. */
 .sr-card {
+  position: relative;
   width: 8.5in; min-height: 10.5in;
   background: #fff;
   border: 1px solid var(--rule);
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
-  padding: 0.5in 0.5in 0.4in;
+  padding: 0.5in 0.5in 0.6in;
   font: 400 10px/1.4 var(--sans, system-ui, sans-serif);
   color: var(--ink);
   display: flex; flex-direction: column;
@@ -4735,15 +4739,19 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-info-row-loc .sr-val { font: 400 11px var(--sans, system-ui); color: var(--ink); }
 
 /* Card footer — sign-id on the left, page indicator on the right.
-   Pushed to the bottom of the .sr-card via margin-top: auto. */
+   Absolute-pinned to the bottom of every .sr-card so it always lands
+   on its own page even when the content above runs long. The card's
+   padding-bottom (0.6in) reserves the space the footer occupies. */
 .sr-card-footer {
-  margin-top: auto;
+  position: absolute;
+  left: 0.5in; right: 0.5in; bottom: 0.3in;
   padding-top: 6px;
   border-top: 1px solid var(--ink);
   display: flex; justify-content: space-between; align-items: baseline;
   font: 700 10px 'IBM Plex Mono', monospace;
   letter-spacing: .8px; text-transform: uppercase;
   color: var(--ink-2);
+  background: #fff;
 }
 .sr-card-footer-left  { text-align: left; }
 .sr-card-footer-right { text-align: right; }
@@ -4900,9 +4908,9 @@ body.rw-sld-photo-dragging .strip-pin {
   min-width: 0;
   display: flex; flex-direction: column; gap: 6px;
 }
-.sr-identity-right { display: flex; min-height: 2.4in; }
+.sr-identity-right { display: flex; min-height: 1.9in; }
 .sr-identity-right .sr-card-map {
-  width: 100%; height: auto; min-height: 2.4in; flex: 1;
+  width: 100%; height: auto; min-height: 1.9in; flex: 1;
 }
 /* Identity grid narrows to 3 cols when sharing the row with the map. */
 .sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
