@@ -31455,7 +31455,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             _field('Foundation', po.post_foundation) +
             _field('Finish',     po.post_finish) +
             _field('Breakaway',  po.post_breakaway) +
-            _field('Condition',  po.post_condition) +
+            _field('Condition',  _spellCondition(po.post_condition)) +
             _field('Damage', damage, { full: true, wrap: true }) +
             (po.notes ? _field('Notes', po.notes, { full: true, wrap: true }) : '') +
           '</div>' +
@@ -31469,13 +31469,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Returns null when both inputs are blank. Used for both the
       // daytime and nighttime rows so the same formula auto-applies
       // when night data starts flowing in from the data form.
-      var _RETRO_ORDER   = { E: 1, G: 2, F: 3, P: 4, X: 5 };
-      var _RETRO_SPELLED = { 1: 'Excellent', 2: 'Good', 3: 'Fair', 4: 'Poor', 5: 'Failed' };
+      // Shared condition vocabulary — every place the report shows a
+      // condition rating (post / panel / sheet / retro) spells the
+      // single letter out to the full word.
+      var _COND_SPELLED   = { E: 'Excellent', G: 'Good', F: 'Fair', P: 'Poor', X: 'Failed' };
+      var _RETRO_ORDER    = { E: 1, G: 2, F: 3, P: 4, X: 5 };
+      var _RETRO_TO_LTR   = { 1: 'E', 2: 'G', 3: 'F', 4: 'P', 5: 'X' };
+      // Worst-of-two retro reader. Maps E < G < F < P < X (highest
+      // order wins), spelled out. Blank when both raters are empty.
       function _worstRetro(r1, r2) {
         var v1 = _RETRO_ORDER[(r1 || '').toString().toUpperCase()] || 0;
         var v2 = _RETRO_ORDER[(r2 || '').toString().toUpperCase()] || 0;
         var worst = Math.max(v1, v2);
-        return worst === 0 ? null : _RETRO_SPELLED[worst];
+        return worst === 0 ? null : _COND_SPELLED[_RETRO_TO_LTR[worst]];
+      }
+      // Single-letter condition → spelled word. Pass through anything
+      // that isn't a clean single letter (e.g. legacy 'P (loose in
+      // ground)') so we don't accidentally hide context.
+      function _spellCondition(v) {
+        if (v == null || v === '') return v;
+        var s = String(v).trim().toUpperCase();
+        if (s.length === 1 && _COND_SPELLED[s]) return _COND_SPELLED[s];
+        return v;
       }
       // Panel type — Aluminum by default; Corrugated Aluminum when
       // the panel notes mention 'corrugat' (catches 'corrugated' and
@@ -31538,9 +31553,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             _field('Sheeting Type',   pn.sheeting_type) +
             // Row 2 — description moved up; sheet condition follows
             _field('Description', pn.panel_description, { wrap: true }) +
-            _field('Sheet Condition', pn.sheeting_condition) +
+            _field('Sheet Condition', _spellCondition(pn.sheeting_condition)) +
             // Row 3 — primary condition assessments
-            _field('Panel Condition', pn.panel_condition) +
+            _field('Panel Condition', _spellCondition(pn.panel_condition)) +
             _field('Retro Day',       retroDayLbl) +
             // Row 4 — damage + nighttime retro
             _field('Damage', dmg, { wrap: true }) +
