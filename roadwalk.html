@@ -4885,6 +4885,22 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sr-delete-btn:hover { background: #b91c1c; color: #fff; }
 .sr-card-hdr-actions { display: flex; gap: 6px; }
+/* Top-right column on every page — agency logos stacked above the
+   on-screen Edit / Delete buttons. The logos print; the buttons don't
+   (already on the @media print hide list). On continuation cards the
+   buttons are absent so only the logos render. */
+.sr-card-hdr-right {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 6px; flex-shrink: 0;
+}
+.sr-card-hdr-logos {
+  display: flex; gap: 10px; align-items: center;
+}
+.sr-card-hdr-logos img {
+  height: 56px; width: auto;
+  display: block;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
 .sr-card-hdr-top {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px;
@@ -31484,6 +31500,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                     + 'title="Delete this sign from the inventory">'
                     + '&#128465; Delete</button>';
 
+      // Agency logos — NPS arrowhead + USDOT triskelion seal. Public-
+      // domain Wikipedia commons SVGs; prints crisply at any size. If
+      // AECOM proxy / offline use turns out to block these, swap the
+      // src for local copies in data/logos/ or replace with inline
+      // SVG markup.
+      var logosBlock =
+        '<div class="sr-card-hdr-logos">'
+          + '<img src="https://upload.wikimedia.org/wikipedia/commons/1/1d/US-NationalParkService-Logo.svg" alt="National Park Service" loading="eager">'
+          + '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Seal_of_the_United_States_Department_of_Transportation.svg" alt="US Department of Transportation" loading="eager">'
+        + '</div>';
+
       // Inset map data-attrs — lazy-Leaflet-init on scroll (or pre-init
       // before printing). Empty data-* fall through to a "No location"
       // placeholder.
@@ -31521,7 +31548,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   '<div class="sr-card-title">Sign Inventory Report</div>' +
                   '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + '</div>' +
                 '</div>' +
-                '<div class="sr-card-hdr-actions">' + editBtn + deleteBtn + '</div>' +
+                '<div class="sr-card-hdr-right">'
+                  + logosBlock
+                  + '<div class="sr-card-hdr-actions">' + editBtn + deleteBtn + '</div>'
+                + '</div>' +
               '</div>' +
             '</header>' +
             '<section class="sr-section">' +
@@ -31555,8 +31585,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var pageOfStrCont = 'Page ' + (pi + 1) + ' of ' + totalPages;
         return '<article class="sr-card sr-card-cont" data-sign-idx="' + idx + '">' +
           '<header class="sr-card-hdr">' +
-            '<div class="sr-card-title">Sign Inventory Report</div>' +
-            '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + '</div>' +
+            '<div class="sr-card-hdr-top">' +
+              '<div class="sr-card-title-wrap">' +
+                '<div class="sr-card-title">Sign Inventory Report</div>' +
+                '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + '</div>' +
+              '</div>' +
+              '<div class="sr-card-hdr-right">' + logosBlock + '</div>' +
+            '</div>' +
           '</header>' +
           '<section class="sr-section">' +
             '<div class="sr-sec-hdr">Photos (continued · ' + startNum + '–' + endNum + ' of ' + photos.length + ')</div>' +
