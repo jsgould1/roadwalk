@@ -4654,8 +4654,9 @@ body.rw-sld-photo-dragging .strip-pin {
   color: var(--ink);
   display: flex; flex-direction: column;
 }
-.sr-card-cont .sr-card-title { font-size: 12px; }
-.sr-card-cont .sr-card-sub { color: var(--ink-3); font-style: italic; }
+/* Continuation card uses the same header sizes / styles as page 1 — */
+/* no font-size shrink, no italic — so 'Page 2 of 2' reads as a true */
+/* multi-page sign card rather than a smaller follow-up. */
 .sr-card-hdr {
   border-bottom: 2px solid var(--ink);
   padding-bottom: 6px; margin-bottom: 10px;
@@ -4670,7 +4671,7 @@ body.rw-sld-photo-dragging .strip-pin {
   font: 400 16px 'IBM Plex Mono', monospace; color: var(--ink-2);
 }
 .sr-section {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .sr-sec-hdr {
   display: flex; align-items: center; justify-content: space-between;
@@ -31521,7 +31522,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               '</div>' +
             '</header>' +
             '<section class="sr-section">' +
-              '<div class="sr-sec-hdr">Sign Information</div>' +
               '<div class="sr-identity-row">' +
                 '<div class="sr-identity-left">' +
                   idBlock +
