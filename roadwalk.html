@@ -30888,25 +30888,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
          openNearbyPhotoPicker so the user can grab field photos by
          proximity without leaving the report view.
      ──────────────────────────────────────────────────────────────────── */
-  // Persisted source-chip selection. null = "all sources active". A Set
-  // means the explicit list of source keys the user wants to see — chips
-  // not in the set are hidden. Keys: pin.attrs.source string, or '' for
-  // pins without a source (legacy/bundle defaults).
-  var SR_SOURCE_KEY = 'rw_sr_sources';
-  function _srLoadSelectedSources() {
+  // Persisted source-chip MUTED list. null / empty = all sources shown.
+  // A Set means those source keys are explicitly hidden. New sources
+  // default to "not muted" (= shown), so a freshly-imported batch
+  // appears in the report without the user having to opt it in. The
+  // key is renamed to clear out any v111-era 'rw_sr_sources' entry
+  // that used the inverted "selected" semantics (which fought the
+  // user's clicks).
+  var SR_MUTED_KEY = 'rw_sr_sources_muted';
+  function _srLoadMutedSources() {
     try {
-      var raw = localStorage.getItem(SR_SOURCE_KEY);
+      var raw = localStorage.getItem(SR_MUTED_KEY);
       if (!raw) return null;
       var parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return null;
+      if (!Array.isArray(parsed) || !parsed.length) return null;
       return new Set(parsed);
     } catch (_) { return null; }
   }
-  function _srSaveSelectedSources(set) {
+  function _srSaveMutedSources(set) {
     try {
-      if (!set) localStorage.removeItem(SR_SOURCE_KEY);
-      else localStorage.setItem(SR_SOURCE_KEY, JSON.stringify(Array.from(set)));
+      if (!set || set.size === 0) localStorage.removeItem(SR_MUTED_KEY);
+      else localStorage.setItem(SR_MUTED_KEY, JSON.stringify(Array.from(set)));
     } catch (_) {}
+    // Also clean up the legacy key so it can't sneak back if the user
+    // toggles a chip and we accidentally read from the wrong storage.
+    try { localStorage.removeItem('rw_sr_sources'); } catch (_) {}
   }
   function _srSourceLabel(s) { return s ? String(s) : '(no source)'; }
   // Last-seen source tally — read inside the chip click handler so it
@@ -31066,28 +31072,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       srcCounts[key] = (srcCounts[key] || 0) + 1;
     });
     var srcKeys = Object.keys(srcCounts).sort();
-    // Reconcile the persisted chip selection with the project's
-    // current source mix. Two clean-ups happen here:
-    //   1. Sources no longer present (e.g. an import batch the user
-    //      deleted) drop out so the chip strip doesn't show a dead key.
-    //   2. Sources that are new since the last time the user touched a
-    //      chip get added to the selection so freshly-placed pins
-    //      (e.g. streetview-capture) actually show in the report. The
-    //      user can still turn them off explicitly afterwards.
-    var selSet = _srLoadSelectedSources();
-    if (selSet) {
+    // Reconcile the persisted muted list with the project's current
+    // source mix — drop any keys for sources no longer present so the
+    // chip strip doesn't carry dead entries. New sources need no
+    // handling here because muted = false by default = shown.
+    var mutedSet = _srLoadMutedSources();
+    if (mutedSet) {
       var changed = false;
-      Array.from(selSet).forEach(function (k) {
-        if (!(k in srcCounts)) { selSet.delete(k); changed = true; }
+      Array.from(mutedSet).forEach(function (k) {
+        if (!(k in srcCounts)) { mutedSet.delete(k); changed = true; }
       });
-      Object.keys(srcCounts).forEach(function (k) {
-        if (!selSet.has(k)) { selSet.add(k); changed = true; }
-      });
-      if (selSet.size === 0) { selSet = null; changed = true; }
-      if (changed) _srSaveSelectedSources(selSet);
+      if (mutedSet.size === 0) { mutedSet = null; changed = true; }
+      if (changed) _srSaveMutedSources(mutedSet);
     }
 
     // ── Render source chips ─────────────────────────────────────────
+    // A chip is "active" (blue, filled) when it is NOT muted. Clicking
+    // it toggles its presence in the muted set, so the next render
+    // re-styles it accordingly.
     var chipsEl = document.getElementById('sr-source-chips');
     if (chipsEl) {
       // Hide the whole row if there's only one possible source — chip
@@ -31095,7 +31097,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var srcRow = document.getElementById('sr-source-row');
       if (srcRow) srcRow.style.display = (srcKeys.length > 1) ? '' : 'none';
       chipsEl.innerHTML = srcKeys.map(function (k) {
-        var active = !selSet || selSet.has(k);
+        var active = !mutedSet || !mutedSet.has(k);
         return '<button type="button" class="sr-chip' + (active ? ' active' : '') + '" '
           + 'data-source="' + _esc(k) + '">' + _esc(_srSourceLabel(k))
           + '<span class="sr-chip-count"> ·' + srcCounts[k] + '</span></button>';
@@ -31106,14 +31108,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           var btn = e.target.closest('.sr-chip');
           if (!btn) return;
           var key = btn.dataset.source;
-          var sel = _srLoadSelectedSources();
-          // null state = "all on". To turn one off we build an explicit
-          // set of every current source, then drop this one.
-          if (!sel) {
-            sel = new Set(Object.keys(_srLastSrcCounts || {}));
-          }
-          if (sel.has(key)) sel.delete(key); else sel.add(key);
-          _srSaveSelectedSources(sel);
+          var muted = _srLoadMutedSources() || new Set();
+          if (muted.has(key)) muted.delete(key); else muted.add(key);
+          _srSaveMutedSources(muted);
           renderSignsReport();
         });
       }
@@ -31125,7 +31122,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (allBtn && !allBtn._wired) {
       allBtn._wired = true;
       allBtn.addEventListener('click', function () {
-        _srSaveSelectedSources(null);
+        _srSaveMutedSources(null);
         renderSignsReport();
       });
     }
@@ -31133,9 +31130,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // ── Apply section / source / search filters ──────────────────────
     var allSigns = allUnfilteredSigns.filter(function (r) {
       if (fSec && r.sec.id !== fSec) return false;
-      if (selSet) {
-        if (!selSet.has(_srcOf(r.pin))) return false;
-      }
+      if (mutedSet && mutedSet.has(_srcOf(r.pin))) return false;
       return true;
     });
     if (fQ) {
