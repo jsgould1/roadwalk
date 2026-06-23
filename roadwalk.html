@@ -30943,13 +30943,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       srcCounts[key] = (srcCounts[key] || 0) + 1;
     });
     var srcKeys = Object.keys(srcCounts).sort();
-    // Clean stale entries out of persisted selection (a source that no
-    // longer exists in the current project just drops out).
+    // Reconcile the persisted chip selection with the project's
+    // current source mix. Two clean-ups happen here:
+    //   1. Sources no longer present (e.g. an import batch the user
+    //      deleted) drop out so the chip strip doesn't show a dead key.
+    //   2. Sources that are new since the last time the user touched a
+    //      chip get added to the selection so freshly-placed pins
+    //      (e.g. streetview-capture) actually show in the report. The
+    //      user can still turn them off explicitly afterwards.
     var selSet = _srLoadSelectedSources();
     if (selSet) {
       var changed = false;
       Array.from(selSet).forEach(function (k) {
         if (!(k in srcCounts)) { selSet.delete(k); changed = true; }
+      });
+      Object.keys(srcCounts).forEach(function (k) {
+        if (!selSet.has(k)) { selSet.add(k); changed = true; }
       });
       if (selSet.size === 0) { selSet = null; changed = true; }
       if (changed) _srSaveSelectedSources(selSet);
