@@ -31484,8 +31484,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // the persistent IDB record.
     function _srSyncHiddenToIdb(pin, list) {
       if (!pin || !pin.ulid) return;
-      var rec = _dataState.idbCacheByUlid[pin.ulid]
-             || _dataState.idbCache[pin.id];
+      // ULID-only — pin.id collides across sections (SI-001 lives in
+      // every section), so the by-id index would risk overwriting a
+      // different section's record.
+      var rec = _dataState.idbCacheByUlid[pin.ulid];
       if (rec) {
         if (!rec.attrs) rec.attrs = {};
         rec.attrs.report_hidden_photos = list.slice();
@@ -33457,11 +33459,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     sections.forEach(function (sec) {
       (sec.pins || []).forEach(function (pin) {
-        // Skip if already in cache. ULID check first because pin.id is
-        // mutable — a renumbered pin's id can collide with the stale key
-        // from a different pin's old id, falsely "skipping" a fresh seed.
-        if (pin.ulid && _dataState.idbCacheByUlid[pin.ulid]) return;
-        if (_dataState.idbCache[pin.id]) return;
+        // Skip if already in cache. pin.id (e.g. "SI-001") is unique
+        // only within a section — Section A, Section B, Section G all
+        // have an SI-001 — so the by-id index is only safe for legacy
+        // pins that never got a ULID. When the pin has a ULID, trust
+        // the ULID index alone.
+        if (pin.ulid) {
+          if (_dataState.idbCacheByUlid[pin.ulid]) return;
+        } else {
+          if (_dataState.idbCache[pin.id]) return;
+        }
 
         var ulid = pin.ulid || makeULID();
         toSeed.push({
@@ -33525,9 +33532,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
    *  from older records.
    */
   function _mergedPin(bundlePin) {
-    var idb = (bundlePin.ulid && _dataState.idbCacheByUlid[bundlePin.ulid])
-           || _dataState.idbCache[bundlePin.id]
-           || {};
+    // pin.id (e.g. "SI-001") is unique only WITHIN a section — every
+    // section starts its sign numbering at 1, so SI-001 exists in
+    // Section A, Section B, Section G, etc. The pin-id-keyed cache
+    // (_dataState.idbCache) is therefore unsafe to use when the pin
+    // has a ULID: it can pull a different section's record onto this
+    // one. Only fall back to the by-id index for legacy pins that
+    // never got a ULID.
+    var idb;
+    if (bundlePin.ulid) {
+      idb = _dataState.idbCacheByUlid[bundlePin.ulid] || {};
+    } else {
+      idb = _dataState.idbCache[bundlePin.id] || {};
+    }
     var merged = Object.assign({}, bundlePin);
     merged.attrs  = Object.assign({}, bundlePin.attrs, idb.attrs || {});
     merged.status = idb.status || bundlePin.status || 'pending';
