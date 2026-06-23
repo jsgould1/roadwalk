@@ -15308,6 +15308,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   window._RW.deleteImportBatch        = deleteImportBatch;
   window._RW.findDuplicatePins        = findDuplicatePins;
   window._RW.removeDuplicatePins      = removeDuplicatePins;
+  window._RW.renumberPinsForKind      = renumberPinsForKind;
+  // Sweep helper: rewrite every pin.id across every section so it
+  // matches the canonical "<KINDPREFIX>-NNN" format ordered by sta_ft.
+  // Use after a reassign / move flow that left a stale section-prefixed
+  // id behind (e.g. "E-SI-002" stuck on a pin now in Section C).
+  window._RW.renumberAllPins = function () {
+    var kinds = new Set();
+    (window.SECTIONS || []).forEach(function (sec) {
+      (sec.pins || []).forEach(function (p) { if (p && p.kind) kinds.add(p.kind); });
+    });
+    var touched = 0;
+    (window.SECTIONS || []).forEach(function (sec) {
+      kinds.forEach(function (k) {
+        if ((sec.pins || []).some(function (p) { return p.kind === k; })) {
+          renumberPinsForKind(sec, k);
+          touched++;
+        }
+      });
+    });
+    if (typeof persistSections === 'function') persistSections();
+    if (window._RW && typeof window._RW.rerender === 'function') window._RW.rerender();
+    return { sweeps: touched };
+  };
 
   // ── Centerline export: dump every section's alignment so you can hand
   //    me your manual corrections without exporting the whole project.
@@ -34384,6 +34407,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!window.confirm('Reassign "' + (merged.id || 'this asset') + '" from "' +
             ((sec && (sec.name || sec.id)) || '—') + '" to "' +
             (target.name || target.id) + '"?')) return;
+        // Capture the source section so we can renumber it after the
+        // splice — `sec` gets reassigned to `target` further down.
+        var sourceSec = sec;
         // Move the live bundle pin between the section pin arrays.
         var moved = null;
         if (sec && Array.isArray(sec.pins)) {
@@ -34395,7 +34421,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         }
         if (!Array.isArray(target.pins)) target.pins = [];
-        target.pins.push(moved || merged);
+        var pinMoved = moved || merged;
+        target.pins.push(pinMoved);
+        // Renumber both sections for this kind so the moved pin gets a
+        // canonical "<PREFIX>-NNN" id in its new section (overwriting
+        // any stale section-prefixed legacy id like "E-SI-002") and
+        // the source section closes the gap left behind.
+        try {
+          var rfn = (window._RW && window._RW.renumberPinsForKind)
+                  || (typeof renumberPinsForKind === 'function' ? renumberPinsForKind : null);
+          if (rfn) {
+            if (sourceSec) rfn(sourceSec, pinMoved.kind);
+            rfn(target, pinMoved.kind);
+          }
+        } catch (_) { /* renumber is best-effort; reassignment still succeeds */ }
         // Point the form at the new section, then persist with the new sec_id.
         sec = target;
         _dataState.sec = target;
