@@ -4845,7 +4845,10 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-flbl {
   font: 700 9px 'IBM Plex Mono', monospace;
   letter-spacing: .35px; text-transform: uppercase;
-  color: var(--ink-3); flex: 0 0 86px;
+  color: var(--ink-3);
+  /* 112px holds the longest labels — 'PANEL CONDITION' / 'SHEET
+     CONDITION' / 'INSTALL DATE' — on a single line. */
+  flex: 0 0 112px;
 }
 .sr-fval {
   color: var(--ink);
@@ -31519,22 +31522,40 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               delBtn +
             '</span>' +
           '</div>' +
+          // Field grid layout — interleaved (left-col / right-col)
+          // so CSS grid drops each pair onto one row:
+          //   Row 1: Sign Code      | Sheeting Type
+          //   Row 2: Description    | Sheet Condition
+          //   Row 3: Panel Condition| Retro Day
+          //   Row 4: Damage         | Retro Night
+          //   Row 5: Panel Size     | Mounting
+          //   Row 6: Panel Type     | Back Panel
+          //   Row 7: Install Date   | (empty)
+          // Then full-width Retro Notes / Notes when populated.
           '<div class="sr-field-grid">' +
+            // Row 1
             _field('Sign Code',       pn.sign_code) +
-            _field('Panel Type',      _panelTypeLabel(pn)) +
-            _field('Panel Size',      pn.panel_size) +
-            _field('Install Date',    pn.panel_install_date) +
-            _field('Panel Condition', pn.panel_condition) +
-            _field('Sheet Cond',      pn.sheeting_condition) +
             _field('Sheeting Type',   pn.sheeting_type) +
-            _field('Back Panel',      pn.back_panel) +
+            // Row 2 — description moved up; sheet condition follows
+            _field('Description', pn.panel_description, { wrap: true }) +
+            _field('Sheet Condition', pn.sheeting_condition) +
+            // Row 3 — primary condition assessments
+            _field('Panel Condition', pn.panel_condition) +
+            _field('Retro Day',       retroDayLbl) +
+            // Row 4 — damage + nighttime retro
+            _field('Damage', dmg, { wrap: true }) +
+            _field('Retro Night',     retroNightLbl) +
+            // Row 5 — physical dimensions / hardware
+            _field('Panel Size',      pn.panel_size) +
             _field('Mounting',        _mountLabel(pn.mounting_hardware)) +
-            _field('Damage',          dmg, { wrap: true }) +
-            _field('Retro Day',       retroDayLbl,   { full: true }) +
-            _field('Retro Night',     retroNightLbl, { full: true }) +
+            // Row 6 — material details
+            _field('Panel Type',      _panelTypeLabel(pn)) +
+            _field('Back Panel',      pn.back_panel) +
+            // Row 7 — historical (Install Date in col 1, col 2 empty)
+            _field('Install Date',    pn.panel_install_date) +
+            // Free-text notes span full width when populated.
             (pn.retro_notes ? _field('Retro Notes', pn.retro_notes, { full: true, wrap: true }) : '') +
             (pn.notes       ? _field('Notes',       pn.notes,       { full: true, wrap: true }) : '') +
-            _field('Description', pn.panel_description, { full: true, wrap: true }) +
           '</div>' +
         '</div>';
       }
