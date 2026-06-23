@@ -4830,15 +4830,39 @@ body.rw-sld-photo-dragging .strip-pin {
   display: flex; flex-direction: column; gap: 6px;
   align-items: flex-end; flex: 0 0 auto;
 }
-/* Identity row — 2/3 info on the left, inset map fills the right 1/3. */
+/* Identity row — Identity + Posts stack in the 2/3 left column; the
+   inset map fills the right 1/3 and stretches to match the combined
+   left column height. CSS grid + min-height keeps Leaflet happy. */
 .sr-identity-row {
-  display: flex; gap: 12px; align-items: stretch;
+  display: grid; grid-template-columns: 2fr 1fr; gap: 12px;
+  align-items: stretch;
 }
-.sr-identity-left  { flex: 2 1 0; min-width: 0; }
-.sr-identity-right { flex: 1 1 0; display: flex; }
-.sr-identity-right .sr-card-map { width: 100%; height: 2.2in; }
+.sr-identity-left  {
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sr-identity-right { display: flex; min-height: 2.4in; }
+.sr-identity-right .sr-card-map {
+  width: 100%; height: auto; min-height: 2.4in; flex: 1;
+}
 /* Identity grid narrows to 3 cols when sharing the row with the map. */
 .sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
+/* Posts card embedded inside identity-left needs a tight sub-header. */
+.sr-identity-left .sr-sec-hdr-tight {
+  font: 700 9.5px 'IBM Plex Mono', monospace;
+  letter-spacing: .7px; text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 2px; margin-top: 2px;
+}
+.sr-identity-left .sr-post-card { margin-bottom: 0; }
+
+/* Panels render side-by-side in a 2-column grid so two panels fit on
+   one row. Each cell still uses .sr-panel-card with break-inside avoid. */
+.sr-panels-2col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+}
+.sr-panels-2col .sr-panel-card { margin-bottom: 0; }
 /* Per-card inset map — Leaflet lazy-init on scroll. */
 .sr-card-map {
   width: 1.6in; height: 1.6in;
@@ -31181,7 +31205,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var staMpLabel = 'STA ' + _esc(pin.sta || '');
       if (mpDisplay) staMpLabel += ' · MP ' + mpDisplay;
 
-      // Identity block.
+      // Identity block. Description (attrs.notes) is intentionally
+      // dropped from the card layout — it doesn't earn its space on
+      // the deliverable.
       var idBlock =
         '<div class="sr-id-grid">' +
           '<div><span class="sr-lbl">Section</span><span class="sr-val">' + _cell(sec.id) + ' · ' + _cell(sec.name) + '</span></div>' +
@@ -31192,8 +31218,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '<div><span class="sr-lbl">EOP Off</span><span class="sr-val">' + _cell(a.eop_offset) + (a.eop_offset != null ? ' ft' : '') + '</span></div>' +
           '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cell(lat) + ', ' + _cell(lng) + '</span></div>' +
           '<div><span class="sr-lbl">Asset ID</span><span class="sr-val">' + _cell(a.asset_id || a.fmss_asset) + '</span></div>' +
-        '</div>' +
-        (a.notes ? '<div class="sr-notes-row"><span class="sr-lbl">Description</span><span class="sr-val">' + _esc(a.notes) + '</span></div>' : '');
+        '</div>';
 
       // Sort panels Front → Right → Back → Left so the cards read in
       // the same order the user sees on the form.
@@ -31294,20 +31319,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         ? posts.map(_postCardHtml).join('')
         : '<div class="sr-tbl-empty">No post data entered.</div>';
       var panelsBlock = panelsSorted.length
-        ? panelsSorted.map(function (entry, i) { return _panelCardHtml(entry.pn, i); }).join('')
+        ? '<div class="sr-panels-2col">'
+          + panelsSorted.map(function (entry, i) { return _panelCardHtml(entry.pn, i); }).join('')
+          + '</div>'
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
 
       // Photo paging: pack photos into chunks of one card each so the
-      // print engine paginates naturally. The first card carries the
-      // identity / posts / panels block and a smaller photo budget;
-      // continuation cards are header-only and can fit more. Letter
-      // paper gives us 11" - 0.9" card padding = 10.1" of content
-      // area. Title 0.4 + identity 2.4 + posts 1.4 + panel-card 1.8 =
-      // 6.0", leaving ~4.1" for photos and the photos-section header.
-      // Each photo row is ~1.9" so a single row (3 photos) is the
-      // safe ceiling for the typical 1-panel sign. Each extra panel
-      // burns another ~1.8" so the budget collapses to zero quickly.
-      var PHOTOS_PAGE_1 = Math.max(0, 3 - Math.max(0, panels.length - 1) * 3);
+      // print engine paginates naturally. With the v116 layout
+      // (Identity + Posts share the top row alongside the inset map,
+      // and Panels render 2-up in a grid) the budget loosens up: the
+      // typical 1-2 panel case leaves ~3.8" for photos = 6 thumbs in
+      // 2 rows × 3 cols. Each pair of extra panels (3-4, 5-6, …)
+      // collapses one row off the photo budget.
+      var _panelRows = Math.ceil(panels.length / 2);
+      var PHOTOS_PAGE_1 = Math.max(0, 6 - Math.max(0, _panelRows - 1) * 3);
       var PHOTOS_PAGE_N = 12;  // 4 rows × 3 cols on continuation pages
       var photoChunks;
       if (!photos.length) {
@@ -31416,11 +31441,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">Identity</div>' +
               '<div class="sr-identity-row">' +
-                '<div class="sr-identity-left">' + idBlock + '</div>' +
+                '<div class="sr-identity-left">' +
+                  idBlock +
+                  '<div class="sr-sec-hdr-tight">Posts (' + posts.length + ')</div>' +
+                  postsBlock +
+                '</div>' +
                 '<div class="sr-identity-right">' + insetMap + '</div>' +
               '</div>' +
             '</section>' +
-            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsBlock + '</section>' +
             '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsBlock + '</section>' +
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">' + photoSecHdr + '</div>' +
