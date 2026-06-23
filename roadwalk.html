@@ -31139,13 +31139,32 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         lat = nLat.toFixed(6);
       }
 
+      // Milepost — derived from the section's mpStart plus the pin's
+      // station-feet offset. Falls back to attrs.mp_start when the
+      // section has no mpStart (e.g. user-added field sections that
+      // were never given a MP range).
+      var mpDisplay = '';
+      var mpStartNum = (sec && typeof sec.mpStart === 'number') ? sec.mpStart
+                    : (sec && typeof sec.mp_start === 'number') ? sec.mp_start : null;
+      var mpVal = null;
+      if (mpStartNum != null && typeof pin.sta_ft === 'number') {
+        mpVal = mpStartNum + pin.sta_ft / 5280;
+      } else if (a.mp_start != null) {
+        mpVal = +a.mp_start;
+      }
+      if (mpVal != null && isFinite(mpVal)) {
+        mpDisplay = mpVal.toFixed(3);
+      }
+      var staMpLabel = 'STA ' + _esc(pin.sta || '');
+      if (mpDisplay) staMpLabel += ' · MP ' + mpDisplay;
+
       // Identity block.
       var idBlock =
         '<div class="sr-id-grid">' +
           '<div><span class="sr-lbl">Section</span><span class="sr-val">' + _cell(sec.id) + ' · ' + _cell(sec.name) + '</span></div>' +
           '<div><span class="sr-lbl">Pin ID</span><span class="sr-val">' + _cell(pin.id) + '</span></div>' +
           '<div><span class="sr-lbl">STA</span><span class="sr-val">' + _cell(pin.sta) + '</span></div>' +
-          '<div><span class="sr-lbl">MP</span><span class="sr-val">' + _cell(a.mp_start != null ? (+a.mp_start).toFixed(4) : '') + '</span></div>' +
+          '<div><span class="sr-lbl">MP</span><span class="sr-val">' + _cell(mpDisplay || (a.mp_start != null ? (+a.mp_start).toFixed(4) : '')) + '</span></div>' +
           '<div><span class="sr-lbl">Side</span><span class="sr-val">' + _cell(a.side) + '</span></div>' +
           '<div><span class="sr-lbl">EOP Off</span><span class="sr-val">' + _cell(a.eop_offset) + (a.eop_offset != null ? ' ft' : '') + '</span></div>' +
           '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cell(lat) + ', ' + _cell(lng) + '</span></div>' +
@@ -31366,7 +31385,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               '<div class="sr-card-hdr-top">' +
                 '<div class="sr-card-title-wrap">' +
                   '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + pageTag + '</div>' +
-                  '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · STA ' + _esc(pin.sta || '') + '</div>' +
+                  '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + ' · ' + staMpLabel + '</div>' +
                 '</div>' +
                 '<div class="sr-card-hdr-actions">' + editBtn + deleteBtn + '</div>' +
               '</div>' +
@@ -31396,7 +31415,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return '<article class="sr-card sr-card-cont" data-sign-idx="' + idx + '">' +
           '<header class="sr-card-hdr">' +
             '<div class="sr-card-title">SIGN INVENTORY · ' + _esc(pin.id || '') + pageTag + '</div>' +
-            '<div class="sr-card-sub">' + _esc(sec.id) + ' · Photos continued · ' + startNum + '–' + endNum + ' of ' + photos.length + '</div>' +
+            '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + staMpLabel + ' · Photos continued · ' + startNum + '–' + endNum + ' of ' + photos.length + '</div>' +
           '</header>' +
           '<section class="sr-section">' +
             '<div class="sr-sec-hdr">Photos (continued)</div>' +
