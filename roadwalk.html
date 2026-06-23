@@ -4628,6 +4628,27 @@ body.rw-sld-photo-dragging .strip-pin {
   cursor: pointer;
 }
 .sr-btn:hover { border-color: var(--blue); color: var(--blue); }
+.sr-btn.active {
+  background: var(--blue); color: #fff; border-color: var(--blue);
+}
+.sr-btn.active:hover { background: #0b62c4; border-color: #0b62c4; color: #fff; }
+
+/* Per-panel delete button — small red X in the panel card sub-header. */
+.sr-panel-del {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  background: #fff; color: #b91c1c;
+  border: 1px solid #b91c1c;
+  padding: 1px 6px; margin-left: 6px;
+  cursor: pointer; letter-spacing: 0;
+}
+.sr-panel-del:hover { background: #b91c1c; color: #fff; }
+
+/* Section route metadata sub-line — below the main section sub-line. */
+.sr-card-meta {
+  margin-top: 2px;
+  font: 400 12px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+}
 
 .sr-list {
   flex: 1 1 auto; overflow-y: auto;
@@ -5004,6 +5025,7 @@ body.rw-sld-photo-dragging .strip-pin {
   /* Hide everything except the signs-report module + its cards. */
   header, #app-tabs, #header-settings-btn, #app-header,
   .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-delete-btn,
+  .sr-panel-del,
   .sr-restore-btn, .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
   #mod-signs_report.active { display: block !important; overflow: visible !important; }
@@ -11348,6 +11370,10 @@ body.mobile-mode #app {
           <input type="text" id="sr-search" placeholder="id, name, code, notes…">
           <span class="sr-count" id="sr-count">— signs</span>
           <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="sr-btn" id="sr-std-angles-btn"
+                    title="Toggle: show only panels at the four standard facing angles (0° / 90° / 180° / 270°). Non-standard panels stay in the data but don't render or print.">
+              ⟂ Std angles only
+            </button>
             <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
           </span>
         </div>
@@ -30935,6 +30961,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // doesn't have to re-walk SECTIONS on every click.
   var _srLastSrcCounts = {};
 
+  // Per-section deliverable metadata. Drives the third header line on
+  // every card so the printed report carries the route + FMSS + MP
+  // range pulled from the AECOM scope table. Sections not in this map
+  // fall back to sec.name verbatim.
+  var _SR_SECTION_INFO = {
+    A: { route: 'Gatlinburg Bypass Road',                                          route_id: 'GRSM-0012Z',  fmss: 57674,  mp_start: 0,      mp_end: 3.57  },
+    B: { route: 'Newfound Gap Road South #1 (NC)',                                 route_id: 'GRSM-0010S',  fmss: 55724,  mp_start: 14.76,  mp_end: 20.90 },
+    C: { route: 'Newfound Gap Road South #2 Southbound (NC)',                      route_id: 'GRSM-0010S',  fmss: 55724,  mp_start: 30.00,  mp_end: 31.96 },
+    D: { route: 'Newfound Gap Road South #2 Northbound (NC)',                      route_id: 'GRSM-0010S',  fmss: 55724,  mp_start: 30.45,  mp_end: 31.59 },
+    E: { route: 'Newfound Gap Road North (TN)',                                    route_id: 'GRSM-0010N',  fmss: 55726,  mp_start: 1.85,   mp_end: 6.13  },
+    F: { route: 'Blue Ridge Parkway, Balsam Gap Sub-District',                     route_id: 'BLRI-0001DC', fmss: 226397, mp_start: 470.15, mp_end: 470.20 },
+    G: { route: 'Campbell Lead Road Access Ramp',                                  route_id: 'GRSM-0163BZ', fmss: 57916,  mp_start: 0,      mp_end: 0.05  },
+    H: { route: 'NB Gatlinburg Bypass Ramp to Gatlinburg Spur Road (Northbound)',  route_id: 'GRSM-0012AZ', fmss: 57674,  mp_start: 0,      mp_end: 0.21  },
+    I: { route: 'NB Gatlinburg Bypass Ramp to Gatlinburg Spur Road (Southbound)',  route_id: 'GRSM-0012BZ', fmss: 57674,  mp_start: 0,      mp_end: 0.08  },
+  };
+
+  // "Standard angles only" toggle — when on, panels at facing_degrees
+  // other than 0 / 90 / 180 / 270 are filtered out of the report
+  // render. They are NOT deleted from the data, just hidden from
+  // print. Persisted to localStorage so the toggle survives reloads.
+  var SR_STD_ANGLES_KEY = 'rw_sr_std_angles_only';
+  function _srLoadStdOnly() {
+    try { return localStorage.getItem(SR_STD_ANGLES_KEY) === '1'; }
+    catch (_) { return false; }
+  }
+  function _srSaveStdOnly(on) {
+    try {
+      if (on) localStorage.setItem(SR_STD_ANGLES_KEY, '1');
+      else localStorage.removeItem(SR_STD_ANGLES_KEY);
+    } catch (_) {}
+  }
+
   // Per-card inset Leaflet maps. Lazy-initialized as cards scroll into
   // view (an IntersectionObserver flips them on). Print-button code
   // force-initializes any uninitialized maps before opening the print
@@ -31037,6 +31095,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _qDeb = setTimeout(renderSignsReport, 120);
       });
     }
+    // Std-angles-only toggle button — wires once, redraws active state
+    // every render so the visual reflects the current localStorage value.
+    var stdBtn = document.getElementById('sr-std-angles-btn');
+    if (stdBtn) {
+      stdBtn.classList.toggle('active', _srLoadStdOnly());
+      if (!stdBtn._wired) {
+        stdBtn._wired = true;
+        stdBtn.addEventListener('click', function () {
+          _srSaveStdOnly(!_srLoadStdOnly());
+          renderSignsReport();
+        });
+      }
+    }
+
     var printBtn = document.getElementById('sr-print-btn');
     if (printBtn && !printBtn._wired) {
       printBtn._wired = true;
@@ -31286,8 +31358,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Sort panels Front → Right → Back → Left so the cards read in
       // the same order the user sees on the form.
       var _DIR_LABEL = { 0: '0° Front', 90: '90° Right', 180: '180° Back', 270: '270° Left' };
+      var _SR_STD_ANGLES = { 0: 1, 90: 1, 180: 1, 270: 1 };
+      var _srStdOnly = _srLoadStdOnly();
       var panelsSorted = panels.map(function (pn, origIdx) {
         return { pn: pn || {}, origIdx: origIdx };
+      }).filter(function (entry) {
+        // When the "Std angles only" toggle is on, drop any panel
+        // whose facing isn't 0 / 90 / 180 / 270. The underlying data
+        // is left untouched — the panel is just hidden from this
+        // render.
+        if (!_srStdOnly) return true;
+        return !!_SR_STD_ANGLES[+(entry.pn.facing_degrees || 0)];
       }).sort(function (a, b) {
         var fa = +(a.pn.facing_degrees || 0);
         var fb = +(b.pn.facing_degrees || 0);
@@ -31392,10 +31473,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (pn.retro_day_r1) retroBits.push('R1 ' + pn.retro_day_r1);
         if (pn.retro_day_r2) retroBits.push('R2 ' + pn.retro_day_r2);
         var retroStr = retroBits.length ? retroBits.join(' · ') : null;
+        // Per-panel delete button — small red X in the sub-header.
+        // Keyed by ULID so the splice survives any re-render that
+        // shuffles index positions.
+        var delBtn = pn.ulid
+          ? '<button type="button" class="sr-panel-del" '
+            + 'data-card-idx="' + idx + '" '
+            + 'data-panel-ulid="' + _esc(pn.ulid) + '" '
+            + 'title="Delete this panel">&times;</button>'
+          : '';
         return '<div class="sr-panel-card">' +
           '<div class="sr-sub-hdr-row">' +
             '<span>' + _esc(hdr) + '</span>' +
-            (pn.ulid ? '<span class="sr-sub-ulid">' + _esc(pn.ulid) + '</span>' : '') +
+            '<span style="display:flex;align-items:baseline;gap:6px">' +
+              (pn.ulid ? '<span class="sr-sub-ulid">' + _esc(pn.ulid) + '</span>' : '') +
+              delBtn +
+            '</span>' +
           '</div>' +
           '<div class="sr-field-grid">' +
             _field('Sign Code',     pn.sign_code) +
@@ -31541,12 +31634,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             photoSecHdr = 'Photos (0) ' + actBtn + ' ' + restoreBtn;
           }
           var pageOfStr = 'Page ' + (pi + 1) + ' of ' + totalPages;
+          // Section sub + route meta line from the AECOM scope table.
+          // Falls back to sec.name when the section isn't in the map.
+          var _info = _SR_SECTION_INFO[sec.id];
+          var _subLine, _metaLine = '';
+          if (_info) {
+            _subLine  = _esc(sec.id) + ' · ' + _esc(_info.route);
+            _metaLine = _esc(_info.route_id) + ' · FMSS ' + _info.fmss
+                      + ' · MP ' + _info.mp_start.toFixed(2) + ' – ' + _info.mp_end.toFixed(2);
+          } else {
+            _subLine = _esc(sec.id) + ' · ' + _esc(sec.name || '');
+          }
           return '<article class="sr-card" data-sign-idx="' + idx + '">' +
             '<header class="sr-card-hdr">' +
               '<div class="sr-card-hdr-top">' +
                 '<div class="sr-card-title-wrap">' +
                   '<div class="sr-card-title">Sign Inventory Report</div>' +
-                  '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + '</div>' +
+                  '<div class="sr-card-sub">' + _subLine + '</div>' +
+                  (_metaLine ? '<div class="sr-card-meta">' + _metaLine + '</div>' : '') +
                 '</div>' +
                 '<div class="sr-card-hdr-right">'
                   + logosBlock
@@ -31583,12 +31688,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // shows which photos this page covers.
         var endNum = startNum + chunk.length - 1;
         var pageOfStrCont = 'Page ' + (pi + 1) + ' of ' + totalPages;
+        // Continuation card mirrors the first card's title block so
+        // page 2+ carries the same section + route meta as page 1.
+        var _infoC = _SR_SECTION_INFO[sec.id];
+        var _subLineC, _metaLineC = '';
+        if (_infoC) {
+          _subLineC  = _esc(sec.id) + ' · ' + _esc(_infoC.route);
+          _metaLineC = _esc(_infoC.route_id) + ' · FMSS ' + _infoC.fmss
+                     + ' · MP ' + _infoC.mp_start.toFixed(2) + ' – ' + _infoC.mp_end.toFixed(2);
+        } else {
+          _subLineC = _esc(sec.id) + ' · ' + _esc(sec.name || '');
+        }
         return '<article class="sr-card sr-card-cont" data-sign-idx="' + idx + '">' +
           '<header class="sr-card-hdr">' +
             '<div class="sr-card-hdr-top">' +
               '<div class="sr-card-title-wrap">' +
                 '<div class="sr-card-title">Sign Inventory Report</div>' +
-                '<div class="sr-card-sub">' + _esc(sec.id) + ' · ' + _esc(sec.name || '') + '</div>' +
+                '<div class="sr-card-sub">' + _subLineC + '</div>' +
+                (_metaLineC ? '<div class="sr-card-meta">' + _metaLineC + '</div>' : '') +
               '</div>' +
               '<div class="sr-card-hdr-right">' + logosBlock + '</div>' +
             '</div>' +
@@ -31687,6 +31804,61 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         }
         if (window._RW && typeof window._RW.rerender === 'function') {
           window._RW.rerender();
+        }
+        renderSignsReport();
+      });
+    });
+
+    // ── Wire per-panel delete buttons (the small red ✕ in each
+    //    panel card sub-header). Splices the panel out of
+    //    pin.attrs.panels by ULID, mirrors the change into the IDB
+    //    inspection record + in-memory cache, then persists.
+    list.querySelectorAll('.sr-panel-del').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var r = allSigns[+btn.dataset.cardIdx];
+        if (!r) return;
+        var panelUlid = btn.dataset.panelUlid;
+        if (!panelUlid) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+        if (!Array.isArray(attrs.panels) || !attrs.panels.length) return;
+        var target = attrs.panels.find(function (pn) {
+          return pn && pn.ulid === panelUlid;
+        });
+        var label = target && (target.sign_code || target.panel_description)
+                  || 'this panel';
+        if (!window.confirm(
+              'Delete panel "' + label + '" from '
+            + (pin.id || 'this sign') + '?\n\nThis cannot be undone.'
+        )) return;
+        var nextPanels = attrs.panels.filter(function (pn) {
+          return !(pn && pn.ulid === panelUlid);
+        });
+        attrs.panels = nextPanels;
+        // Sync the IDB inspection record + cache so _mergedPin won't
+        // overlay the deleted panel back on top.
+        if (pin.ulid && _dataState.idbCacheByUlid[pin.ulid]) {
+          var rec = _dataState.idbCacheByUlid[pin.ulid];
+          if (!rec.attrs) rec.attrs = {};
+          rec.attrs.panels = nextPanels.slice();
+        }
+        if (pin.ulid && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+          window.RWIdb.openDB().then(function (db) {
+            var tx = db.transaction('inspections', 'readwrite');
+            var store = tx.objectStore('inspections');
+            var getReq = store.get(pin.ulid);
+            getReq.onsuccess = function (ev2) {
+              var dbRec = ev2.target.result;
+              if (!dbRec) return;
+              if (!dbRec.attrs) dbRec.attrs = {};
+              dbRec.attrs.panels = nextPanels.slice();
+              store.put(dbRec);
+            };
+          }).catch(function () {});
+        }
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          window._RW.persistSections();
         }
         renderSignsReport();
       });
