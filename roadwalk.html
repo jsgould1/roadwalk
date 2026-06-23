@@ -4830,39 +4830,31 @@ body.rw-sld-photo-dragging .strip-pin {
   display: flex; flex-direction: column; gap: 6px;
   align-items: flex-end; flex: 0 0 auto;
 }
-/* Identity row — Identity + Posts stack in the 2/3 left column; the
-   inset map fills the right 1/3 and stretches to match the combined
-   left column height. CSS grid + min-height keeps Leaflet happy. */
+/* Identity row — info on the left 2/3, inset map on the right 1/3.
+   Posts have moved BACK to their own full-width section below so the
+   Posts and Panels cards match visually. The map only needs to span
+   the identity grid height now, so its min-height drops accordingly. */
 .sr-identity-row {
   display: grid; grid-template-columns: 2fr 1fr; gap: 12px;
   align-items: stretch;
 }
-.sr-identity-left  {
-  min-width: 0;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.sr-identity-right { display: flex; min-height: 2.4in; }
+.sr-identity-left  { min-width: 0; }
+.sr-identity-right { display: flex; min-height: 1.8in; }
 .sr-identity-right .sr-card-map {
-  width: 100%; height: auto; min-height: 2.4in; flex: 1;
+  width: 100%; height: auto; min-height: 1.8in; flex: 1;
 }
 /* Identity grid narrows to 3 cols when sharing the row with the map. */
 .sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
-/* Posts card embedded inside identity-left needs a tight sub-header. */
-.sr-identity-left .sr-sec-hdr-tight {
-  font: 700 9.5px 'IBM Plex Mono', monospace;
-  letter-spacing: .7px; text-transform: uppercase;
-  color: var(--ink-2);
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 2px; margin-top: 2px;
-}
-.sr-identity-left .sr-post-card { margin-bottom: 0; }
 
-/* Panels render side-by-side in a 2-column grid so two panels fit on
-   one row. Each cell still uses .sr-panel-card with break-inside avoid. */
-.sr-panels-2col {
+/* Posts and Panels both render in a 2-column grid so their bordered
+   cards line up at the same 50% width and the user can compare them
+   side-by-side. break-inside:avoid on each child still keeps a card
+   whole through page breaks. */
+.sr-cards-2col {
   display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
 }
-.sr-panels-2col .sr-panel-card { margin-bottom: 0; }
+.sr-cards-2col > .sr-post-card,
+.sr-cards-2col > .sr-panel-card { margin-bottom: 0; }
 /* Per-card inset map — Leaflet lazy-init on scroll. */
 .sr-card-map {
   width: 1.6in; height: 1.6in;
@@ -31316,10 +31308,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
 
       var postsBlock = posts.length
-        ? posts.map(_postCardHtml).join('')
+        ? '<div class="sr-cards-2col">'
+          + posts.map(_postCardHtml).join('')
+          + '</div>'
         : '<div class="sr-tbl-empty">No post data entered.</div>';
       var panelsBlock = panelsSorted.length
-        ? '<div class="sr-panels-2col">'
+        ? '<div class="sr-cards-2col">'
           + panelsSorted.map(function (entry, i) { return _panelCardHtml(entry.pn, i); }).join('')
           + '</div>'
         : '<div class="sr-tbl-empty">No panel data entered.</div>';
@@ -31441,14 +31435,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">Identity</div>' +
               '<div class="sr-identity-row">' +
-                '<div class="sr-identity-left">' +
-                  idBlock +
-                  '<div class="sr-sec-hdr-tight">Posts (' + posts.length + ')</div>' +
-                  postsBlock +
-                '</div>' +
+                '<div class="sr-identity-left">' + idBlock + '</div>' +
                 '<div class="sr-identity-right">' + insetMap + '</div>' +
               '</div>' +
             '</section>' +
+            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsBlock + '</section>' +
             '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsBlock + '</section>' +
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">' + photoSecHdr + '</div>' +
