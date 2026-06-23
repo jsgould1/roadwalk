@@ -34806,6 +34806,116 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       && (_dataState.pin.kind === 'sign' || _dataState.pin.kind === 'pt_sign'));
   };
 
+  // ── Non-standard panel-angle cleanup ──────────────────────────────
+  // The detailed sign form is hard-coded to 4 facing directions (0°,
+  // 90°, 180°, 270°). AECOM Features imports can carry panels with
+  // arbitrary facing_degrees values from the source data — those
+  // panels are stored on pin.attrs.panels but never rendered by the
+  // form, so the user can't see or edit them. They DO appear in the
+  // printed Signs Report, which surfaces every panel regardless of
+  // angle. After the user re-enters that information at one of the
+  // standard angles, the original non-standard copy is left as a
+  // hidden duplicate. These two helpers find and drop it.
+
+  var _STD_PANEL_ANGLES = new Set([0, 90, 180, 270]);
+
+  // Walk every sign pin and return a flat list of panels whose
+  // facing_degrees isn't one of the 4 form-supported values. Read
+  // the MERGED attrs so the user's saved state (IDB overlay) is the
+  // source of truth — not just the bundle.
+  function findNonStandardPanelAngles() {
+    var hits = [];
+    (window.SECTIONS || []).forEach(function (sec) {
+      (sec.pins || []).forEach(function (pin) {
+        if (pin.kind !== 'sign' && pin.kind !== 'pt_sign') return;
+        var merged = _mergedPin(pin);
+        var panels = (merged.attrs && Array.isArray(merged.attrs.panels))
+          ? merged.attrs.panels : [];
+        panels.forEach(function (pn, i) {
+          if (!pn) return;
+          var deg = +pn.facing_degrees;
+          if (!_STD_PANEL_ANGLES.has(deg)) {
+            hits.push({
+              sec_id:            sec.id,
+              pin_id:            pin.id,
+              ulid:              pin.ulid,
+              panel_idx:         i,
+              facing_degrees:    pn.facing_degrees,
+              sign_code:         pn.sign_code || null,
+              panel_description: pn.panel_description || null,
+            });
+          }
+        });
+      });
+    });
+    return hits;
+  }
+  window._RW.findNonStandardPanelAngles = findNonStandardPanelAngles;
+
+  // Drop every non-standard-angle panel across every sign pin. Writes
+  // touch three layers in lock-step:
+  //   1. The live bundle pin's attrs.panels
+  //   2. The in-memory IDB cache (_dataState.idbCacheByUlid) so
+  //      _mergedPin returns the cleaned list immediately
+  //   3. The persistent IDB inspection record so the change survives
+  //      reload
+  // Returns { pins_touched, panels_removed }.
+  function removeNonStandardPanelAngles() {
+    var pinsTouched = 0;
+    var panelsRemoved = 0;
+    (window.SECTIONS || []).forEach(function (sec) {
+      (sec.pins || []).forEach(function (pin) {
+        if (pin.kind !== 'sign' && pin.kind !== 'pt_sign') return;
+        var merged = _mergedPin(pin);
+        var mergedPanels = (merged.attrs && Array.isArray(merged.attrs.panels))
+          ? merged.attrs.panels : [];
+        var cleaned = mergedPanels.filter(function (pn) {
+          return pn && _STD_PANEL_ANGLES.has(+pn.facing_degrees);
+        });
+        if (cleaned.length === mergedPanels.length) return;
+        // 1) Bundle pin attrs.
+        if (!pin.attrs) pin.attrs = {};
+        pin.attrs.panels = cleaned.slice();
+        // 2) In-memory IDB cache.
+        if (pin.ulid && _dataState.idbCacheByUlid[pin.ulid]) {
+          var rec = _dataState.idbCacheByUlid[pin.ulid];
+          if (!rec.attrs) rec.attrs = {};
+          rec.attrs.panels = cleaned.slice();
+        }
+        // 3) Persistent IDB record.
+        if (pin.ulid && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+          window.RWIdb.openDB().then(function (db) {
+            var tx = db.transaction('inspections', 'readwrite');
+            var store = tx.objectStore('inspections');
+            var getReq = store.get(pin.ulid);
+            getReq.onsuccess = function (ev) {
+              var dbRec = ev.target.result;
+              if (!dbRec) return;
+              if (!dbRec.attrs) dbRec.attrs = {};
+              dbRec.attrs.panels = cleaned.slice();
+              store.put(dbRec);
+            };
+          }).catch(function () {});
+        }
+        panelsRemoved += (mergedPanels.length - cleaned.length);
+        pinsTouched++;
+      });
+    });
+    if (pinsTouched) {
+      if (window._RW && typeof window._RW.persistSections === 'function') {
+        window._RW.persistSections();
+      }
+      if (window._RW && typeof window._RW.rerender === 'function') {
+        window._RW.rerender();
+      }
+      if (typeof window.renderSignsReport === 'function') {
+        try { window.renderSignsReport(); } catch (_) {}
+      }
+    }
+    return { pins_touched: pinsTouched, panels_removed: panelsRemoved };
+  }
+  window._RW.removeNonStandardPanelAngles = removeNonStandardPanelAngles;
+
   // ── Form body renderer (dispatches by kind) ────────────────────────────────
   function _renderFormBody() {
     var scrollEl = document.getElementById('data-form-scroll');
