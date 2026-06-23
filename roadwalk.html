@@ -4830,21 +4830,32 @@ body.rw-sld-photo-dragging .strip-pin {
   display: flex; flex-direction: column; gap: 6px;
   align-items: flex-end; flex: 0 0 auto;
 }
-/* Identity row — info on the left 2/3, inset map on the right 1/3.
-   Posts have moved BACK to their own full-width section below so the
-   Posts and Panels cards match visually. The map only needs to span
-   the identity grid height now, so its min-height drops accordingly. */
+/* Identity row — info + Posts on the left 2/3, inset map on the right
+   1/3. Posts live INSIDE identity-left below the identity grid, but
+   the post card itself is constrained to 50% of the card-content
+   width (≈ 3.7in, same as a panel card in the panels grid) so its
+   outline matches a panel's outline. The map stretches via grid +
+   min-height to fill the combined Identity + Posts column height. */
 .sr-identity-row {
   display: grid; grid-template-columns: 2fr 1fr; gap: 12px;
   align-items: stretch;
 }
-.sr-identity-left  { min-width: 0; }
-.sr-identity-right { display: flex; min-height: 1.8in; }
+.sr-identity-left  {
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sr-identity-right { display: flex; min-height: 2.4in; }
 .sr-identity-right .sr-card-map {
-  width: 100%; height: auto; min-height: 1.8in; flex: 1;
+  width: 100%; height: auto; min-height: 2.4in; flex: 1;
 }
 /* Identity grid narrows to 3 cols when sharing the row with the map. */
 .sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
+/* When the cards-2col grid is nested inside identity-left, force a
+   single column at 50%-page-width so the post card outline lines up
+   with a panel card outline. Multiple posts stack vertically here. */
+.sr-identity-left .sr-cards-2col {
+  grid-template-columns: 3.7in;
+}
 
 /* Posts and Panels both render in a 2-column grid so their bordered
    cards line up at the same 50% width and the user can compare them
@@ -31435,11 +31446,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">Identity</div>' +
               '<div class="sr-identity-row">' +
-                '<div class="sr-identity-left">' + idBlock + '</div>' +
+                '<div class="sr-identity-left">' +
+                  idBlock +
+                  '<div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' +
+                  postsBlock +
+                '</div>' +
                 '<div class="sr-identity-right">' + insetMap + '</div>' +
               '</div>' +
             '</section>' +
-            '<section class="sr-section"><div class="sr-sec-hdr">Posts (' + posts.length + ')</div>' + postsBlock + '</section>' +
             '<section class="sr-section"><div class="sr-sec-hdr">Panels (' + panels.length + ')</div>' + panelsBlock + '</section>' +
             '<section class="sr-section">' +
               '<div class="sr-sec-hdr">' + photoSecHdr + '</div>' +
