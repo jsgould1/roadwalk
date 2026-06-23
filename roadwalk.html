@@ -4661,24 +4661,24 @@ body.rw-sld-photo-dragging .strip-pin {
   padding-bottom: 6px; margin-bottom: 10px;
 }
 .sr-card-title {
-  font: 700 14px 'IBM Plex Mono', monospace;
-  letter-spacing: 1.5px; text-transform: uppercase;
+  font: 700 18px 'IBM Plex Mono', monospace;
+  letter-spacing: 1px;
   color: var(--ink);
 }
 .sr-card-sub {
-  margin-top: 2px;
-  font: 400 11px 'IBM Plex Mono', monospace; color: var(--ink-2);
+  margin-top: 3px;
+  font: 400 16px 'IBM Plex Mono', monospace; color: var(--ink-2);
 }
 .sr-section {
   margin-bottom: 12px;
 }
 .sr-sec-hdr {
   display: flex; align-items: center; justify-content: space-between;
-  font: 700 10px 'IBM Plex Mono', monospace;
-  letter-spacing: .7px; text-transform: uppercase;
+  font: 700 14px 'IBM Plex Mono', monospace;
+  letter-spacing: .8px; text-transform: uppercase;
   color: var(--ink-2);
   border-bottom: 1px solid var(--rule);
-  padding-bottom: 3px; margin-bottom: 6px;
+  padding-bottom: 4px; margin-bottom: 8px;
 }
 .sr-id-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 16px;
@@ -4692,32 +4692,46 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sr-val { font: 400 11px var(--sans, system-ui); color: var(--ink); }
 
-/* Sign Information block (replaces the old Identity grid). Three
-   rows of decreasing emphasis:
-     1. Pin ID (large, bold) + first-panel description (large)
-     2. STA · MP · Lat/Lng  (location reporting)
-     3. Side · EOP Offset   (cross-section info)
-   Each label/value pair keeps the existing .sr-lbl / .sr-val styling
-   so the rest of the card stays visually consistent. */
-.sr-info-block { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-.sr-info-row { display: grid; gap: 4px 18px; }
-.sr-info-row > div { display: flex; flex-direction: column; min-width: 0; }
+/* Sign Information block (replaces the old Identity grid). Two
+   rows now — the explicit Side/EOP row collapsed into row 2:
+     1. "Pin ID: <id>"  +  "Description: <panel-desc>"  (12 px)
+     2. MP · STA · Side · Offset · Lat/Lng  (11 px, single row of 5)
+   Labels and values both at 11 px in row 2 per spec. */
+.sr-info-block { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .sr-info-row-name {
-  grid-template-columns: auto 1fr; align-items: baseline;
+  display: grid; grid-template-columns: auto 1fr;
+  align-items: baseline; gap: 0 18px;
   border-bottom: 1px solid var(--rule);
   padding-bottom: 4px;
-  gap: 0 16px;
 }
-.sr-info-pinid {
-  font: 700 17px 'IBM Plex Mono', monospace;
-  letter-spacing: 1.2px; color: var(--ink);
-}
-.sr-info-panel-desc {
-  font: 700 13px var(--sans, system-ui); color: var(--ink-2);
+.sr-info-row-name > div {
+  font: 400 12px var(--sans, system-ui); color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
 }
-.sr-info-row-loc  { grid-template-columns: repeat(3, 1fr); }
-.sr-info-row-side { grid-template-columns: repeat(2, 1fr); }
+.sr-info-row-name .sr-info-name-lbl {
+  font: 700 12px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px;
+  color: var(--ink-3);
+}
+.sr-info-row-name .sr-info-name-val {
+  font: 700 12px var(--sans, system-ui); color: var(--ink);
+  margin-left: 4px;
+}
+.sr-info-row-loc {
+  display: flex; flex-wrap: nowrap; gap: 14px;
+  font: 400 11px var(--sans, system-ui);
+}
+.sr-info-row-loc > div {
+  display: flex; flex-direction: column; min-width: 0; flex: 0 0 auto;
+}
+.sr-info-row-loc > div:last-child { flex: 1 1 auto; }
+.sr-info-row-loc .sr-lbl {
+  font: 700 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.sr-info-row-loc .sr-val { font: 400 11px var(--sans, system-ui); color: var(--ink); }
 
 /* Card footer — sign-id on the left, page indicator on the right.
    Pushed to the bottom of the .sr-card via margin-top: auto. */
@@ -4777,7 +4791,7 @@ body.rw-sld-photo-dragging .strip-pin {
   break-inside: avoid; page-break-inside: avoid;
 }
 .sr-sub-hdr-row {
-  font: 700 9px 'IBM Plex Mono', monospace;
+  font: 700 11px 'IBM Plex Mono', monospace;
   letter-spacing: .6px; text-transform: uppercase;
   color: var(--ink);
   border-bottom: 1px solid var(--rule);
@@ -4786,22 +4800,22 @@ body.rw-sld-photo-dragging .strip-pin {
   gap: 8px;
 }
 .sr-sub-ulid {
-  font: 400 7.5px 'IBM Plex Mono', monospace;
+  font: 400 8px 'IBM Plex Mono', monospace;
   color: var(--ink-3); text-transform: none; letter-spacing: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 2.4in;
 }
 .sr-field-grid {
   display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 1px 14px;
-  font: 400 9.5px var(--sans, system-ui);
+  gap: 2px 14px;
+  font: 400 11px var(--sans, system-ui);
 }
 .sr-fld { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
 .sr-fld-full { grid-column: 1 / -1; }
 .sr-flbl {
-  font: 700 7.5px 'IBM Plex Mono', monospace;
+  font: 700 9px 'IBM Plex Mono', monospace;
   letter-spacing: .35px; text-transform: uppercase;
-  color: var(--ink-3); flex: 0 0 84px;
+  color: var(--ink-3); flex: 0 0 86px;
 }
 .sr-fval {
   color: var(--ink);
@@ -31275,18 +31289,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         || (a.mp_start != null ? (+a.mp_start).toFixed(4) : '');
       var idBlock =
         '<div class="sr-info-block">' +
-          '<div class="sr-info-row sr-info-row-name">' +
-            '<div class="sr-info-pinid">' + _esc(signIdStr) + '</div>' +
-            '<div class="sr-info-panel-desc">' + _esc(panelDescStr) + '</div>' +
+          // Row 1 (12 px): Pin ID + first panel description, both as
+          // inline labeled values.
+          '<div class="sr-info-row-name">' +
+            '<div>'
+              + '<span class="sr-info-name-lbl">Pin ID:</span>'
+              + '<span class="sr-info-name-val">' + _esc(signIdStr) + '</span>'
+            + '</div>' +
+            '<div>'
+              + '<span class="sr-info-name-lbl">Description:</span>'
+              + '<span class="sr-info-name-val">' + _esc(panelDescStr || '—') + '</span>'
+            + '</div>' +
           '</div>' +
-          '<div class="sr-info-row sr-info-row-loc">' +
-            '<div><span class="sr-lbl">STA</span><span class="sr-val">' + _cell(pin.sta) + '</span></div>' +
+          // Row 2 (11 px): MP · STA · Side · Offset · Lat/Lng, all on
+          // one line.
+          '<div class="sr-info-row-loc">' +
             '<div><span class="sr-lbl">MP</span><span class="sr-val">' + _cell(mpStr) + '</span></div>' +
-            '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cell(lat) + ', ' + _cell(lng) + '</span></div>' +
-          '</div>' +
-          '<div class="sr-info-row sr-info-row-side">' +
+            '<div><span class="sr-lbl">STA</span><span class="sr-val">' + _cell(pin.sta) + '</span></div>' +
             '<div><span class="sr-lbl">Side</span><span class="sr-val">' + _cell(a.side) + '</span></div>' +
-            '<div><span class="sr-lbl">EOP Offset</span><span class="sr-val">' + _cell(a.eop_offset) + (a.eop_offset != null ? ' ft' : '') + '</span></div>' +
+            '<div><span class="sr-lbl">Offset</span><span class="sr-val">' + _cell(a.eop_offset) + (a.eop_offset != null ? ' ft' : '') + '</span></div>' +
+            '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cell(lat) + ', ' + _cell(lng) + '</span></div>' +
           '</div>' +
         '</div>';
 
