@@ -15091,6 +15091,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         BUNDLE.sections = BUNDLE.sections.filter(function (s) { return s && s.id !== id; });
       }
       var save = BUNDLE ? _saveProjectToDB(BUNDLE) : Promise.resolve();
+      // CRITICAL: also persist the field working copy. applyBundle's
+      // restore step at line ~12808 reads safety/rw_sections_<pid> on
+      // every reload and does `SECTIONS = saved.sections.concat(added)`
+      // — so without this write the working copy still carries the
+      // deleted section and the next reload silently restores it.
+      // This was the source of "deleted sections keep coming back".
+      if (window._RW && typeof window._RW.persistSections === 'function') {
+        try { window._RW.persistSections(); } catch (_) {}
+      }
       return save.then(function () {
         if (typeof window.renderDashboard === 'function') {
           try { window.renderDashboard('all'); } catch (_) {}
