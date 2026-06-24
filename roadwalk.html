@@ -33817,10 +33817,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var m = String(v).trim().match(/^([1-5])/);
     return m ? +m[1] : null;
   }
+  // Spelled vocabulary for the printed culvert report. Maps the
+  // numeric rating to the user-facing word. Legacy records that still
+  // carry "5 – Critical" surface as "Failed" without a data migration
+  // — the form's _CULV_COND was renamed to use "Failed" going forward.
+  var _CV_COND_SPELLED = {
+    1: 'Excellent', 2: 'Good', 3: 'Fair', 4: 'Poor', 5: 'Failed',
+  };
   function _cvColoredCond(v) {
     var n = _cvCondLetter(v);
     if (!n) return '<span style="color:#6b7280">—</span>';
-    var spelled = String(v).trim();
+    var spelled = _CV_COND_SPELLED[n] || String(v).trim();
     var color = _CV_COND_COLOR[n];
     if (!color) return _esc(spelled);
     return '<span style="color:' + color + ';font-weight:700">' + _esc(spelled) + '</span>';
@@ -34520,21 +34527,39 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '</table>'
         + '</div>';
 
-      // Condition ratings card — five rows, all colored.
+      // Condition ratings card — three columns now: label, colored
+      // rating word (Excellent / Good / Fair / Poor / Failed), and
+      // free-text Comments/Notes the user types into the data form.
+      function _condRow(label, condVal, notesVal) {
+        return '<tr>'
+          + '<td style="padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;vertical-align:top;">'
+            + label + '</td>'
+          + '<td style="padding:4px 14px 4px 0;vertical-align:top;white-space:nowrap;">'
+            + _cvColoredCond(condVal) + '</td>'
+          + '<td style="padding:4px 0;color:#111;vertical-align:top;">'
+            + (notesVal ? _esc(notesVal) : '<span style="color:#9ca3af">—</span>')
+          + '</td>'
+        + '</tr>';
+      }
       var condBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CONDITION RATINGS</span></div>'
-          + '<table style="border-collapse:collapse;font:13px sans-serif;width:100%;">'
-            + '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Inlet</td>'
-              + '<td style="padding:4px 0;">' + _cvColoredCond(a.inlet_condition) + '</td></tr>'
-            + '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Barrel</td>'
-              + '<td style="padding:4px 0;">' + _cvColoredCond(a.barrel_condition) + '</td></tr>'
-            + '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Outlet</td>'
-              + '<td style="padding:4px 0;">' + _cvColoredCond(a.outlet_condition) + '</td></tr>'
-            + '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Upstream Headwall</td>'
-              + '<td style="padding:4px 0;">' + _cvColoredCond(a.hw_upstream_cond) + '</td></tr>'
-            + '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Downstream Headwall</td>'
-              + '<td style="padding:4px 0;">' + _cvColoredCond(a.hw_downstream_cond) + '</td></tr>'
+          + '<table style="border-collapse:collapse;font:13px sans-serif;width:100%;table-layout:fixed;">'
+            + '<colgroup>'
+              + '<col style="width:32%">'
+              + '<col style="width:18%">'
+              + '<col style="width:50%">'
+            + '</colgroup>'
+            + '<tr style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#555;">'
+              + '<th style="text-align:left;padding:2px 14px 4px 0;border-bottom:1px solid #ddd;">Element</th>'
+              + '<th style="text-align:left;padding:2px 14px 4px 0;border-bottom:1px solid #ddd;">Rating</th>'
+              + '<th style="text-align:left;padding:2px 0 4px;border-bottom:1px solid #ddd;">Comments / Notes</th>'
+            + '</tr>'
+            + _condRow('Inlet',               a.inlet_condition,   a.inlet_condition_notes)
+            + _condRow('Barrel',              a.barrel_condition,  a.barrel_condition_notes)
+            + _condRow('Outlet',              a.outlet_condition,  a.outlet_condition_notes)
+            + _condRow('Upstream Headwall',   a.hw_upstream_cond,  a.hw_upstream_cond_notes)
+            + _condRow('Downstream Headwall', a.hw_downstream_cond,a.hw_downstream_cond_notes)
           + '</table>'
         + '</div>';
 
@@ -38650,7 +38675,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // ── Culvert form — full inspection sub-tabs ────────────────────────────────
   // Ported from the NPS Culvert Assessment tool. Sub-tabs:
   // Location · Physical · Condition · Hydrology · Photos · Detail · Notes.
-  var _CULV_COND = ['1 – Excellent','2 – Good','3 – Fair','4 – Poor','5 – Critical','N/A'];
+  var _CULV_COND = ['1 – Excellent','2 – Good','3 – Fair','4 – Poor','5 – Failed','N/A'];
   var _CULV_OBS  = {
     inlet:  ['Debris','Scour','Joint Separation','Sediment','Undermining','Corrosion','Vegetation','Headwall Damage','Deformation','Other'],
     outlet: ['Debris','Scour','Joint Separation','Sediment','Undermining','Corrosion','Vegetation','Headwall Damage','Deformation','Other'],
@@ -38973,10 +38998,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return _sectionHdr('CONDITION RATINGS') +
         _condReadonlyRow('Overall', _deriveOverallCondition(pin), 'worst of all ratings below') +
         _selectRow('Inlet condition',     'inlet_condition',     a.inlet_condition     || '2 – Good', _o(_CULV_COND)) +
+        _inputRow ('Inlet notes',         'inlet_condition_notes',   a.inlet_condition_notes,   'text') +
         _selectRow('Barrel condition',    'barrel_condition',    a.barrel_condition    || '2 – Good', _o(_CULV_COND)) +
+        _inputRow ('Barrel notes',        'barrel_condition_notes',  a.barrel_condition_notes,  'text') +
         _selectRow('Outlet condition',    'outlet_condition',    a.outlet_condition    || '2 – Good', _o(_CULV_COND)) +
+        _inputRow ('Outlet notes',        'outlet_condition_notes',  a.outlet_condition_notes,  'text') +
         _selectRow('Upstream headwall',   'hw_upstream_cond',    a.hw_upstream_cond    || '2 – Good', _o(_CULV_COND)) +
+        _inputRow ('Upstream HW notes',   'hw_upstream_cond_notes',  a.hw_upstream_cond_notes,  'text') +
         _selectRow('Downstream headwall', 'hw_downstream_cond',  a.hw_downstream_cond  || '2 – Good', _o(_CULV_COND)) +
+        _inputRow ('Downstream HW notes', 'hw_downstream_cond_notes',a.hw_downstream_cond_notes,'text') +
         _sectionHdr('INLET — OBSERVED ISSUES')  + _culvObsGrid(a, 'inlet') +
         _sectionHdr('OUTLET — OBSERVED ISSUES') + _culvObsGrid(a, 'outlet') +
         _sectionHdr('BARREL — OBSERVED ISSUES') + _culvObsGrid(a, 'barrel');
