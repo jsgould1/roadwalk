@@ -33996,10 +33996,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + 'placeholder="Add notes…">';
   }
   // Mirror a single attrs.{field} change into the IDB inspection
-  // record so _mergedPin's IDB overlay sees the new value next time
-  // — without re-serialising the whole SECTIONS blob (which is what
-  // OOMs on photo-heavy projects). Same pattern _cvSyncHiddenToIdb
-  // already uses for report_hidden_photos.
+  // record so _mergedPin's IDB overlay sees the new value next time.
+  //
+  // The naive version of this (read rec → mutate field → store.put)
+  // OOMs the Edge tab budget on photo-heavy projects: any record
+  // that still carries embedded photo dataUrls in attrs.photos
+  // (pre-externalisation legacy records, or anything that slipped
+  // past _saveDataForm) gets fully structured-cloned on every
+  // dropdown change. The fix mirrors _saveDataForm: build a LEAN
+  // attrs copy where each ph.dataUrl is replaced by a _photo_key
+  // ref, stream the raw bytes to their own per-photo IDB records,
+  // then put just the lean record. Photos already carrying
+  // _photo_key are pass-through — no redundant write.
   function _cvSyncFieldToIdb(pin, field, value) {
     if (!pin || !pin.ulid) return;
     var rec = _dataState && _dataState.idbCacheByUlid
@@ -34015,10 +34023,62 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var getReq = store.get(pin.ulid);
       getReq.onsuccess = function (ev) {
         var dbRec = ev.target.result;
-        if (!dbRec) return;
-        if (!dbRec.attrs) dbRec.attrs = {};
-        dbRec.attrs[field] = value;
-        store.put(dbRec);
+        if (!dbRec) {
+          dbRec = {
+            pin_id: pin.id,
+            ulid:   pin.ulid,
+            kind:   pin.kind,
+            sec_id: null,
+            attrs:  {},
+          };
+        }
+        var srcAttrs = dbRec.attrs || {};
+        var leanAttrs = {};
+        var photoWrites = [];
+        var k;
+        for (k in srcAttrs) {
+          if (k === 'photos' && Array.isArray(srcAttrs[k])) {
+            leanAttrs[k] = srcAttrs[k].map(function (ph, i) {
+              if (!ph || typeof ph !== 'object') return ph;
+              if (!ph.dataUrl) return ph;          // already lean
+              if (ph._photo_key) {                  // key present — strip bytes, keep ref
+                var keep = {};
+                for (var pk in ph) {
+                  if (pk !== 'dataUrl') keep[pk] = ph[pk];
+                }
+                return keep;
+              }
+              // Orphan dataUrl — externalise it to its own safety
+              // record so the inspection record stays small.
+              var key = 'rw_pinphoto_' + pin.ulid + '_' + i;
+              photoWrites.push({ key: key, dataUrl: ph.dataUrl });
+              var lean = { _photo_key: key };
+              for (var pk2 in ph) {
+                if (pk2 !== 'dataUrl') lean[pk2] = ph[pk2];
+              }
+              return lean;
+            });
+          } else {
+            leanAttrs[k] = srcAttrs[k];
+          }
+        }
+        leanAttrs[field] = value;
+        dbRec.attrs    = leanAttrs;
+        dbRec.saved_at = new Date().toISOString();
+        try { store.put(dbRec); } catch (_) {}
+
+        // Stream any orphan dataUrls to their own safety records,
+        // one at a time, so each structured clone stays tiny. Fire
+        // and forget — the field update has already landed.
+        if (photoWrites.length && window.RWIdb && typeof window.RWIdb.put === 'function') {
+          var _wi = 0;
+          (function next() {
+            if (_wi >= photoWrites.length) return;
+            var p = photoWrites[_wi++];
+            window.RWIdb.put('safety', { dataUrl: p.dataUrl }, p.key)
+              .then(next, next);
+          })();
+        }
       };
     }).catch(function () {});
   }
@@ -35166,8 +35226,37 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // ── Inline condition editing (rating <select> + notes <input>) ──
     // Direct attrs mutation + IDB sync via _cvSyncFieldToIdb mirrors
     // the per-photo hide path. We deliberately do NOT call
-    // persistSections per change — that re-serialises the whole
-    // SECTIONS blob which is the OOM trigger we already fought once.
+    // persistSections or renderCulvertsReport per change — those
+    // re-serialise the whole SECTIONS blob / rebuild the DOM for
+    // every culvert in the section, which was OOMing the tab. The
+    // surgical update below only refreshes the one card the user is
+    // editing: its overall-condition pill, its select's color, and
+    // its schematic SVG.
+    function _surgicallyUpdateCard(card, pin) {
+      if (!card || !pin) return;
+      // Overall condition pill
+      var overallVal = card.querySelector('.sr-info-row-overall .sr-info-name-val');
+      if (overallVal) {
+        var ovCond = _deriveOverallCondition(pin) || '—';
+        overallVal.innerHTML = _cvColoredCond(ovCond);
+      }
+      // Recolor every rating select in this card so the new value
+      // reads in the right condition color.
+      card.querySelectorAll('.cv-cond-edit').forEach(function (s) {
+        var n = _cvCondLetter(s.value);
+        s.style.color = n ? _CV_COND_COLOR[n] : '#6b7280';
+        s.style.fontWeight = n ? '700' : '400';
+      });
+      // Redraw the barrel + end-fitting SVG (its strokes are colored
+      // by the same _CV_COND_COLOR map).
+      var schem = card.querySelector('.cv-schematic');
+      if (schem) {
+        var fresh = _cvBarrelSchematicSvg(pin);
+        // _cvBarrelSchematicSvg returns the wrapping <div> too; swap
+        // the whole node so its inline width stays consistent.
+        schem.outerHTML = fresh;
+      }
+    }
     list.querySelectorAll('.cv-cond-edit').forEach(function (sel) {
       sel.addEventListener('change', function () {
         var r = all[+sel.dataset.cvIdx];
@@ -35178,9 +35267,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var attrs = pin.attrs || (pin.attrs = {});
         attrs[field] = sel.value;
         _cvSyncFieldToIdb(pin, field, sel.value);
-        // Re-render so the Overall Condition row + the barrel /
-        // end-fitting colors in the schematic pick up the change.
-        renderCulvertsReport();
+        _surgicallyUpdateCard(sel.closest('.sr-card'), pin);
       });
     });
     list.querySelectorAll('.cv-notes-edit').forEach(function (inp) {
@@ -35193,9 +35280,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var attrs = pin.attrs || (pin.attrs = {});
         attrs[field] = inp.value;
         _cvSyncFieldToIdb(pin, field, inp.value);
-        // No re-render on notes — the new text is already in the
-        // input the user just typed into, and a re-render would
-        // blur the field mid-edit.
+        // No surgical update — the new text is already in the input
+        // the user just typed into, and stepping outside it would
+        // blur mid-edit.
       });
     });
 
@@ -43192,7 +43279,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     list:        function () { return PHOTOS.slice(); },
     get:         function (id) { return PHOTOS.find(function (p) { return p.id === id; }) || null; },
     save:        function (p) { return dbPut(p); },
-    saveMany:    function (ps) { return Promise.all(ps.map(dbPut)); },
+    // Chunked so the structured-clone budget stays bounded. Promise.all
+    // over every photo at once was OOMing the tab on photo-heavy
+    // selections — each dbPut structured-clones the geophoto record
+    // (incl. its dataUrl), and N parallel clones briefly hold N copies
+    // of the bytes in memory at the same time. Chunks of 2 keep at most
+    // two photo-sized clones in flight at any moment.
+    saveMany:    function (ps) {
+      var CHUNK = 2;
+      function step(i) {
+        if (i >= ps.length) return Promise.resolve();
+        var batch = ps.slice(i, i + CHUNK);
+        return Promise.all(batch.map(dbPut)).then(function () { return step(i + CHUNK); });
+      }
+      return step(0);
+    },
     newGroupId:  _newGroupId,
     groupColor:  _groupColor,
     members:     _groupMembers,
