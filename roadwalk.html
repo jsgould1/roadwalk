@@ -29834,12 +29834,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     }
 
-    // ── Signs Report: rebuild on tab switch ─────────────────────
-    // Every reopen pulls a fresh _mergedPin so latest form edits
-    // appear immediately (the data form may have been saved between
-    // the last open and this one).
+    // ── Signs Report: render only on first entry ───────────────
+    // Rebuilding all sign cards (DOM + Leaflet inset maps) doubles
+    // the in-flight memory for a tick — fine on a cold tab switch,
+    // catastrophic when stacked on top of a fresh _saveDataForm
+    // write (Edge OOM-page-crashes ~50% of saves from the Edit Data
+    // → Save flow because that flow comes back through here).
+    // So only render when the list is actually empty. Section / chip
+    // / search controls already re-render on change, and the saved
+    // pin's card is briefly stale on the on-screen view until then —
+    // a fair trade for not crashing the tab.
     if (name === 'signs_report' && typeof window.renderSignsReport === 'function') {
-      window.renderSignsReport();
+      var _srList = document.getElementById('sr-list');
+      if (!_srList || !_srList.children.length) {
+        window.renderSignsReport();
+      }
     }
 
     // ── Data module: refresh list + badges on tab switch ───────
