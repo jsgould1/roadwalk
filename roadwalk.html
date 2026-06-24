@@ -12634,6 +12634,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         const added = _bundleSecs.filter(function (s) { return s && !savedIds.has(s.id); });
         SECTIONS = saved.sections.concat(added);
         window.SECTIONS = SECTIONS;
+        // ── Pin-level merge: also pick up brand-new pins published into
+        // sections that already existed in the working copy. Matches by
+        // ULID so pins the user added by hand stay in place; only pins
+        // whose ULIDs don't appear in the saved section get appended.
+        // Skips _userAdded sections (no bundle source) and bundle pins
+        // that don't carry a ULID (so we never duplicate by id collision).
+        // This is how new feature drops — the AECOM_FOX culvert ingest,
+        // future PMIS-driven sign updates, etc. — surface without a
+        // destructive "Reset to published data".
+        var addedPinCount = 0;
+        SECTIONS.forEach(function (sec) {
+          if (sec._userAdded) return;
+          var bundleSec = _bundleSecs.find(function (b) { return b && b.id === sec.id; });
+          if (!bundleSec || !Array.isArray(bundleSec.pins)) return;
+          var savedUlids = new Set(
+            (sec.pins || [])
+              .map(function (p) { return p && p.ulid; })
+              .filter(Boolean)
+          );
+          var newPins = bundleSec.pins.filter(function (p) {
+            return p && p.ulid && !savedUlids.has(p.ulid);
+          });
+          if (newPins.length) {
+            sec.pins = (sec.pins || []).concat(newPins);
+            addedPinCount += newPins.length;
+          }
+        });
         // Hydrate per-pin photo dataUrls back from their own IDB
         // records. _persistSections externalises them so the
         // SECTIONS blob stays small (avoids structured-clone OOM).
@@ -12658,11 +12685,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
           console.log('[RoadWalk] Restored field working copy —',
             saved.sections.length, 'edited section(s), +' + added.length +
-            ' new from bundle [' + added.map(function (s) { return s.id; }).join(',') +
-            '], hydrated ' + hydrations.length + ' photo dataUrl(s), saved', saved.saved_at);
-          // Persist the merged copy so the new sections survive the next
-          // reload (and are included in any export).
-          if (added.length && window._RW && typeof window._RW.persistSections === 'function') {
+            ' new section(s) from bundle [' + added.map(function (s) { return s.id; }).join(',') +
+            '], +' + addedPinCount + ' new pin(s), hydrated ' +
+            hydrations.length + ' photo dataUrl(s), saved', saved.saved_at);
+          // Persist the merged copy so the new sections + pins survive
+          // the next reload (and are included in any export).
+          if ((added.length || addedPinCount) && window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
         });
