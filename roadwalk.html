@@ -34282,13 +34282,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // (header + footer) but show only the photo grid.
     var PHOTOS_PAGE_1 = 3;
     var PHOTOS_PAGE_N = 12;
+    // Returns the photos that should appear in the printed report
+    // PLUS the count of report-hidden photos so the main card can
+    // surface a Restore (N hidden) button. Each visible entry is
+    // enriched with _emb_idx / _hide_key so the action buttons can
+    // route through the same annotate / hide path the sign report
+    // uses (window._RW.openAnnotateModal, report_hidden_photos).
     function _photosForCulvert(pin) {
       var a = pin.attrs || {};
-      var photos = Array.isArray(a.photos) ? a.photos : [];
+      var rawPhotos = Array.isArray(a.photos) ? a.photos : [];
       var hidden = new Set(Array.isArray(a.report_hidden_photos) ? a.report_hidden_photos : []);
-      return photos
-        .map(function (p, i) { return { idx: i, p: p }; })
-        .filter(function (e) { return !hidden.has('emb:' + e.idx) && e.p && e.p.dataUrl; });
+      var out = [];
+      var hiddenCount = 0;
+      rawPhotos.forEach(function (p, i) {
+        if (!p || !p.dataUrl) return;
+        var key = 'emb:' + i;
+        if (hidden.has(key)) { hiddenCount++; return; }
+        out.push({
+          idx:       i,
+          p:         p,
+          src:       p.dataUrl,
+          caption:   p.caption || '',
+          _emb_idx:  i,
+          _hide_key: key,
+        });
+      });
+      out._hiddenCount = hiddenCount;
+      return out;
     }
     function _chunkPhotos(photos) {
       if (!photos.length) return [[]];
@@ -34453,9 +34473,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!chunk.length) return '<div class="sr-tbl-empty">No photos linked yet.</div>';
         return '<div class="sr-photo-grid">'
           + chunk.map(function (e) {
-              var cap = e.p.caption ? '<figcaption>' + _esc(e.p.caption) + '</figcaption>' : '';
+              var cap = e.caption ? '<figcaption>' + _esc(e.caption) + '</figcaption>' : '';
+              // ✎ annotate (form-photo annotation modal) and ✕ hide
+              // mirror the sign report's per-photo action buttons.
+              // .sr-photo-actions is display:none in print so the
+              // deliverable stays clean.
+              var acts = ''
+                + '<button type="button" class="sr-photo-act sr-photo-ann" '
+                  + 'data-cv-idx="' + idx + '" data-emb-idx="' + e._emb_idx + '" '
+                  + 'title="Annotate">&#9998;</button>'
+                + '<button type="button" class="sr-photo-act sr-photo-hide" '
+                  + 'data-cv-idx="' + idx + '" data-hide-key="' + _esc(e._hide_key) + '" '
+                  + 'title="Hide from printed report (photo is kept)">&times;</button>';
               return '<figure class="sr-photo">'
-                + '<img src="' + e.p.dataUrl + '" alt="">'
+                + '<img src="' + e.src + '" alt="">'
+                + '<div class="sr-photo-actions">' + acts + '</div>'
                 + cap
                 + '</figure>';
             }).join('')
@@ -34522,6 +34554,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   + '<button type="button" class="cv-pick-btn" '
                     + 'data-cv-idx="' + idx + '" '
                     + 'title="Pick from photos you have already taken, sorted by distance">📍 Select Nearby Photos</button>'
+                  + (visiblePhotos._hiddenCount
+                      ? '<button type="button" class="sr-restore-btn cv-restore-btn" '
+                        + 'data-cv-idx="' + idx + '">↻ Restore ('
+                        + visiblePhotos._hiddenCount + ' hidden)</button>'
+                      : '')
                 + '</span>'
               + '</div>' +
               _photoGrid(chunk) +
@@ -34564,6 +34601,91 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     } else {
       insetDivs.forEach(_cvInitInsetMap);
     }
+
+    // ── Per-photo annotate / hide + per-card Restore ──
+    // Mirrors _srSyncHiddenToIdb so the IDB inspection record's
+    // report_hidden_photos list stays in lockstep with the bundle pin.
+    // _mergedPin overlays IDB attrs ON TOP of the bundle, so writing
+    // only to the bundle would let a stale IDB list mask the change
+    // until the project reloaded.
+    function _cvSyncHiddenToIdb(pin, hiddenList) {
+      if (!pin || !pin.ulid) return;
+      var rec = _dataState && _dataState.idbCacheByUlid
+        ? _dataState.idbCacheByUlid[pin.ulid] : null;
+      if (rec) {
+        if (!rec.attrs) rec.attrs = {};
+        rec.attrs.report_hidden_photos = hiddenList.slice();
+      }
+      if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function') return;
+      window.RWIdb.openDB().then(function (db) {
+        var tx    = db.transaction('inspections', 'readwrite');
+        var store = tx.objectStore('inspections');
+        var getReq = store.get(pin.ulid);
+        getReq.onsuccess = function (ev) {
+          var dbRec = ev.target.result;
+          if (!dbRec) return;
+          if (!dbRec.attrs) dbRec.attrs = {};
+          dbRec.attrs.report_hidden_photos = hiddenList.slice();
+          store.put(dbRec);
+        };
+      }).catch(function () {});
+    }
+
+    list.querySelectorAll('.sr-photo-act').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+
+        if (btn.classList.contains('sr-photo-ann')) {
+          var embIdx = +btn.dataset.embIdx;
+          if (!isFinite(embIdx)) return;
+          if (!window._RW || typeof window._RW.openAnnotateModal !== 'function') {
+            alert('Annotate not available.');
+            return;
+          }
+          window._RW.openAnnotateModal(embIdx, pin, function () {
+            if (window._RW && typeof window._RW.persistSections === 'function') {
+              try { window._RW.persistSections(); } catch (_) {}
+            }
+            renderCulvertsReport();
+          });
+          return;
+        }
+
+        if (btn.classList.contains('sr-photo-hide')) {
+          var hideKey = btn.dataset.hideKey;
+          if (!hideKey) return;
+          var hidden = Array.isArray(attrs.report_hidden_photos)
+            ? attrs.report_hidden_photos.slice()
+            : [];
+          if (hidden.indexOf(hideKey) === -1) hidden.push(hideKey);
+          attrs.report_hidden_photos = hidden;
+          _cvSyncHiddenToIdb(pin, hidden);
+          if (window._RW && typeof window._RW.persistSections === 'function') {
+            try { window._RW.persistSections(); } catch (_) {}
+          }
+          renderCulvertsReport();
+        }
+      });
+    });
+
+    list.querySelectorAll('.cv-restore-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+        attrs.report_hidden_photos = [];
+        _cvSyncHiddenToIdb(pin, []);
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          try { window._RW.persistSections(); } catch (_) {}
+        }
+        renderCulvertsReport();
+      });
+    });
 
     // ── Auto-add-nearby button ──
     list.querySelectorAll('.cv-auto-btn').forEach(function (btn) {
