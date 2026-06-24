@@ -34093,6 +34093,44 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     return worst;
   }
+  // True when the pin actually has a named structure on this end —
+  // "Headwall", "Type 4A/4B/6B", "Manhole/Drop Inlet", "Flange", or any
+  // user-typed freeform. False for empty, "None", or "N/A". Used to
+  // gate the FAIR default on Inlet Structure / Outlet Structure so the
+  // report doesn't claim a condition on something that isn't there.
+  function _cvHasEndStructure(pin, side /* 'in' | 'out' */) {
+    if (!pin) return false;
+    var a = pin.attrs || {};
+    var v = (side === 'in') ? a.in_type : a.out_type;
+    if (v == null) return false;
+    var s = String(v).trim().toLowerCase();
+    if (!s) return false;
+    if (s === 'none' || s === 'n/a' || s === '—' || s === '-') return false;
+    return true;
+  }
+  // Effective condition rating with the project's default-FAIR rule:
+  //   Inlet / Barrel / Outlet   → "3 – Fair" if unset
+  //   Inlet  Structure (hw_us)  → "3 – Fair" only if in_type names a structure
+  //   Outlet Structure (hw_ds)  → "3 – Fair" only if out_type names a structure
+  // Returns the raw attrs[field] when it has a value, or '' when the
+  // structure gate fails on a headwall.
+  function _cvEffectiveCond(pin, field) {
+    var a = (pin && pin.attrs) || {};
+    var v = a[field];
+    if (v != null && String(v).trim() !== '') return v;
+    if (field === 'inlet_condition'
+        || field === 'barrel_condition'
+        || field === 'outlet_condition') return '3 – Fair';
+    if (field === 'hw_upstream_cond')   return _cvHasEndStructure(pin, 'in')  ? '3 – Fair' : '';
+    if (field === 'hw_downstream_cond') return _cvHasEndStructure(pin, 'out') ? '3 – Fair' : '';
+    return '';
+  }
+  // Expose to the form module so its _deriveOverallCondition + the
+  // form's CONDITION sub-tab can apply the same defaults.
+  window._RW = window._RW || {};
+  window._RW.cv = window._RW.cv || {};
+  window._RW.cv.effectiveCond   = _cvEffectiveCond;
+  window._RW.cv.hasEndStructure = _cvHasEndStructure;
   // Shared escape (same pattern the sign report uses internally).
   function _esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -34180,12 +34218,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     function _endRatingColor(side, shape) {
       var isInlet = (side === 'inlet');
       if (shape === 'headwall') {
-        return _ratingColor(isInlet ? a.hw_upstream_cond : a.hw_downstream_cond);
+        return _ratingColor(_cvEffectiveCond(pin, isInlet ? 'hw_upstream_cond' : 'hw_downstream_cond'));
       }
-      return _ratingColor(isInlet ? a.inlet_condition : a.outlet_condition);
+      return _ratingColor(_cvEffectiveCond(pin, isInlet ? 'inlet_condition' : 'outlet_condition'));
     }
-    var barrelColor = _ratingColor(a.barrel_condition);
-    var barrelLabel = a.barrel_condition ? String(a.barrel_condition) : 'No barrel rating';
+    var _barrelEff = _cvEffectiveCond(pin, 'barrel_condition');
+    var barrelColor = _ratingColor(_barrelEff);
+    var barrelLabel = _barrelEff ? String(_barrelEff) : 'No barrel rating';
 
     function _endShape(side, shape, anchorX) {
       var isInlet = (side === 'inlet');
@@ -34790,8 +34829,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
 
       var ovCond = _cvWorstCond([
-        a.inlet_condition, a.barrel_condition, a.outlet_condition,
-        a.hw_upstream_cond, a.hw_downstream_cond,
+        _cvEffectiveCond(pin, 'inlet_condition'),
+        _cvEffectiveCond(pin, 'barrel_condition'),
+        _cvEffectiveCond(pin, 'outlet_condition'),
+        _cvEffectiveCond(pin, 'hw_upstream_cond'),
+        _cvEffectiveCond(pin, 'hw_downstream_cond'),
       ]);
 
       // Description — concise summary built per spec:
@@ -34914,16 +34956,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               + '<col style="width:18%">'
               + '<col style="width:50%">'
             + '</colgroup>'
-            + _condRow('Inlet',               a.inlet_condition,   a.inlet_condition_notes,
-                        'inlet_condition',    'inlet_condition_notes')
-            + _condRow('Barrel',              a.barrel_condition,  a.barrel_condition_notes,
-                        'barrel_condition',   'barrel_condition_notes')
-            + _condRow('Outlet',              a.outlet_condition,  a.outlet_condition_notes,
-                        'outlet_condition',   'outlet_condition_notes')
-            + _condRow('Upstream Headwall',   a.hw_upstream_cond,  a.hw_upstream_cond_notes,
-                        'hw_upstream_cond',   'hw_upstream_cond_notes')
-            + _condRow('Downstream Headwall', a.hw_downstream_cond,a.hw_downstream_cond_notes,
-                        'hw_downstream_cond', 'hw_downstream_cond_notes')
+            + _condRow('Inlet',            _cvEffectiveCond(pin, 'inlet_condition'),    a.inlet_condition_notes,
+                        'inlet_condition', 'inlet_condition_notes')
+            + _condRow('Barrel',           _cvEffectiveCond(pin, 'barrel_condition'),   a.barrel_condition_notes,
+                        'barrel_condition','barrel_condition_notes')
+            + _condRow('Outlet',           _cvEffectiveCond(pin, 'outlet_condition'),   a.outlet_condition_notes,
+                        'outlet_condition','outlet_condition_notes')
+            + _condRow('Inlet Structure',  _cvEffectiveCond(pin, 'hw_upstream_cond'),   a.hw_upstream_cond_notes,
+                        'hw_upstream_cond','hw_upstream_cond_notes')
+            + _condRow('Outlet Structure', _cvEffectiveCond(pin, 'hw_downstream_cond'), a.hw_downstream_cond_notes,
+                        'hw_downstream_cond','hw_downstream_cond_notes')
           + '</table>'
         + '</div>';
 
@@ -38731,8 +38773,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (p) { codes.push(p.panel_condition); codes.push(p.sheeting_condition); }
       });
     } else if (pin.kind === 'culvert') {
-      codes.push(a.inlet_condition, a.barrel_condition, a.outlet_condition,
-                 a.hw_upstream_cond, a.hw_downstream_cond);
+      // Use the same default-FAIR + structure-gated rule the report
+      // uses so the form's Overall pill and the report's "Overall
+      // Condition" line never disagree.
+      var _eff = window._RW && window._RW.cv && window._RW.cv.effectiveCond;
+      if (_eff) {
+        codes.push(_eff(pin, 'inlet_condition'),
+                   _eff(pin, 'barrel_condition'),
+                   _eff(pin, 'outlet_condition'),
+                   _eff(pin, 'hw_upstream_cond'),
+                   _eff(pin, 'hw_downstream_cond'));
+      } else {
+        codes.push(a.inlet_condition, a.barrel_condition, a.outlet_condition,
+                   a.hw_upstream_cond, a.hw_downstream_cond);
+      }
     }
     return _worstCondition(codes);
   }
@@ -39513,18 +39567,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // ── CONDITION ─────────────────────────────────────────────────────────────
     if (sub === 'condition') {
+      // Defaults match the report: Inlet / Barrel / Outlet always
+      // default to "3 – Fair"; Inlet Structure and Outlet Structure
+      // only default to Fair if the corresponding end type names an
+      // actual structure (a culvert with no inlet headwall shouldn't
+      // claim a Fair rating on a thing that isn't there).
+      var _hasInS  = window._RW && window._RW.cv && window._RW.cv.hasEndStructure
+        ? window._RW.cv.hasEndStructure(pin, 'in')  : true;
+      var _hasOutS = window._RW && window._RW.cv && window._RW.cv.hasEndStructure
+        ? window._RW.cv.hasEndStructure(pin, 'out') : true;
+      var _hwUsDefault = _hasInS  ? '3 – Fair' : '';
+      var _hwDsDefault = _hasOutS ? '3 – Fair' : '';
       return _sectionHdr('CONDITION RATINGS') +
         _condReadonlyRow('Overall', _deriveOverallCondition(pin), 'worst of all ratings below') +
-        _selectRow('Inlet condition',     'inlet_condition',     a.inlet_condition     || '2 – Good', _o(_CULV_COND)) +
+        _selectRow('Inlet condition',     'inlet_condition',     a.inlet_condition     || '3 – Fair', _o(_CULV_COND)) +
         _inputRow ('Inlet notes',         'inlet_condition_notes',   a.inlet_condition_notes,   'text') +
-        _selectRow('Barrel condition',    'barrel_condition',    a.barrel_condition    || '2 – Good', _o(_CULV_COND)) +
+        _selectRow('Barrel condition',    'barrel_condition',    a.barrel_condition    || '3 – Fair', _o(_CULV_COND)) +
         _inputRow ('Barrel notes',        'barrel_condition_notes',  a.barrel_condition_notes,  'text') +
-        _selectRow('Outlet condition',    'outlet_condition',    a.outlet_condition    || '2 – Good', _o(_CULV_COND)) +
+        _selectRow('Outlet condition',    'outlet_condition',    a.outlet_condition    || '3 – Fair', _o(_CULV_COND)) +
         _inputRow ('Outlet notes',        'outlet_condition_notes',  a.outlet_condition_notes,  'text') +
-        _selectRow('Upstream headwall',   'hw_upstream_cond',    a.hw_upstream_cond    || '2 – Good', _o(_CULV_COND)) +
-        _inputRow ('Upstream Headwall notes',   'hw_upstream_cond_notes',  a.hw_upstream_cond_notes,  'text') +
-        _selectRow('Downstream headwall', 'hw_downstream_cond',  a.hw_downstream_cond  || '2 – Good', _o(_CULV_COND)) +
-        _inputRow ('Downstream Headwall notes', 'hw_downstream_cond_notes',a.hw_downstream_cond_notes,'text') +
+        _selectRow('Inlet Structure',     'hw_upstream_cond',    a.hw_upstream_cond    || _hwUsDefault, _o(_CULV_COND)) +
+        _inputRow ('Inlet Structure notes',     'hw_upstream_cond_notes',  a.hw_upstream_cond_notes,  'text') +
+        _selectRow('Outlet Structure',    'hw_downstream_cond',  a.hw_downstream_cond  || _hwDsDefault, _o(_CULV_COND)) +
+        _inputRow ('Outlet Structure notes',    'hw_downstream_cond_notes',a.hw_downstream_cond_notes,'text') +
         _sectionHdr('INLET — OBSERVED ISSUES')  + _culvObsGrid(a, 'inlet') +
         _sectionHdr('OUTLET — OBSERVED ISSUES') + _culvObsGrid(a, 'outlet') +
         _sectionHdr('BARREL — OBSERVED ISSUES') + _culvObsGrid(a, 'barrel');
