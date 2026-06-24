@@ -33984,7 +33984,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (rec && rec.pin_id) _dataState.idbCache[rec.pin_id]     = rec;
         if (rec && rec.ulid)   _dataState.idbCacheByUlid[rec.ulid] = rec;
       });
-      return _dataState.idbCache;
+      // Hydrate any per-pin photo dataUrls that were externalised by
+      // _saveDataForm (v138+) so _mergedPin returns thumbnails as
+      // soon as the form opens. Records that pre-date v138 still
+      // carry dataUrl inline — those skip the lookup.
+      var hydrations = [];
+      (records || []).forEach(function (rec) {
+        if (!rec || !rec.attrs || !Array.isArray(rec.attrs.photos)) return;
+        rec.attrs.photos.forEach(function (ph) {
+          if (!ph || ph.dataUrl || !ph._photo_key) return;
+          hydrations.push(
+            window.RWIdb.get('safety', ph._photo_key).then(function (rr) {
+              if (rr && rr.dataUrl) ph.dataUrl = rr.dataUrl;
+            }).catch(function () { /* missing record — skip */ })
+          );
+        });
+      });
+      return Promise.all(hydrations).then(function () {
+        return _dataState.idbCache;
+      });
     });
   }
 
@@ -37600,13 +37618,36 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     }
 
+    // pin.attrs.photos[] carries full base64 dataUrls. Persisting the
+    // raw object to IDB OOMs the browser on signs with many photos
+    // (structured clone doubles the in-flight size). Build a lean
+    // attrs copy where each ph.dataUrl is replaced by a _photo_key
+    // reference, and stash each dataUrl as its own tiny IDB record
+    // under 'rw_pinphoto_<ulid>_<idx>'. _loadIdbCache rehydrates them
+    // on the next form open.
+    var _attrsForIdb = pin.attrs || {};
+    var _photoWrites = [];
+    if (Array.isArray(_attrsForIdb.photos) && pin.ulid) {
+      _attrsForIdb = Object.assign({}, _attrsForIdb, {
+        photos: _attrsForIdb.photos.map(function (ph, i) {
+          if (!ph || !ph.dataUrl) return ph;
+          var key = 'rw_pinphoto_' + pin.ulid + '_' + i;
+          _photoWrites.push({ key: key, dataUrl: ph.dataUrl });
+          var copy = Object.assign({}, ph);
+          copy._photo_key = key;
+          delete copy.dataUrl;
+          return copy;
+        }),
+      });
+    }
+
     var record = {
       pin_id:   pin.id,             // human-readable label (mutable: renumbered on insert)
       ulid:     pin.ulid,           // canonical primary key (immutable)
       kind:     pin.kind,
       sec_id:   _dataState.sec ? _dataState.sec.id : null,
       status:   pin.status || 'pending',
-      attrs:    pin.attrs || {},
+      attrs:    _attrsForIdb,
       saved_at: new Date().toISOString(),
     };
 
@@ -37630,10 +37671,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     return window.RWIdb.put('inspections', record).then(function () {
-      // Update both cache indexes so _mergedPin finds the record immediately
-      _dataState.idbCache[pin.id]             = record;
-      _dataState.idbCacheByUlid[record.ulid]  = record;
+      // Cache the FULL record (with original dataUrls) so _mergedPin
+      // returns thumbnails immediately. record.attrs.photos is the
+      // lean version intended only for IDB.
+      var fullRecord = Object.assign({}, record, { attrs: pin.attrs });
+      _dataState.idbCache[pin.id]             = fullRecord;
+      _dataState.idbCacheByUlid[fullRecord.ulid]  = fullRecord;
       _dataState.dirty = false;
+      // Stream the photo dataUrls to their own IDB records, one at a
+      // time, so the structured clone stays small.
+      var _pi = 0;
+      function _nextPhoto() {
+        if (_pi >= _photoWrites.length) return;
+        var p = _photoWrites[_pi++];
+        window.RWIdb.put('safety', { dataUrl: p.dataUrl }, p.key)
+          .then(_nextPhoto, function () { _nextPhoto(); });
+      }
+      _nextPhoto();
       // Also persist the whole working SECTIONS copy so it survives reload.
       if (window._RW && typeof window._RW.persistSections === 'function') {
         window._RW.persistSections();
