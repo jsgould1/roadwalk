@@ -5040,26 +5040,36 @@ body.rw-sld-photo-dragging .strip-pin {
 /* ── Print rules — collapse chrome, one card per page ────────────── */
 @media print {
   @page { size: letter; margin: 0; }
-  /* Body + html lose the screen viewport-height constraint so the full
-     card stack flows onto its own pages instead of being clipped to
-     the first sheet. */
-  html, body {
+  /* Release every layer of the screen layout that anchors content to
+     the viewport: #app is position:fixed, .app-main is overflow:hidden
+     flex child, .module-view is position:absolute inset:0. All three
+     collapse the printable region to a single viewport-sized box if
+     left as-is, which is why only one sheet ever came out. */
+  html, body, #app {
     background: #fff !important;
     height: auto !important; min-height: 0 !important;
     overflow: visible !important;
+    position: static !important; inset: auto !important;
+    display: block !important;
+    padding: 0 !important;
   }
-  /* Hide everything except the signs-report module + its cards.
-     #app-nav is the real top nav element — the previous #app-header
-     selector matched nothing so the AECOM/RoadWalk header used to
-     bleed onto the first printed page and cover the report header. */
-  header, #app-nav, #app-tabs, #header-settings-btn, #app-header,
+  /* Hide the top app chrome. NOTE: the previous rule used a bare
+     `header,` tag selector that matched the per-card
+     <header class="sr-card-hdr"> too, which is why the Sign Inventory
+     Report title + section info + agency logos went missing from the
+     printed page. Use specific selectors only. */
+  #app-nav, #app-tabs, #header-settings-btn,
   .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-delete-btn,
   .sr-panel-del,
   .sr-restore-btn, .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
-  /* Module + list both have to drop their flex / overflow-y:auto
-     so the card stack isn't trapped inside a fixed-height scroll
-     container. Without these overrides only page 1 ever printed. */
+  .app-main {
+    position: static !important; overflow: visible !important;
+    flex: 0 0 auto !important; height: auto !important;
+  }
+  .module-view {
+    position: static !important; inset: auto !important;
+  }
   #mod-signs_report.active {
     display: block !important; overflow: visible !important;
     height: auto !important; min-height: 0 !important;
