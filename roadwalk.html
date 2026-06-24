@@ -4997,6 +4997,29 @@ body.rw-sld-photo-dragging .strip-pin {
 /* Push the posts block to the bottom of the left column so its bottom
    edge aligns with the maplet's bottom edge. */
 .sr-identity-left > :last-child { margin-top: auto; }
+/* Culvert cards have only the identity block in identity-left (no
+   posts block), so the bottom-push above leaves the Pin ID / Overall /
+   MP rows floating at the bottom of the column. Anchor them to the
+   top instead so they read from the top edge of the inset map. */
+.sr-card[data-cv-idx] .sr-identity-left > :last-child { margin-top: 0; }
+/* Per-culvert action buttons (Select Nearby Photos, Auto-add nearby)
+   sit in the Photos section header. They are screen-only — the print
+   stylesheet hides .sr-photo-actions, so we route through the same
+   class to inherit that behavior. */
+.cv-photo-actions {
+  display: inline-flex; gap: 6px; margin-left: auto;
+}
+.cv-photo-actions .cv-pick-btn,
+.cv-photo-actions .cv-auto-btn {
+  font: 700 9.5px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 8px; border: 1px solid var(--rule); border-radius: 3px;
+  background: #fff; color: var(--ink); cursor: pointer;
+}
+.cv-photo-actions .cv-pick-btn { background: var(--blue, #1d4ed8); color: #fff; border-color: var(--blue, #1d4ed8); }
+.cv-photo-actions .cv-auto-btn:hover  { background: var(--paper-2); }
+.cv-photo-actions .cv-pick-btn:hover  { filter: brightness(1.05); }
+@media print { .cv-photo-actions { display: none !important; } }
 .sr-identity-right { display: flex; min-height: 2.3in; }
 .sr-identity-right .sr-card-map {
   width: 100%; height: auto; min-height: 2.3in; flex: 1;
@@ -33830,6 +33853,163 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
   function _cvSourceLabel(k) { return k || '(no source)'; }
 
+  // ── Culvert inset map ────────────────────────────────────────────
+  // Mirror of _srInitInsetMap but tuned for a polyline asset on ESRI
+  // World Imagery (aerial) with the culvert drawn in deliberate blue.
+  // Lazy-init via IntersectionObserver so opening the report doesn't
+  // spin up 60 Leaflet maps at once.
+  var _cvInsetMaps    = [];
+  var _cvInsetObserver = null;
+  function _cvInitInsetMap(div) {
+    if (!div || div._cvInitialized || typeof L === 'undefined') return null;
+    div._cvInitialized = true;
+    var coords;
+    try { coords = JSON.parse(div.dataset.coords || '[]'); } catch (_) { coords = []; }
+    if (!Array.isArray(coords) || coords.length < 2) {
+      div.classList.add('empty');
+      return null;
+    }
+    // GeoJSON coords are [lng, lat]; Leaflet wants [lat, lng].
+    var ll = coords
+      .map(function (c) {
+        var lng = +c[0], lat = +c[1];
+        return (isFinite(lng) && isFinite(lat)) ? [lat, lng] : null;
+      })
+      .filter(Boolean);
+    if (ll.length < 2) { div.classList.add('empty'); return null; }
+
+    var map = L.map(div, {
+      zoomControl: false, attributionControl: false,
+      dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false, touchZoom: false, tap: false,
+    });
+    var tileFn = window.offlineTileLayer || L.tileLayer;
+    tileFn(
+      'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19 },
+      'esri_aerial'
+    ).addTo(map);
+    // The culvert line + endpoint pips. Blue per spec to read as the
+    // drainage feature rather than the road centerline.
+    L.polyline(ll, { color: '#1d4ed8', weight: 4, opacity: 0.95 }).addTo(map);
+    L.circleMarker(ll[0],            { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
+    L.circleMarker(ll[ll.length - 1], { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
+    map.fitBounds(L.latLngBounds(ll).pad(0.6));
+    setTimeout(function () { try { map.invalidateSize(); } catch (_) {} }, 50);
+    _cvInsetMaps.push(map);
+    return map;
+  }
+  function _cvEnsureObserver() {
+    if (_cvInsetObserver || typeof IntersectionObserver === 'undefined') return _cvInsetObserver;
+    _cvInsetObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          _cvInitInsetMap(en.target);
+          _cvInsetObserver.unobserve(en.target);
+        }
+      });
+    }, { rootMargin: '200px' });
+    return _cvInsetObserver;
+  }
+  function _cvForceInitAllMaps() {
+    document.querySelectorAll('#cv-list .sr-card-map').forEach(_cvInitInsetMap);
+  }
+  function _cvTeardownInsetMaps() {
+    while (_cvInsetMaps.length) {
+      var m = _cvInsetMaps.pop();
+      try { m.remove(); } catch (_) {}
+    }
+  }
+  window.addEventListener('beforeprint', function () {
+    var mod = document.getElementById('mod-culverts_report');
+    if (mod && mod.classList.contains('active')) _cvForceInitAllMaps();
+  });
+
+  // ── Polyline distance (feet) for the Auto-add-nearby radius ─────
+  // Equirectangular projection at the midpoint latitude — accurate at
+  // the corridor scale we're checking against.
+  function _cvPointToSegmentFt(pt, a, b) {
+    var lat0 = (a.lat + b.lat) / 2;
+    var coslat = Math.cos(lat0 * Math.PI / 180);
+    var FT_PER_DEG = 364000;
+    var px = pt.lng * coslat * FT_PER_DEG, py = pt.lat * FT_PER_DEG;
+    var ax = a.lng  * coslat * FT_PER_DEG, ay = a.lat  * FT_PER_DEG;
+    var bx = b.lng  * coslat * FT_PER_DEG, by = b.lat  * FT_PER_DEG;
+    var dx = bx - ax, dy = by - ay;
+    var len2 = dx * dx + dy * dy;
+    if (len2 === 0) {
+      var ddx = px - ax, ddy = py - ay;
+      return Math.sqrt(ddx * ddx + ddy * ddy);
+    }
+    var t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+    var projx = ax + t * dx, projy = ay + t * dy;
+    var ex = px - projx, ey = py - projy;
+    return Math.sqrt(ex * ex + ey * ey);
+  }
+  function _cvPointToPolylineFt(pt, poly) {
+    var best = Infinity;
+    for (var i = 0; i < poly.length - 1; i++) {
+      var d = _cvPointToSegmentFt(pt, poly[i], poly[i + 1]);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  // ── Auto-add nearby photos ──────────────────────────────────────
+  // Pulls every geophoto whose lat/lng falls within `maxFt` of the
+  // culvert polyline, dedups against anything already linked or
+  // already on attrs.photos by geophoto id / dataUrl prefix, appends
+  // them with a "Nearby photo (N ft)" caption, and stamps
+  // linked_pin_id on the geophoto so the photo triage tab reflects
+  // the new association. Returns the number of photos added.
+  function _cvAutoAddNearbyPhotos(pin, secId, maxFt) {
+    var coords = (pin.geometry && pin.geometry.coordinates) || [];
+    if (coords.length < 2) return 0;
+    var poly = coords
+      .map(function (c) {
+        var lng = +c[0], lat = +c[1];
+        return (isFinite(lng) && isFinite(lat)) ? { lat: lat, lng: lng } : null;
+      })
+      .filter(Boolean);
+    if (poly.length < 2) return 0;
+
+    var geophotos = (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function')
+      ? window._RW.geophotos.list() : [];
+    if (!geophotos.length) return 0;
+
+    pin.attrs = pin.attrs || {};
+    pin.attrs.photos = Array.isArray(pin.attrs.photos) ? pin.attrs.photos : [];
+    var photos = pin.attrs.photos;
+
+    var linkedGpIds = new Set();
+    photos.forEach(function (p) {
+      if (p && p._gp_id != null) linkedGpIds.add(String(p._gp_id));
+    });
+
+    var prefix = secId + '::' + pin.id;
+    var added = 0;
+    geophotos.forEach(function (gp) {
+      if (!gp || gp.lat == null || gp.lng == null) return;
+      if (linkedGpIds.has(String(gp.id))) return;
+      // Skip photos already linked to a different pin so we don't steal
+      // them from another asset's record.
+      if (gp.linked_pin_id && gp.linked_pin_id !== prefix) return;
+      var d = _cvPointToPolylineFt({ lat: +gp.lat, lng: +gp.lng }, poly);
+      if (d > maxFt) return;
+      photos.push({
+        dataUrl:      gp.dataUrl || '',
+        caption:      gp.description || ('Nearby photo (' + d.toFixed(0) + ' ft)'),
+        captured_at:  gp.captured_at || null,
+        _gp_id:       gp.id,
+        _auto_added_ft: Math.round(d),
+      });
+      gp.linked_pin_id = prefix;
+      linkedGpIds.add(String(gp.id));
+      added++;
+    });
+    return added;
+  }
+
   function renderCulvertsReport() {
     var list = document.getElementById('cv-list');
     if (!list) return;
@@ -34104,14 +34284,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               idBlock +
             '</div>' +
             '<div class="sr-identity-right">' +
-              '<div class="sr-card-map empty"></div>' +
+              '<div class="sr-card-map" data-coords="'
+                + _esc(JSON.stringify(
+                    Array.isArray(pin.geometry && pin.geometry.coordinates)
+                      ? pin.geometry.coordinates : []
+                  )) + '"></div>' +
             '</div>' +
           '</div>' +
         '</section>' +
         '<section class="sr-section">' + propsBlock + '</section>' +
         '<section class="sr-section">' + condBlock + '</section>' +
         '<section class="sr-section">' +
-          '<div class="sr-sec-hdr">Photos (' + visiblePhotos.length + ')</div>' +
+          '<div class="sr-sec-hdr">'
+            + 'Photos (' + visiblePhotos.length + ')'
+            + '<span class="cv-photo-actions">'
+              + '<button type="button" class="cv-auto-btn" '
+                + 'data-cv-idx="' + idx + '" '
+                + 'title="Auto-link any geophoto within 15 ft of this culvert">⊕ Auto-add nearby (15 ft)</button>'
+              + '<button type="button" class="cv-pick-btn" '
+                + 'data-cv-idx="' + idx + '" '
+                + 'title="Pick from photos you have already taken, sorted by distance">📍 Select Nearby Photos</button>'
+            + '</span>'
+          + '</div>' +
           photosBlock +
         '</section>' +
         '<div class="sr-card-footer">' +
@@ -34137,6 +34331,56 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           alert('Culvert ' + btn.textContent.trim() + ' — coming in the next commit.');
         });
       }
+    });
+
+    // ── Drop stale Leaflet inset instances + lazy-init the new ones ──
+    _cvTeardownInsetMaps();
+    var insetDivs = list.querySelectorAll('.sr-card-map');
+    var obs = _cvEnsureObserver();
+    if (obs) {
+      insetDivs.forEach(function (d) { obs.observe(d); });
+    } else {
+      insetDivs.forEach(_cvInitInsetMap);
+    }
+
+    // ── Auto-add-nearby button ──
+    list.querySelectorAll('.cv-auto-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        var added = _cvAutoAddNearbyPhotos(r.pin, r.sec.id, 15);
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          try { window._RW.persistSections(); } catch (_) {}
+        }
+        // Lightweight feedback — full re-render so the new photos
+        // appear and the (N) count updates.
+        renderCulvertsReport();
+        if (added === 0) {
+          alert('No new geophotos within 15 ft of this culvert.');
+        } else {
+          console.log('[Culverts] auto-added ' + added + ' photo(s) to ' + r.pin.id);
+        }
+      });
+    });
+
+    // ── Select Nearby Photos (manual picker — reuses the shared
+    //    nearby-picker the Sign Inventory module also uses). ──
+    list.querySelectorAll('.cv-pick-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        if (!(window._RW && typeof window._RW.openNearbyPhotoPicker === 'function')) {
+          alert('Nearby photo picker not available.');
+          return;
+        }
+        window._RW.openNearbyPhotoPicker({
+          pin:   r.pin,
+          secId: r.sec.id,
+          maxFt: 150,
+          title: 'Nearby field photos — ' + r.pin.id,
+          onPick: function () { renderCulvertsReport(); },
+        });
+      });
     });
   }
   window.renderCulvertsReport = renderCulvertsReport;
