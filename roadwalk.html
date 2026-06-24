@@ -34521,6 +34521,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var inletShape  = _cvEndTypeShape(a.in_type);
     var outletShape = _cvEndTypeShape(a.out_type);
 
+    // Per-schematic stone-hatch pattern id. SVG ids are document-
+    // scoped, so multiple culvert cards on the same page need unique
+    // ids — sanitised pin ulid/id keeps that property without
+    // introducing randomness that would re-render every paint.
+    var _stoneId = 'cv-stone-' + String(pin.ulid || pin.id || 'x').replace(/[^a-zA-Z0-9]/g, '');
+
     // Component coloring helpers. The pipe cross-section now reads
     // three independent ratings — inlet (the 10% closest to the
     // inlet end), barrel (the middle 80%), and outlet (the 10%
@@ -34557,6 +34563,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
             + 'fill="' + color + '" stroke="#111" stroke-width="1.2" />'
+          // Stone hatch overlay — same rect, fill=url(#stone-pattern),
+          // no stroke (the colored rect under it already carries the
+          // outline). 0.55-opacity mortar reads as masonry without
+          // washing out the condition color.
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="url(#' + _stoneId + ')" stroke="none" pointer-events="none" />'
           + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
             + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Headwall</text>'
           + '</g>';
@@ -34621,9 +34633,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (shape === 'wing_wall') {
         // Tall rectangle like a headwall, PLUS two short angled wing
         // lines flaring outward from the top and bottom corners on
-        // the side that faces away from the barrel. Conveys the
-        // wing-wall geometry at a glance without exploding the
-        // schematic bounding box.
+        // the side that faces away from the barrel. Stone overlay
+        // matches the headwall so the two read as the same masonry
+        // family. The wing lines stay solid color (they represent
+        // wing geometry, not masonry surface).
         var wOuterX = isInlet ? boxX : (boxX + boxW);
         var wing   = 10;                   // wing line length
         var wingDx = isInlet ? -wing : wing;
@@ -34631,6 +34644,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
             + 'fill="' + color + '" stroke="#111" stroke-width="1.2" />'
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="url(#' + _stoneId + ')" stroke="none" pointer-events="none" />'
           + '<line x1="' + wOuterX + '" y1="' + boxY + '" '
             + 'x2="' + (wOuterX + wingDx) + '" y2="' + (boxY - wingDy) + '" '
             + 'stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" />'
@@ -34681,6 +34696,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return '<div class="cv-schematic">'
       + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" '
         + 'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
+      // Stone-block hatch pattern — overlays the headwall + wing-wall
+      // fills so they read as masonry instead of a flat slab. 9×5
+      // unit stones in a running-bond layout (row 2's vertical
+      // joints are offset by half a stone via the pattern wrap),
+      // mortar drawn in dark slate at 0.5 opacity so the
+      // condition-color fill underneath still shows through.
+      + '<defs>'
+        + '<pattern id="' + _stoneId + '" width="9" height="5" patternUnits="userSpaceOnUse">'
+          + '<line x1="0"   y1="2.5" x2="9" y2="2.5" stroke="#1f2937" stroke-opacity="0.55" stroke-width="0.7" />'
+          + '<line x1="4.5" y1="0"   x2="4.5" y2="2.5" stroke="#1f2937" stroke-opacity="0.55" stroke-width="0.7" />'
+          + '<line x1="0"   y1="2.5" x2="0"   y2="5"   stroke="#1f2937" stroke-opacity="0.55" stroke-width="0.7" />'
+          + '<line x1="9"   y1="2.5" x2="9"   y2="5"   stroke="#1f2937" stroke-opacity="0.55" stroke-width="0.7" />'
+        + '</pattern>'
+      + '</defs>'
       // Pipe spec caption — directly above the pipe.
       + '<text x="' + midX + '" y="' + (barrelY - 24) + '" text-anchor="middle" '
         + 'font-size="13" font-weight="700" font-family="sans-serif" fill="#111">'
