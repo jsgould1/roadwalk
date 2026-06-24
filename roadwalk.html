@@ -29317,8 +29317,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           var leanPhotos = pin.attrs.photos.map(function (ph, i) {
             if (!ph) return ph;
             if (!ph.dataUrl || !pinUlid) return ph;
+            // Already externalised on a previous save — keep the
+            // existing _photo_key reference and skip the redundant
+            // IDB write. Without this, every persistSections call
+            // re-writes every photo, which OOMs on large projects.
+            if (ph._photo_key) {
+              var keep = Object.assign({}, ph);
+              delete keep.dataUrl;
+              return keep;
+            }
             var key = 'rw_pinphoto_' + pinUlid + '_' + i;
-            photoWrites.push({ key: key, dataUrl: ph.dataUrl });
+            photoWrites.push({ key: key, dataUrl: ph.dataUrl, _ref: ph });
             var copy = Object.assign({}, ph);
             copy._photo_key = key;
             delete copy.dataUrl;
@@ -29338,13 +29347,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         .catch(function (e) { console.warn('[RoadWalk] section persist failed:', e); });
 
       // Each photo writes as its own IDB record. Sequential so the
-      // browser never holds more than one large clone at a time.
+      // browser never holds more than one large clone at a time. On
+      // success we mark the IN-MEMORY photo with _photo_key so the
+      // NEXT persistSections / _saveDataForm pass recognises it as
+      // already externalised and skips re-writing the same bytes.
       var pi = 0;
       function nextPhoto() {
         if (pi >= photoWrites.length) return;
         var p = photoWrites[pi++];
         idbPut('safety', { dataUrl: p.dataUrl }, p.key)
-          .then(nextPhoto, function () { nextPhoto(); });
+          .then(function () {
+            if (p._ref) p._ref._photo_key = p.key;
+            nextPhoto();
+          }, function () { nextPhoto(); });
       }
       nextPhoto();
     } catch (e) { console.warn('[RoadWalk] _persistSections error:', e); }
@@ -37625,14 +37640,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // reference, and stash each dataUrl as its own tiny IDB record
     // under 'rw_pinphoto_<ulid>_<idx>'. _loadIdbCache rehydrates them
     // on the next form open.
+    //
+    // Optimisation: photos that already have _photo_key set were
+    // externalised on a previous save and the raw bytes are already
+    // in the safety store. Reusing the existing key skips both the
+    // structured-clone of the dataUrl AND a redundant IDB write —
+    // which is what was still OOM-ing v139 on saves that didn't
+    // change photos (each save was re-writing every photo).
     var _attrsForIdb = pin.attrs || {};
     var _photoWrites = [];
     if (Array.isArray(_attrsForIdb.photos) && pin.ulid) {
       _attrsForIdb = Object.assign({}, _attrsForIdb, {
         photos: _attrsForIdb.photos.map(function (ph, i) {
           if (!ph || !ph.dataUrl) return ph;
+          // Already persisted on a previous save — reuse the key,
+          // don't queue a new write.
+          if (ph._photo_key) {
+            var keep = Object.assign({}, ph);
+            delete keep.dataUrl;
+            return keep;
+          }
           var key = 'rw_pinphoto_' + pin.ulid + '_' + i;
-          _photoWrites.push({ key: key, dataUrl: ph.dataUrl });
+          _photoWrites.push({ key: key, dataUrl: ph.dataUrl, _ref: ph });
           var copy = Object.assign({}, ph);
           copy._photo_key = key;
           delete copy.dataUrl;
@@ -37679,13 +37708,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _dataState.idbCacheByUlid[fullRecord.ulid]  = fullRecord;
       _dataState.dirty = false;
       // Stream the photo dataUrls to their own IDB records, one at a
-      // time, so the structured clone stays small.
+      // time, so the structured clone stays small. On success, mark
+      // the IN-MEMORY photo object with _photo_key so the next save
+      // (or the persistSections call below) recognises it as already
+      // persisted and skips re-writing it.
       var _pi = 0;
       function _nextPhoto() {
         if (_pi >= _photoWrites.length) return;
         var p = _photoWrites[_pi++];
         window.RWIdb.put('safety', { dataUrl: p.dataUrl }, p.key)
-          .then(_nextPhoto, function () { _nextPhoto(); });
+          .then(function () {
+            if (p._ref) p._ref._photo_key = p.key;
+            _nextPhoto();
+          }, function () { _nextPhoto(); });
       }
       _nextPhoto();
       // Also persist the whole working SECTIONS copy so it survives reload.
