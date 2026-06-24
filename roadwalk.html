@@ -32861,9 +32861,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           } else {
             photoSecHdr = 'Photos (0) ' + actBtn + ' ' + restoreBtn;
           }
-          var pageOfStr     = 'Page ' + (pi + 1) + ' of ' + totalPages;
+          var pageOfStr     = (pi + 1) + ' of ' + totalPages;
           var filePageNum   = fileStartPage[idx] + pi;
-          var filePageOfStr = filePageNum + ' of ' + totalFilePages;
+          var filePageOfStr = 'Page ' + filePageNum + ' of ' + totalFilePages;
           // Section sub + route meta line from the AECOM scope table.
           // Falls back to sec.name when the section isn't in the map.
           var _info = _SR_SECTION_INFO[sec.id];
@@ -32910,7 +32910,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               + '</div>' +
               '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
               '<div class="sr-card-footer-right">'
-                + '<div>' + _esc(signIdStr) + ' · ' + pageOfStr + '</div>'
+                + '<div>' + _esc(signIdStr) + ' — ' + pageOfStr + '</div>'
                 + '<div class="sr-card-footer-right-file">' + filePageOfStr + '</div>'
               + '</div>' +
             '</div>' +
@@ -32920,9 +32920,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // identity row, no inset map, no edit button. Range label
         // shows which photos this page covers.
         var endNum = startNum + chunk.length - 1;
-        var pageOfStrCont = 'Page ' + (pi + 1) + ' of ' + totalPages;
+        var pageOfStrCont = (pi + 1) + ' of ' + totalPages;
         var filePageNumCont   = fileStartPage[idx] + pi;
-        var filePageOfStrCont = filePageNumCont + ' of ' + totalFilePages;
+        var filePageOfStrCont = 'Page ' + filePageNumCont + ' of ' + totalFilePages;
         // Continuation card mirrors the first card's title block so
         // page 2+ carries the same section + route meta as page 1.
         var _infoC = _SR_SECTION_INFO[sec.id];
@@ -32955,7 +32955,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + '</div>' +
             '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
             '<div class="sr-card-footer-right">'
-              + '<div>' + _esc(signIdStr) + ' · ' + pageOfStrCont + '</div>'
+              + '<div>' + _esc(signIdStr) + ' — ' + pageOfStrCont + '</div>'
               + '<div class="sr-card-footer-right-file">' + filePageOfStrCont + '</div>'
             + '</div>' +
           '</div>' +
