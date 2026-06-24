@@ -5056,6 +5056,89 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-photo-act.sr-photo-del:hover { background: #c0392b; border-color: #c0392b; }
 
 /* ── Print rules — collapse chrome, one card per page ────────────── */
+/* Section picker — shared modal for Print / Export CSV / Export KML.
+   Position:fixed so it escapes the .module-view absolute container. */
+.sr-picker {
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.sr-picker[hidden] { display: none; }
+.sr-picker-backdrop {
+  position: absolute; inset: 0; background: rgba(15, 18, 24, 0.55);
+}
+.sr-picker-card {
+  position: relative; z-index: 1;
+  background: #fff; border: 1px solid var(--rule);
+  border-radius: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  min-width: 420px; max-width: 560px; max-height: 80vh;
+  display: flex; flex-direction: column;
+}
+.sr-picker-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.sr-picker-title {
+  font: 700 14px 'IBM Plex Sans', sans-serif; color: var(--ink);
+}
+.sr-picker-close {
+  background: none; border: 0; cursor: pointer; font-size: 16px;
+  color: var(--ink-3); padding: 4px 8px;
+}
+.sr-picker-close:hover { color: var(--ink); }
+.sr-picker-sub {
+  padding: 8px 14px 0; font: 400 12px 'IBM Plex Sans', sans-serif;
+  color: var(--ink-2);
+}
+.sr-picker-toolbar {
+  padding: 8px 14px; display: flex; gap: 6px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.sr-picker-tool {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .5px; text-transform: uppercase;
+  padding: 4px 10px; border: 1px solid var(--rule); border-radius: 3px;
+  background: #fff; color: var(--ink); cursor: pointer;
+}
+.sr-picker-tool:hover { background: var(--paper-2); }
+.sr-picker-list {
+  flex: 1 1 auto; overflow-y: auto;
+  padding: 6px 14px; min-height: 100px;
+}
+.sr-picker-item {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 10px;
+  padding: 6px 4px; border-bottom: 1px dashed var(--rule-soft);
+  cursor: pointer; user-select: none;
+}
+.sr-picker-item:hover { background: var(--paper-2); }
+.sr-picker-item input { margin: 0; cursor: pointer; }
+.sr-picker-item-label {
+  font: 600 12px 'IBM Plex Sans', sans-serif; color: var(--ink);
+}
+.sr-picker-item-count {
+  font: 600 10px 'IBM Plex Mono', monospace; color: var(--ink-3);
+  white-space: nowrap;
+}
+.sr-picker-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 10px 14px; border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+.sr-picker-cancel, .sr-picker-confirm {
+  font: 700 11px 'IBM Plex Mono', monospace;
+  letter-spacing: .5px; text-transform: uppercase;
+  padding: 6px 14px; border: 1px solid var(--rule); border-radius: 3px;
+  background: #fff; color: var(--ink); cursor: pointer;
+}
+.sr-picker-confirm {
+  background: var(--blue, #1d4ed8); color: #fff; border-color: var(--blue, #1d4ed8);
+}
+.sr-picker-cancel:hover { background: var(--paper-2); }
+.sr-picker-confirm:hover { filter: brightness(1.05); }
+/* Hide the picker in print so a stuck-open modal can't bleed onto a sheet. */
+@media print { .sr-picker { display: none !important; } }
+
 @media print {
   @page { size: letter; margin: 0; }
   /* Release every layer of the screen layout that anchors content to
@@ -11470,8 +11553,9 @@ body.mobile-mode #app {
               ⟂ Std angles only
             </button>
             <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
-            <button class="sr-btn" id="sr-print-all-btn" title="Switch the Section filter to (all), wait for tiles, then open browser Print dialog — Save as PDF for the full deliverable across every section">🖨 Print ALL Sections</button>
-            <button class="sr-btn" id="sr-export-csv-btn" title="Download three CSVs (signs / panels / posts) for the currently filtered view — join on pin_id for summary stats">📥 Export CSV</button>
+            <button class="sr-btn" id="sr-print-all-btn" title="Pick which sections to print, wait for tiles, then open browser Print dialog — Save as PDF for the deliverable">🖨 Print Sections…</button>
+            <button class="sr-btn" id="sr-export-csv-btn" title="Pick which sections, then download three CSVs (signs / panels / posts) — join on pin_id for summary stats">📥 Export CSV…</button>
+            <button class="sr-btn" id="sr-export-kml-btn" title="Pick which sections, then download one KML per section — each carries the road centerline plus every sign as a Placemark with full info and photo thumbnails">🌐 Export KML…</button>
           </span>
         </div>
         <div class="sr-head-row" id="sr-source-row">
@@ -11489,6 +11573,30 @@ body.mobile-mode #app {
       </div>
       <div class="sr-list" id="sr-list">
         <!-- Populated by renderSignsReport() once the module activates. -->
+      </div>
+
+      <!-- Section picker — shared by Print Sections / Export CSV /
+           Export KML. Hidden by default; _srPickSections() unhides and
+           rebuilds the checkbox list on every open. Last selection per
+           action is remembered in localStorage. -->
+      <div id="sr-picker" class="sr-picker" hidden>
+        <div class="sr-picker-backdrop"></div>
+        <div class="sr-picker-card">
+          <div class="sr-picker-hdr">
+            <span class="sr-picker-title" id="sr-picker-title">Pick sections</span>
+            <button class="sr-picker-close" id="sr-picker-close" type="button" aria-label="Close">✕</button>
+          </div>
+          <div class="sr-picker-sub" id="sr-picker-sub"></div>
+          <div class="sr-picker-toolbar">
+            <button type="button" class="sr-picker-tool" id="sr-picker-all">All</button>
+            <button type="button" class="sr-picker-tool" id="sr-picker-none">None</button>
+          </div>
+          <div class="sr-picker-list" id="sr-picker-list"></div>
+          <div class="sr-picker-footer">
+            <button type="button" class="sr-picker-cancel" id="sr-picker-cancel">Cancel</button>
+            <button type="button" class="sr-picker-confirm" id="sr-picker-confirm">Continue</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -31170,6 +31278,104 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // PMIS numbers change.
   var _SR_PROJECT_NUMBERS = 'GRSM 10S(2) PMIS 328913 | GRSM 10N(4) PMIS 207789 | GRSM 12(4) PMIS 246405';
 
+  // Section override: when set to a Set of section ids, renderSignsReport
+  // narrows allSigns to just those sections, regardless of the section
+  // dropdown. Print Sections uses this so the user can print a chosen
+  // multi-section subset without flipping the dropdown to a single
+  // value. CSV / KML exports build their own filter from the same
+  // picked set and don't read this — but they DO touch render, so the
+  // override is cleared before any caller hands off.
+  var _srSectionOverride = null;
+
+  // Reusable section-picker modal — used by Print / Export CSV / Export
+  // KML. Calls opts.onConfirm(picked: string[]) on Continue. Last
+  // selection per opts.persistKey is remembered in localStorage so the
+  // next open starts where the user left off.
+  var _srPickerOnConfirm = null;
+  function _srPickSections(opts) {
+    var modal     = document.getElementById('sr-picker');
+    var titleEl   = document.getElementById('sr-picker-title');
+    var subEl     = document.getElementById('sr-picker-sub');
+    var listEl    = document.getElementById('sr-picker-list');
+    var confirmBtn= document.getElementById('sr-picker-confirm');
+    if (!modal || !listEl) return;
+    titleEl.textContent = opts.title || 'Pick sections';
+    subEl.textContent   = opts.sub   || '';
+    confirmBtn.textContent = opts.actionLabel || 'Continue';
+
+    var sections = window.SECTIONS || [];
+    var withSigns = sections.filter(function (sec) {
+      return (sec.pins || []).some(function (p) {
+        return p && (p.kind === 'sign' || p.kind === 'pt_sign');
+      });
+    });
+
+    var prevSel = null;
+    if (opts.persistKey) {
+      try {
+        var raw = localStorage.getItem(opts.persistKey);
+        if (raw) prevSel = new Set(JSON.parse(raw));
+      } catch (_) {}
+    }
+    // Default to "everything" the first time the user opens any given
+    // action so the most natural first click — Continue — does what
+    // they probably expect.
+    if (!prevSel || !prevSel.size) {
+      prevSel = new Set(withSigns.map(function (s) { return s.id; }));
+    }
+
+    listEl.innerHTML = withSigns.map(function (sec) {
+      var info = _SR_SECTION_INFO[sec.id];
+      var label = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
+      var sigCount = (sec.pins || []).filter(function (p) {
+        return p && (p.kind === 'sign' || p.kind === 'pt_sign');
+      }).length;
+      var checked = prevSel.has(sec.id) ? ' checked' : '';
+      // Inline _esc — picker can be opened before renderSignsReport
+      // defines its local _esc, so we can't reuse that one.
+      var esc = function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+          return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
+        });
+      };
+      return '<label class="sr-picker-item">'
+        + '<input type="checkbox" value="' + esc(sec.id) + '"' + checked + '>'
+        + '<span class="sr-picker-item-label">' + esc(label) + '</span>'
+        + '<span class="sr-picker-item-count">' + sigCount + ' signs</span>'
+        + '</label>';
+    }).join('') || '<div style="padding:20px;color:var(--ink-3);text-align:center;">No sections have signs yet.</div>';
+
+    _srPickerOnConfirm = function (picked) {
+      if (opts.persistKey) {
+        try { localStorage.setItem(opts.persistKey, JSON.stringify(picked)); } catch (_) {}
+      }
+      if (typeof opts.onConfirm === 'function') opts.onConfirm(picked);
+    };
+
+    if (!modal._wired) {
+      modal._wired = true;
+      function _close() { modal.hidden = true; _srPickerOnConfirm = null; }
+      document.getElementById('sr-picker-close').addEventListener('click', _close);
+      document.getElementById('sr-picker-cancel').addEventListener('click', _close);
+      modal.querySelector('.sr-picker-backdrop').addEventListener('click', _close);
+      document.getElementById('sr-picker-all').addEventListener('click', function () {
+        listEl.querySelectorAll('input[type=checkbox]').forEach(function (i) { i.checked = true; });
+      });
+      document.getElementById('sr-picker-none').addEventListener('click', function () {
+        listEl.querySelectorAll('input[type=checkbox]').forEach(function (i) { i.checked = false; });
+      });
+      confirmBtn.addEventListener('click', function () {
+        var picked = Array.from(listEl.querySelectorAll('input[type=checkbox]:checked'))
+                          .map(function (i) { return i.value; });
+        var cb = _srPickerOnConfirm;
+        modal.hidden = true;
+        _srPickerOnConfirm = null;
+        if (cb) cb(picked);
+      });
+    }
+    modal.hidden = false;
+  }
+
   // "Standard angles only" toggle — when on, panels at facing_degrees
   // other than 0 / 90 / 180 / 270 are filtered out of the report
   // render. They are NOT deleted from the data, just hidden from
@@ -31306,20 +31512,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return (pin.attrs && pin.attrs.source) || pin.source || '';
   }
 
-  function _srExportCsv() {
+  function _srExportCsv(sectionSet) {
     var sections = window.SECTIONS || [];
     var secEl    = document.getElementById('sr-section');
     var searchEl = document.getElementById('sr-search');
-    var fSec     = (secEl && secEl.value) || '';
+    // When the picker passes a section set, it takes priority over the
+    // dropdown so the user can multi-select. Search + source filters
+    // still apply on top.
+    var fSec     = (sectionSet && sectionSet.size) ? '' : ((secEl && secEl.value) || '');
     var fQ       = (searchEl && searchEl.value.trim().toLowerCase()) || '';
     var mutedSet = _srLoadMutedSources();
 
     // Replicate the filter logic from renderSignsReport so the export
-    // reflects exactly what's on screen.
+    // reflects exactly what's on screen (or what the picker chose).
     var rows = [];
     sections.forEach(function (sec) {
       (sec.pins || []).forEach(function (p) {
         if (!p || (p.kind !== 'sign' && p.kind !== 'pt_sign')) return;
+        if (sectionSet && sectionSet.size && !sectionSet.has(sec.id)) return;
         if (fSec && sec.id !== fSec) return;
         if (mutedSet && mutedSet.has(_csvSrc(p))) return;
         rows.push({ sec: sec, pin: p });
@@ -31460,7 +31670,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var pad = function (n) { return n < 10 ? '0' + n : n; };
     var ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
            + '_' + pad(d.getHours()) + pad(d.getMinutes());
-    var scope = fSec ? fSec.toLowerCase() : 'all';
+    var scope;
+    if (sectionSet && sectionSet.size) {
+      scope = Array.from(sectionSet).sort().join('').toLowerCase();
+    } else {
+      scope = fSec ? fSec.toLowerCase() : 'all';
+    }
 
     // Three sequential downloads. Browsers throttle bulk downloads
     // when fired in the same tick, so space them out by ~200 ms.
@@ -31471,6 +31686,316 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     setTimeout(function () {
       _csvDownload('roadwalk_posts_'  + scope + '_' + ts + '.csv', postsCsv.join('\r\n'));
     }, 500);
+  }
+
+  // ── KML export ────────────────────────────────────────────────────
+  // XML attribute / element text escape. CDATA bodies don't need it,
+  // but everything outside a CDATA does.
+  function _xmlEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  }
+  // Resize a dataUrl to a max-width JPEG so a 50-sign × 6-photo KML
+  // ends in the tens of MB instead of a couple hundred. Canvas runs
+  // synchronously once Image.onload fires; we wrap in a Promise so the
+  // caller can await a parallel fleet.
+  function _srResizeDataUrl(dataUrl, maxWidth, quality) {
+    return new Promise(function (resolve) {
+      if (!dataUrl || dataUrl.indexOf('data:') !== 0) return resolve('');
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var ratio = Math.min(1, maxWidth / (img.width || maxWidth));
+          var w = Math.max(1, Math.round(img.width * ratio));
+          var h = Math.max(1, Math.round(img.height * ratio));
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (e) { resolve(dataUrl); }
+      };
+      img.onerror = function () { resolve(''); };
+      img.src = dataUrl;
+    });
+  }
+  // Walk the same photo lookup the report uses — embedded
+  // pin.attrs.photos + linked geophotos, deduped by dataUrl, skipping
+  // entries marked report_hidden so the KML matches what prints.
+  function _srPhotosForKml(pin) {
+    var out = [];
+    var seen = Object.create(null);
+    var hidden = new Set(
+      (pin.attrs && Array.isArray(pin.attrs.report_hidden_photos))
+        ? pin.attrs.report_hidden_photos : []
+    );
+    var emb = (pin.attrs && Array.isArray(pin.attrs.photos)) ? pin.attrs.photos : [];
+    emb.forEach(function (p, i) {
+      if (!p || hidden.has('emb:' + i)) return;
+      var src = p.dataUrl || '';
+      if (!src || seen[src]) return;
+      seen[src] = true;
+      out.push({ src: src, caption: p.caption || ('Form photo ' + (i + 1)) });
+    });
+    if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
+      var prefix = ((pin._secId) || '') + '::' + pin.id;
+      window._RW.geophotos.list().forEach(function (gp) {
+        if (!gp || gp.linked_pin_id !== prefix) return;
+        if (hidden.has('gp:' + gp.id)) return;
+        var src = gp.dataUrl || '';
+        if (!src || seen[src]) return;
+        seen[src] = true;
+        out.push({ src: src, caption: gp.description || 'Linked photo' });
+      });
+    }
+    return out;
+  }
+  function _srKmlDownload(filename, content) {
+    var blob = new Blob([content], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function _srExportKml(sectionIds) {
+    var sections = window.SECTIONS || [];
+    var byId = {};
+    sections.forEach(function (s) { if (s) byId[s.id] = s; });
+    var picked = sectionIds.map(function (id) { return byId[id]; }).filter(Boolean);
+    if (!picked.length) { alert('No sections selected.'); return; }
+
+    // Progress toast — KML build is async on photo resizing so the
+    // user needs to see SOMETHING happen for a few seconds.
+    var tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;top:50%;left:50%;'
+      + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
+      + 'padding:14px 20px;font:600 12px monospace;z-index:99999;'
+      + 'border:1px solid #fff;border-radius:4px;text-align:center;';
+    tip.textContent = 'Building KML for ' + picked.length + ' section(s)…';
+    document.body.appendChild(tip);
+
+    var mutedSet = _srLoadMutedSources();
+
+    // Build all sections sequentially so the browser doesn't choke on
+    // dozens of parallel canvas operations.
+    var allDone = Promise.resolve();
+    picked.forEach(function (sec, secIdx) {
+      allDone = allDone.then(function () { return _buildOneKml(sec); });
+    });
+    allDone.then(function () {
+      if (tip.parentNode) tip.parentNode.removeChild(tip);
+    }).catch(function (err) {
+      if (tip.parentNode) tip.parentNode.removeChild(tip);
+      alert('KML build failed: ' + err);
+    });
+
+    function _buildOneKml(sec) {
+      var info = _SR_SECTION_INFO[sec.id];
+      var sectionTitle = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
+      tip.textContent = 'Building KML for section ' + sec.id + '…';
+
+      // Centerline coords. sec.alignment is [[lat, lng], ...] (Leaflet
+      // format); KML wants "lng,lat lng,lat …".
+      var lineCoords = '';
+      if (Array.isArray(sec.alignment) && sec.alignment.length >= 2) {
+        lineCoords = sec.alignment.map(function (c) {
+          var lat = +c[0], lng = +c[1];
+          return (isFinite(lat) && isFinite(lng)) ? (lng + ',' + lat) : '';
+        }).filter(Boolean).join(' ');
+      }
+
+      // Collect signs in this section that pass the source filter,
+      // sorted by station so the KML's pin order is intuitive.
+      var pins = (sec.pins || []).filter(function (p) {
+        if (!p || (p.kind !== 'sign' && p.kind !== 'pt_sign')) return false;
+        if (mutedSet && mutedSet.has(_csvSrc(p))) return false;
+        return true;
+      });
+      pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
+
+      // Resize every photo for every pin in parallel. _srPhotosForKml
+      // returns photo refs in the same order the report renders, and
+      // we cap at the first 12 per pin so the file doesn't balloon.
+      var pinBundles = pins.map(function (pin) {
+        var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
+        // Stash sec id so _srPhotosForKml can build the geophoto link key.
+        merged._secId = sec.id;
+        var photos = _srPhotosForKml(merged).slice(0, 12);
+        var resizePromises = photos.map(function (ph) {
+          return _srResizeDataUrl(ph.src, 720, 0.6).then(function (small) {
+            return { src: small || ph.src, caption: ph.caption };
+          });
+        });
+        return Promise.all(resizePromises).then(function (resized) {
+          return { sec: sec, rawPin: pin, pin: merged, photos: resized };
+        });
+      });
+
+      return Promise.all(pinBundles).then(function (bundles) {
+        var placemarks = bundles.map(_pinPlacemark).join('\n');
+        var centerline = lineCoords ? (
+          '<Placemark>'
+          + '<name>Centerline — ' + _xmlEsc(sec.id) + '</name>'
+          + '<styleUrl>#rw-centerline</styleUrl>'
+          + '<LineString><tessellate>1</tessellate><coordinates>' + lineCoords + '</coordinates></LineString>'
+          + '</Placemark>'
+        ) : '';
+
+        var meta = info
+          ? (_xmlEsc(info.route_id) + ' · FMSS ' + info.fmss
+             + ' · MP ' + info.mp_start.toFixed(2) + ' – ' + info.mp_end.toFixed(2))
+          : '';
+
+        var kml =
+          '<?xml version="1.0" encoding="UTF-8"?>\n'
+          + '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
+          + '<Document>\n'
+          + '<name>' + _xmlEsc('RoadWalk · ' + sectionTitle) + '</name>\n'
+          + '<description>' + _xmlEsc(meta + (meta ? ' · ' : '') + pins.length + ' signs') + '</description>\n'
+          + '<Style id="rw-centerline">'
+            + '<LineStyle><color>ff2b6fff</color><width>4</width></LineStyle>'
+          + '</Style>\n'
+          + '<Style id="rw-sign">'
+            + '<IconStyle><scale>1.0</scale>'
+              + '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon>'
+            + '</IconStyle>'
+            + '<LabelStyle><scale>0.75</scale></LabelStyle>'
+          + '</Style>\n'
+          + '<Folder>\n'
+          + '<name>' + _xmlEsc(sectionTitle) + '</name>\n'
+          + centerline + '\n'
+          + '<Folder><name>Signs (' + pins.length + ')</name>\n'
+          + placemarks + '\n'
+          + '</Folder>\n'
+          + '</Folder>\n'
+          + '</Document>\n'
+          + '</kml>\n';
+
+        var d = new Date();
+        var pad = function (n) { return n < 10 ? '0' + n : n; };
+        var ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+        _srKmlDownload('roadwalk_' + sec.id.toLowerCase() + '_' + ts + '.kml', kml);
+      });
+    }
+
+    function _pinPlacemark(bundle) {
+      var sec = bundle.sec, pin = bundle.pin, raw = bundle.rawPin;
+      var a = pin.attrs || {};
+      var g = pin.geometry && pin.geometry.coordinates;
+      if (!Array.isArray(g) || g.length < 2) return '';
+      var lng = +g[0], lat = +g[1];
+      if (!isFinite(lng) || !isFinite(lat)) return '';
+
+      var pinIdFull = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+      var posts  = Array.isArray(a.posts)  ? a.posts  : [];
+      var panels = Array.isArray(a.panels) ? a.panels : [];
+
+      // Overall + Retro condition rollups — same source as the report.
+      var ovCodes = [];
+      posts.forEach(function (po) { if (po) ovCodes.push(po.post_condition); });
+      panels.forEach(function (pn) {
+        if (pn) { ovCodes.push(pn.panel_condition); ovCodes.push(pn.sheeting_condition); }
+      });
+      var retroCodes = [];
+      panels.forEach(function (pn) {
+        if (!pn) return;
+        retroCodes.push(pn.retro_day_r1, pn.retro_day_r2, pn.retro_night_r1, pn.retro_night_r2);
+      });
+      var ovCond    = (typeof _worstCondition === 'function') ? _worstCondition(ovCodes)    : null;
+      var retroCond = (typeof _worstCondition === 'function') ? _worstCondition(retroCodes) : null;
+
+      // MP
+      var mpStr = '';
+      var mpStartNum = (sec && typeof sec.mpStart === 'number') ? sec.mpStart
+                    : (sec && typeof sec.mp_start === 'number') ? sec.mp_start : null;
+      var mpVal = null;
+      if (mpStartNum != null && typeof pin.sta_ft === 'number') mpVal = mpStartNum + pin.sta_ft / 5280;
+      else if (a.mp_start != null) mpVal = +a.mp_start;
+      if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
+
+      // Description joined from all panels.
+      var descStr = panels.map(function (pn) {
+        return ((pn && (pn.panel_description || pn.sign_code)) || '').trim();
+      }).filter(Boolean).join(' / ') || '(no description)';
+
+      // Build the HTML description body — Google Earth renders this in
+      // the balloon when the pin is clicked.
+      var html = '';
+      html += '<h3 style="margin:0 0 4px;font-family:sans-serif;">' + _xmlEsc(pinIdFull) + '</h3>';
+      html += '<p style="margin:0 0 8px;font-family:sans-serif;font-size:13px;"><b>' + _xmlEsc(descStr) + '</b></p>';
+      html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;">';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Overall</td><td><b>' + _xmlEsc(_csvSpellCond(ovCond) || '—') + '</b></td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Retro</td><td><b>' + _xmlEsc(_csvSpellCond(retroCond) || '—') + '</b></td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">MP</td><td>' + _xmlEsc(mpStr || '—') + '</td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">STA</td><td>' + _xmlEsc(pin.sta || '—') + '</td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Side</td><td>' + _xmlEsc(a.side || '—') + '</td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">EOP Offset</td><td>' + _xmlEsc(a.eop_offset != null ? (a.eop_offset + ' ft') : '—') + '</td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Posts</td><td>' + posts.length + '</td></tr>';
+      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Panels</td><td>' + panels.length + '</td></tr>';
+      html += '</table>';
+
+      // Per-panel summary table.
+      if (panels.length) {
+        html += '<p style="margin:8px 0 4px;font-family:sans-serif;font-size:11px;font-weight:bold;color:#333;">PANELS</p>';
+        html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:11px;">';
+        html += '<tr style="color:#555;"><td style="padding:2px 6px 2px 0;">#</td><td style="padding:2px 6px 2px 0;">Code</td><td style="padding:2px 6px 2px 0;">Description</td><td style="padding:2px 6px 2px 0;">Cond</td><td style="padding:2px 6px 2px 0;">Sheet</td></tr>';
+        panels.forEach(function (pn, i) {
+          if (!pn) return;
+          html += '<tr>'
+            + '<td style="padding:1px 6px 1px 0;">' + (i + 1) + '</td>'
+            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(pn.sign_code || '—') + '</td>'
+            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(pn.panel_description || '—') + '</td>'
+            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(_csvSpellCond(pn.panel_condition) || '—') + '</td>'
+            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(_csvSpellCond(pn.sheeting_condition) || '—') + '</td>'
+            + '</tr>';
+        });
+        html += '</table>';
+      }
+
+      // Photo thumbnails — 2-col grid of inline data: URIs.
+      if (bundle.photos.length) {
+        html += '<p style="margin:8px 0 4px;font-family:sans-serif;font-size:11px;font-weight:bold;color:#333;">PHOTOS (' + bundle.photos.length + ')</p>';
+        html += '<table style="border-collapse:collapse;">';
+        for (var i = 0; i < bundle.photos.length; i += 2) {
+          html += '<tr>';
+          for (var j = 0; j < 2; j++) {
+            var ph = bundle.photos[i + j];
+            if (!ph) { html += '<td></td>'; continue; }
+            html += '<td style="padding:3px;vertical-align:top;">'
+              + '<img src="' + ph.src + '" style="width:280px;height:auto;display:block;border:1px solid #999;">'
+              + '</td>';
+          }
+          html += '</tr>';
+        }
+        html += '</table>';
+      }
+
+      // Build ExtendedData for analytics tools that read KML fields.
+      var ext = ''
+        + '<Data name="section"><value>' + _xmlEsc(sec.id) + '</value></Data>'
+        + '<Data name="pin_id"><value>' + _xmlEsc(pin.id || '') + '</value></Data>'
+        + '<Data name="overall_condition"><value>' + _xmlEsc(_csvSpellCond(ovCond)) + '</value></Data>'
+        + '<Data name="retro_condition"><value>' + _xmlEsc(_csvSpellCond(retroCond)) + '</value></Data>'
+        + '<Data name="mp"><value>' + _xmlEsc(mpStr) + '</value></Data>'
+        + '<Data name="sta"><value>' + _xmlEsc(pin.sta || '') + '</value></Data>'
+        + '<Data name="side"><value>' + _xmlEsc(a.side || '') + '</value></Data>'
+        + '<Data name="n_posts"><value>' + posts.length + '</value></Data>'
+        + '<Data name="n_panels"><value>' + panels.length + '</value></Data>';
+
+      return '<Placemark>'
+        + '<name>' + _xmlEsc(pinIdFull) + '</name>'
+        + '<styleUrl>#rw-sign</styleUrl>'
+        + '<description><![CDATA[' + html + ']]></description>'
+        + '<ExtendedData>' + ext + '</ExtendedData>'
+        + '<Point><coordinates>' + lng + ',' + lat + '</coordinates></Point>'
+        + '</Placemark>';
+    }
   }
 
   function renderSignsReport() {
@@ -31548,42 +32073,68 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     }
 
-    // Print ALL Sections — temporarily flip the Section dropdown to
-    // "(all)", re-render so every section's signs are in the DOM,
-    // wait longer for the bigger map fleet, print, then restore the
-    // previous section selection so the user is right where they left
-    // off when the dialog closes.
+    // Print Sections — opens the picker, then narrows the rendered
+    // card stack to just the picked sections via _srSectionOverride,
+    // waits for the inset-map tiles to land, opens Print, and clears
+    // the override on dialog close so the on-screen view restores.
     var printAllBtn = document.getElementById('sr-print-all-btn');
     if (printAllBtn && !printAllBtn._wired) {
       printAllBtn._wired = true;
       printAllBtn.addEventListener('click', function () {
-        var sel = document.getElementById('sr-section');
-        var prevSection = sel ? sel.value : '';
-        if (sel && sel.value !== '') {
-          sel.value = '';
-          renderSignsReport();
-        }
-        _srTriggerPrint('Loading map tiles for all sections…', 4000, function () {
-          if (sel && sel.value !== prevSection) {
-            sel.value = prevSection;
+        _srPickSections({
+          title: 'Pick sections to print',
+          sub:   'A separate page is printed for each sign in the selected sections.',
+          actionLabel: 'Print',
+          persistKey:  'rw_sr_print_sections',
+          onConfirm: function (picked) {
+            if (!picked.length) return;
+            _srSectionOverride = new Set(picked);
             renderSignsReport();
-          }
+            _srTriggerPrint(
+              'Loading map tiles for ' + picked.length + ' section(s)…',
+              picked.length > 2 ? 4500 : 3000,
+              function () {
+                _srSectionOverride = null;
+                renderSignsReport();
+              }
+            );
+          },
         });
       });
     }
 
-    // Export CSV — downloads three sibling CSVs (signs / panels / posts)
-    // that match the currently filtered report. Join on pin_id (or
-    // section_id + pin_id when section codes repeat across projects).
-    // Aggregates on the signs file (n_posts / n_panels / n_photos /
-    // worst conditions) save the analyst from re-grouping for the
-    // common "how many Poor panels per section" questions, while the
-    // panels + posts files give per-row granularity for code-level
-    // queries (number of W1-6 Large Arrows, R1-1 Stops, etc.).
+    // Export CSV — opens the picker; _srExportCsv accepts the picked
+    // section set and emits the three sibling CSVs (signs / panels /
+    // posts) joined on (section_id, pin_id).
     var exportCsvBtn = document.getElementById('sr-export-csv-btn');
     if (exportCsvBtn && !exportCsvBtn._wired) {
       exportCsvBtn._wired = true;
-      exportCsvBtn.addEventListener('click', function () { _srExportCsv(); });
+      exportCsvBtn.addEventListener('click', function () {
+        _srPickSections({
+          title: 'Pick sections to export',
+          sub:   'Three CSVs (signs / panels / posts) covering the selected sections will download.',
+          actionLabel: 'Export CSV',
+          persistKey:  'rw_sr_csv_sections',
+          onConfirm: function (picked) { if (picked.length) _srExportCsv(new Set(picked)); },
+        });
+      });
+    }
+
+    // Export KML — opens the picker; _srExportKml emits one KML per
+    // picked section, each carrying the section's road centerline plus
+    // every sign as a Placemark with full info + thumbnail photos.
+    var exportKmlBtn = document.getElementById('sr-export-kml-btn');
+    if (exportKmlBtn && !exportKmlBtn._wired) {
+      exportKmlBtn._wired = true;
+      exportKmlBtn.addEventListener('click', function () {
+        _srPickSections({
+          title: 'Pick sections to export as KML',
+          sub:   'One KML file per section. Each carries the centerline and every sign with info + photo thumbnails. Large photo counts may take a few seconds to resize.',
+          actionLabel: 'Export KML',
+          persistKey:  'rw_sr_kml_sections',
+          onConfirm: function (picked) { if (picked.length) _srExportKml(picked); },
+        });
+      });
     }
 
     // ── Collect every sign (unfiltered), tally sources for chip strip
@@ -31668,8 +32219,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // ── Apply section / source / search filters ──────────────────────
+    // _srSectionOverride (set by Print Sections) takes priority over
+    // the section dropdown so a multi-section subset can render
+    // without flipping the dropdown to a single value.
     var allSigns = allUnfilteredSigns.filter(function (r) {
-      if (fSec && r.sec.id !== fSec) return false;
+      if (_srSectionOverride && _srSectionOverride.size && !_srSectionOverride.has(r.sec.id)) return false;
+      if (!_srSectionOverride && fSec && r.sec.id !== fSec) return false;
       if (mutedSet && mutedSet.has(_srcOf(r.pin))) return false;
       return true;
     });
