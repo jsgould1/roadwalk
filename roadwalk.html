@@ -34491,6 +34491,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _cvEndTypeShape(type) {
     if (!type) return '';
     var s = String(type).toLowerCase();
+    // Wing-wall check has to come BEFORE the bare headwall check
+    // because "Wing Wall" should be its own shape rather than fall
+    // through to plain headwall (some legacy values include both
+    // words; the wing-wall match wins).
+    if (s.indexOf('wing')       !== -1) return 'wing_wall';
+    if (s.indexOf('project')    !== -1) return 'projecting';
     if (s.indexOf('headwall')   !== -1) return 'headwall';
     if (s.indexOf('4a')         !== -1) return 'type_4a';
     if (s.indexOf('4b')         !== -1) return 'type_4b';
@@ -34610,6 +34616,42 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '<polygon points="' + pts + '" fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
           + '<text x="' + ((x0 + x1)/2) + '" y="' + labelY + '" text-anchor="middle" '
             + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Flared End</text>'
+          + '</g>';
+      }
+      if (shape === 'wing_wall') {
+        // Tall rectangle like a headwall, PLUS two short angled wing
+        // lines flaring outward from the top and bottom corners on
+        // the side that faces away from the barrel. Conveys the
+        // wing-wall geometry at a glance without exploding the
+        // schematic bounding box.
+        var wOuterX = isInlet ? boxX : (boxX + boxW);
+        var wing   = 10;                   // wing line length
+        var wingDx = isInlet ? -wing : wing;
+        var wingDy = wing * 0.7;
+        return '<g>'
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="' + color + '" stroke="#111" stroke-width="1.2" />'
+          + '<line x1="' + wOuterX + '" y1="' + boxY + '" '
+            + 'x2="' + (wOuterX + wingDx) + '" y2="' + (boxY - wingDy) + '" '
+            + 'stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" />'
+          + '<line x1="' + wOuterX + '" y1="' + (boxY + boxH) + '" '
+            + 'x2="' + (wOuterX + wingDx) + '" y2="' + (boxY + boxH + wingDy) + '" '
+            + 'stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" />'
+          + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Wing Wall</text>'
+          + '</g>';
+      }
+      if (shape === 'projecting') {
+        // No physical structure to render — the pipe just sticks out
+        // past the embankment. Drop a short italic "Projecting"
+        // label below the bare pipe end so the viewer doesn't read
+        // the empty space as "end type not yet identified."
+        var pLblX = anchorX + (isInlet ? -4 : 4);
+        return '<g>'
+          + '<text x="' + pLblX + '" y="' + labelY + '" '
+            + 'text-anchor="' + (isInlet ? 'end' : 'start') + '" '
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" '
+            + 'font-style="italic" font-weight="700">Projecting</text>'
           + '</g>';
       }
       return ''; // open barrel end
@@ -40526,7 +40568,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // to the options so saving the form doesn't silently overwrite
       // legacy data — Other / Add Manually stays at the bottom so the
       // user can switch to any new value they want.
-      var endTypes = ['Headwall','Type 4A','Type 4B','Type 6B','Flange','None','Other / Add Manually'];
+      var endTypes = ['Headwall','Wing Wall','Type 4A','Type 4B','Type 6B','Flange','Projecting','None','Other / Add Manually'];
       function _endOpts(currentVal) {
         if (currentVal && endTypes.indexOf(currentVal) === -1) {
           return [currentVal].concat(endTypes);
