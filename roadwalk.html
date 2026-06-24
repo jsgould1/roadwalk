@@ -4780,7 +4780,25 @@ body.rw-sld-photo-dragging .strip-pin {
   color: var(--ink-2);
   background: #fff;
 }
-.sr-card-footer-left  { text-align: left; }
+.sr-card-footer-left  {
+  text-align: left;
+  display: flex; align-items: center; gap: 8px;
+}
+.sr-card-footer-logo {
+  height: 14px; width: auto; display: block;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+/* Project-number strip in the footer middle. Slightly less letter-
+   spacing than the surrounding sign-id / page-of so the long list of
+   GRSM / PMIS pairs stays on one line at 10px. */
+.sr-card-footer-middle {
+  text-align: center;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  flex: 1 1 auto; min-width: 0;
+  padding: 0 12px;
+}
 .sr-card-footer-right { text-align: right; }
 .sr-notes-row {
   margin-top: 6px;
@@ -31147,6 +31165,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     I: { route: 'NB Gatlinburg Bypass Ramp to Gatlinburg Spur Road (Southbound)',  route_id: 'GRSM-0012BZ', fmss: 57674,  mp_start: 0,      mp_end: 0.08  },
   };
 
+  // Project numbers strip — sits in the footer middle of every printed
+  // sign card. One static string for the whole project; bump here when
+  // PMIS numbers change.
+  var _SR_PROJECT_NUMBERS = 'GRSM 10S(2) PMIS 328913 | GRSM 10N(4) PMIS 207789 | GRSM 12(4) PMIS 246405';
+
   // "Standard angles only" toggle — when on, panels at facing_degrees
   // other than 0 / 90 / 180 / 270 are filtered out of the report
   // render. They are NOT deleted from the data, just hidden from
@@ -32285,7 +32308,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 ? _photoGridFor(chunk, startNum) : '') +
             '</section>' +
             '<div class="sr-card-footer">' +
-              '<div class="sr-card-footer-left">' + _esc(signIdStr) + '</div>' +
+              '<div class="sr-card-footer-left">'
+                + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
+                + _esc(signIdStr)
+              + '</div>' +
+              '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
               '<div class="sr-card-footer-right">' + pageOfStr + '</div>' +
             '</div>' +
           '</article>';
@@ -32322,7 +32349,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             _photoGridFor(chunk, startNum) +
           '</section>' +
           '<div class="sr-card-footer">' +
-            '<div class="sr-card-footer-left">' + _esc(signIdStr) + '</div>' +
+            '<div class="sr-card-footer-left">'
+              + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
+              + _esc(signIdStr)
+            + '</div>' +
+            '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
             '<div class="sr-card-footer-right">' + pageOfStrCont + '</div>' +
           '</div>' +
         '</article>';
