@@ -11759,6 +11759,7 @@ body.mobile-mode #app {
           <span class="sr-count" id="cv-count">— culverts</span>
           <span style="margin-left:auto;display:flex;gap:6px;">
             <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
+            <button class="sr-btn" id="cv-prune-photos-btn" title="Find photos whose GPS coordinates fall outside your project area (likely stray imports from another project) and delete them.">🗑 Prune distant…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
             <button class="sr-btn" id="cv-print-all-btn" title="Pick which sections to print, wait for tiles, then open browser Print dialog">🖨 Print Sections…</button>
             <button class="sr-btn" id="cv-export-csv-btn" title="Pick which sections, then download CSVs of the culvert data">📥 Export CSV…</button>
@@ -34970,6 +34971,112 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     }
+    // Prune-distant-photos modal: scans IDB for photos whose lat/lng
+    // falls outside the union of all section alignments plus a 10-mile
+    // buffer, shows the user the count + a sorted sample, and on
+    // confirmation deletes them via a single write transaction. Built
+    // and torn down per use so there's no lingering DOM.
+    function _cvOpenPrunePhotosModal() {
+      var api = window._RW && window._RW.geophotos;
+      if (!api || typeof api.scanDistantPhotos !== 'function' || typeof api.deleteByIds !== 'function') {
+        alert('Photo cleanup is unavailable — geophotos module not ready.');
+        return;
+      }
+      var backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:8px;max-width:560px;width:92%;'
+        + 'max-height:82vh;overflow:auto;padding:18px 20px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);'
+        + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
+      panel.innerHTML =
+        '<h3 style="margin:0 0 6px;font-size:16px;">Prune distant photos</h3>'
+        + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
+        + 'Scanning for photos whose GPS coordinates fall more than 10 miles '
+        + 'outside any of your project sections — typically stray imports '
+        + 'from another job that got dragged in.'
+        + '</p>'
+        + '<div id="prune-status" style="padding:10px 12px;background:#f1f5f9;border-radius:4px;'
+        + 'font-family:\'IBM Plex Mono\',monospace;font-size:12px;">Scanning…</div>'
+        + '<div id="prune-results" style="display:none;margin-top:10px;"></div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">'
+        + '<button type="button" data-act="cancel" style="font:600 13px system-ui;padding:6px 14px;'
+        + 'border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">Cancel</button>'
+        + '<button type="button" data-act="delete" disabled style="font:700 13px system-ui;padding:6px 14px;'
+        + 'border:none;border-radius:4px;background:#dc2626;color:#fff;cursor:pointer;opacity:.5;">Delete</button>'
+        + '</div>';
+      backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+
+      function close() { try { document.body.removeChild(backdrop); } catch (_) {} }
+      backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) close(); });
+      panel.querySelector('[data-act="cancel"]').addEventListener('click', close);
+
+      var distantIds = [];
+      var statusEl  = panel.querySelector('#prune-status');
+      var resultsEl = panel.querySelector('#prune-results');
+      var deleteBtn = panel.querySelector('[data-act="delete"]');
+
+      api.scanDistantPhotos(10).then(function (r) {
+        if (!r.bbox) {
+          statusEl.textContent = 'No project sections — cannot determine project area.';
+          return;
+        }
+        statusEl.textContent = 'Scanned ' + r.scanned + ' photo(s). '
+          + 'Project bbox: ' + r.union.minLat.toFixed(3) + '°N to ' + r.union.maxLat.toFixed(3) + '°N, '
+          + r.union.minLng.toFixed(3) + '°W to ' + r.union.maxLng.toFixed(3) + '°W (+ '
+          + r.bufferMiles + ' mi buffer).';
+        if (r.noGps) statusEl.textContent += ' ' + r.noGps + ' record(s) have no GPS and were skipped.';
+        if (!r.distant.length) {
+          resultsEl.style.display = 'block';
+          resultsEl.innerHTML = '<p style="color:var(--ink-3);">Nothing to prune — every photo with GPS is inside the project area.</p>';
+          return;
+        }
+        distantIds = r.distant.map(function (p) { return p.id; });
+        var sample = r.distant.slice(0, 12).map(function (p) {
+          return '<li style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:2px 0;'
+              + 'border-bottom:1px solid #f1f5f9;">'
+              + '<span style="color:#dc2626;font-weight:700;">' + p.miles.toFixed(0) + ' mi</span>  '
+              + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4)
+              + (p.linked ? '  <span style="color:#0ea5e9;">linked: ' + _esc(p.linked) + '</span>' : '')
+              + (p.desc   ? '  <span style="color:var(--ink-3);">' + _esc(p.desc.slice(0, 40)) + '</span>' : '')
+              + '</li>';
+        }).join('');
+        resultsEl.style.display = 'block';
+        resultsEl.innerHTML =
+          '<p style="margin:4px 0 6px;"><strong style="color:#dc2626;">' + r.distant.length
+          + ' photo(s)</strong> outside the project area.</p>'
+          + '<p style="margin:0 0 6px;color:var(--ink-3);font-size:12px;">'
+          + 'Sample (sorted by distance from project center, max 12 shown):</p>'
+          + '<ul style="list-style:none;padding:0;margin:0 0 8px;max-height:240px;overflow:auto;'
+          + 'background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;">'
+          + sample + '</ul>';
+        deleteBtn.disabled = false;
+        deleteBtn.style.opacity = '1';
+        deleteBtn.textContent = 'Delete ' + r.distant.length + ' photo(s)';
+      }).catch(function (err) {
+        statusEl.textContent = 'Scan failed: ' + (err && err.message ? err.message : 'unknown error');
+      });
+
+      deleteBtn.addEventListener('click', function () {
+        if (!distantIds.length) return;
+        if (!confirm('Permanently delete ' + distantIds.length + ' photo(s) from IDB? This cannot be undone.')) return;
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = 'Deleting…';
+        api.deleteByIds(distantIds).then(function (n) {
+          statusEl.textContent = 'Deleted ' + n + ' photo(s). Reloading…';
+          // Re-pull PHOTOS so the report and map reflect the prune.
+          return api.reloadFromIdb();
+        }).then(function (count) {
+          statusEl.textContent = 'Done. PHOTOS now holds ' + count + ' record(s) in current scope.';
+          setTimeout(close, 1200);
+        }).catch(function () {
+          statusEl.textContent = 'Delete failed.';
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = 'Retry';
+        });
+      });
+    }
     function _cvOpenFolderPicker(pin) {
       if (!pin) return;
       var input = document.createElement('input');
@@ -35383,6 +35490,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (scopeBtn && !scopeBtn._wired) {
       scopeBtn._wired = true;
       scopeBtn.addEventListener('click', function () { _cvOpenPhotoScopeModal(); });
+    }
+    var pruneBtn = document.getElementById('cv-prune-photos-btn');
+    if (pruneBtn && !pruneBtn._wired) {
+      pruneBtn._wired = true;
+      pruneBtn.addEventListener('click', function () { _cvOpenPrunePhotosModal(); });
     }
 
     ['cv-print-btn', 'cv-print-all-btn', 'cv-export-csv-btn', 'cv-export-kml-btn'].forEach(function (id) {
@@ -43817,6 +43929,94 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return s ? Array.from(s) : null;            // null = all sections
     },
     sectionBboxes: _sectionBboxesForScope,
+    // Scan IDB for photos whose lat/lng falls OUTSIDE the union of
+    // all section alignments + a buffer. These are typically stray
+    // imports from a different project that got dragged in. The
+    // resolved object gives total scanned + the array of distant
+    // records (just id, lat, lng, distance for the modal sample).
+    scanDistantPhotos: function (bufferMiles) {
+      var rawSecs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+      var bboxes = _sectionBboxesForScope();
+      var union = null;
+      for (var sid in bboxes) {
+        var b = bboxes[sid];
+        if (!union) {
+          union = { minLat: b.minLat, maxLat: b.maxLat, minLng: b.minLng, maxLng: b.maxLng };
+        } else {
+          if (b.minLat < union.minLat) union.minLat = b.minLat;
+          if (b.maxLat > union.maxLat) union.maxLat = b.maxLat;
+          if (b.minLng < union.minLng) union.minLng = b.minLng;
+          if (b.maxLng > union.maxLng) union.maxLng = b.maxLng;
+        }
+      }
+      if (!union) return Promise.resolve({ scanned: 0, distant: [], bbox: null, noGps: 0 });
+      var bufDeg = (bufferMiles || 10) * 0.01449;     // ~1 mi at 36° N
+      var bbox = {
+        minLat: union.minLat - bufDeg, maxLat: union.maxLat + bufDeg,
+        minLng: union.minLng - bufDeg, maxLng: union.maxLng + bufDeg,
+      };
+      var cLat = (bbox.minLat + bbox.maxLat) / 2;
+      var cLng = (bbox.minLng + bbox.maxLng) / 2;
+      function haversineMi(la1, lo1, la2, lo2) {
+        var rad = Math.PI / 180, R = 3958.76;
+        var dLat = (la2 - la1) * rad, dLng = (lo2 - lo1) * rad;
+        var a = Math.sin(dLat/2)*Math.sin(dLat/2)
+              + Math.cos(la1*rad)*Math.cos(la2*rad)*Math.sin(dLng/2)*Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+      return openDB().then(function (db) {
+        return new Promise(function (res, rej) {
+          var tx = db.transaction(DB_STORE, 'readonly');
+          var req = tx.objectStore(DB_STORE).openCursor();
+          var distant = [];
+          var scanned = 0, noGps = 0;
+          req.onsuccess = function (e) {
+            var cur = e.target.result;
+            if (!cur) {
+              distant.sort(function (a, b) { return b.miles - a.miles; });
+              res({ scanned: scanned, distant: distant, bbox: bbox, noGps: noGps,
+                    union: union, bufferMiles: bufferMiles || 10 });
+              return;
+            }
+            scanned++;
+            var rec = cur.value;
+            if (!rec || rec.lat == null || rec.lng == null) {
+              noGps++;
+            } else {
+              var lat = +rec.lat, lng = +rec.lng;
+              if (isFinite(lat) && isFinite(lng) && (
+                  lat < bbox.minLat || lat > bbox.maxLat ||
+                  lng < bbox.minLng || lng > bbox.maxLng)) {
+                distant.push({
+                  id:      rec.id,
+                  lat:     lat,
+                  lng:     lng,
+                  miles:   haversineMi(lat, lng, cLat, cLng),
+                  desc:    rec.description || '',
+                  linked:  rec.linked_pin_id || '',
+                });
+              }
+            }
+            rec = null;
+            cur.continue();
+          };
+          req.onerror = function () { rej(req.error); };
+        });
+      });
+    },
+    // Bulk delete by id. Single write transaction so it commits atomically.
+    deleteByIds: function (ids) {
+      if (!ids || !ids.length) return Promise.resolve(0);
+      return openDB().then(function (db) {
+        return new Promise(function (res, rej) {
+          var tx = db.transaction(DB_STORE, 'readwrite');
+          var store = tx.objectStore(DB_STORE);
+          ids.forEach(function (id) { store.delete(id); });
+          tx.oncomplete = function () { res(ids.length); };
+          tx.onerror    = function () { rej(tx.error); };
+        });
+      });
+    },
     // Chunked so the structured-clone budget stays bounded. Promise.all
     // over every photo at once was OOMing the tab on photo-heavy
     // selections — each dbPut structured-clones the geophoto record
