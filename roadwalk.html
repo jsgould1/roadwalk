@@ -5002,6 +5002,19 @@ body.rw-sld-photo-dragging .strip-pin {
    MP rows floating at the bottom of the column. Anchor them to the
    top instead so they read from the top edge of the inset map. */
 .sr-card[data-cv-idx] .sr-identity-left > :last-child { margin-top: 0; }
+/* Plan-view schematic: straightline barrel + end fittings + callout.
+   Sits below the identity block, fills the remaining left-column width.
+   Light card-like frame so it reads as a diagram, not body text. */
+.cv-schematic {
+  margin-top: 6px;
+  padding: 4px;
+  background: #fafafa;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cv-schematic svg { display: block; max-width: 100%; }
 /* Per-culvert action buttons (Select Nearby Photos, Auto-add nearby)
    sit in the Photos section header. They are screen-only — the print
    stylesheet hides .sr-photo-actions, so we route through the same
@@ -33853,6 +33866,141 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
   function _cvSourceLabel(k) { return k || '(no source)'; }
 
+  // ── Culvert plan-view schematic ─────────────────────────────────
+  // Pure SVG so it renders the same on screen and in print. Reads the
+  // pin attrs.in_type / out_type strings via keyword matching:
+  //   "headwall"                 → filled rectangle (mass)
+  //   "manhole" / "man hole" /
+  //     "drop inlet"             → outline rectangle (hollow)
+  //   "flange" / "flared"        → triangular flare opening outward
+  //   (anything else / blank)    → no end shape, barrel ends open
+  function _cvEndTypeShape(type) {
+    if (!type) return '';
+    var s = String(type).toLowerCase();
+    if (s.indexOf('headwall')   !== -1) return 'headwall';
+    if (s.indexOf('manhole')    !== -1) return 'open_box';
+    if (s.indexOf('man hole')   !== -1) return 'open_box';
+    if (s.indexOf('drop inlet') !== -1) return 'open_box';
+    if (s.indexOf('flange')     !== -1) return 'flange';
+    if (s.indexOf('flared')     !== -1) return 'flange';
+    return '';
+  }
+
+  function _cvBarrelSchematicSvg(pin) {
+    var a = pin.attrs || {};
+
+    var W = 520, H = 150;
+    var barrelY = 68;
+    var barrelH = 22;
+    var barrelStartX = 100;
+    var barrelEndX   = W - 100;
+
+    var inletShape  = _cvEndTypeShape(a.in_type);
+    var outletShape = _cvEndTypeShape(a.out_type);
+
+    // Barrel color from the parsed 1–5 condition rating.
+    var cn = _cvCondLetter(a.barrel_condition);
+    var barrelColor = cn ? _CV_COND_COLOR[cn] : '#9ca3af';
+    var barrelLabel = a.barrel_condition ? String(a.barrel_condition) : 'No barrel rating';
+
+    function _endShape(side, shape, anchorX) {
+      var isInlet = (side === 'inlet');
+      var boxW = 18;
+      var boxH = barrelH + 28;
+      var boxY = barrelY - 14;
+      var boxX = isInlet ? (anchorX - boxW) : anchorX;
+      var labelY = boxY + boxH + 14;
+
+      if (shape === 'headwall') {
+        return '<g>'
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="#374151" stroke="#111" stroke-width="1.2" />'
+          + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">Headwall</text>'
+          + '</g>';
+      }
+      if (shape === 'open_box') {
+        var ot = isInlet ? a.in_type : a.out_type;
+        var label = (String(ot || '').toLowerCase().indexOf('drop') !== -1) ? 'Drop Inlet' : 'Manhole';
+        return '<g>'
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="#fff" stroke="#111" stroke-width="2" />'
+          + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">' + label + '</text>'
+          + '</g>';
+      }
+      if (shape === 'flange') {
+        // Triangular flare — outer mouth ~2x the barrel height, anchored
+        // to the barrel face, flaring outward (inlet=left, outlet=right).
+        var depth     = 30;
+        var halfBarrel = barrelH / 2;
+        var halfFlare  = barrelH;
+        var x0 = anchorX;
+        var x1 = isInlet ? (anchorX - depth) : (anchorX + depth);
+        var topInner = barrelY;
+        var botInner = barrelY + barrelH;
+        var topOuter = barrelY - (halfFlare - halfBarrel);
+        var botOuter = barrelY + barrelH + (halfFlare - halfBarrel);
+        var pts = x0 + ',' + topInner + ' '
+                + x1 + ',' + topOuter + ' '
+                + x1 + ',' + botOuter + ' '
+                + x0 + ',' + botInner;
+        return '<g>'
+          + '<polygon points="' + pts + '" fill="#fff" stroke="#111" stroke-width="2" />'
+          + '<text x="' + ((x0 + x1)/2) + '" y="' + labelY + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">Flared End</text>'
+          + '</g>';
+      }
+      return ''; // open barrel end
+    }
+
+    // Callout above the barrel — material · size · length, leader line
+    // drops to the barrel midpoint.
+    var midX = (barrelStartX + barrelEndX) / 2;
+    var calloutBits = [];
+    if (a.material)  calloutBits.push(a.material);
+    if (a.size_in)   calloutBits.push(a.size_in + '"');
+    if (a.length_ft) calloutBits.push(a.length_ft + ' ft');
+    var callout  = calloutBits.join(' · ') || '(no spec)';
+    var calloutW = Math.max(140, 18 + callout.length * 7);
+    var calloutX = midX - calloutW/2;
+    var calloutY = 6;
+    var calloutH = 22;
+
+    return '<div class="cv-schematic">'
+      + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" '
+        + 'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
+      // Callout box
+      + '<rect x="' + calloutX + '" y="' + calloutY + '" width="' + calloutW + '" height="' + calloutH + '" '
+        + 'fill="#fff" stroke="#111" stroke-width="1.2" rx="3" />'
+      + '<text x="' + midX + '" y="' + (calloutY + 15) + '" text-anchor="middle" '
+        + 'font-size="11" font-weight="700" font-family="sans-serif" fill="#111">'
+        + _esc(callout) + '</text>'
+      // Leader line down to barrel
+      + '<line x1="' + midX + '" y1="' + (calloutY + calloutH) + '" '
+        + 'x2="' + midX + '" y2="' + barrelY + '" stroke="#111" stroke-width="1" />'
+      // Barrel — colored by condition
+      + '<rect x="' + barrelStartX + '" y="' + barrelY + '" '
+        + 'width="' + (barrelEndX - barrelStartX) + '" height="' + barrelH + '" '
+        + 'fill="' + barrelColor + '" fill-opacity="0.78" stroke="#111" stroke-width="1.2" />'
+      // End fittings
+      + _endShape('inlet',  inletShape,  barrelStartX)
+      + _endShape('outlet', outletShape, barrelEndX)
+      // Direction labels (above barrel, at each end)
+      + '<text x="' + (barrelStartX + 4) + '" y="' + (barrelY - 8) + '" '
+        + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">INLET</text>'
+      + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 8) + '" text-anchor="end" '
+        + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">OUTLET</text>'
+      // Barrel condition label centered under barrel — color tracks the
+      // barrel fill so an unrated barrel reads gray and a critical one
+      // pops red.
+      + '<text x="' + midX + '" y="' + (barrelY + barrelH + 38) + '" text-anchor="middle" '
+        + 'font-size="10.5" font-family="sans-serif" fill="' + barrelColor + '" font-weight="700">'
+        + 'Barrel: ' + _esc(barrelLabel) + '</text>'
+      + '</svg>'
+      + '</div>';
+  }
+
   // ── Culvert inset map ────────────────────────────────────────────
   // Mirror of _srInitInsetMap but tuned for a polyline asset on ESRI
   // World Imagery (aerial) with the culvert drawn in deliberate blue.
@@ -34282,6 +34430,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '<div class="sr-identity-row">' +
             '<div class="sr-identity-left">' +
               idBlock +
+              _cvBarrelSchematicSvg(pin) +
             '</div>' +
             '<div class="sr-identity-right">' +
               '<div class="sr-card-map" data-coords="'
