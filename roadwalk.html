@@ -34611,18 +34611,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
       var condBlock = ''
         + '<div class="sr-post-card">'
-          + '<div class="sr-sub-hdr-row"><span>CONDITION RATINGS</span></div>'
+          // Title bar carries the column labels inline so the table
+          // below stays as data rows only — no orphan header row.
+          // grid columns match the colgroup widths so the labels stay
+          // visually aligned with the data columns.
+          + '<div class="sr-sub-hdr-row" style="display:grid;'
+            + 'grid-template-columns:32% 18% 50%;align-items:baseline;gap:0;">'
+            + '<span>CONDITION RATINGS</span>'
+            + '<span style="font:700 10px \'IBM Plex Mono\',monospace;'
+              + 'letter-spacing:.5px;color:var(--ink-3);">RATING</span>'
+            + '<span style="font:700 10px \'IBM Plex Mono\',monospace;'
+              + 'letter-spacing:.5px;color:var(--ink-3);">COMMENTS / NOTES</span>'
+          + '</div>'
           + '<table style="border-collapse:collapse;font:13px sans-serif;width:100%;table-layout:fixed;">'
             + '<colgroup>'
               + '<col style="width:32%">'
               + '<col style="width:18%">'
               + '<col style="width:50%">'
             + '</colgroup>'
-            + '<tr style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#555;">'
-              + '<th style="text-align:left;padding:2px 14px 4px 0;border-bottom:1px solid #ddd;">Element</th>'
-              + '<th style="text-align:left;padding:2px 14px 4px 0;border-bottom:1px solid #ddd;">Rating</th>'
-              + '<th style="text-align:left;padding:2px 0 4px;border-bottom:1px solid #ddd;">Comments / Notes</th>'
-            + '</tr>'
             + _condRow('Inlet',               a.inlet_condition,   a.inlet_condition_notes)
             + _condRow('Barrel',              a.barrel_condition,  a.barrel_condition_notes)
             + _condRow('Outlet',              a.outlet_condition,  a.outlet_condition_notes)
