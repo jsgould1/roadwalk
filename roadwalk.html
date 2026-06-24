@@ -11443,6 +11443,7 @@ body.mobile-mode #app {
             </button>
             <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
             <button class="sr-btn" id="sr-print-all-btn" title="Switch the Section filter to (all), wait for tiles, then open browser Print dialog — Save as PDF for the full deliverable across every section">🖨 Print ALL Sections</button>
+            <button class="sr-btn" id="sr-export-csv-btn" title="Download three CSVs (signs / panels / posts) for the currently filtered view — join on pin_id for summary stats">📥 Export CSV</button>
           </span>
         </div>
         <div class="sr-head-row" id="sr-source-row">
@@ -31229,6 +31230,216 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (mod && mod.classList.contains('active')) _srForceInitAllMaps();
   });
 
+  // ── CSV export helpers ────────────────────────────────────────────
+  // Quote per RFC 4180: wrap in "" if the value carries a comma, quote
+  // or newline; double internal quotes.
+  function _csvEsc(v) {
+    if (v == null) return '';
+    var s = String(v);
+    if (s.indexOf(',') < 0 && s.indexOf('"') < 0 && s.indexOf('\n') < 0 && s.indexOf('\r') < 0) return s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  function _csvRow(arr) { return arr.map(_csvEsc).join(','); }
+  function _csvDownload(filename, content) {
+    // UTF-8 BOM so Excel auto-detects the encoding and accents render.
+    var blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+  // Single-letter condition code → spelled word. Same vocabulary the
+  // report uses on screen so the CSV matches "as it appears".
+  var _CSV_COND_SPELLED = { E: 'Excellent', G: 'Good', F: 'Fair', P: 'Poor', X: 'Failed' };
+  function _csvSpellCond(v) {
+    if (!v) return '';
+    var s = String(v).trim().toUpperCase();
+    return _CSV_COND_SPELLED[s.charAt(0)] || v;
+  }
+  // Panel-type derivation mirrors _panelTypeLabel in the per-card
+  // renderer so the CSV's panel_type matches the printed report.
+  function _csvPanelType(pn) {
+    var notes = ((pn.notes || '') + ' ' + (pn.retro_notes || '')).toLowerCase();
+    if (notes.indexOf('corrugat') !== -1) return 'Corrugated Aluminum';
+    return 'Aluminum';
+  }
+  function _csvMount(v) { return v === 'angled_brackets' ? 'Bracket' : (v || ''); }
+  function _csvSrc(pin) {
+    return (pin.attrs && pin.attrs.source) || pin.source || '';
+  }
+
+  function _srExportCsv() {
+    var sections = window.SECTIONS || [];
+    var secEl    = document.getElementById('sr-section');
+    var searchEl = document.getElementById('sr-search');
+    var fSec     = (secEl && secEl.value) || '';
+    var fQ       = (searchEl && searchEl.value.trim().toLowerCase()) || '';
+    var mutedSet = _srLoadMutedSources();
+
+    // Replicate the filter logic from renderSignsReport so the export
+    // reflects exactly what's on screen.
+    var rows = [];
+    sections.forEach(function (sec) {
+      (sec.pins || []).forEach(function (p) {
+        if (!p || (p.kind !== 'sign' && p.kind !== 'pt_sign')) return;
+        if (fSec && sec.id !== fSec) return;
+        if (mutedSet && mutedSet.has(_csvSrc(p))) return;
+        rows.push({ sec: sec, pin: p });
+      });
+    });
+    if (fQ) {
+      rows = rows.filter(function (r) {
+        var a = r.pin.attrs || {};
+        var hay = [r.pin.id, a.name, a.notes, r.sec.id,
+                   (a.panels || []).map(function (pn) { return pn && pn.sign_code; }).join(' ')]
+          .filter(Boolean).join(' ').toLowerCase();
+        return hay.indexOf(fQ) !== -1;
+      });
+    }
+    rows.sort(function (a, b) {
+      if (a.sec.id !== b.sec.id) return a.sec.id < b.sec.id ? -1 : 1;
+      return (a.pin.sta_ft || 0) - (b.pin.sta_ft || 0);
+    });
+
+    if (!rows.length) {
+      alert('No signs match the current filters — nothing to export.');
+      return;
+    }
+
+    var signsHdr = ['section_id','pin_id','pin_ulid','description',
+                    'overall_condition','retro_condition',
+                    'mp','sta','sta_ft','side','eop_offset_ft','lat','lng','source',
+                    'n_posts','n_panels','n_photos'];
+    var panelsHdr = ['section_id','pin_id','pin_ulid','panel_idx','panel_ulid',
+                     'facing_degrees','sign_code','panel_description',
+                     'panel_condition','sheeting_condition','sheeting_type',
+                     'retro_day_r1','retro_day_r2','retro_night_r1','retro_night_r2',
+                     'panel_size','mounting','panel_type','back_panel',
+                     'panel_install_date','damage','retro_notes','notes'];
+    var postsHdr  = ['section_id','pin_id','pin_ulid','post_idx','post_ulid',
+                     'post_type','post_count','post_height_ft','post_foundation',
+                     'post_finish','post_breakaway','post_condition','post_damage','notes'];
+
+    var signsCsv  = [signsHdr.join(',')];
+    var panelsCsv = [panelsHdr.join(',')];
+    var postsCsv  = [postsHdr.join(',')];
+
+    rows.forEach(function (r) {
+      var sec = r.sec;
+      var pin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
+      var a   = pin.attrs || {};
+      var posts  = Array.isArray(a.posts)  ? a.posts  : [];
+      var panels = Array.isArray(a.panels) ? a.panels : [];
+      var photos = Array.isArray(a.photos) ? a.photos : [];
+
+      // MP — same derivation the on-screen card uses.
+      var mpStr = '';
+      var mpStartNum = (sec && typeof sec.mpStart === 'number') ? sec.mpStart
+                    : (sec && typeof sec.mp_start === 'number') ? sec.mp_start : null;
+      var mpVal = null;
+      if (mpStartNum != null && typeof pin.sta_ft === 'number') {
+        mpVal = mpStartNum + pin.sta_ft / 5280;
+      } else if (a.mp_start != null) {
+        mpVal = +a.mp_start;
+      }
+      if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
+
+      var lat = '', lng = '';
+      var g = pin.geometry && pin.geometry.coordinates;
+      if (Array.isArray(g) && g.length >= 2) { lng = +g[0]; lat = +g[1]; }
+
+      // Overall / retro condition rollups — same input as the report's
+      // Overall + Retro Condition row.
+      var ovCodes = [];
+      posts.forEach(function (po) { if (po) ovCodes.push(po.post_condition); });
+      panels.forEach(function (pn) {
+        if (pn) { ovCodes.push(pn.panel_condition); ovCodes.push(pn.sheeting_condition); }
+      });
+      var ovCond = (typeof _worstCondition === 'function') ? _worstCondition(ovCodes) : null;
+      var retroCodes = [];
+      panels.forEach(function (pn) {
+        if (!pn) return;
+        retroCodes.push(pn.retro_day_r1, pn.retro_day_r2, pn.retro_night_r1, pn.retro_night_r2);
+      });
+      var retroCond = (typeof _worstCondition === 'function') ? _worstCondition(retroCodes) : null;
+
+      // Description joined across all panels, mirroring the printed
+      // identity block.
+      var descStr = panels.map(function (pn) {
+        return ((pn && (pn.panel_description || pn.sign_code)) || '').trim();
+      }).filter(Boolean).join(' / ');
+
+      signsCsv.push(_csvRow([
+        sec.id || '', pin.id || '', pin.ulid || '', descStr,
+        _csvSpellCond(ovCond), _csvSpellCond(retroCond),
+        mpStr, pin.sta || '', (pin.sta_ft != null ? pin.sta_ft : ''),
+        a.side || '', (a.eop_offset != null ? a.eop_offset : ''),
+        lat, lng, _csvSrc(pin),
+        posts.length, panels.length, photos.length
+      ]));
+
+      panels.forEach(function (pn, i) {
+        if (!pn) return;
+        var dmg = Array.isArray(pn.damage_flags)
+          ? pn.damage_flags.join(' | ')
+          : (pn.damage_flags || '');
+        panelsCsv.push(_csvRow([
+          sec.id || '', pin.id || '', pin.ulid || '',
+          i + 1, pn.ulid || '',
+          (pn.facing_degrees != null ? pn.facing_degrees : ''),
+          pn.sign_code || '', pn.panel_description || '',
+          _csvSpellCond(pn.panel_condition), _csvSpellCond(pn.sheeting_condition),
+          pn.sheeting_type || '',
+          pn.retro_day_r1 || '', pn.retro_day_r2 || '',
+          pn.retro_night_r1 || '', pn.retro_night_r2 || '',
+          pn.panel_size || '', _csvMount(pn.mounting_hardware),
+          _csvPanelType(pn),
+          pn.back_panel || '', pn.panel_install_date || '',
+          dmg, pn.retro_notes || '', pn.notes || ''
+        ]));
+      });
+
+      posts.forEach(function (po, i) {
+        if (!po) return;
+        var dmg = Array.isArray(po.post_damage)
+          ? po.post_damage.join(' | ')
+          : (po.post_damage || '');
+        postsCsv.push(_csvRow([
+          sec.id || '', pin.id || '', pin.ulid || '',
+          i + 1, po.ulid || '',
+          po.post_type || '', (po.post_count != null ? po.post_count : ''),
+          (po.post_height_ft != null ? po.post_height_ft : ''),
+          po.post_foundation || '', po.post_finish || '', po.post_breakaway || '',
+          _csvSpellCond(po.post_condition),
+          dmg, po.notes || ''
+        ]));
+      });
+    });
+
+    // Timestamp + scope tag so multiple exports don't clobber each
+    // other on disk.
+    var d = new Date();
+    var pad = function (n) { return n < 10 ? '0' + n : n; };
+    var ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+           + '_' + pad(d.getHours()) + pad(d.getMinutes());
+    var scope = fSec ? fSec.toLowerCase() : 'all';
+
+    // Three sequential downloads. Browsers throttle bulk downloads
+    // when fired in the same tick, so space them out by ~200 ms.
+    _csvDownload('roadwalk_signs_'  + scope + '_' + ts + '.csv', signsCsv.join('\r\n'));
+    setTimeout(function () {
+      _csvDownload('roadwalk_panels_' + scope + '_' + ts + '.csv', panelsCsv.join('\r\n'));
+    }, 250);
+    setTimeout(function () {
+      _csvDownload('roadwalk_posts_'  + scope + '_' + ts + '.csv', postsCsv.join('\r\n'));
+    }, 500);
+  }
+
   function renderSignsReport() {
     var list = document.getElementById('sr-list');
     if (!list) return;
@@ -31326,6 +31537,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         });
       });
+    }
+
+    // Export CSV — downloads three sibling CSVs (signs / panels / posts)
+    // that match the currently filtered report. Join on pin_id (or
+    // section_id + pin_id when section codes repeat across projects).
+    // Aggregates on the signs file (n_posts / n_panels / n_photos /
+    // worst conditions) save the analyst from re-grouping for the
+    // common "how many Poor panels per section" questions, while the
+    // panels + posts files give per-row granularity for code-level
+    // queries (number of W1-6 Large Arrows, R1-1 Stops, etc.).
+    var exportCsvBtn = document.getElementById('sr-export-csv-btn');
+    if (exportCsvBtn && !exportCsvBtn._wired) {
+      exportCsvBtn._wired = true;
+      exportCsvBtn.addEventListener('click', function () { _srExportCsv(); });
     }
 
     // ── Collect every sign (unfiltered), tally sources for chip strip
