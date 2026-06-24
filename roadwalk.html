@@ -36308,10 +36308,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // ── Auto-add-nearby button ──
-    // Surgical photo update (no full re-render) — _cvAutoAddNearbyPhotos
-    // only mutates geophoto records' linked_pin_id and saves them
-    // through the geophotos API. SECTIONS isn't touched and the only
-    // visible delta is this culvert's photo grid.
+    // Surgical photo update for instant feedback, then a deferred
+    // full re-render so continuation cards and the "Page N of TOTAL"
+    // footer page counts reflect the new photo count. With v204's
+    // data-photo-id render path the full re-render no longer
+    // embeds dataUrls in the DOM, so its memory cost is bounded.
     list.querySelectorAll('.cv-auto-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var r = all[+btn.dataset.cvIdx];
@@ -36322,9 +36323,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _cvSurgicalPhotoUpdate(cardEl, r, idx);
         if (added === 0) {
           alert('No new geophotos within 15 ft of this culvert.');
-        } else {
-          console.log('[Culverts] auto-linked ' + added + ' photo(s) to ' + r.pin.id);
+          return;
         }
+        console.log('[Culverts] auto-linked ' + added + ' photo(s) to ' + r.pin.id);
+        // Defer the full re-render so the surgical flash lands
+        // first AND any in-flight IDB writes from auto-add finish
+        // before we rebuild the DOM. Without this the continuation
+        // cards stay stale and the 4th+ photo never appears.
+        setTimeout(function () {
+          try { renderCulvertsReport(); } catch (_) {}
+        }, 600);
       });
     });
 
@@ -36345,17 +36353,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           secId: r.sec.id,
           maxFt: 150,
           title: 'Nearby field photos — ' + r.pin.id,
-          // Surgical update only — DON'T rebuild all 195 cards. Even
-          // with lazy photos the full re-render was OOM-ing on Apply
-          // because the DOM allocation for 195 cards × their SVGs +
-          // condition rows + inset map placeholders + photo grids
-          // happens on top of the just-finished saveMany. The
-          // surgical update only touches this culvert's photo grid +
-          // count, preserving scroll position and keeping peak memory
-          // flat. Scroll-to-card not needed because the user clicked
-          // a button on this card — it's already in view.
+          // Two-phase update: surgical for instant visual feedback
+          // (yellow flash + Photos N count + the first 3 thumbnails
+          // on the main card), then a deferred full re-render so
+          // continuation cards (photos 4+) appear and every card's
+          // "Page N of TOTAL" footer reflects the new totals. With
+          // v204's data-photo-id render path the full re-render no
+          // longer embeds dataUrls in the DOM, so its memory cost is
+          // bounded even on 195-culvert projects.
           onPick: function () {
             _cvSurgicalPhotoUpdate(cardEl, r, idx);
+            setTimeout(function () {
+              try { renderCulvertsReport(); } catch (_) {}
+            }, 600);
           },
         });
       });
