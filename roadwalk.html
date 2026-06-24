@@ -4959,6 +4959,9 @@ body.rw-sld-photo-dragging .strip-pin {
   min-width: 0;
   display: flex; flex-direction: column; gap: 6px;
 }
+/* Push the posts block to the bottom of the left column so its bottom
+   edge aligns with the maplet's bottom edge. */
+.sr-identity-left > :last-child { margin-top: auto; }
 .sr-identity-right { display: flex; min-height: 2.3in; }
 .sr-identity-right .sr-card-map {
   width: 100%; height: auto; min-height: 2.3in; flex: 1;
