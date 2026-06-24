@@ -11760,6 +11760,7 @@ body.mobile-mode #app {
           <span style="margin-left:auto;display:flex;gap:6px;">
             <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
             <button class="sr-btn" id="cv-prune-photos-btn" title="Find photos whose GPS coordinates fall outside your project area (likely stray imports from another project) and delete them.">🗑 Prune distant…</button>
+            <button class="sr-btn" id="cv-manage-sections-btn" title="View all project sections and delete ones that don't belong (e.g. sections dragged in from another project).">📋 Manage sections…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
             <button class="sr-btn" id="cv-print-all-btn" title="Pick which sections to print, wait for tiles, then open browser Print dialog">🖨 Print Sections…</button>
             <button class="sr-btn" id="cv-export-csv-btn" title="Pick which sections, then download CSVs of the culvert data">📥 Export CSV…</button>
@@ -13891,6 +13892,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   window._RW = window._RW || {};
   window._RW.toAltSta   = _toAltSta;
   window._RW.fromAltSta = _fromAltSta;
+
+  // ── Section management ─────────────────────────────────────────
+  // Lets the culvert report's "Manage sections…" modal list and
+  // delete sections that don't belong in the project (e.g. stray
+  // sections dragged in from another job). list() returns a thin
+  // {id, name, pinCount} so the modal doesn't have to clone full
+  // section records. deleteById() drops the section from both
+  // SECTIONS (in memory) and BUNDLE.sections (the persisted source
+  // of truth), writes the updated bundle back to IDB, and triggers
+  // a dashboard re-render so list views drop the deleted entry
+  // immediately. Returns true if a section was removed, false if
+  // the id wasn't found.
+  window._RW.sections = {
+    list: function () {
+      return (SECTIONS || []).map(function (s) {
+        return {
+          id:        s && s.id,
+          name:      (s && s.name) || '',
+          pinCount:  (s && Array.isArray(s.pins)) ? s.pins.length : 0,
+          mpStart:   (s && typeof s.mpStart === 'number') ? s.mpStart : null,
+          mpEnd:     (s && typeof s.mpEnd   === 'number') ? s.mpEnd   : null,
+        };
+      });
+    },
+    deleteById: function (id) {
+      if (!id) return Promise.resolve(false);
+      var idx = SECTIONS.findIndex(function (s) { return s && s.id === id; });
+      if (idx < 0) return Promise.resolve(false);
+      SECTIONS.splice(idx, 1);
+      if (BUNDLE && Array.isArray(BUNDLE.sections)) {
+        BUNDLE.sections = BUNDLE.sections.filter(function (s) { return s && s.id !== id; });
+      }
+      var save = BUNDLE ? _saveProjectToDB(BUNDLE) : Promise.resolve();
+      return save.then(function () {
+        if (typeof window.renderDashboard === 'function') {
+          try { window.renderDashboard('all'); } catch (_) {}
+        }
+        return true;
+      }, function () { return true; });          // keep in-memory removal even if persist fails
+    },
+  };
   // Determine which side of the alignment a point sits on (L = left of
   // direction of travel, R = right, on = within ~5ft of centerline).
   function sideOfAlignment(cursorLL, coords) {
@@ -34971,6 +35013,89 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     }
+    // Manage-sections modal: lists every project section with a
+    // per-row Delete button. Used to drop stray sections that got
+    // dragged in from another job. Each delete prompts native
+    // confirm, calls _RW.sections.deleteById() (which mutates
+    // SECTIONS in memory, rewrites BUNDLE in IDB, and triggers a
+    // dashboard re-render), then refreshes the modal list in place.
+    function _cvOpenManageSectionsModal() {
+      var api = window._RW && window._RW.sections;
+      if (!api || typeof api.list !== 'function' || typeof api.deleteById !== 'function') {
+        alert('Section management is unavailable — bundle module not ready.');
+        return;
+      }
+      var backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:8px;max-width:580px;width:92%;'
+        + 'max-height:82vh;overflow:auto;padding:18px 20px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);'
+        + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
+      backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+      function close() { try { document.body.removeChild(backdrop); } catch (_) {} }
+      backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) close(); });
+
+      function renderList() {
+        var rows = api.list();
+        var rowsHtml = rows.map(function (s, i) {
+          var mp = (s.mpStart != null && s.mpEnd != null)
+            ? '<span style="color:var(--ink-3);font-size:11px;margin-left:6px;">MP '
+              + s.mpStart.toFixed(2) + '–' + s.mpEnd.toFixed(2) + '</span>'
+            : '';
+          var pinBadge = '<span style="background:#f1f5f9;color:var(--ink);padding:1px 7px;border-radius:10px;'
+            + 'font:700 10px \'IBM Plex Mono\',monospace;margin-left:6px;">' + s.pinCount + ' pin'
+            + (s.pinCount === 1 ? '' : 's') + '</span>';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #f1f5f9;">'
+            + '<span style="font-weight:700;font-family:\'IBM Plex Mono\',monospace;font-size:12px;'
+            + 'min-width:80px;color:var(--ink);">' + _esc(s.id || '?') + '</span>'
+            + '<span style="flex:1;">' + _esc(s.name || '(no name)') + mp + pinBadge + '</span>'
+            + '<button type="button" data-del-id="' + _esc(s.id) + '" '
+            + 'style="font:600 11px system-ui;padding:4px 10px;border:1px solid #dc2626;'
+            + 'border-radius:4px;background:#fff;color:#dc2626;cursor:pointer;">Delete</button>'
+            + '</div>';
+        }).join('');
+        panel.innerHTML =
+          '<h3 style="margin:0 0 6px;font-size:16px;">Manage sections</h3>'
+          + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
+          + 'Drops a section from the project bundle. The section\'s pins go with it. '
+          + 'Linked geophotos and inspection records survive in IDB but become orphans '
+          + '(harmless — you can re-import the section later if needed).'
+          + '</p>'
+          + '<div id="mgr-list" style="margin-bottom:14px;">' + (rowsHtml || '<p>No sections.</p>') + '</div>'
+          + '<p id="mgr-status" style="margin:0 0 10px;color:var(--ink-3);font-size:12px;min-height:14px;"></p>'
+          + '<div style="display:flex;justify-content:flex-end;">'
+          + '<button type="button" data-act="close" style="font:600 13px system-ui;padding:6px 14px;'
+          + 'border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">Close</button>'
+          + '</div>';
+        panel.querySelector('[data-act="close"]').addEventListener('click', close);
+        panel.querySelectorAll('[data-del-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.dataset.delId;
+            var label = rows.find(function (r) { return r.id === id; });
+            var pinNote = label && label.pinCount
+              ? ' (' + label.pinCount + ' pin' + (label.pinCount === 1 ? '' : 's') + ' will also be removed)'
+              : '';
+            if (!confirm('Delete section "' + (label ? (label.name || label.id) : id) + '"' + pinNote + '?'))
+              return;
+            var status = panel.querySelector('#mgr-status');
+            status.textContent = 'Deleting ' + id + '…';
+            api.deleteById(id).then(function (ok) {
+              if (ok) {
+                status.textContent = 'Deleted ' + id + '.';
+                renderList();                    // refresh modal in place
+                try { renderCulvertsReport(); } catch (_) {}
+              } else {
+                status.textContent = 'Section ' + id + ' not found.';
+              }
+            }).catch(function () { status.textContent = 'Delete failed.'; });
+          });
+        });
+      }
+      renderList();
+    }
+
     // Prune-distant-photos modal: scans IDB for photos whose lat/lng
     // falls outside the union of all section alignments plus a 10-mile
     // buffer, shows the user the count + a sorted sample, and on
@@ -35495,6 +35620,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (pruneBtn && !pruneBtn._wired) {
       pruneBtn._wired = true;
       pruneBtn.addEventListener('click', function () { _cvOpenPrunePhotosModal(); });
+    }
+    var mgrBtn = document.getElementById('cv-manage-sections-btn');
+    if (mgrBtn && !mgrBtn._wired) {
+      mgrBtn._wired = true;
+      mgrBtn.addEventListener('click', function () { _cvOpenManageSectionsModal(); });
     }
 
     ['cv-print-btn', 'cv-print-all-btn', 'cv-export-csv-btn', 'cv-export-kml-btn'].forEach(function (id) {
