@@ -34031,11 +34031,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
       boxZoom: false, keyboard: false, touchZoom: false, tap: false,
     });
+    // Nearmap aerial — Section A is fully covered, so the inset
+    // shows the actual roadbed instead of the cartoon street map.
+    // offlineTileLayer falls back to live tiles if no prebake is
+    // cached; the layer-name arg keys any prebake the user has loaded.
+    var nearmapKey = 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5';
     var tileFn = window.offlineTileLayer || L.tileLayer;
     tileFn(
-      'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19 },
-      'esri_aerial'
+      'https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.jpg?apikey=' + nearmapKey,
+      { maxZoom: 24, attribution: '© Nearmap' },
+      'nearmap'
     ).addTo(map);
     // The culvert line + endpoint pips. Blue per spec to read as the
     // drainage feature rather than the road centerline.
@@ -34269,6 +34274,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     var _SR_PROJECT_NUMBERS_LOCAL = (typeof _SR_PROJECT_NUMBERS !== 'undefined') ? _SR_PROJECT_NUMBERS : '';
 
+    // ── Photo paging ─────────────────────────────────────────────────
+    // The main culvert card already carries identity / maplet /
+    // schematic / properties / conditions — so it can only fit a
+    // single row of photos at the bottom. Anything past PHOTOS_PAGE_1
+    // spills onto continuation cards that mirror the print-card frame
+    // (header + footer) but show only the photo grid.
+    var PHOTOS_PAGE_1 = 3;
+    var PHOTOS_PAGE_N = 12;
+    function _photosForCulvert(pin) {
+      var a = pin.attrs || {};
+      var photos = Array.isArray(a.photos) ? a.photos : [];
+      var hidden = new Set(Array.isArray(a.report_hidden_photos) ? a.report_hidden_photos : []);
+      return photos
+        .map(function (p, i) { return { idx: i, p: p }; })
+        .filter(function (e) { return !hidden.has('emb:' + e.idx) && e.p && e.p.dataUrl; });
+    }
+    function _chunkPhotos(photos) {
+      if (!photos.length) return [[]];
+      var chunks = [photos.slice(0, PHOTOS_PAGE_1)];
+      var rest = photos.slice(PHOTOS_PAGE_1);
+      while (rest.length) {
+        chunks.push(rest.slice(0, PHOTOS_PAGE_N));
+        rest = rest.slice(PHOTOS_PAGE_N);
+      }
+      return chunks;
+    }
+
+    // First pass: total file pages so every card carries its
+    // deliverable-wide "Page N of TOTAL" counter.
+    var pagesPerCulvert = all.map(function (r) {
+      var mergedPin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
+      return _chunkPhotos(_photosForCulvert(mergedPin)).length;
+    });
+    var fileStartPage = [];
+    var _accumPages = 1;
+    pagesPerCulvert.forEach(function (n, i) {
+      fileStartPage[i] = _accumPages;
+      _accumPages += n;
+    });
+    var totalFilePages = _accumPages - 1;
+
     list.innerHTML = all.map(function (r, idx) {
       var sec = r.sec;
       var pin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
@@ -34396,27 +34442,39 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + '</div>';
 
       // Photos — pull from attrs.photos (the bundle drops them there
-      // pre-hydrated). Cap at 12 to keep the printed page manageable.
-      var photos = Array.isArray(a.photos) ? a.photos : [];
-      var hidden = new Set(Array.isArray(a.report_hidden_photos) ? a.report_hidden_photos : []);
-      var visiblePhotos = photos
-        .map(function (p, i) { return { idx: i, p: p }; })
-        .filter(function (e) { return !hidden.has('emb:' + e.idx) && e.p && e.p.dataUrl; })
-        .slice(0, 12);
-      var photosBlock = visiblePhotos.length
-        ? '<div class="sr-photo-grid">'
-          + visiblePhotos.map(function (e) {
+      // pre-hydrated). Chunk for paging across continuation cards so
+      // a 9-photo culvert spills onto a second sheet instead of
+      // overflowing the first one off the printable area.
+      var visiblePhotos = _photosForCulvert(pin);
+      var photoChunks   = _chunkPhotos(visiblePhotos);
+      var pagesForCv    = photoChunks.length;
+
+      function _photoGrid(chunk) {
+        if (!chunk.length) return '<div class="sr-tbl-empty">No photos linked yet.</div>';
+        return '<div class="sr-photo-grid">'
+          + chunk.map(function (e) {
               var cap = e.p.caption ? '<figcaption>' + _esc(e.p.caption) + '</figcaption>' : '';
               return '<figure class="sr-photo">'
                 + '<img src="' + e.p.dataUrl + '" alt="">'
                 + cap
                 + '</figure>';
             }).join('')
-          + '</div>'
-        : '<div class="sr-tbl-empty">No photos linked yet.</div>';
-
-      return '<article class="sr-card" data-cv-idx="' + idx + '">' +
-        '<header class="sr-card-hdr">' +
+          + '</div>';
+      }
+      function _footer(pageNumWithinCv, fileNum) {
+        return '<div class="sr-card-footer">' +
+          '<div class="sr-card-footer-left">'
+            + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
+          + '</div>' +
+          '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS_LOCAL + '</div>' +
+          '<div class="sr-card-footer-right">'
+            + '<div>' + _esc(pinIdStr) + ' — ' + pageNumWithinCv + ' of ' + pagesForCv + '</div>'
+            + '<div class="sr-card-footer-right-file">Page ' + fileNum + ' of ' + totalFilePages + '</div>'
+          + '</div>' +
+        '</div>';
+      }
+      function _headerBlock() {
+        return '<header class="sr-card-hdr">' +
           '<div class="sr-card-hdr-top">' +
             '<div class="sr-card-title-wrap">' +
               '<div class="sr-card-title">Culvert Assessment Report</div>' +
@@ -34425,49 +34483,64 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '</div>' +
             '<div class="sr-card-hdr-right">' + logosBlock + '</div>' +
           '</div>' +
-        '</header>' +
-        '<section class="sr-section">' +
-          '<div class="sr-identity-row">' +
-            '<div class="sr-identity-left">' +
-              idBlock +
-              _cvBarrelSchematicSvg(pin) +
-            '</div>' +
-            '<div class="sr-identity-right">' +
-              '<div class="sr-card-map" data-coords="'
-                + _esc(JSON.stringify(
-                    Array.isArray(pin.geometry && pin.geometry.coordinates)
-                      ? pin.geometry.coordinates : []
-                  )) + '"></div>' +
-            '</div>' +
-          '</div>' +
-        '</section>' +
-        '<section class="sr-section">' + propsBlock + '</section>' +
-        '<section class="sr-section">' + condBlock + '</section>' +
-        '<section class="sr-section">' +
-          '<div class="sr-sec-hdr">'
-            + 'Photos (' + visiblePhotos.length + ')'
-            + '<span class="cv-photo-actions">'
-              + '<button type="button" class="cv-auto-btn" '
-                + 'data-cv-idx="' + idx + '" '
-                + 'title="Auto-link any geophoto within 15 ft of this culvert">⊕ Auto-add nearby (15 ft)</button>'
-              + '<button type="button" class="cv-pick-btn" '
-                + 'data-cv-idx="' + idx + '" '
-                + 'title="Pick from photos you have already taken, sorted by distance">📍 Select Nearby Photos</button>'
-            + '</span>'
-          + '</div>' +
-          photosBlock +
-        '</section>' +
-        '<div class="sr-card-footer">' +
-          '<div class="sr-card-footer-left">'
-            + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
-          + '</div>' +
-          '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS_LOCAL + '</div>' +
-          '<div class="sr-card-footer-right">'
-            + '<div>' + _esc(pinIdStr) + ' — 1 of 1</div>'
-            + '<div class="sr-card-footer-right-file">Page ' + (idx + 1) + ' of ' + all.length + '</div>'
-          + '</div>' +
-        '</div>' +
-      '</article>';
+        '</header>';
+      }
+
+      return photoChunks.map(function (chunk, pi) {
+        var filePageNum = fileStartPage[idx] + pi;
+        // First card (pi === 0) carries the full identity + maplet +
+        // schematic + properties + conditions block. Continuation
+        // cards keep the same header + footer but show only the
+        // remaining photos so each chunk lands on its own sheet.
+        if (pi === 0) {
+          return '<article class="sr-card" data-cv-idx="' + idx + '">' +
+            _headerBlock() +
+            '<section class="sr-section">' +
+              '<div class="sr-identity-row">' +
+                '<div class="sr-identity-left">' +
+                  idBlock +
+                  _cvBarrelSchematicSvg(pin) +
+                '</div>' +
+                '<div class="sr-identity-right">' +
+                  '<div class="sr-card-map" data-coords="'
+                    + _esc(JSON.stringify(
+                        Array.isArray(pin.geometry && pin.geometry.coordinates)
+                          ? pin.geometry.coordinates : []
+                      )) + '"></div>' +
+                '</div>' +
+              '</div>' +
+            '</section>' +
+            '<section class="sr-section">' + propsBlock + '</section>' +
+            '<section class="sr-section">' + condBlock + '</section>' +
+            '<section class="sr-section">' +
+              '<div class="sr-sec-hdr">'
+                + 'Photos (' + visiblePhotos.length + ')'
+                + '<span class="cv-photo-actions">'
+                  + '<button type="button" class="cv-auto-btn" '
+                    + 'data-cv-idx="' + idx + '" '
+                    + 'title="Auto-link any geophoto within 15 ft of this culvert">⊕ Auto-add nearby (15 ft)</button>'
+                  + '<button type="button" class="cv-pick-btn" '
+                    + 'data-cv-idx="' + idx + '" '
+                    + 'title="Pick from photos you have already taken, sorted by distance">📍 Select Nearby Photos</button>'
+                + '</span>'
+              + '</div>' +
+              _photoGrid(chunk) +
+            '</section>' +
+            _footer(1, filePageNum) +
+          '</article>';
+        }
+        // Continuation card.
+        var startNum = PHOTOS_PAGE_1 + (pi - 1) * PHOTOS_PAGE_N + 1;
+        var endNum   = startNum + chunk.length - 1;
+        return '<article class="sr-card sr-card-cont" data-cv-idx="' + idx + '">' +
+          _headerBlock() +
+          '<section class="sr-section">' +
+            '<div class="sr-sec-hdr">Photos (continued · ' + startNum + '–' + endNum + ' of ' + visiblePhotos.length + ')</div>' +
+            _photoGrid(chunk) +
+          '</section>' +
+          _footer(pi + 1, filePageNum) +
+        '</article>';
+      }).join('');
     }).join('');
 
     // Placeholder wiring for the action buttons — full Print / CSV /
