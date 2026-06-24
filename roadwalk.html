@@ -5031,15 +5031,18 @@ body.rw-sld-photo-dragging .strip-pin {
   display: inline-flex; gap: 6px; margin-left: auto;
 }
 .cv-photo-actions .cv-pick-btn,
-.cv-photo-actions .cv-auto-btn {
+.cv-photo-actions .cv-auto-btn,
+.cv-photo-actions .cv-folder-btn {
   font: 700 9.5px 'IBM Plex Mono', monospace;
   letter-spacing: .4px; text-transform: uppercase;
   padding: 3px 8px; border: 1px solid var(--rule); border-radius: 3px;
   background: #fff; color: var(--ink); cursor: pointer;
 }
-.cv-photo-actions .cv-pick-btn { background: var(--blue, #1d4ed8); color: #fff; border-color: var(--blue, #1d4ed8); }
-.cv-photo-actions .cv-auto-btn:hover  { background: var(--paper-2); }
-.cv-photo-actions .cv-pick-btn:hover  { filter: brightness(1.05); }
+.cv-photo-actions .cv-pick-btn   { background: var(--blue, #1d4ed8); color: #fff; border-color: var(--blue, #1d4ed8); }
+.cv-photo-actions .cv-folder-btn { background: #047857; color: #fff; border-color: #047857; }
+.cv-photo-actions .cv-auto-btn:hover   { background: var(--paper-2); }
+.cv-photo-actions .cv-pick-btn:hover   { filter: brightness(1.05); }
+.cv-photo-actions .cv-folder-btn:hover { filter: brightness(1.10); }
 @media print { .cv-photo-actions { display: none !important; } }
 /* Culvert Properties layout — each row is a flex container with one
    or two label+value pairs. justify-content:space-between lands the
@@ -34734,11 +34737,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var out = [];
       var seenSrc = Object.create(null);
       var hiddenCount = 0;
-      // Pass 1 — embedded form-photos.
+      // Pass 1 — embedded form-photos AND folder-picked blob refs.
+      // A folder-picked photo carries _cv_photo_id (pointing into the
+      // IDB 'photos' store as a Blob) instead of a base64 dataUrl, so
+      // it stays out of the JS heap until the post-render pass sets
+      // src on the rendered <img>. Legacy embedded photos with raw
+      // dataUrl still flow through unchanged.
       rawPhotos.forEach(function (p, i) {
-        if (!p || !p.dataUrl) return;
+        if (!p) return;
         var key = 'emb:' + i;
         if (hidden.has(key)) { hiddenCount++; return; }
+        if (p._cv_photo_id != null) {
+          // Folder-picked blob ref. src stays empty until the post-
+          // render pass swaps in a blob URL.
+          out.push({
+            idx:       i,
+            p:         p,
+            src:       '',
+            _cv_photo_id: p._cv_photo_id,
+            caption:   p.caption || p.file_name || '',
+            _emb_idx:  i,
+            _hide_key: key,
+          });
+          return;
+        }
+        if (!p.dataUrl) return;
         if (seenSrc[p.dataUrl]) return;
         seenSrc[p.dataUrl] = true;
         out.push({
@@ -34787,6 +34810,129 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         rest = rest.slice(PHOTOS_PAGE_N);
       }
       return chunks;
+    }
+    // ── Folder-pick photo storage ────────────────────────────────────
+    // Module-level cache from IDB photo_id → blob URL. We only ever
+    // mint one URL per photo and reuse it across renders so we don't
+    // thrash createObjectURL/revokeObjectURL. Memory cost is bounded
+    // by the number of distinct culvert photos the user opens, which
+    // is microscopic vs. holding 4500 base64 dataUrls in PHOTOS.
+    var _cvBlobUrlCache = _cvBlobUrlCache || (window._cvBlobUrlCache = window._cvBlobUrlCache || {});
+    function _cvLoadBlobUrl(photoId) {
+      if (photoId == null) return Promise.resolve(null);
+      if (_cvBlobUrlCache[photoId]) return Promise.resolve(_cvBlobUrlCache[photoId]);
+      if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function') return Promise.resolve(null);
+      return window.RWIdb.openDB().then(function (db) {
+        return new Promise(function (res) {
+          var tx = db.transaction('photos', 'readonly');
+          var rq = tx.objectStore('photos').get(photoId);
+          rq.onsuccess = function (e) {
+            var rec = e.target.result;
+            if (!rec || !rec.blob) { res(null); return; }
+            var url;
+            try { url = URL.createObjectURL(rec.blob); }
+            catch (_) { res(null); return; }
+            _cvBlobUrlCache[photoId] = url;
+            res(url);
+          };
+          rq.onerror = function () { res(null); };
+        });
+      }).catch(function () { return null; });
+    }
+    // Walk every <img data-cv-photo-id="…"> currently in the report
+    // and async-swap src to a blob URL. Called after every render that
+    // mints new img placeholders. Each fetch is independent so we let
+    // the browser parallelise — blob fetches are tiny structured-clone
+    // operations, not the 5-MB dataUrl clones that were OOMing us.
+    function _cvHydrateBlobImgs(rootEl) {
+      var root = rootEl || document;
+      var imgs = root.querySelectorAll('img[data-cv-photo-id]');
+      if (!imgs.length) return;
+      imgs.forEach(function (img) {
+        var pid = +img.getAttribute('data-cv-photo-id');
+        if (!pid || img.src) return;
+        _cvLoadBlobUrl(pid).then(function (url) {
+          if (url) img.src = url;
+          else img.alt = '(photo missing)';
+        });
+      });
+    }
+    // Folder picker — opens a native multi-file input scoped to images.
+    // Each selected file is added as a Blob into the IDB 'photos'
+    // store (Blobs structured-clone by reference, not by copying
+    // bytes), and a lightweight metadata entry is appended to
+    // pin.attrs.photos so the report walk picks them up. dataUrls
+    // never enter JS memory — that's the whole point.
+    function _cvOpenFolderPicker(pin) {
+      if (!pin) return;
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', function () {
+        var files = Array.from(input.files || []);
+        document.body.removeChild(input);
+        if (!files.length) return;
+        _cvIngestPickedFiles(pin, files);
+      });
+      input.click();
+    }
+    function _cvIngestPickedFiles(pin, files) {
+      if (!pin || !pin.ulid || !files.length) return Promise.resolve(0);
+      if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function') {
+        alert('Photo storage unavailable.');
+        return Promise.resolve(0);
+      }
+      pin.attrs = pin.attrs || {};
+      pin.attrs.photos = Array.isArray(pin.attrs.photos) ? pin.attrs.photos : [];
+      var photos = pin.attrs.photos;
+      var added = 0;
+      // Sequential ingestion so we never hold two large File / Blob
+      // clones in flight at the same time.
+      function ingestOne(file) {
+        return window.RWIdb.openDB().then(function (db) {
+          return new Promise(function (res) {
+            var tx = db.transaction('photos', 'readwrite');
+            var capturedAt = file.lastModified
+              ? new Date(file.lastModified).toISOString()
+              : new Date().toISOString();
+            var rec = {
+              pin_id:      pin.ulid,
+              blob:        file,
+              file_name:   file.name,
+              mime:        file.type || 'image/jpeg',
+              size:        file.size,
+              captured_at: capturedAt,
+              source:      'cv_pick',
+            };
+            var rq = tx.objectStore('photos').add(rec);
+            rq.onsuccess = function (e) {
+              var photoId = e.target.result;
+              photos.push({
+                _cv_photo_id: photoId,
+                file_name:    file.name,
+                captured_at:  capturedAt,
+                source:       'cv_pick',
+              });
+              added++;
+              res();
+            };
+            rq.onerror = function () { res(); };
+          });
+        }).catch(function () {});
+      }
+      return files.reduce(function (chain, f) {
+        return chain.then(function () { return ingestOne(f); });
+      }, Promise.resolve()).then(function () {
+        // Persist the lean attrs.photos array — _cv_photo_id refs
+        // only, no bytes — so the structured-clone stays tiny.
+        _cvSyncFieldToIdb(pin, 'photos', photos);
+        renderCulvertsReport();
+        if (added) console.log('[Culverts] folder-picked ' + added + ' photo(s) for ' + pin.id);
+        return added;
+      });
     }
 
     // First pass: total file pages so every card carries its
@@ -34998,8 +35144,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 '<button type="button" class="sr-photo-act sr-photo-hide" '
                   + 'data-cv-idx="' + idx + '" data-hide-key="' + _esc(e._hide_key) + '" '
                   + 'title="Hide from printed report (photo is kept)">&times;</button>';
+              // Folder-picked photos render a placeholder <img> with
+              // data-cv-photo-id — _cvHydrateBlobImgs swaps in a blob
+              // URL after the DOM mounts. Legacy embedded photos and
+              // linked geophotos still set src directly from their
+              // dataUrl on first render so they don't flash blank.
+              var imgTag;
+              if (e._cv_photo_id != null) {
+                imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
+              } else {
+                imgTag = '<img src="' + e.src + '" alt="" loading="lazy">';
+              }
               return '<figure class="sr-photo">'
-                + '<img src="' + e.src + '" alt="">'
+                + imgTag
                 + '<div class="sr-photo-actions">' + acts + '</div>'
                 + cap
                 + '</figure>';
@@ -35073,6 +35230,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               '<div class="sr-sec-hdr">'
                 + 'Photos (' + visiblePhotos.length + ')'
                 + '<span class="cv-photo-actions">'
+                  + '<button type="button" class="cv-folder-btn" '
+                    + 'data-cv-idx="' + idx + '" '
+                    + 'title="Pick a specific set of photos from a folder on your computer. Photos stay as Blobs in IDB — no base64 in memory.">📁 Pick from folder…</button>'
                   + '<button type="button" class="cv-auto-btn" '
                     + 'data-cv-idx="' + idx + '" '
                     + 'title="Auto-link any geophoto within 15 ft of this culvert">⊕ Auto-add nearby (15 ft)</button>'
@@ -35327,6 +35487,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // blur mid-edit.
       });
     });
+
+    // ── Pick-from-folder button ──
+    // Opens a native file picker; each selected file gets stored as
+    // a Blob in IDB and referenced by pin.attrs.photos[] as
+    // {_cv_photo_id}. No base64 strings, no PHOTOS bloat, no
+    // structured-clone OOM. This is the recommended path at scale.
+    list.querySelectorAll('.cv-folder-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        _cvOpenFolderPicker(r.pin);
+      });
+    });
+
+    // After every render, swap blob URLs into the picked-photo <img>
+    // placeholders. Cheap — only reads the IDB rows we actually need.
+    _cvHydrateBlobImgs(list);
 
     // ── Auto-add-nearby button ──
     // No persistSections call: _cvAutoAddNearbyPhotos only mutates
