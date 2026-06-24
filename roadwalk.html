@@ -7994,9 +7994,9 @@ input.fs-slider::-webkit-slider-thumb {
 .section-row.surf-asphalt,
 .section-row.section-child.surf-asphalt { background: #E2EFDD; }   /* light green  */
 
-/* Give every dashboard row clearance for the absolutely-positioned EDIT button */
+/* Give every dashboard row clearance for the absolutely-positioned EDIT + DELETE buttons */
 .section-row.section-child,
-.section-row.section-parent { padding-right: 92px; }
+.section-row.section-parent { padding-right: 148px; }
 
 /* EDIT-data button on a section row */
 .section-row .row-edit-btn {
@@ -8018,11 +8018,34 @@ input.fs-slider::-webkit-slider-thumb {
 }
 .section-row .row-edit-btn:active { background: var(--blue); color: #fff; }
 
-/* Sits left of EDIT on field-added child rows that resolve to a bundle parent.
+/* DELETE-section button — sits immediately left of EDIT. Red theme
+   to mark it as destructive. Uses the same mono cap typography
+   so it doesn't visually fight EDIT. */
+.section-row .row-delete-btn {
+  position: absolute;
+  right: 86px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #dc2626;
+  background: var(--paper);
+  border: 1px solid #dc2626;
+  padding: 5px 8px;
+  cursor: pointer;
+  z-index: 1;
+}
+.section-row .row-delete-btn:hover  { background: #fef2f2; }
+.section-row .row-delete-btn:active { background: #dc2626; color: #fff; }
+
+/* Sits left of DELETE on field-added child rows that resolve to a bundle parent.
    Folds the child into its parent (moves pins, re-stations, drops the row). */
 .section-row .row-merge-btn {
   position: absolute;
-  right: 86px;
+  right: 144px;
   top: 50%;
   transform: translateY(-50%);
   font-family: 'IBM Plex Mono', monospace;
@@ -8038,7 +8061,7 @@ input.fs-slider::-webkit-slider-thumb {
   z-index: 1;
 }
 .section-row .row-merge-btn:active { background: var(--accent, #c2410c); color: #fff; }
-.section-row.has-merge-btn { padding-right: 152px; }
+.section-row.has-merge-btn { padding-right: 210px; }
 
 /* --- Full-export modal (#export-modal) ---------------------------------------------
    Centred card overlay. Shows a live pre-flight summary of each data
@@ -31428,6 +31451,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + (!sec.kickoff ? '<span class="item">— kickoff pending</span>' : '')
         + '</div>'
         + (canMerge ? '<button type="button" class="row-merge-btn" title="Move pins, photos and inspection records into the parent section">↑ Merge</button>' : '')
+        + '<button type="button" class="row-delete-btn" title="Remove this section from the project bundle. Use for sections that got dragged in from another job.">🗑 Delete</button>'
         + '<button type="button" class="row-edit-btn">✎ Edit</button>'
         + '<span class="arrow">›</span>';
       row.addEventListener('click', function () {
@@ -31445,6 +31469,40 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           if (window._RW && typeof window._RW.editSectionData === 'function') {
             window._RW.editSectionData(sec.id);
           }
+        });
+      }
+      // Per-row Delete button. Native confirm with the pin-count
+      // note since the deletion is destructive, then calls the
+      // shared _RW.sections.deleteById API which updates SECTIONS
+      // and BUNDLE in memory, writes the bundle back to IDB, and
+      // triggers a dashboard re-render so this row disappears.
+      const deleteBtn = row.querySelector('.row-delete-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          if (!window._RW || !window._RW.sections
+              || typeof window._RW.sections.deleteById !== 'function') {
+            alert('Section delete is unavailable — bundle module not ready.');
+            return;
+          }
+          const pinCount = (sec.pins || []).length;
+          const pinNote = pinCount
+            ? '\n\n• ' + pinCount + ' pin' + (pinCount === 1 ? '' : 's')
+              + ' on this section will be removed.'
+            : '';
+          const ok = confirm(
+            'Delete section "' + (sec.name || sec.id) + '" (' + sec.id + ')?'
+            + pinNote
+            + '\n\nLinked geophotos and inspection records survive in IDB '
+            + 'as orphans — harmless and recoverable if you re-import the '
+            + 'section later.'
+          );
+          if (!ok) return;
+          window._RW.sections.deleteById(sec.id).then(function (removed) {
+            if (!removed) alert('Section "' + sec.id + '" was not found.');
+          }).catch(function () {
+            alert('Delete failed — see console.');
+          });
         });
       }
       const mergeBtn = row.querySelector('.row-merge-btn');
