@@ -34484,20 +34484,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var PHOTOS_PAGE_N = 12;
     // Returns the photos that should appear in the printed report
     // PLUS the count of report-hidden photos so the main card can
-    // surface a Restore (N hidden) button. Each visible entry is
-    // enriched with _emb_idx / _hide_key so the action buttons can
-    // route through the same annotate / hide path the sign report
-    // uses (window._RW.openAnnotateModal, report_hidden_photos).
-    function _photosForCulvert(pin) {
+    // surface a Restore (N hidden) button. Walks BOTH the embedded
+    // pin.attrs.photos array AND the linked-geophoto list (any
+    // geophoto whose linked_pin_id matches secId::pinId), deduping
+    // against duplicate dataUrls. The Select Nearby Photos picker
+    // only stamps linked_pin_id on the geophoto — it does not push
+    // to attrs.photos — so a culvert renderer that only reads
+    // attrs.photos would miss every picker-added photo. Each entry
+    // is enriched with _emb_idx (when from attrs.photos) or _gp_id
+    // (when from a linked geophoto) + _hide_key so the per-photo
+    // annotate / hide buttons can route through the same flow the
+    // sign report uses.
+    function _photosForCulvert(pin, sec) {
       var a = pin.attrs || {};
       var rawPhotos = Array.isArray(a.photos) ? a.photos : [];
       var hidden = new Set(Array.isArray(a.report_hidden_photos) ? a.report_hidden_photos : []);
       var out = [];
+      var seenSrc = Object.create(null);
       var hiddenCount = 0;
+      // Pass 1 — embedded form-photos.
       rawPhotos.forEach(function (p, i) {
         if (!p || !p.dataUrl) return;
         var key = 'emb:' + i;
         if (hidden.has(key)) { hiddenCount++; return; }
+        if (seenSrc[p.dataUrl]) return;
+        seenSrc[p.dataUrl] = true;
         out.push({
           idx:       i,
           p:         p,
@@ -34507,6 +34518,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           _hide_key: key,
         });
       });
+      // Pass 2 — linked geophotos (any photo whose linked_pin_id
+      // matches this culvert's secId::pinId). These don't have an
+      // _emb_idx, so annotate falls back to the hide path only.
+      if (sec && pin && pin.id
+          && window._RW && window._RW.geophotos
+          && typeof window._RW.geophotos.list === 'function') {
+        var prefix = sec.id + '::' + pin.id;
+        window._RW.geophotos.list().forEach(function (gp) {
+          if (!gp || gp.linked_pin_id !== prefix) return;
+          var key = 'gp:' + gp.id;
+          if (hidden.has(key)) { hiddenCount++; return; }
+          var src = gp.dataUrl || '';
+          if (!src || seenSrc[src]) return;
+          seenSrc[src] = true;
+          out.push({
+            p:         gp,
+            src:       src,
+            caption:   gp.description || (gp.captured_at
+                          ? new Date(gp.captured_at).toLocaleString()
+                          : 'Linked photo'),
+            _gp_id:    gp.id,
+            _hide_key: key,
+          });
+        });
+      }
       out._hiddenCount = hiddenCount;
       return out;
     }
@@ -34525,7 +34561,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // deliverable-wide "Page N of TOTAL" counter.
     var pagesPerCulvert = all.map(function (r) {
       var mergedPin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
-      return _chunkPhotos(_photosForCulvert(mergedPin)).length;
+      return _chunkPhotos(_photosForCulvert(mergedPin, r.sec)).length;
     });
     var fileStartPage = [];
     var _accumPages = 1;
@@ -34685,11 +34721,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '</table>'
         + '</div>';
 
-      // Photos — pull from attrs.photos (the bundle drops them there
-      // pre-hydrated). Chunk for paging across continuation cards so
-      // a 9-photo culvert spills onto a second sheet instead of
-      // overflowing the first one off the printable area.
-      var visiblePhotos = _photosForCulvert(pin);
+      // Photos — pulls embedded form-photos AND linked geophotos
+      // (anything with linked_pin_id == secId::pinId). Chunked across
+      // continuation cards so an N-photo culvert spills onto extra
+      // sheets instead of overflowing the first one off the printable
+      // area.
+      var visiblePhotos = _photosForCulvert(pin, sec);
       var photoChunks   = _chunkPhotos(visiblePhotos);
       var pagesForCv    = photoChunks.length;
 
@@ -34698,15 +34735,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return '<div class="sr-photo-grid">'
           + chunk.map(function (e) {
               var cap = e.caption ? '<figcaption>' + _esc(e.caption) + '</figcaption>' : '';
-              // ✎ annotate (form-photo annotation modal) and ✕ hide
-              // mirror the sign report's per-photo action buttons.
-              // .sr-photo-actions is display:none in print so the
-              // deliverable stays clean.
-              var acts = ''
-                + '<button type="button" class="sr-photo-act sr-photo-ann" '
-                  + 'data-cv-idx="' + idx + '" data-emb-idx="' + e._emb_idx + '" '
-                  + 'title="Annotate">&#9998;</button>'
-                + '<button type="button" class="sr-photo-act sr-photo-hide" '
+              // Annotate is available only for embedded form-photos
+              // (those carry an _emb_idx into pin.attrs.photos that the
+              // annotation modal needs); linked geophotos just get the
+              // hide button.
+              var acts = '';
+              if (e._emb_idx != null) {
+                acts +=
+                  '<button type="button" class="sr-photo-act sr-photo-ann" '
+                    + 'data-cv-idx="' + idx + '" data-emb-idx="' + e._emb_idx + '" '
+                    + 'title="Annotate">&#9998;</button>';
+              }
+              acts +=
+                '<button type="button" class="sr-photo-act sr-photo-hide" '
                   + 'data-cv-idx="' + idx + '" data-hide-key="' + _esc(e._hide_key) + '" '
                   + 'title="Hide from printed report (photo is kept)">&times;</button>';
               return '<figure class="sr-photo">'
