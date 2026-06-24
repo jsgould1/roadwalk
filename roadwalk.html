@@ -35184,11 +35184,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
       panel.innerHTML =
         '<h3 style="margin:0 0 6px;font-size:16px;">Prune distant photos</h3>'
-        + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
-        + 'Scanning for photos whose GPS coordinates fall more than 10 miles '
-        + 'outside any of your project sections — typically stray imports '
-        + 'from another job that got dragged in.'
+        + '<p style="margin:0 0 10px;color:var(--ink-3);font-size:13px;">'
+        + 'Deletes photos whose perpendicular distance to every section\'s '
+        + 'centerline exceeds the threshold below. A road project hugs a '
+        + 'line, not a box — so 500 ft from the centerline is a tight, '
+        + 'accurate filter for on-project photos.'
         + '</p>'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+        + '<label style="font:600 12px system-ui;">Max distance from centerline:</label>'
+        + '<input id="prune-threshold" type="number" min="50" max="50000" step="50" value="500" '
+        + 'style="width:80px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;'
+        + 'font:600 13px \'IBM Plex Mono\',monospace;">'
+        + '<span style="color:var(--ink-3);font-size:12px;">ft</span>'
+        + '<button type="button" data-act="rescan" style="font:600 12px system-ui;padding:4px 10px;'
+        + 'border:1px solid #1d4ed8;border-radius:4px;background:#fff;color:#1d4ed8;cursor:pointer;'
+        + 'margin-left:auto;">Re-scan</button>'
+        + '</div>'
         + '<div id="prune-status" style="padding:10px 12px;background:#f1f5f9;border-radius:4px;'
         + 'font-family:\'IBM Plex Mono\',monospace;font-size:12px;">Scanning…</div>'
         + '<div id="prune-results" style="display:none;margin-top:10px;"></div>'
@@ -35209,47 +35220,66 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var statusEl  = panel.querySelector('#prune-status');
       var resultsEl = panel.querySelector('#prune-results');
       var deleteBtn = panel.querySelector('[data-act="delete"]');
+      var thresholdInput = panel.querySelector('#prune-threshold');
+      var rescanBtn = panel.querySelector('[data-act="rescan"]');
 
-      api.scanDistantPhotos(10).then(function (r) {
-        if (!r.bbox) {
-          statusEl.textContent = 'No project sections — cannot determine project area.';
-          return;
-        }
-        statusEl.textContent = 'Scanned ' + r.scanned + ' photo(s). '
-          + 'Project bbox: ' + r.union.minLat.toFixed(3) + '°N to ' + r.union.maxLat.toFixed(3) + '°N, '
-          + r.union.minLng.toFixed(3) + '°W to ' + r.union.maxLng.toFixed(3) + '°W (+ '
-          + r.bufferMiles + ' mi buffer).';
-        if (r.noGps) statusEl.textContent += ' ' + r.noGps + ' record(s) have no GPS and were skipped.';
-        if (!r.distant.length) {
+      function runScan() {
+        distantIds = [];
+        resultsEl.style.display = 'none';
+        resultsEl.innerHTML = '';
+        deleteBtn.disabled = true;
+        deleteBtn.style.opacity = '.5';
+        deleteBtn.textContent = 'Delete';
+        statusEl.textContent = 'Scanning…';
+        var ft = +thresholdInput.value || 500;
+        api.scanDistantPhotos(ft).then(function (r) {
+          if (r.noAlign) {
+            statusEl.textContent = 'No project sections with alignments — cannot determine centerlines.';
+            return;
+          }
+          statusEl.textContent = 'Scanned ' + r.scanned + ' photo(s). '
+            + 'Threshold: > ' + r.thresholdFt + ' ft from every section centerline.';
+          if (r.noGps) statusEl.textContent += ' ' + r.noGps + ' record(s) have no GPS and were skipped.';
+          if (!r.distant.length) {
+            resultsEl.style.display = 'block';
+            resultsEl.innerHTML = '<p style="color:var(--ink-3);">Nothing to prune — every photo with GPS is within ' + r.thresholdFt + ' ft of a section centerline.</p>';
+            return;
+          }
+          distantIds = r.distant.map(function (p) { return p.id; });
+          var sample = r.distant.slice(0, 12).map(function (p) {
+            var distStr = p.feet >= 5280
+              ? (p.feet / 5280).toFixed(1) + ' mi'
+              : Math.round(p.feet) + ' ft';
+            return '<li style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:2px 0;'
+                + 'border-bottom:1px solid #f1f5f9;">'
+                + '<span style="color:#dc2626;font-weight:700;">' + distStr + '</span>  '
+                + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4)
+                + (p.linked ? '  <span style="color:#0ea5e9;">linked: ' + _esc(p.linked) + '</span>' : '')
+                + (p.desc   ? '  <span style="color:var(--ink-3);">' + _esc(p.desc.slice(0, 40)) + '</span>' : '')
+                + '</li>';
+          }).join('');
           resultsEl.style.display = 'block';
-          resultsEl.innerHTML = '<p style="color:var(--ink-3);">Nothing to prune — every photo with GPS is inside the project area.</p>';
-          return;
-        }
-        distantIds = r.distant.map(function (p) { return p.id; });
-        var sample = r.distant.slice(0, 12).map(function (p) {
-          return '<li style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:2px 0;'
-              + 'border-bottom:1px solid #f1f5f9;">'
-              + '<span style="color:#dc2626;font-weight:700;">' + p.miles.toFixed(0) + ' mi</span>  '
-              + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4)
-              + (p.linked ? '  <span style="color:#0ea5e9;">linked: ' + _esc(p.linked) + '</span>' : '')
-              + (p.desc   ? '  <span style="color:var(--ink-3);">' + _esc(p.desc.slice(0, 40)) + '</span>' : '')
-              + '</li>';
-        }).join('');
-        resultsEl.style.display = 'block';
-        resultsEl.innerHTML =
-          '<p style="margin:4px 0 6px;"><strong style="color:#dc2626;">' + r.distant.length
-          + ' photo(s)</strong> outside the project area.</p>'
-          + '<p style="margin:0 0 6px;color:var(--ink-3);font-size:12px;">'
-          + 'Sample (sorted by distance from project center, max 12 shown):</p>'
-          + '<ul style="list-style:none;padding:0;margin:0 0 8px;max-height:240px;overflow:auto;'
-          + 'background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;">'
-          + sample + '</ul>';
-        deleteBtn.disabled = false;
-        deleteBtn.style.opacity = '1';
-        deleteBtn.textContent = 'Delete ' + r.distant.length + ' photo(s)';
-      }).catch(function (err) {
-        statusEl.textContent = 'Scan failed: ' + (err && err.message ? err.message : 'unknown error');
+          resultsEl.innerHTML =
+            '<p style="margin:4px 0 6px;"><strong style="color:#dc2626;">' + r.distant.length
+            + ' photo(s)</strong> more than ' + r.thresholdFt + ' ft from every section centerline.</p>'
+            + '<p style="margin:0 0 6px;color:var(--ink-3);font-size:12px;">'
+            + 'Sample (sorted farthest-first, max 12 shown):</p>'
+            + '<ul style="list-style:none;padding:0;margin:0 0 8px;max-height:240px;overflow:auto;'
+            + 'background:#fafbfc;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;">'
+            + sample + '</ul>';
+          deleteBtn.disabled = false;
+          deleteBtn.style.opacity = '1';
+          deleteBtn.textContent = 'Delete ' + r.distant.length + ' photo(s)';
+        }).catch(function (err) {
+          statusEl.textContent = 'Scan failed: ' + (err && err.message ? err.message : 'unknown error');
+        });
+      }
+
+      rescanBtn.addEventListener('click', runScan);
+      thresholdInput.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') runScan();
       });
+      runScan();
 
       deleteBtn.addEventListener('click', function () {
         if (!distantIds.length) return;
@@ -43188,8 +43218,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var coords = (s && s.alignment) || [];
       if (!coords.length) return;
       var minLat = +Infinity, maxLat = -Infinity, minLng = +Infinity, maxLng = -Infinity;
+      // sec.alignment after applyBundle is [[lat, lng], ...] (Leaflet
+      // convention). The previous build read c[0] as lng / c[1] as
+      // lat — swapped — which produced a bbox of ~-83° to -83° "lat",
+      // making EVERY photo with a real lat of ~35.7° read as "outside
+      // the project area." That's the source of the 4000-photo false
+      // positive in scanDistantPhotos.
       coords.forEach(function (c) {
-        var lng = +c[0], lat = +c[1];
+        var lat = +c[0], lng = +c[1];
         if (!isFinite(lng) || !isFinite(lat)) return;
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
@@ -43203,6 +43239,49 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       };
     });
     return out;
+  }
+  // Minimum perpendicular distance in feet from (lat, lng) to ANY
+  // segment of ANY section's alignment polyline. Used by the new
+  // centerline-based prune: anything more than maxFt from every
+  // centerline is unambiguously off-project.
+  //
+  // Equirectangular projection — cheap and accurate at the project's
+  // local scale. cos(lat) handles the longitude squish; 364000 is the
+  // standard feet-per-degree-of-latitude constant.
+  function _minDistFtToAnyCenterline(lat, lng) {
+    var secs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+    if (!secs.length) return Infinity;
+    var coslat = Math.cos(lat * Math.PI / 180);
+    var FT_PER_DEG = 364000;
+    var px = lng * coslat * FT_PER_DEG;
+    var py = lat * FT_PER_DEG;
+    var minD2 = Infinity;
+    for (var s = 0; s < secs.length; s++) {
+      var align = secs[s] && secs[s].alignment;
+      if (!align || align.length < 2) continue;
+      for (var i = 0; i < align.length - 1; i++) {
+        var a = align[i], b = align[i + 1];
+        var aLat = +a[0], aLng = +a[1];
+        var bLat = +b[0], bLng = +b[1];
+        if (!isFinite(aLat) || !isFinite(aLng) || !isFinite(bLat) || !isFinite(bLng)) continue;
+        var ax = aLng * coslat * FT_PER_DEG;
+        var ay = aLat * FT_PER_DEG;
+        var bx = bLng * coslat * FT_PER_DEG;
+        var by = bLat * FT_PER_DEG;
+        var dx = bx - ax, dy = by - ay;
+        var len2 = dx * dx + dy * dy;
+        if (len2 < 1e-6) continue;
+        var t = ((px - ax) * dx + (py - ay) * dy) / len2;
+        if (t < 0) t = 0;
+        else if (t > 1) t = 1;
+        var projx = ax + t * dx;
+        var projy = ay + t * dy;
+        var ddx = px - projx, ddy = py - projy;
+        var d2 = ddx * ddx + ddy * ddy;
+        if (d2 < minD2) minD2 = d2;
+      }
+    }
+    return Math.sqrt(minD2);
   }
   function _photoInScope(rec, scopeSet, bboxes) {
     if (!scopeSet) return true;                    // null = all sections
@@ -44127,40 +44206,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return s ? Array.from(s) : null;            // null = all sections
     },
     sectionBboxes: _sectionBboxesForScope,
-    // Scan IDB for photos whose lat/lng falls OUTSIDE the union of
-    // all section alignments + a buffer. These are typically stray
-    // imports from a different project that got dragged in. The
-    // resolved object gives total scanned + the array of distant
-    // records (just id, lat, lng, distance for the modal sample).
-    scanDistantPhotos: function (bufferMiles) {
+    // Scan IDB for photos whose perpendicular distance to EVERY
+    // section's alignment polyline exceeds maxFt. A road project
+    // hugs a line, not a fat box — so 500 ft from the centerline is
+    // what's actually "on project," and anything farther is the
+    // stray imports we want to drop.
+    //
+    // Replaces the old bbox-from-section-corners approach, which had
+    // a swapped-axis bug AND was the wrong shape for linear projects
+    // (a long thin road inside a fat box flagged everything within
+    // miles of the road as "near," which is not what we want).
+    scanDistantPhotos: function (maxFt) {
+      var thresholdFt = (typeof maxFt === 'number' && maxFt > 0) ? maxFt : 500;
       var rawSecs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
-      var bboxes = _sectionBboxesForScope();
-      var union = null;
-      for (var sid in bboxes) {
-        var b = bboxes[sid];
-        if (!union) {
-          union = { minLat: b.minLat, maxLat: b.maxLat, minLng: b.minLng, maxLng: b.maxLng };
-        } else {
-          if (b.minLat < union.minLat) union.minLat = b.minLat;
-          if (b.maxLat > union.maxLat) union.maxLat = b.maxLat;
-          if (b.minLng < union.minLng) union.minLng = b.minLng;
-          if (b.maxLng > union.maxLng) union.maxLng = b.maxLng;
-        }
-      }
-      if (!union) return Promise.resolve({ scanned: 0, distant: [], bbox: null, noGps: 0 });
-      var bufDeg = (bufferMiles || 10) * 0.01449;     // ~1 mi at 36° N
-      var bbox = {
-        minLat: union.minLat - bufDeg, maxLat: union.maxLat + bufDeg,
-        minLng: union.minLng - bufDeg, maxLng: union.maxLng + bufDeg,
-      };
-      var cLat = (bbox.minLat + bbox.maxLat) / 2;
-      var cLng = (bbox.minLng + bbox.maxLng) / 2;
-      function haversineMi(la1, lo1, la2, lo2) {
-        var rad = Math.PI / 180, R = 3958.76;
-        var dLat = (la2 - la1) * rad, dLng = (lo2 - lo1) * rad;
-        var a = Math.sin(dLat/2)*Math.sin(dLat/2)
-              + Math.cos(la1*rad)*Math.cos(la2*rad)*Math.sin(dLng/2)*Math.sin(dLng/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (!rawSecs.length) {
+        return Promise.resolve({ scanned: 0, distant: [], thresholdFt: thresholdFt, noGps: 0, noAlign: true });
       }
       return openDB().then(function (db) {
         return new Promise(function (res, rej) {
@@ -44171,9 +44231,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           req.onsuccess = function (e) {
             var cur = e.target.result;
             if (!cur) {
-              distant.sort(function (a, b) { return b.miles - a.miles; });
-              res({ scanned: scanned, distant: distant, bbox: bbox, noGps: noGps,
-                    union: union, bufferMiles: bufferMiles || 10 });
+              // Sort farthest-first so the modal sample shows the
+              // most obviously stray records on top.
+              distant.sort(function (a, b) { return b.feet - a.feet; });
+              res({ scanned: scanned, distant: distant, thresholdFt: thresholdFt, noGps: noGps });
               return;
             }
             scanned++;
@@ -44182,17 +44243,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               noGps++;
             } else {
               var lat = +rec.lat, lng = +rec.lng;
-              if (isFinite(lat) && isFinite(lng) && (
-                  lat < bbox.minLat || lat > bbox.maxLat ||
-                  lng < bbox.minLng || lng > bbox.maxLng)) {
-                distant.push({
-                  id:      rec.id,
-                  lat:     lat,
-                  lng:     lng,
-                  miles:   haversineMi(lat, lng, cLat, cLng),
-                  desc:    rec.description || '',
-                  linked:  rec.linked_pin_id || '',
-                });
+              if (isFinite(lat) && isFinite(lng)) {
+                var distFt = _minDistFtToAnyCenterline(lat, lng);
+                if (distFt > thresholdFt) {
+                  distant.push({
+                    id:     rec.id,
+                    lat:    lat,
+                    lng:    lng,
+                    feet:   distFt,
+                    desc:   rec.description || '',
+                    linked: rec.linked_pin_id || '',
+                  });
+                }
               }
             }
             rec = null;
