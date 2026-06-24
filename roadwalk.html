@@ -11728,6 +11728,7 @@ body.mobile-mode #app {
                  select. Persisted to localStorage as 'rw_sr_sources'. -->
           </div>
           <button type="button" class="sr-chip-all" id="sr-sources-all" title="Reset — show every source">All</button>
+          <button type="button" class="sr-chip-all" id="sr-sources-aecom" title="Mute every source whose key doesn't start with AECOM (hides NPS-GIS pre-bundle pins). Persisted across reloads.">AECOM only</button>
         </div>
         <div class="sr-head-row sr-print-note">
           Tip: <strong>File → Print → Save as PDF</strong> for the deliverable.
@@ -11795,6 +11796,8 @@ body.mobile-mode #app {
           <div class="sr-chips" id="cv-source-chips">
             <!-- One chip per unique attrs.source. Click toggles MUTED state. -->
           </div>
+          <button type="button" class="sr-chip-all" id="cv-sources-all" title="Reset — show every source">All</button>
+          <button type="button" class="sr-chip-all" id="cv-sources-aecom" title="Mute every source whose key doesn't start with AECOM (hides NPS-GIS pre-bundle pins). Persisted across reloads.">AECOM only</button>
         </div>
       </div>
       <div class="sr-list" id="cv-list">
@@ -33026,6 +33029,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         renderSignsReport();
       });
     }
+    // "AECOM only" — mute every source key whose name doesn't start
+    // with AECOM. Hides NPS-GIS pre-bundle pins so the report only
+    // surfaces what the team actually captured (AECOM + AECOM_FOX).
+    // Persisted to localStorage via _srSaveMutedSources so the
+    // preference survives reload.
+    var aecomBtn = document.getElementById('sr-sources-aecom');
+    if (aecomBtn && !aecomBtn._wired) {
+      aecomBtn._wired = true;
+      aecomBtn.addEventListener('click', function () {
+        var muted = new Set();
+        srcKeys.forEach(function (k) {
+          if (!/^AECOM/i.test(k)) muted.add(k);
+        });
+        _srSaveMutedSources(muted.size ? muted : null);
+        renderSignsReport();
+      });
+    }
 
     // ── Apply section / source / search filters ──────────────────────
     // _srSectionOverride (set by Print Sections) takes priority over
@@ -34790,6 +34810,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           renderCulvertsReport();
         });
       }
+    }
+    // "All" and "AECOM only" toggles next to the culvert source
+    // chips — mirror the sign report. AECOM-only mutes every source
+    // whose key doesn't start with AECOM, hiding NPS-GIS pre-bundle
+    // culverts so only the team-captured records render. Persisted
+    // to localStorage via _cvSaveMuted.
+    var cvAllBtn = document.getElementById('cv-sources-all');
+    if (cvAllBtn && !cvAllBtn._wired) {
+      cvAllBtn._wired = true;
+      cvAllBtn.addEventListener('click', function () {
+        _cvSaveMuted(null);
+        renderCulvertsReport();
+      });
+    }
+    var cvAecomBtn = document.getElementById('cv-sources-aecom');
+    if (cvAecomBtn && !cvAecomBtn._wired) {
+      cvAecomBtn._wired = true;
+      cvAecomBtn.addEventListener('click', function () {
+        var muted = new Set();
+        srcKeys.forEach(function (k) {
+          if (!/^AECOM/i.test(k)) muted.add(k);
+        });
+        _cvSaveMuted(muted.size ? muted : null);
+        renderCulvertsReport();
+      });
     }
 
     // Apply section / source / search filters.
