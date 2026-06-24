@@ -31753,36 +31753,44 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '</span>' +
           '</div>' +
           // Field grid layout — interleaved (left-col / right-col)
-          // so CSS grid drops each pair onto one row:
+          // so CSS grid drops each pair onto one row. Description is
+          // pulled OUT of the paired flow and dropped at the bottom
+          // as a full-width row: long sign text ("Pigeon Forge
+          // Straight Ahead | Gatlinburg Next Right") now wraps inside
+          // the full card width instead of pinching the left column
+          // and ballooning the card height, which was eating into the
+          // photo budget and pushing the bottom row of thumbs off
+          // the printable page.
           //   Row 1: Sign Code      | Sheeting Type
-          //   Row 2: Description    | Sheet Condition
-          //   Row 3: Panel Condition| Retro Day
-          //   Row 4: Damage         | Retro Night
-          //   Row 5: Panel Size     | Mounting
-          //   Row 6: Panel Type     | Back Panel
-          //   Row 7: Install Date   | (empty)
+          //   Row 2: Panel Condition| Sheet Condition
+          //   Row 3: Retro Day      | Retro Night
+          //   Row 4: Damage         | Panel Size
+          //   Row 5: Mounting       | Panel Type
+          //   Row 6: Back Panel     | Install Date
+          //   Row 7: Description (full width, wrap)
           // Then full-width Retro Notes / Notes when populated.
           '<div class="sr-field-grid">' +
             // Row 1
             _field('Sign Code',       pn.sign_code) +
             _field('Sheeting Type',   _spellSheeting(pn.sheeting_type)) +
-            // Row 2 — description moved up; sheet condition follows
-            _field('Description', pn.panel_description, { wrap: true }) +
+            // Row 2 — primary condition assessments
+            _field('Panel Condition', _coloredCond(pn.panel_condition),   { raw: true }) +
             _field('Sheet Condition', _coloredCond(pn.sheeting_condition), { raw: true }) +
-            // Row 3 — primary condition assessments
-            _field('Panel Condition', _coloredCond(pn.panel_condition), { raw: true }) +
-            _field('Retro Day',       _coloredCond(retroDayLtr),         { raw: true }) +
-            // Row 4 — damage + nighttime retro
+            // Row 3 — daytime + nighttime retroreflectivity
+            _field('Retro Day',       _coloredCond(retroDayLtr),   { raw: true }) +
+            _field('Retro Night',     _coloredCond(retroNightLtr), { raw: true }) +
+            // Row 4 — damage + dimensions
             _field('Damage', dmg, { wrap: true }) +
-            _field('Retro Night',     _coloredCond(retroNightLtr),       { raw: true }) +
-            // Row 5 — physical dimensions / hardware
             _field('Panel Size',      pn.panel_size) +
+            // Row 5 — hardware + material
             _field('Mounting',        _mountLabel(pn.mounting_hardware)) +
-            // Row 6 — material details
             _field('Panel Type',      _panelTypeLabel(pn)) +
+            // Row 6 — back panel + history
             _field('Back Panel',      pn.back_panel) +
-            // Row 7 — historical (Install Date in col 1, col 2 empty)
             _field('Install Date',    pn.panel_install_date) +
+            // Row 7 — Description gets the entire card width so long
+            // sign text rarely needs to wrap at all.
+            _field('Description', pn.panel_description, { full: true, wrap: true }) +
             // Free-text notes span full width when populated.
             (pn.retro_notes ? _field('Retro Notes', pn.retro_notes, { full: true, wrap: true }) : '') +
             (pn.notes       ? _field('Notes',       pn.notes,       { full: true, wrap: true }) : '') +
