@@ -34773,11 +34773,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<div><span class="sr-info-name-lbl">Overall Condition:</span>'
               + '<span class="sr-info-name-val">' + _cvColoredCond(ovCond) + '</span></div>' +
           '</div>' +
+          // Culverts span the road as a LineString, so Side / Offset
+          // (which describe a point's left/right placement relative to
+          // the alignment) don't carry useful information — every
+          // culvert reads as "on the centerline." MP / STA describe
+          // the crossing point itself; Lat/Lng are the midpoint.
           '<div class="sr-info-row-loc">' +
             '<div><span class="sr-lbl">MP</span><span class="sr-val">' + _cvCell(mpStr) + '</span></div>' +
             '<div><span class="sr-lbl">STA</span><span class="sr-val">' + _cvCell(pin.sta) + '</span></div>' +
-            '<div><span class="sr-lbl">Side</span><span class="sr-val">' + _cvCell(a.perp_side || a.side) + '</span></div>' +
-            '<div><span class="sr-lbl">Offset</span><span class="sr-val">' + _cvCell(a.perp_offset_ft != null ? (a.perp_offset_ft + ' ft') : '') + '</span></div>' +
             '<div><span class="sr-lbl">Lat/Lng</span><span class="sr-val">' + _cvCell(lat) + ', ' + _cvCell(lng) + '</span></div>' +
           '</div>' +
         '</div>';
