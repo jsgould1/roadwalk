@@ -5041,6 +5041,31 @@ body.rw-sld-photo-dragging .strip-pin {
 .cv-photo-actions .cv-auto-btn:hover  { background: var(--paper-2); }
 .cv-photo-actions .cv-pick-btn:hover  { filter: brightness(1.05); }
 @media print { .cv-photo-actions { display: none !important; } }
+/* Inline-editable controls inside the Culvert Conditions card —
+   styled as plain text on screen so the table reads the same as the
+   sign report, then locked to read-only in print. The <select> and
+   <input> still carry the page's font + color so the rating word
+   shows up colored exactly like the static span did. */
+.cv-cond-edit, .cv-notes-edit {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background: transparent; border: none; padding: 0;
+  font: inherit; color: inherit; cursor: pointer; outline: none;
+  border-radius: 2px;
+}
+.cv-cond-edit:hover, .cv-notes-edit:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.cv-cond-edit:focus, .cv-notes-edit:focus {
+  background: rgba(29, 78, 216, 0.08);
+}
+.cv-notes-edit { width: 100%; cursor: text; min-width: 0; }
+.cv-notes-edit::placeholder { color: #9ca3af; font-style: italic; }
+@media print {
+  .cv-cond-edit, .cv-notes-edit {
+    pointer-events: none;
+    background: transparent !important;
+  }
+}
 .sr-identity-right { display: flex; min-height: 2.3in; }
 .sr-identity-right .sr-card-map {
   width: 100%; height: auto; min-height: 2.3in; flex: 1;
@@ -33898,6 +33923,69 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!color) return _esc(spelled);
     return '<span style="color:' + color + ';font-weight:700">' + _esc(spelled) + '</span>';
   }
+  // Inline-editable rating <select>. Renders the spelled word in
+  // condition color so the cell reads the same as the static span,
+  // but lets the user pick a new rating without leaving the report.
+  // Options carry the raw 1-5 / N/A vocabulary the data form uses so
+  // _CULV_COND-driven saves stay round-trippable.
+  function _cvColoredCondSelect(currentVal, fieldName, cvIdx) {
+    var n = _cvCondLetter(currentVal);
+    var color = n ? _CV_COND_COLOR[n] : '#6b7280';
+    var weight = n ? 'font-weight:700;' : '';
+    var options = ['1 – Excellent', '2 – Good', '3 – Fair', '4 – Poor', '5 – Failed', 'N/A'];
+    var hasMatch = false;
+    var opts = '';
+    options.forEach(function (opt) {
+      var selected = (opt === currentVal) ? ' selected' : '';
+      if (selected) hasMatch = true;
+      opts += '<option value="' + _esc(opt) + '"' + selected + '>' + _esc(opt) + '</option>';
+    });
+    // Blank option for clearing — selected only if the current value
+    // doesn't match any of the known options (so legacy values still
+    // render, just without a checkmark in the dropdown).
+    var blankSelected = (!currentVal || (!hasMatch && currentVal !== 'N/A')) ? ' selected' : '';
+    opts = '<option value=""' + blankSelected + '>—</option>' + opts;
+    return '<select class="cv-cond-edit" '
+      + 'data-cv-idx="' + cvIdx + '" '
+      + 'data-field="' + _esc(fieldName) + '" '
+      + 'style="color:' + color + ';' + weight + '">'
+      + opts
+      + '</select>';
+  }
+  function _cvNotesInput(currentVal, fieldName, cvIdx) {
+    return '<input type="text" class="cv-notes-edit" '
+      + 'data-cv-idx="' + cvIdx + '" '
+      + 'data-field="' + _esc(fieldName) + '" '
+      + 'value="' + _esc(currentVal || '') + '" '
+      + 'placeholder="Add notes…">';
+  }
+  // Mirror a single attrs.{field} change into the IDB inspection
+  // record so _mergedPin's IDB overlay sees the new value next time
+  // — without re-serialising the whole SECTIONS blob (which is what
+  // OOMs on photo-heavy projects). Same pattern _cvSyncHiddenToIdb
+  // already uses for report_hidden_photos.
+  function _cvSyncFieldToIdb(pin, field, value) {
+    if (!pin || !pin.ulid) return;
+    var rec = _dataState && _dataState.idbCacheByUlid
+      ? _dataState.idbCacheByUlid[pin.ulid] : null;
+    if (rec) {
+      if (!rec.attrs) rec.attrs = {};
+      rec.attrs[field] = value;
+    }
+    if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function') return;
+    window.RWIdb.openDB().then(function (db) {
+      var tx    = db.transaction('inspections', 'readwrite');
+      var store = tx.objectStore('inspections');
+      var getReq = store.get(pin.ulid);
+      getReq.onsuccess = function (ev) {
+        var dbRec = ev.target.result;
+        if (!dbRec) return;
+        if (!dbRec.attrs) dbRec.attrs = {};
+        dbRec.attrs[field] = value;
+        store.put(dbRec);
+      };
+    }).catch(function () {});
+  }
   // Worst-of culvert conditions — same "highest number wins" rule the
   // form's _deriveOverallCondition uses, returned as the original
   // labelled string so the colored span keeps the readable "3 – Fair".
@@ -34321,12 +34409,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
 
   // ── Auto-add nearby photos ──────────────────────────────────────
-  // Pulls every geophoto whose lat/lng falls within `maxFt` of the
-  // culvert polyline, dedups against anything already linked or
-  // already on attrs.photos by geophoto id / dataUrl prefix, appends
-  // them with a "Nearby photo (N ft)" caption, and stamps
-  // linked_pin_id on the geophoto so the photo triage tab reflects
-  // the new association. Returns the number of photos added.
+  // Walks every geophoto whose lat/lng falls within `maxFt` of the
+  // culvert polyline and stamps linked_pin_id on the matching ones
+  // so they surface in the report via the linked-geophoto walk in
+  // _photosForCulvert. Earlier versions also pushed the dataUrl into
+  // pin.attrs.photos which made the SECTIONS blob balloon — and the
+  // follow-up persistSections call would then OOM on the structured-
+  // clone exactly like the OOM-on-save we already fixed for the data
+  // form. Linking-only keeps the bundle small; the geophotos store
+  // owns its own per-record IDB writes through window._RW.geophotos.
   function _cvAutoAddNearbyPhotos(pin, secId, maxFt) {
     var coords = (pin.geometry && pin.geometry.coordinates) || [];
     if (coords.length < 2) return 0;
@@ -34338,40 +34429,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       .filter(Boolean);
     if (poly.length < 2) return 0;
 
-    var geophotos = (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function')
-      ? window._RW.geophotos.list() : [];
+    var api = (window._RW && window._RW.geophotos) ? window._RW.geophotos : null;
+    var geophotos = (api && typeof api.list === 'function') ? api.list() : [];
     if (!geophotos.length) return 0;
 
-    pin.attrs = pin.attrs || {};
-    pin.attrs.photos = Array.isArray(pin.attrs.photos) ? pin.attrs.photos : [];
-    var photos = pin.attrs.photos;
-
-    var linkedGpIds = new Set();
-    photos.forEach(function (p) {
-      if (p && p._gp_id != null) linkedGpIds.add(String(p._gp_id));
-    });
-
     var prefix = secId + '::' + pin.id;
-    var added = 0;
+    var added  = 0;
+    var toSave = [];
     geophotos.forEach(function (gp) {
       if (!gp || gp.lat == null || gp.lng == null) return;
-      if (linkedGpIds.has(String(gp.id))) return;
-      // Skip photos already linked to a different pin so we don't steal
-      // them from another asset's record.
-      if (gp.linked_pin_id && gp.linked_pin_id !== prefix) return;
+      if (gp.linked_pin_id === prefix) return;          // already linked here
+      if (gp.linked_pin_id && gp.linked_pin_id !== prefix) return;  // owned by another pin
       var d = _cvPointToPolylineFt({ lat: +gp.lat, lng: +gp.lng }, poly);
       if (d > maxFt) return;
-      photos.push({
-        dataUrl:      gp.dataUrl || '',
-        caption:      gp.description || ('Nearby photo (' + d.toFixed(0) + ' ft)'),
-        captured_at:  gp.captured_at || null,
-        _gp_id:       gp.id,
-        _auto_added_ft: Math.round(d),
-      });
       gp.linked_pin_id = prefix;
-      linkedGpIds.add(String(gp.id));
+      toSave.push(gp);
       added++;
     });
+
+    // Persist via the geophotos API — one record per photo, not the
+    // whole SECTIONS blob — so the structured-clone budget stays
+    // bounded per call.
+    if (toSave.length && api) {
+      if (typeof api.saveMany === 'function') {
+        try { api.saveMany(toSave); } catch (_) {}
+      } else if (typeof api.save === 'function') {
+        toSave.forEach(function (gp) { try { api.save(gp); } catch (_) {} });
+      }
+    }
     return added;
   }
 
@@ -34702,12 +34787,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // typography as the properties card so the two read as a set.
       var _cLblS = 'padding:3px 12px 3px 0;color:var(--ink-3);font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap;vertical-align:top;';
       var _cValS = 'padding:3px 12px 3px 0;color:var(--ink);font:400 11px var(--sans,system-ui);vertical-align:top;';
-      function _condRow(label, condVal, notesVal) {
+      function _condRow(label, condVal, notesVal, condField, notesField) {
         return '<tr>'
           + '<td style="' + _cLblS + '">' + label + '</td>'
-          + '<td style="' + _cValS + 'white-space:nowrap;">' + _cvColoredCond(condVal) + '</td>'
+          + '<td style="' + _cValS + 'white-space:nowrap;">'
+            + _cvColoredCondSelect(condVal, condField, idx)
+          + '</td>'
           + '<td style="' + _cValS + '">'
-            + (notesVal ? _esc(notesVal) : '<span style="color:#9ca3af">—</span>')
+            + _cvNotesInput(notesVal, notesField, idx)
           + '</td>'
         + '</tr>';
       }
@@ -34729,11 +34816,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               + '<col style="width:18%">'
               + '<col style="width:50%">'
             + '</colgroup>'
-            + _condRow('Inlet',               a.inlet_condition,   a.inlet_condition_notes)
-            + _condRow('Barrel',              a.barrel_condition,  a.barrel_condition_notes)
-            + _condRow('Outlet',              a.outlet_condition,  a.outlet_condition_notes)
-            + _condRow('Upstream Headwall',   a.hw_upstream_cond,  a.hw_upstream_cond_notes)
-            + _condRow('Downstream Headwall', a.hw_downstream_cond,a.hw_downstream_cond_notes)
+            + _condRow('Inlet',               a.inlet_condition,   a.inlet_condition_notes,
+                        'inlet_condition',    'inlet_condition_notes')
+            + _condRow('Barrel',              a.barrel_condition,  a.barrel_condition_notes,
+                        'barrel_condition',   'barrel_condition_notes')
+            + _condRow('Outlet',              a.outlet_condition,  a.outlet_condition_notes,
+                        'outlet_condition',   'outlet_condition_notes')
+            + _condRow('Upstream Headwall',   a.hw_upstream_cond,  a.hw_upstream_cond_notes,
+                        'hw_upstream_cond',   'hw_upstream_cond_notes')
+            + _condRow('Downstream Headwall', a.hw_downstream_cond,a.hw_downstream_cond_notes,
+                        'hw_downstream_cond', 'hw_downstream_cond_notes')
           + '</table>'
         + '</div>';
 
@@ -35033,22 +35125,58 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     });
 
+    // ── Inline condition editing (rating <select> + notes <input>) ──
+    // Direct attrs mutation + IDB sync via _cvSyncFieldToIdb mirrors
+    // the per-photo hide path. We deliberately do NOT call
+    // persistSections per change — that re-serialises the whole
+    // SECTIONS blob which is the OOM trigger we already fought once.
+    list.querySelectorAll('.cv-cond-edit').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var r = all[+sel.dataset.cvIdx];
+        if (!r) return;
+        var field = sel.dataset.field;
+        if (!field) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+        attrs[field] = sel.value;
+        _cvSyncFieldToIdb(pin, field, sel.value);
+        // Re-render so the Overall Condition row + the barrel /
+        // end-fitting colors in the schematic pick up the change.
+        renderCulvertsReport();
+      });
+    });
+    list.querySelectorAll('.cv-notes-edit').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var r = all[+inp.dataset.cvIdx];
+        if (!r) return;
+        var field = inp.dataset.field;
+        if (!field) return;
+        var pin = r.pin;
+        var attrs = pin.attrs || (pin.attrs = {});
+        attrs[field] = inp.value;
+        _cvSyncFieldToIdb(pin, field, inp.value);
+        // No re-render on notes — the new text is already in the
+        // input the user just typed into, and a re-render would
+        // blur the field mid-edit.
+      });
+    });
+
     // ── Auto-add-nearby button ──
+    // No persistSections call: _cvAutoAddNearbyPhotos only mutates
+    // geophoto records (linked_pin_id) and saves them through the
+    // geophotos API. SECTIONS isn't touched, so re-serialising the
+    // whole bundle here would be pointless work AND a structured-
+    // clone OOM risk on photo-heavy projects.
     list.querySelectorAll('.cv-auto-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var r = all[+btn.dataset.cvIdx];
         if (!r) return;
         var added = _cvAutoAddNearbyPhotos(r.pin, r.sec.id, 15);
-        if (window._RW && typeof window._RW.persistSections === 'function') {
-          try { window._RW.persistSections(); } catch (_) {}
-        }
-        // Lightweight feedback — full re-render so the new photos
-        // appear and the (N) count updates.
         renderCulvertsReport();
         if (added === 0) {
           alert('No new geophotos within 15 ft of this culvert.');
         } else {
-          console.log('[Culverts] auto-added ' + added + ' photo(s) to ' + r.pin.id);
+          console.log('[Culverts] auto-linked ' + added + ' photo(s) to ' + r.pin.id);
         }
       });
     });
