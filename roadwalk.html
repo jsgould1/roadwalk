@@ -5060,21 +5060,27 @@ body.rw-sld-photo-dragging .strip-pin {
    gap landing between them, while the .cv-pair flex tightens the
    label against its own value. Full-width rows (Inlet Type / Outlet
    Type / Notes) span the row by setting flex:1 1 100% on the pair. */
+/* Culvert Properties layout — 5-column grid:
+     col 1: label (auto)
+     col 2: field (1fr)
+     col 3: literal spacer column (32 px) for breathing room between
+            the two label+field pairs in each row
+     col 4: label (auto)
+     col 5: field (1fr)
+   Notes row's field uses grid-column:2/-1 so the input stretches from
+   col 2 all the way to col 5 (skipping the col-1 NOTES label which
+   stays in its own cell). */
 .cv-prop-list { padding: 4px 0; }
-.cv-prop-row {
-  display: flex;
-  justify-content: space-between;
+.cv-prop-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 32px auto 1fr;
+  column-gap: 8px;
+  row-gap: 6px;
   align-items: baseline;
-  gap: 24px;
-  padding: 3px 0;
+  padding: 4px 0;
 }
-.cv-pair {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-.cv-pair-full { flex: 1 1 100%; }
+.cv-prop-grid > .cv-prop-spacer { /* empty col-3 cell — keeps the grid honest */ }
+.cv-prop-grid > .cv-prop-notes-val { grid-column: 2 / -1; }
 .cv-lbl {
   color: var(--ink-3);
   font: 700 10px 'IBM Plex Mono', monospace;
@@ -5088,7 +5094,6 @@ body.rw-sld-photo-dragging .strip-pin {
   font: 400 11px var(--sans, system-ui);
   min-width: 0;
 }
-.cv-pair-full .cv-val { white-space: normal; }
 
 /* Inline-editable controls inside the Culvert Conditions card —
    styled as plain text on screen so the table reads the same as the
@@ -35721,37 +35726,41 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</div>' +
         '</div>';
 
-      // Properties card. Each row is a flex container with one or
-      // two label+value pairs; .cv-pair flex tightens each label
-      // against its own value, and the parent row's
-      // justify-content:space-between pushes the two pairs to
-      // opposite edges so the gap reads between the pairs rather
-      // than inside them. Full-width rows (Inlet Type / Outlet Type
-      // / Notes) take up the whole row via .cv-pair-full.
-      function _pair(label, val) {
-        return '<div class="cv-pair">'
-          + '<span class="cv-lbl">' + label + '</span>'
-          + '<span class="cv-val">' + _cvCell(val) + '</span>'
-          + '</div>';
+      // Properties card. 5-column CSS grid: label · field · spacer ·
+      // label · field. Notes row's field spans columns 2–5 so the
+      // input gets the full width. Every field is inline-editable —
+      // a plain text/number input wearing the .cv-notes-edit class so
+      // the existing change handler (which mutates pin.attrs[field]
+      // and calls _cvSyncFieldToIdb) picks them up without new wiring.
+      function _propInput(field, value, type) {
+        var t = type || 'text';
+        var v = (value == null ? '' : value);
+        return '<input class="cv-notes-edit" type="' + t + '" '
+          + 'data-cv-idx="' + idx + '" '
+          + 'data-field="' + _esc(field) + '" '
+          + 'value="' + _esc(v) + '" '
+          + 'placeholder="—"'
+          + (t === 'number' ? ' step="any"' : '')
+          + '>';
       }
-      function _pairFull(label, val) {
-        return '<div class="cv-pair cv-pair-full">'
-          + '<span class="cv-lbl">' + label + '</span>'
-          + '<span class="cv-val">' + _cvCell(val) + '</span>'
-          + '</div>';
+      function _propLbl(text) {
+        return '<span class="cv-lbl">' + text + '</span>';
       }
-      function _propsRow(left, right) {
-        return '<div class="cv-prop-row">' + left + (right || '') + '</div>';
-      }
+      var _sp = '<span class="cv-prop-spacer"></span>';
       var propsBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CULVERT PROPERTIES</span></div>'
-          + '<div class="cv-prop-list">'
-            + _propsRow(_pair('Material',  a.material),    _pair('Coating',     a.coating))
-            + _propsRow(_pair('Size (in)', a.size_in),     _pair('Length (ft)', a.length_ft))
-            + _propsRow(_pairFull('Inlet Type',  a.in_type))
-            + _propsRow(_pairFull('Outlet Type', a.out_type))
-            + (a.notes ? _propsRow(_pairFull('Notes', a.notes)) : '')
+          + '<div class="cv-prop-grid">'
+            + _propLbl('Material')   + _propInput('material',  a.material,  'text')   + _sp
+            + _propLbl('Coating')    + _propInput('coating',   a.coating,   'text')
+            + _propLbl('Size (in)')  + _propInput('size_in',   a.size_in,   'number') + _sp
+            + _propLbl('Length (ft)')+ _propInput('length_ft', a.length_ft, 'number')
+            + _propLbl('Inlet Type') + _propInput('in_type',   a.in_type,   'text')   + _sp
+            + _propLbl('Outlet Type')+ _propInput('out_type',  a.out_type,  'text')
+            + _propLbl('Notes')
+            + '<input class="cv-notes-edit cv-prop-notes-val" type="text" '
+              + 'data-cv-idx="' + idx + '" data-field="notes" '
+              + 'value="' + _esc(a.notes || '') + '" placeholder="Add notes…">'
           + '</div>'
         + '</div>';
 
