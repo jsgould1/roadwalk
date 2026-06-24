@@ -31536,6 +31536,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var _ovCond = (typeof _worstCondition === 'function')
         ? _worstCondition(_ovCondCodes)
         : null;
+      // Condition / retro lookup tables — declared up here (above
+      // idBlock) so the very first _coloredCond(_ovCond) call below
+      // can read _COND_SPELLED and _SR_COND_COLOR. They were
+      // previously declared further down by the post / panel helpers
+      // and were still `undefined` at idBlock time, throwing
+      // "Cannot read properties of undefined" out of the .map and
+      // leaving the sign-card list empty even though the "N signs"
+      // count had already rendered.
+      var _SR_COND_COLOR = {
+        E: '#15803d', // Excellent — dark green
+        G: '#22c55e', // Good — green
+        F: '#ca8a04', // Fair — mustard yellow (readable on white)
+        P: '#b91c1c', // Poor — red
+        X: '#111111', // Failed — black
+      };
+      var _COND_SPELLED = { E: 'Excellent', G: 'Good', F: 'Fair', P: 'Poor', X: 'Failed' };
+      var _RETRO_ORDER  = { E: 1, G: 2, F: 3, P: 4, X: 5 };
+      var _RETRO_TO_LTR = { 1: 'E', 2: 'G', 3: 'F', 4: 'P', 5: 'X' };
       var idBlock =
         '<div class="sr-info-block">' +
           // Row 1 (12 px): Pin ID + every panel description, both as
@@ -31588,16 +31606,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '</div>';
       }
 
-      // Condition palette for the printed report. Distinct from the
-      // form's _condColorFor — that one collapses E and G into the
-      // same green; this one keeps them separate per user spec.
-      var _SR_COND_COLOR = {
-        E: '#15803d', // Excellent — dark green
-        G: '#22c55e', // Good — green
-        F: '#ca8a04', // Fair — mustard yellow (readable on white)
-        P: '#b91c1c', // Poor — red
-        X: '#111111', // Failed — black
-      };
+      // _SR_COND_COLOR is now declared above idBlock so the first
+      // _coloredCond call in the identity block doesn't crash on an
+      // undefined lookup table.
       function _condTextColor(code) {
         if (!code) return null;
         var s = String(code).trim().toUpperCase().charAt(0);
@@ -31657,12 +31668,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Returns null when both inputs are blank. Used for both the
       // daytime and nighttime rows so the same formula auto-applies
       // when night data starts flowing in from the data form.
-      // Shared condition vocabulary — every place the report shows a
-      // condition rating (post / panel / sheet / retro) spells the
-      // single letter out to the full word.
-      var _COND_SPELLED   = { E: 'Excellent', G: 'Good', F: 'Fair', P: 'Poor', X: 'Failed' };
-      var _RETRO_ORDER    = { E: 1, G: 2, F: 3, P: 4, X: 5 };
-      var _RETRO_TO_LTR   = { 1: 'E', 2: 'G', 3: 'F', 4: 'P', 5: 'X' };
+      // _COND_SPELLED / _RETRO_ORDER / _RETRO_TO_LTR are now declared
+      // above idBlock so the first _coloredCond call in the identity
+      // block doesn't crash on an undefined lookup table.
       // Worst-of-two retro reader. Maps E < G < F < P < X (highest
       // order wins), spelled out. Blank when both raters are empty.
       function _worstRetro(r1, r2) {
