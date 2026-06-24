@@ -31905,11 +31905,84 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _srForceInitAllMaps() {
     document.querySelectorAll('#sr-list .sr-card-map').forEach(_srInitInsetMap);
   }
+
+  // ── Shared lazy-photo loader (sign + culvert reports) ─────────────
+  // The reports render every linked photo as an <img> in the DOM at
+  // once. With hundreds of cards × multi-MB dataUrls the eager-load
+  // pattern pinned the decoded-bitmap memory hard enough to OOM the
+  // tab. Solution: render imgs with data-src (the dataUrl held only
+  // as a DOM attribute string, never decoded), then an
+  // IntersectionObserver swaps src ← data-src when the figure
+  // scrolls into the viewport. Cards far below the fold never
+  // allocate a bitmap.
+  //
+  // teardown() disconnects any prior observer so a re-render doesn't
+  // leak observation registrations. forceLoadAll() materialises every
+  // img regardless of viewport — wired into the beforeprint handler
+  // so the printed PDF carries the photos even though the user has
+  // only scrolled through a few cards.
+  (function () {
+    var observer = null;
+    function _onIntersect(entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var img = entry.target;
+        var src = img.getAttribute('data-src');
+        if (src && !img.src) {
+          img.src = src;
+          img.removeAttribute('data-src');
+          observer.unobserve(img);                 // one-shot — once decoded, leave it
+        }
+      });
+    }
+    function observe(rootEl) {
+      if (!rootEl) return;
+      if (typeof IntersectionObserver === 'undefined') {
+        forceLoadAll(rootEl);
+        return;
+      }
+      if (!observer) {
+        observer = new IntersectionObserver(_onIntersect, { rootMargin: '400px' });
+      }
+      rootEl.querySelectorAll('img[data-src]').forEach(function (img) {
+        observer.observe(img);
+      });
+    }
+    function teardown() {
+      if (observer) {
+        try { observer.disconnect(); } catch (_) {}
+        observer = null;
+      }
+    }
+    function forceLoadAll(rootEl) {
+      var root = rootEl || document;
+      root.querySelectorAll('img[data-src]').forEach(function (img) {
+        var src = img.getAttribute('data-src');
+        if (src && !img.src) {
+          img.src = src;
+          img.removeAttribute('data-src');
+        }
+      });
+    }
+    window._RW = window._RW || {};
+    window._RW.lazyPhotos = {
+      observe: observe,
+      teardown: teardown,
+      forceLoadAll: forceLoadAll,
+    };
+  })();
+
   // File → Print path (no print-button click). Synchronous force-init so
   // every card has a map widget; tiles may not all have loaded though.
   window.addEventListener('beforeprint', function () {
     var mod = document.getElementById('mod-signs_report');
-    if (mod && mod.classList.contains('active')) _srForceInitAllMaps();
+    if (mod && mod.classList.contains('active')) {
+      _srForceInitAllMaps();
+      // Materialise every lazy photo so the printed PDF carries them.
+      if (window._RW && window._RW.lazyPhotos) {
+        window._RW.lazyPhotos.forceLoadAll(document.getElementById('sr-list'));
+      }
+    }
   });
 
   // ── CSV export helpers ────────────────────────────────────────────
@@ -33607,8 +33680,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   + 'data-hide-key="' + _esc(ph._hide_key) + '" '
                   + 'title="Hide from printed report (photo is kept)">&times;</button>';
             }
+            // data-src + IntersectionObserver (see window._RW.lazyPhotos).
+            // The dataUrl sits as an attribute string until the figure
+            // scrolls into view, then src is swapped in. Cards far from
+            // the viewport never allocate a decoded bitmap.
             return '<figure class="sr-photo">' +
-              '<img src="' + _esc(ph.src) + '" alt="">' +
+              '<img data-src="' + _esc(ph.src) + '" alt="" loading="lazy">' +
               (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
             '</figure>';
           }).join('') +
@@ -34056,6 +34133,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     } else {
       // No IntersectionObserver — init synchronously (rare; old browsers).
       insetDivs.forEach(_srInitInsetMap);
+    }
+    // Lazy-load photos so off-viewport cards never allocate decoded
+    // bitmaps. Teardown the previous observer first so a re-render
+    // doesn't leak registrations onto stale (now-removed) <img>
+    // elements still pinned by the observer.
+    if (window._RW && window._RW.lazyPhotos) {
+      window._RW.lazyPhotos.teardown();
+      window._RW.lazyPhotos.observe(list);
     }
   }
   window.renderSignsReport = renderSignsReport;
@@ -34575,7 +34660,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
   window.addEventListener('beforeprint', function () {
     var mod = document.getElementById('mod-culverts_report');
-    if (mod && mod.classList.contains('active')) _cvForceInitAllMaps();
+    if (mod && mod.classList.contains('active')) {
+      _cvForceInitAllMaps();
+      // Materialise every lazy photo so the printed PDF carries them.
+      if (window._RW && window._RW.lazyPhotos) {
+        window._RW.lazyPhotos.forceLoadAll(document.getElementById('cv-list'));
+      }
+    }
   });
 
   // ── Polyline distance (feet) for the Auto-add-nearby radius ─────
@@ -35636,13 +35727,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               // Folder-picked photos render a placeholder <img> with
               // data-cv-photo-id — _cvHydrateBlobImgs swaps in a blob
               // URL after the DOM mounts. Legacy embedded photos and
-              // linked geophotos still set src directly from their
-              // dataUrl on first render so they don't flash blank.
+              // linked geophotos use data-src + IntersectionObserver
+              // (window._RW.lazyPhotos) so off-viewport cards never
+              // allocate a decoded bitmap.
               var imgTag;
               if (e._cv_photo_id != null) {
                 imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
               } else {
-                imgTag = '<img src="' + e.src + '" alt="" loading="lazy">';
+                imgTag = '<img data-src="' + e.src + '" alt="" loading="lazy">';
               }
               return '<figure class="sr-photo">'
                 + imgTag
@@ -36014,6 +36106,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // After every render, swap blob URLs into the picked-photo <img>
     // placeholders. Cheap — only reads the IDB rows we actually need.
     _cvHydrateBlobImgs(list);
+
+    // Lazy-load dataUrl-backed photos so off-viewport cards never
+    // allocate decoded bitmaps. teardown() clears the previous
+    // observer so a re-render doesn't leak registrations onto stale
+    // <img> elements that have since been removed from the DOM.
+    if (window._RW && window._RW.lazyPhotos) {
+      window._RW.lazyPhotos.teardown();
+      window._RW.lazyPhotos.observe(list);
+    }
 
     // ── Auto-add-nearby button ──
     // No persistSections call: _cvAutoAddNearbyPhotos only mutates
