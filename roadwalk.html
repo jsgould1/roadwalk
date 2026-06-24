@@ -4782,10 +4782,10 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sr-card-footer-left  {
   text-align: left;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center;
 }
 .sr-card-footer-logo {
-  height: 14px; width: auto; display: block;
+  height: 18px; width: auto; display: block;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 /* Project-number strip in the footer middle. Slightly less letter-
@@ -4799,7 +4799,20 @@ body.rw-sld-photo-dragging .strip-pin {
   flex: 1 1 auto; min-width: 0;
   padding: 0 12px;
 }
-.sr-card-footer-right { text-align: right; }
+/* Right column is now two stacked lines:
+     row 1: <sign id> · PAGE X of N   (X / N count this sign's pages)
+     row 2:              N of XX      (file-wide page count) */
+.sr-card-footer-right {
+  text-align: right;
+  display: flex; flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+.sr-card-footer-right-file {
+  color: var(--ink-3);
+  font-weight: 700;
+  margin-top: 1px;
+}
 .sr-notes-row {
   margin-top: 6px;
   padding: 5px 8px;
@@ -32322,6 +32335,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     function _cell(v) { return v == null || v === '' ? '—' : _esc(v); }
 
+    // ── File-wide page counter ───────────────────────────────────────
+    // Each sign produces 1 base card + N continuation cards (one per
+    // photo page after page 1). Pre-pass over allSigns to count pages
+    // per sign and roll up the total so every printed card can carry
+    // its own "K of TOTAL" file-wide page number.
+    function _countSignPages(r) {
+      var pin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
+      var a   = pin.attrs || {};
+      var panels = Array.isArray(a.panels) ? a.panels : [];
+      var photos = _photosForPin(pin, r.sec);
+      var PAGE_1 = Math.max(0, 6 - Math.max(0, panels.length - 1) * 3);
+      var PAGE_N = 12;
+      if (!photos.length) return 1;
+      var pages = 1;
+      var rest = photos.slice(PAGE_1);
+      while (rest.length) { pages++; rest = rest.slice(PAGE_N); }
+      return pages;
+    }
+    var pagesPerSign  = allSigns.map(_countSignPages);
+    var fileStartPage = [];
+    var _cumPages = 1;
+    for (var _pi = 0; _pi < pagesPerSign.length; _pi++) {
+      fileStartPage.push(_cumPages);
+      _cumPages += pagesPerSign[_pi];
+    }
+    var totalFilePages = _cumPages - 1;
+
     // ── Build one card per sign ──────────────────────────────────────
     list.innerHTML = allSigns.map(function (r, idx) {
       var sec = r.sec;
@@ -32821,7 +32861,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           } else {
             photoSecHdr = 'Photos (0) ' + actBtn + ' ' + restoreBtn;
           }
-          var pageOfStr = 'Page ' + (pi + 1) + ' of ' + totalPages;
+          var pageOfStr     = 'Page ' + (pi + 1) + ' of ' + totalPages;
+          var filePageNum   = fileStartPage[idx] + pi;
+          var filePageOfStr = filePageNum + ' of ' + totalFilePages;
           // Section sub + route meta line from the AECOM scope table.
           // Falls back to sec.name when the section isn't in the map.
           var _info = _SR_SECTION_INFO[sec.id];
@@ -32865,10 +32907,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<div class="sr-card-footer">' +
               '<div class="sr-card-footer-left">'
                 + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
-                + _esc(signIdStr)
               + '</div>' +
               '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
-              '<div class="sr-card-footer-right">' + pageOfStr + '</div>' +
+              '<div class="sr-card-footer-right">'
+                + '<div>' + _esc(signIdStr) + ' · ' + pageOfStr + '</div>'
+                + '<div class="sr-card-footer-right-file">' + filePageOfStr + '</div>'
+              + '</div>' +
             '</div>' +
           '</article>';
         }
@@ -32877,6 +32921,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // shows which photos this page covers.
         var endNum = startNum + chunk.length - 1;
         var pageOfStrCont = 'Page ' + (pi + 1) + ' of ' + totalPages;
+        var filePageNumCont   = fileStartPage[idx] + pi;
+        var filePageOfStrCont = filePageNumCont + ' of ' + totalFilePages;
         // Continuation card mirrors the first card's title block so
         // page 2+ carries the same section + route meta as page 1.
         var _infoC = _SR_SECTION_INFO[sec.id];
@@ -32906,10 +32952,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '<div class="sr-card-footer">' +
             '<div class="sr-card-footer-left">'
               + '<img class="sr-card-footer-logo" src="data/logos/AECOM_Logo_Black_RGB.png" alt="AECOM">'
-              + _esc(signIdStr)
             + '</div>' +
             '<div class="sr-card-footer-middle">' + _SR_PROJECT_NUMBERS + '</div>' +
-            '<div class="sr-card-footer-right">' + pageOfStrCont + '</div>' +
+            '<div class="sr-card-footer-right">'
+              + '<div>' + _esc(signIdStr) + ' · ' + pageOfStrCont + '</div>'
+              + '<div class="sr-card-footer-right-file">' + filePageOfStrCont + '</div>'
+            + '</div>' +
           '</div>' +
         '</article>';
       }).join('');
