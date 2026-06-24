@@ -30945,12 +30945,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               month: 'short', day: 'numeric',
               hour: '2-digit', minute: '2-digit', second: '2-digit',
             }) : '';
-            // data-src so the dataUrl sits as an attribute string but
-            // is never decoded until the tile scrolls into the modal
-            // viewport. window._RW.lazyPhotos.observe() below picks
-            // them up after the grid is mounted.
+            // data-photo-id (tiny id string) instead of data-src
+            // (the full 5 MB dataUrl). The lazy observer looks up
+            // dataUrl from PHOTOS by id at decode time, so the DOM
+            // never carries the multi-MB base64 string per tile —
+            // which is what was blowing the budget on Apply.
             tile.innerHTML =
-              '<img data-src="' + p.dataUrl + '" alt="" loading="lazy">' +
+              '<img data-photo-id="' + p.id + '" alt="" loading="lazy">' +
               '<div class="rw-nbp-tile-meta">' +
                 (time ? '<div class="rw-nbp-tile-time">' + time + '</div>' : '') +
                 '<div class="rw-nbp-tile-dist">' + Math.round(c.d) + ' ft</div>' +
@@ -30995,7 +30996,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       modal.querySelector('.rw-nbp-nonebtn').onclick = function () {
         selectedIds.clear(); render(); updateAddBtn();
       };
-      function close() { modal.hidden = true; }
+      // Tear down the grid contents on close so the picker's tile
+      // <img> elements (and their attached lazy observers) don't
+      // stay mounted between opens. Even with data-photo-id keeping
+      // the DOM tiny, dropping the tiles frees decoded bitmaps for
+      // anything that did scroll into view.
+      function close() {
+        modal.hidden = true;
+        var g = modal.querySelector('.rw-nbp-grid');
+        if (g) g.innerHTML = '';
+        if (window._RW && window._RW.lazyPhotos) {
+          try { window._RW.lazyPhotos.teardown(); } catch (_) {}
+        }
+      }
       modal.querySelector('.rw-nbp-cancel').onclick = close;
       modal.querySelector('.rw-nbp-close').onclick  = close;
       modal.querySelector('.rw-nbp-backdrop').onclick = close;
@@ -31936,14 +31949,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // only scrolled through a few cards.
   (function () {
     var observer = null;
+    // data-photo-id is the lighter form: the img carries a tiny id
+    // string (e.g. "gp1763..." → ~20 bytes), and we look up the
+    // dataUrl from PHOTOS at decode time. Embedding the full 5 MB
+    // dataUrl into a data-src attribute would allocate a ~5 MB
+    // string per img — multiplied across the surgical photo grid +
+    // the picker tiles + the full report cards, that's what was
+    // blowing past Edge's budget on Apply.
+    function _lookupSrc(img) {
+      var src = img.getAttribute('data-src');
+      if (src) return src;
+      var pid = img.getAttribute('data-photo-id');
+      if (pid && window._RW && window._RW.geophotos
+          && typeof window._RW.geophotos.get === 'function') {
+        var p = window._RW.geophotos.get(pid);
+        if (p && p.dataUrl) return p.dataUrl;
+      }
+      return null;
+    }
     function _onIntersect(entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
         var img = entry.target;
-        var src = img.getAttribute('data-src');
-        if (src && !img.src) {
+        if (img.src) { observer.unobserve(img); return; }
+        var src = _lookupSrc(img);
+        if (src) {
           img.src = src;
           img.removeAttribute('data-src');
+          img.removeAttribute('data-photo-id');
           observer.unobserve(img);                 // one-shot — once decoded, leave it
         }
       });
@@ -31957,7 +31990,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!observer) {
         observer = new IntersectionObserver(_onIntersect, { rootMargin: '400px' });
       }
-      rootEl.querySelectorAll('img[data-src]').forEach(function (img) {
+      rootEl.querySelectorAll('img[data-src], img[data-photo-id]').forEach(function (img) {
         observer.observe(img);
       });
     }
@@ -31969,11 +32002,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     function forceLoadAll(rootEl) {
       var root = rootEl || document;
-      root.querySelectorAll('img[data-src]').forEach(function (img) {
-        var src = img.getAttribute('data-src');
-        if (src && !img.src) {
+      root.querySelectorAll('img[data-src], img[data-photo-id]').forEach(function (img) {
+        if (img.src) return;
+        var src = _lookupSrc(img);
+        if (src) {
           img.src = src;
           img.removeAttribute('data-src');
+          img.removeAttribute('data-photo-id');
         }
       });
     }
@@ -33693,12 +33728,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   + 'data-hide-key="' + _esc(ph._hide_key) + '" '
                   + 'title="Hide from printed report (photo is kept)">&times;</button>';
             }
-            // data-src + IntersectionObserver (see window._RW.lazyPhotos).
-            // The dataUrl sits as an attribute string until the figure
-            // scrolls into view, then src is swapped in. Cards far from
-            // the viewport never allocate a decoded bitmap.
+            // Linked geophotos: tiny data-photo-id (observer looks up
+            // dataUrl from PHOTOS at decode time). Embedded form-
+            // photos: data-src because their dataUrl isn't in any
+            // registry the observer can look up. Either way the
+            // dataUrl never gets duplicated into a DOM attribute
+            // string — that's what was OOM-ing on Apply.
+            var imgTag = ph._gp_id
+              ? '<img data-photo-id="' + ph._gp_id + '" alt="" loading="lazy">'
+              : '<img data-src="' + _esc(ph.src) + '" alt="" loading="lazy">';
             return '<figure class="sr-photo">' +
-              '<img data-src="' + _esc(ph.src) + '" alt="" loading="lazy">' +
+              imgTag +
               (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
             '</figure>';
           }).join('') +
@@ -35739,13 +35779,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   + 'title="Hide from printed report (photo is kept)">&times;</button>';
               // Folder-picked photos render a placeholder <img> with
               // data-cv-photo-id — _cvHydrateBlobImgs swaps in a blob
-              // URL after the DOM mounts. Legacy embedded photos and
-              // linked geophotos use data-src + IntersectionObserver
-              // (window._RW.lazyPhotos) so off-viewport cards never
-              // allocate a decoded bitmap.
+              // URL after the DOM mounts. Linked geophotos use
+              // data-photo-id (tiny id string, observer looks up
+              // dataUrl from PHOTOS at decode time). Embedded form-
+              // photos still need data-src because their dataUrl
+              // isn't in a registry the observer can look up.
               var imgTag;
               if (e._cv_photo_id != null) {
                 imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
+              } else if (e._gp_id) {
+                imgTag = '<img data-photo-id="' + e._gp_id + '" alt="" loading="lazy">';
               } else {
                 imgTag = '<img data-src="' + e.src + '" alt="" loading="lazy">';
               }
@@ -36176,9 +36219,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           acts += '<button type="button" class="sr-photo-act sr-photo-hide" '
                 + 'data-cv-idx="' + idx + '" data-hide-key="' + _esc(e._hide_key) + '" '
                 + 'title="Hide from printed report (photo is kept)">&times;</button>';
-          var imgTag = (e._cv_photo_id != null)
-            ? '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">'
-            : '<img data-src="' + e.src + '" alt="" loading="lazy">';
+          // Linked geophotos get a tiny data-photo-id (the lazy
+          // observer looks up the dataUrl from PHOTOS on decode).
+          // Embedded form-photos still fall back to data-src because
+          // pin.attrs.photos[i].dataUrl isn't in any registry the
+          // observer can look up.
+          var imgTag;
+          if (e._cv_photo_id != null) {
+            imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
+          } else if (e._gp_id) {
+            imgTag = '<img data-photo-id="' + e._gp_id + '" alt="" loading="lazy">';
+          } else {
+            imgTag = '<img data-src="' + e.src + '" alt="" loading="lazy">';
+          }
           return '<figure class="sr-photo">' + imgTag
                + '<div class="sr-photo-actions">' + acts + '</div>'
                + cap + '</figure>';
