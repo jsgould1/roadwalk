@@ -11420,6 +11420,7 @@ body.mobile-mode #app {
               ⟂ Std angles only
             </button>
             <button class="sr-btn" id="sr-print-btn" title="Open browser Print dialog — Save as PDF for the deliverable">🖨 Print</button>
+            <button class="sr-btn" id="sr-print-all-btn" title="Switch the Section filter to (all), wait for tiles, then open browser Print dialog — Save as PDF for the full deliverable across every section">🖨 Print ALL Sections</button>
           </span>
         </div>
         <div class="sr-head-row" id="sr-source-row">
@@ -31245,6 +31246,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }
     }
 
+    // Shared "load tiles → print" helper so both Print and Print-All
+    // share the same pre-print sequence. msg is the toast text; longer
+    // delays for Print-All give the bigger inset-map fleet time to
+    // pull every tile from cache before the browser pauses scripts to
+    // open the print dialog.
+    function _srTriggerPrint(msg, delayMs, afterPrint) {
+      _srForceInitAllMaps();
+      var tip = document.createElement('div');
+      tip.textContent = msg;
+      tip.style.cssText = 'position:fixed;top:50%;left:50%;'
+        + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
+        + 'padding:10px 16px;font:600 12px monospace;z-index:99999;'
+        + 'border:1px solid #fff;border-radius:4px;';
+      document.body.appendChild(tip);
+      setTimeout(function () {
+        if (tip.parentNode) tip.parentNode.removeChild(tip);
+        window.print();
+        if (typeof afterPrint === 'function') {
+          // Defer restore until the print dialog has closed; window.print()
+          // is synchronous in Chromium so this runs on the next tick.
+          setTimeout(afterPrint, 0);
+        }
+      }, delayMs);
+    }
+
     var printBtn = document.getElementById('sr-print-btn');
     if (printBtn && !printBtn._wired) {
       printBtn._wired = true;
@@ -31252,21 +31278,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // Force-init every inset map, give tiles time to load, then
         // open the print dialog. Without this, only the cards that
         // happened to be visible would have a populated inset map.
-        _srForceInitAllMaps();
-        if (typeof printBtn._tipNode === 'undefined') {
-          printBtn._tipNode = null;
+        _srTriggerPrint('Loading map tiles…', 2500, null);
+      });
+    }
+
+    // Print ALL Sections — temporarily flip the Section dropdown to
+    // "(all)", re-render so every section's signs are in the DOM,
+    // wait longer for the bigger map fleet, print, then restore the
+    // previous section selection so the user is right where they left
+    // off when the dialog closes.
+    var printAllBtn = document.getElementById('sr-print-all-btn');
+    if (printAllBtn && !printAllBtn._wired) {
+      printAllBtn._wired = true;
+      printAllBtn.addEventListener('click', function () {
+        var sel = document.getElementById('sr-section');
+        var prevSection = sel ? sel.value : '';
+        if (sel && sel.value !== '') {
+          sel.value = '';
+          renderSignsReport();
         }
-        var tip = document.createElement('div');
-        tip.textContent = 'Loading map tiles…';
-        tip.style.cssText = 'position:fixed;top:50%;left:50%;'
-          + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
-          + 'padding:10px 16px;font:600 12px monospace;z-index:99999;'
-          + 'border:1px solid #fff;border-radius:4px;';
-        document.body.appendChild(tip);
-        setTimeout(function () {
-          if (tip.parentNode) tip.parentNode.removeChild(tip);
-          window.print();
-        }, 2500);
+        _srTriggerPrint('Loading map tiles for all sections…', 4000, function () {
+          if (sel && sel.value !== prevSection) {
+            sel.value = prevSection;
+            renderSignsReport();
+          }
+        });
       });
     }
 
