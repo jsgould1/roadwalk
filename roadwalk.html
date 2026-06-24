@@ -5002,6 +5002,18 @@ body.rw-sld-photo-dragging .strip-pin {
    MP rows floating at the bottom of the column. Anchor them to the
    top instead so they read from the top edge of the inset map. */
 .sr-card[data-cv-idx] .sr-identity-left > :last-child { margin-top: 0; }
+/* Culvert-card location row — bump up from the default 11/9 px so the
+   MP / STA / Side / Offset / Lat-Lng metadata row reads at a glance
+   during field walks. */
+.sr-card[data-cv-idx] .sr-info-row-loc {
+  font: 400 13px var(--sans, system-ui);
+}
+.sr-card[data-cv-idx] .sr-info-row-loc .sr-lbl {
+  font: 700 10px 'IBM Plex Mono', monospace;
+}
+.sr-card[data-cv-idx] .sr-info-row-loc .sr-val {
+  font: 400 13px var(--sans, system-ui);
+}
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
@@ -34649,46 +34661,52 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</div>' +
         '</div>';
 
-      // Properties card.
+      // Properties card. Match the sign report's panel-card aesthetic:
+      // small mono uppercase labels in ink-3, normal-weight 11px sans
+      // values in ink. Labels stay bold to read as a header row;
+      // values are normal weight so the data, not the label, draws
+      // attention.
+      var _lblS = 'padding:3px 12px 3px 0;color:var(--ink-3);font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap;vertical-align:top;';
+      var _valS = 'padding:3px 14px 3px 0;color:var(--ink);font:400 11px var(--sans,system-ui);vertical-align:top;';
       function _row4(l1, v1, l2, v2) {
-        var lblS = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;';
-        var valS = 'padding:4px 14px 4px 0;color:#111;';
         return '<tr>'
-          + '<td style="' + lblS + '">' + l1 + '</td>'
-          + '<td style="' + valS + '">' + _cvCell(v1) + '</td>'
-          + '<td style="' + lblS + '">' + (l2 || '') + '</td>'
-          + '<td style="' + valS + '">' + (l2 ? _cvCell(v2) : '') + '</td>'
+          + '<td style="' + _lblS + '">' + l1 + '</td>'
+          + '<td style="' + _valS + '">' + _cvCell(v1) + '</td>'
+          + '<td style="' + _lblS + '">' + (l2 || '') + '</td>'
+          + '<td style="' + _valS + '">' + (l2 ? _cvCell(v2) : '') + '</td>'
+          + '</tr>';
+      }
+      function _rowFull(label, val) {
+        return '<tr>'
+          + '<td style="' + _lblS + '">' + label + '</td>'
+          + '<td colspan="3" style="' + _valS + '">' + _cvCell(val) + '</td>'
           + '</tr>';
       }
       var propsBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CULVERT PROPERTIES</span></div>'
-          + '<table style="border-collapse:collapse;font:13px sans-serif;width:100%;">'
-            + _row4('Material',         a.material,
-                    'Coating',          a.coating)
-            + _row4('Size (in)',        a.size_in,
-                    'Length (ft)',      a.length_ft)
-            + _row4('Inlet Type',       a.in_type,
-                    'Outlet Type',      a.out_type)
-            + _row4('Stationing 2026',  a.stationing_2026,
-                    'Stationing 1994',  a.stationing_1994)
-            + (a.notes
-                ? '<tr><td style="padding:4px 14px 4px 0;color:#555;font-weight:600;">Notes</td>'
-                  + '<td colspan="3" style="padding:4px 0;color:#111;">' + _esc(a.notes) + '</td></tr>'
-                : '')
+          + '<table style="border-collapse:collapse;width:100%;">'
+            + _row4('Material',  a.material,
+                    'Coating',   a.coating)
+            + _row4('Size (in)', a.size_in,
+                    'Length (ft)', a.length_ft)
+            + _rowFull('Inlet Type',  a.in_type)
+            + _rowFull('Outlet Type', a.out_type)
+            + (a.notes ? _rowFull('Notes', a.notes) : '')
           + '</table>'
         + '</div>';
 
-      // Condition ratings card — three columns now: label, colored
-      // rating word (Excellent / Good / Fair / Poor / Failed), and
-      // free-text Comments/Notes the user types into the data form.
+      // Conditions card — three columns: label, colored rating word
+      // (Excellent / Good / Fair / Poor / Failed), and free-text
+      // Comments/Notes the user types into the data form. Same
+      // typography as the properties card so the two read as a set.
+      var _cLblS = 'padding:3px 12px 3px 0;color:var(--ink-3);font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap;vertical-align:top;';
+      var _cValS = 'padding:3px 12px 3px 0;color:var(--ink);font:400 11px var(--sans,system-ui);vertical-align:top;';
       function _condRow(label, condVal, notesVal) {
         return '<tr>'
-          + '<td style="padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;vertical-align:top;">'
-            + label + '</td>'
-          + '<td style="padding:4px 14px 4px 0;vertical-align:top;white-space:nowrap;">'
-            + _cvColoredCond(condVal) + '</td>'
-          + '<td style="padding:4px 0;color:#111;vertical-align:top;">'
+          + '<td style="' + _cLblS + '">' + label + '</td>'
+          + '<td style="' + _cValS + 'white-space:nowrap;">' + _cvColoredCond(condVal) + '</td>'
+          + '<td style="' + _cValS + '">'
             + (notesVal ? _esc(notesVal) : '<span style="color:#9ca3af">—</span>')
           + '</td>'
         + '</tr>';
@@ -34697,17 +34715,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + '<div class="sr-post-card">'
           // Title bar carries the column labels inline so the table
           // below stays as data rows only — no orphan header row.
-          // grid columns match the colgroup widths so the labels stay
-          // visually aligned with the data columns.
           + '<div class="sr-sub-hdr-row" style="display:grid;'
             + 'grid-template-columns:32% 18% 50%;align-items:baseline;gap:0;">'
-            + '<span>CONDITION RATINGS</span>'
+            + '<span>CULVERT CONDITIONS</span>'
             + '<span style="font:700 10px \'IBM Plex Mono\',monospace;'
               + 'letter-spacing:.5px;color:var(--ink-3);">RATING</span>'
             + '<span style="font:700 10px \'IBM Plex Mono\',monospace;'
               + 'letter-spacing:.5px;color:var(--ink-3);">COMMENTS / NOTES</span>'
           + '</div>'
-          + '<table style="border-collapse:collapse;font:13px sans-serif;width:100%;table-layout:fixed;">'
+          + '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">'
             + '<colgroup>'
               + '<col style="width:32%">'
               + '<col style="width:18%">'
