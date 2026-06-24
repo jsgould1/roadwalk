@@ -31876,6 +31876,54 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     return out;
   }
+  // Vocabulary helpers — duplicated here at module scope because the
+  // originals live inside renderSignsReport's per-sign closure. Keeping
+  // them inline ensures the KMZ balloon matches the printed report
+  // letter-for-letter.
+  var _KMZ_COND_COLOR = {
+    E: '#15803d', G: '#22c55e', F: '#ca8a04', P: '#b91c1c', X: '#ef4444'
+  };
+  function _kmzColoredCond(v) {
+    var spelled = _csvSpellCond(v);
+    if (!spelled) return '—';
+    var c = String(v).trim().toUpperCase().charAt(0);
+    var color = _KMZ_COND_COLOR[c];
+    if (!color) return _xmlEsc(String(spelled));
+    return '<span style="color:' + color + ';font-weight:700">' + _xmlEsc(String(spelled)) + '</span>';
+  }
+  var _KMZ_RETRO_ORDER  = { E: 1, G: 2, F: 3, P: 4, X: 5 };
+  var _KMZ_RETRO_TO_LTR = { 1: 'E', 2: 'G', 3: 'F', 4: 'P', 5: 'X' };
+  function _kmzWorstRetroLtr(r1, r2) {
+    var v1 = _KMZ_RETRO_ORDER[(r1 || '').toString().toUpperCase()] || 0;
+    var v2 = _KMZ_RETRO_ORDER[(r2 || '').toString().toUpperCase()] || 0;
+    var worst = Math.max(v1, v2);
+    return worst === 0 ? '' : _KMZ_RETRO_TO_LTR[worst];
+  }
+  var _KMZ_SHEETING = {
+    EG:      'Engineering Grade',
+    HIP:     'High Intensity',
+    DG3:     'Diamond Grade',
+    FYG:     'Fluorescent Yellow-Green',
+    FO:      'Fluorescent Orange',
+    OTHER:   'Other',
+    UNKNOWN: 'Unknown',
+  };
+  function _kmzSpellSheeting(v) {
+    if (v == null || v === '') return '';
+    var s = String(v).trim().toUpperCase();
+    return _KMZ_SHEETING[s] || v;
+  }
+  function _kmzMountLabel(v) {
+    if (v === 'angled_brackets') return 'Bracket';
+    return v || '';
+  }
+  function _kmzPanelTypeLabel(pn) {
+    var notes = ((pn.notes || '') + ' ' + (pn.retro_notes || '')).toLowerCase();
+    if (notes.indexOf('corrugat') !== -1) return 'Corrugated Aluminum';
+    return 'Aluminum';
+  }
+  var _KMZ_DIR_LABEL = { 0: '0° Front', 90: '90° Right', 180: '180° Back', 270: '270° Left' };
+
   function _srKmzDownload(filename, blob) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -31946,25 +31994,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
       pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
 
-      // For each pin: resize every photo (up to 12) into a thumb + a
-      // full-size JPEG. Both go into the KMZ's files/ folder; the
-      // balloon HTML uses the thumb as the visible img and the full as
-      // the <a href> target.
+      // For each pin: resize every photo (up to 12) into a single
+      // high-quality JPEG that lives in the KMZ's files/ folder. The
+      // previous build also stored a smaller thumb and wrapped it in
+      // an anchor pointing at the larger one, but Google Earth opens
+      // <a href> targets in the system browser, which can't resolve
+      // KMZ-internal relative paths, so the click was a no-op. The
+      // single high-res image now displays at 420 px in the balloon
+      // (downsampled from ~1400 px) — sharp enough for inspection
+      // without needing to click through.
       var pinBundles = pins.map(function (pin) {
         var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
         merged._secId = sec.id;
         var photos = _srPhotosForKml(merged).slice(0, 12);
         var photoPromises = photos.map(function (ph, idx) {
-          return Promise.all([
-            _srResizeJpegBytes(ph.src,  720, 0.7),   // thumb
-            _srResizeJpegBytes(ph.src, 1600, 0.78),  // full
-          ]).then(function (pair) {
-            return {
-              thumbBytes: pair[0],
-              fullBytes:  pair[1],
-              caption:    ph.caption,
-              idx:        idx,
-            };
+          return _srResizeJpegBytes(ph.src, 1400, 0.72).then(function (bytes) {
+            return { bytes: bytes, caption: ph.caption, idx: idx };
           });
         });
         return Promise.all(photoPromises).then(function (resized) {
@@ -32065,87 +32110,151 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       else if (a.mp_start != null) mpVal = +a.mp_start;
       if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
 
-      // Description joined from all panels — used as the leading
-      // bold line in the balloon body. The Placemark <name> already
-      // renders the pin id automatically, so we don't repeat it here.
+      // Description joined from all panels. The Placemark <name>
+      // renders the pin id automatically; this is the panel-text line.
       var descStr = panels.map(function (pn) {
         return ((pn && (pn.panel_description || pn.sign_code)) || '').trim();
       }).filter(Boolean).join(' / ') || '(no description)';
 
-      // Bigger fonts than the previous KML pass — 16 px for fact rows,
-      // 18 px for the description heading. Labels spelled out per
-      // user spec.
-      var lblStyle = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;';
-      var valStyle = 'padding:4px 0;color:#111;';
+      // ── Common cell + row helpers ────────────────────────────────
+      var lblStyle  = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;vertical-align:top;';
+      var valStyle  = 'padding:4px 14px 4px 0;color:#111;vertical-align:top;';
       function _row(lbl, val, bold) {
         return '<tr><td style="' + lblStyle + '">' + lbl + '</td>'
           + '<td style="' + valStyle + '">' + (bold ? '<b>' : '') + val + (bold ? '</b>' : '') + '</td></tr>';
       }
-      var html = '';
-      html += '<p style="margin:0 0 10px;font-family:sans-serif;font-size:18px;color:#111;"><b>' + _xmlEsc(descStr) + '</b></p>';
-      html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:16px;">';
-      html += _row('Overall Condition',           _xmlEsc(_csvSpellCond(ovCond)    || '—'), true);
-      html += _row('Retro Condition',             _xmlEsc(_csvSpellCond(retroCond) || '—'), true);
-      html += _row('Milepost',                    _xmlEsc(mpStr || '—'));
-      html += _row('Station',                     _xmlEsc(pin.sta || '—'));
-      html += _row('Side',                        _xmlEsc(a.side || '—'));
-      html += _row('Edge of Pavement Offset',     _xmlEsc(a.eop_offset != null ? (a.eop_offset + ' ft') : '—'));
-      html += _row('Latitude',                    _xmlEsc(lat.toFixed(6)));
-      html += _row('Longitude',                   _xmlEsc(lng.toFixed(6)));
-      html += _row('Number of Posts',             posts.length);
-      html += _row('Number of Panels',            panels.length);
-      html += '</table>';
-
-      // Per-panel summary table — full headers, bigger text.
-      if (panels.length) {
-        html += '<p style="margin:14px 0 6px;font-family:sans-serif;font-size:14px;font-weight:700;color:#333;letter-spacing:.5px;">PANELS</p>';
-        html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">';
-        html += '<tr style="color:#555;font-weight:600;">'
-          + '<td style="padding:3px 10px 3px 0;">#</td>'
-          + '<td style="padding:3px 10px 3px 0;">Sign Code</td>'
-          + '<td style="padding:3px 10px 3px 0;">Description</td>'
-          + '<td style="padding:3px 10px 3px 0;">Panel Condition</td>'
-          + '<td style="padding:3px 10px 3px 0;">Sheet Condition</td>'
+      // Two label/value pairs on a single row — used inside the per-
+      // post and per-panel cards so the balloon mirrors the report
+      // card's two-column field grid.
+      function _row4(l1, v1, l2, v2, opts) {
+        opts = opts || {};
+        var v1Html = (opts.raw1 ? v1 : _xmlEsc(v1 == null || v1 === '' ? '—' : v1));
+        var v2Html = (opts.raw2 ? v2 : _xmlEsc(v2 == null || v2 === '' ? '—' : v2));
+        return '<tr>'
+          + '<td style="' + lblStyle + '">' + l1 + '</td>'
+          + '<td style="' + valStyle + '">' + v1Html + '</td>'
+          + '<td style="' + lblStyle + '">' + (l2 || '') + '</td>'
+          + '<td style="' + valStyle + '">' + (l2 ? v2Html : '') + '</td>'
           + '</tr>';
-        panels.forEach(function (pn, i) {
-          if (!pn) return;
-          html += '<tr>'
-            + '<td style="padding:2px 10px 2px 0;">' + (i + 1) + '</td>'
-            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(pn.sign_code || '—') + '</td>'
-            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(pn.panel_description || '—') + '</td>'
-            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(_csvSpellCond(pn.panel_condition) || '—') + '</td>'
-            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(_csvSpellCond(pn.sheeting_condition) || '—') + '</td>'
-            + '</tr>';
-        });
-        html += '</table>';
+      }
+      function _rowFull(lbl, val) {
+        var vHtml = _xmlEsc(val == null || val === '' ? '—' : val);
+        return '<tr><td style="' + lblStyle + '">' + lbl + '</td>'
+          + '<td colspan="3" style="' + valStyle + '">' + vHtml + '</td></tr>';
+      }
+      function _sectionHdr(label) {
+        return '<p style="margin:18px 0 6px;font:700 14px sans-serif;color:#1d4ed8;letter-spacing:.5px;border-bottom:2px solid #1d4ed8;padding-bottom:3px;">'
+          + label + '</p>';
       }
 
-      // Photo thumbnails — write each pair (thumb, full) into the KMZ
-      // and reference them with a relative path. Clicking the thumb
-      // opens the full-size JPEG via the default viewer.
-      var realPhotos = bundle.photos.filter(function (ph) { return ph && ph.thumbBytes; });
+      // ── Balloon body ─────────────────────────────────────────────
+      var html = '';
+      // Description heading + identity facts
+      html += '<p style="margin:0 0 10px;font-family:sans-serif;font-size:18px;color:#111;"><b>' + _xmlEsc(descStr) + '</b></p>';
+      html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:16px;">';
+      html += _row('Overall Condition', _kmzColoredCond(ovCond),    true);
+      html += _row('Retro Condition',   _kmzColoredCond(retroCond), true);
+      html += _row('Milepost',          _xmlEsc(mpStr || '—'));
+      html += _row('Station',           _xmlEsc(pin.sta || '—'));
+      html += _row('Side',              _xmlEsc(a.side || '—'));
+      html += _row('Edge of Pavement Offset', _xmlEsc(a.eop_offset != null ? (a.eop_offset + ' ft') : '—'));
+      html += _row('Latitude',          _xmlEsc(lat.toFixed(6)));
+      html += _row('Longitude',         _xmlEsc(lng.toFixed(6)));
+      html += _row('Number of Posts',   posts.length);
+      html += _row('Number of Panels',  panels.length);
+      html += '</table>';
+
+      // ── POSTS section — one card per post, all fields ─────────────
+      if (posts.length) {
+        html += _sectionHdr('POSTS (' + posts.length + ')');
+        posts.forEach(function (po, i) {
+          if (!po) return;
+          var damage = Array.isArray(po.post_damage)
+            ? po.post_damage.join(' · ')
+            : (po.post_damage || '');
+          html += '<div style="border:1px solid #ddd;background:#fafafa;padding:8px 10px;margin-bottom:8px;">';
+          html += '<div style="font:700 13px sans-serif;letter-spacing:.4px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:6px;">POST ' + (i + 1) + '</div>';
+          html += '<table style="border-collapse:collapse;font:14px sans-serif;width:100%;">';
+          html += _row4('Type',        po.post_type,
+                        'Count',       po.post_count);
+          html += _row4('Height (ft)', po.post_height_ft,
+                        'Foundation',  po.post_foundation);
+          html += _row4('Finish',      po.post_finish,
+                        'Breakaway',   po.post_breakaway);
+          html += _row4('Condition',   _kmzColoredCond(po.post_condition),
+                        '', '',
+                        { raw1: true });
+          html += _rowFull('Damage', damage);
+          if (po.notes) html += _rowFull('Notes', po.notes);
+          html += '</table></div>';
+        });
+      }
+
+      // ── PANELS section — one card per panel, every field ──────────
+      if (panels.length) {
+        html += _sectionHdr('PANELS (' + panels.length + ')');
+        panels.forEach(function (pn, i) {
+          if (!pn) return;
+          var deg = +(pn.facing_degrees || 0);
+          var facingLbl = _KMZ_DIR_LABEL[deg]
+            || (pn.facing_degrees != null ? deg + '°' : '');
+          var hdr = 'PANEL ' + (i + 1);
+          if (facingLbl)         hdr += ' · ' + facingLbl;
+          if (pn.sign_code)      hdr += ' · ' + pn.sign_code;
+          if (pn.panel_description && pn.sign_code) hdr += ' (' + pn.panel_description + ')';
+          else if (pn.panel_description)            hdr += ' · ' + pn.panel_description;
+          var dmg = Array.isArray(pn.damage_flags)
+            ? pn.damage_flags.join(' · ')
+            : (pn.damage_flags || '');
+          var retroDayLtr   = _kmzWorstRetroLtr(pn.retro_day_r1,   pn.retro_day_r2);
+          var retroNightLtr = _kmzWorstRetroLtr(pn.retro_night_r1, pn.retro_night_r2);
+
+          html += '<div style="border:1px solid #ddd;background:#fafafa;padding:8px 10px;margin-bottom:8px;">';
+          html += '<div style="font:700 13px sans-serif;letter-spacing:.4px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:6px;">' + _xmlEsc(hdr) + '</div>';
+          html += '<table style="border-collapse:collapse;font:14px sans-serif;width:100%;">';
+          html += _row4('Sign Code',        pn.sign_code,
+                        'Sheeting Type',   _kmzSpellSheeting(pn.sheeting_type));
+          html += _row4('Panel Condition',  _kmzColoredCond(pn.panel_condition),
+                        'Sheet Condition', _kmzColoredCond(pn.sheeting_condition),
+                        { raw1: true, raw2: true });
+          html += _row4('Retro Day',        _kmzColoredCond(retroDayLtr),
+                        'Retro Night',     _kmzColoredCond(retroNightLtr),
+                        { raw1: true, raw2: true });
+          html += _row4('Damage',           dmg,
+                        'Panel Size',      pn.panel_size);
+          html += _row4('Mounting',         _kmzMountLabel(pn.mounting_hardware),
+                        'Panel Type',      _kmzPanelTypeLabel(pn));
+          html += _row4('Back Panel',       pn.back_panel,
+                        'Install Date',    pn.panel_install_date);
+          html += _rowFull('Description', pn.panel_description);
+          if (pn.retro_notes) html += _rowFull('Retro Notes', pn.retro_notes);
+          if (pn.notes)       html += _rowFull('Notes',       pn.notes);
+          html += '</table></div>';
+        });
+      }
+
+      // ── PHOTOS section — single high-quality JPEG per photo,
+      // displayed at 420 px in a 2-column grid. Drops the previous
+      // dual thumb/full pair + click-to-zoom because Google Earth
+      // can't resolve KMZ-relative <a href> targets reliably.
+      var realPhotos = bundle.photos.filter(function (ph) { return ph && ph.bytes; });
       if (realPhotos.length) {
-        html += '<p style="margin:14px 0 6px;font-family:sans-serif;font-size:14px;font-weight:700;color:#333;letter-spacing:.5px;">PHOTOS (' + realPhotos.length + ')</p>';
+        html += _sectionHdr('PHOTOS (' + realPhotos.length + ')');
         html += '<table style="border-collapse:collapse;">';
         for (var i = 0; i < realPhotos.length; i += 2) {
           html += '<tr>';
           for (var j = 0; j < 2; j++) {
             var ph = realPhotos[i + j];
             if (!ph) { html += '<td></td>'; continue; }
-            var thumbPath = 'files/' + pinIdSafe + '_' + ph.idx + '.jpg';
-            var fullPath  = 'files/' + pinIdSafe + '_' + ph.idx + '_full.jpg';
-            files.push({ name: thumbPath, data: ph.thumbBytes });
-            if (ph.fullBytes) files.push({ name: fullPath, data: ph.fullBytes });
+            var path = 'files/' + pinIdSafe + '_' + ph.idx + '.jpg';
+            files.push({ name: path, data: ph.bytes });
             html += '<td style="padding:6px;vertical-align:top;">'
-              + '<a href="' + fullPath + '" target="_blank">'
-                + '<img src="' + thumbPath + '" style="width:340px;height:auto;display:block;border:1px solid #999;">'
-              + '</a>'
+              + '<img src="' + path + '" style="width:420px;height:auto;display:block;border:1px solid #999;">'
               + '</td>';
           }
           html += '</tr>';
         }
         html += '</table>';
-        html += '<p style="margin:6px 0 0;font-family:sans-serif;font-size:11px;color:#888;">Click a thumbnail to open the full-size image.</p>';
       }
 
       // ExtendedData for analytics tools that read KML / KMZ fields.
