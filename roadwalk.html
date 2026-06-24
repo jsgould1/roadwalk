@@ -4744,11 +4744,9 @@ body.rw-sld-photo-dragging .strip-pin {
   font: 700 12px var(--sans, system-ui); color: var(--ink);
   margin-left: 4px;
 }
-/* Overall Condition is its own row right below Pin ID / Description.
-   Drops the upper rule (the Pin ID row already carries one) and uses
-   a single column since it's only one labeled value. */
+/* Overall + Retro Condition share a row right below Pin ID / Description.
+   Inherits the two-column grid from .sr-info-row-name. */
 .sr-info-row-overall {
-  grid-template-columns: auto;
   border-bottom: 1px solid var(--rule);
 }
 .sr-info-row-loc {
@@ -31536,6 +31534,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var _ovCond = (typeof _worstCondition === 'function')
         ? _worstCondition(_ovCondCodes)
         : null;
+      // Retro condition — worst of day R1/R2 and night R1/R2 across
+      // every panel. Same E/G/F/P/X scale as the regular condition.
+      var _retroCodes = [];
+      (Array.isArray(a.panels) ? a.panels : []).forEach(function (pn) {
+        if (!pn) return;
+        _retroCodes.push(pn.retro_day_r1, pn.retro_day_r2,
+                         pn.retro_night_r1, pn.retro_night_r2);
+      });
+      var _retroCond = (typeof _worstCondition === 'function')
+        ? _worstCondition(_retroCodes)
+        : null;
       // Condition / retro lookup tables — declared up here (above
       // idBlock) so the very first _coloredCond(_ovCond) call below
       // can read _COND_SPELLED and _SR_COND_COLOR. They were
@@ -31568,12 +31577,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               + '<span class="sr-info-name-val">' + _esc(panelDescStr || '—') + '</span>'
             + '</div>' +
           '</div>' +
-          // Row 1.5: OVERALL CONDITION — worst of every post / panel /
-          // sheet condition on this pin, spelled and color-coded.
+          // Row 1.5: OVERALL CONDITION + RETRO CONDITION. Overall is
+          // the worst of every post / panel / sheet condition; Retro
+          // is the worst of every panel's day + night R1/R2.
           '<div class="sr-info-row-name sr-info-row-overall">' +
             '<div>'
               + '<span class="sr-info-name-lbl">Overall Condition:</span>'
               + '<span class="sr-info-name-val">' + _coloredCond(_ovCond) + '</span>'
+            + '</div>' +
+            '<div>'
+              + '<span class="sr-info-name-lbl">Retro Condition:</span>'
+              + '<span class="sr-info-name-val">' + _coloredCond(_retroCond) + '</span>'
             + '</div>' +
           '</div>' +
           // Row 2 (11 px): MP · STA · Side · Offset · Lat/Lng, all on
