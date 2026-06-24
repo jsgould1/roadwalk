@@ -36129,18 +36129,94 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       window._RW.lazyPhotos.observe(list);
     }
 
+    // ── Surgical photo update — used by Auto-add and Select Nearby ──
+    // Rather than re-rendering 195 culvert cards after a link change
+    // (which OOM'd the tab even with lazy photos), we just rewrite
+    // the one culvert's photos section in place. Re-walks
+    // _photosForCulvert for fresh links, updates the count badge,
+    // swaps the photo grid HTML, and re-registers lazy observers +
+    // blob hydration on the new <img> elements. Scroll position is
+    // preserved because we never touch any other card.
+    function _cvSurgicalPhotoUpdate(cardEl, r, idx) {
+      if (!cardEl || !r || !r.pin || !r.sec) return false;
+      var visiblePhotos = _photosForCulvert(r.pin, r.sec);
+      // Find the photos section by its "Photos (N)" header text.
+      var photoSec = null;
+      cardEl.querySelectorAll('.sr-section').forEach(function (s) {
+        var hdr = s.querySelector('.sr-sec-hdr');
+        if (!hdr) return;
+        var tn = hdr.firstChild;
+        if (tn && tn.nodeType === 3 && /^Photos\s*\(/.test(tn.nodeValue)) {
+          photoSec = s;
+        }
+      });
+      if (!photoSec) return false;
+      // Update the count text in place (without disturbing the
+      // button group span that follows the text node).
+      var hdr = photoSec.querySelector('.sr-sec-hdr');
+      if (hdr && hdr.firstChild && hdr.firstChild.nodeType === 3) {
+        hdr.firstChild.nodeValue = 'Photos (' + visiblePhotos.length + ')';
+      }
+      // Replace the photo grid (or empty placeholder).
+      var oldGrid = photoSec.querySelector('.sr-photo-grid, .sr-tbl-empty');
+      if (!oldGrid) return false;
+      var chunk = visiblePhotos.slice(0, PHOTOS_PAGE_1);
+      var html;
+      if (!chunk.length) {
+        html = '<div class="sr-tbl-empty">No photos linked yet.</div>';
+      } else {
+        html = '<div class="sr-photo-grid">' + chunk.map(function (e) {
+          var cap = e.caption ? '<figcaption>' + _esc(e.caption) + '</figcaption>' : '';
+          var acts = '';
+          if (e._emb_idx != null) {
+            acts += '<button type="button" class="sr-photo-act sr-photo-ann" '
+                  + 'data-cv-idx="' + idx + '" data-emb-idx="' + e._emb_idx + '" '
+                  + 'title="Annotate">&#9998;</button>';
+          }
+          acts += '<button type="button" class="sr-photo-act sr-photo-hide" '
+                + 'data-cv-idx="' + idx + '" data-hide-key="' + _esc(e._hide_key) + '" '
+                + 'title="Hide from printed report (photo is kept)">&times;</button>';
+          var imgTag = (e._cv_photo_id != null)
+            ? '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">'
+            : '<img data-src="' + e.src + '" alt="" loading="lazy">';
+          return '<figure class="sr-photo">' + imgTag
+               + '<div class="sr-photo-actions">' + acts + '</div>'
+               + cap + '</figure>';
+        }).join('') + '</div>';
+      }
+      var tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      oldGrid.parentNode.replaceChild(tmp.firstChild, oldGrid);
+      // Re-wire observers for the just-mounted <img> elements.
+      if (window._RW && window._RW.lazyPhotos) {
+        window._RW.lazyPhotos.observe(photoSec);
+      }
+      _cvHydrateBlobImgs(photoSec);
+      // Visual confirmation flash — yellow fade.
+      if (photoSec.animate) {
+        try {
+          photoSec.animate(
+            [{ background: '#fef3c7' }, { background: 'transparent' }],
+            { duration: 900, easing: 'ease-out' }
+          );
+        } catch (_) {}
+      }
+      return true;
+    }
+
     // ── Auto-add-nearby button ──
-    // No persistSections call: _cvAutoAddNearbyPhotos only mutates
-    // geophoto records (linked_pin_id) and saves them through the
-    // geophotos API. SECTIONS isn't touched, so re-serialising the
-    // whole bundle here would be pointless work AND a structured-
-    // clone OOM risk on photo-heavy projects.
+    // Surgical photo update (no full re-render) — _cvAutoAddNearbyPhotos
+    // only mutates geophoto records' linked_pin_id and saves them
+    // through the geophotos API. SECTIONS isn't touched and the only
+    // visible delta is this culvert's photo grid.
     list.querySelectorAll('.cv-auto-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var r = all[+btn.dataset.cvIdx];
         if (!r) return;
+        var cardEl = btn.closest('.sr-card');
+        var idx = +btn.dataset.cvIdx;
         var added = _cvAutoAddNearbyPhotos(r.pin, r.sec.id, 15);
-        renderCulvertsReport();
+        _cvSurgicalPhotoUpdate(cardEl, r, idx);
         if (added === 0) {
           alert('No new geophotos within 15 ft of this culvert.');
         } else {
@@ -36155,6 +36231,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       btn.addEventListener('click', function () {
         var r = all[+btn.dataset.cvIdx];
         if (!r) return;
+        var cardEl = btn.closest('.sr-card');
+        var idx = +btn.dataset.cvIdx;
         if (!(window._RW && typeof window._RW.openNearbyPhotoPicker === 'function')) {
           alert('Nearby photo picker not available.');
           return;
@@ -36164,19 +36242,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           secId: r.sec.id,
           maxFt: 150,
           title: 'Nearby field photos — ' + r.pin.id,
-          // Defer the report re-render so:
-          //   (1) the picker modal's DOM tears down + GC can reclaim
-          //       all its tile <img> dataUrl strings BEFORE we start
-          //       allocating a fresh 195-card report
-          //   (2) saveMany's chunked structured-clones finish writing
-          //       to IDB so we don't have two memory spikes stacked
-          // Without this defer the synchronous renderCulvertsReport()
-          // landed on top of the picker DOM + the in-flight saveMany,
-          // which is what was tipping the Edge tab budget on Apply.
+          // Surgical update only — DON'T rebuild all 195 cards. Even
+          // with lazy photos the full re-render was OOM-ing on Apply
+          // because the DOM allocation for 195 cards × their SVGs +
+          // condition rows + inset map placeholders + photo grids
+          // happens on top of the just-finished saveMany. The
+          // surgical update only touches this culvert's photo grid +
+          // count, preserving scroll position and keeping peak memory
+          // flat. Scroll-to-card not needed because the user clicked
+          // a button on this card — it's already in view.
           onPick: function () {
-            setTimeout(function () {
-              try { renderCulvertsReport(); } catch (_) {}
-            }, 400);
+            _cvSurgicalPhotoUpdate(cardEl, r, idx);
           },
         });
       });
