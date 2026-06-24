@@ -4744,6 +4744,13 @@ body.rw-sld-photo-dragging .strip-pin {
   font: 700 12px var(--sans, system-ui); color: var(--ink);
   margin-left: 4px;
 }
+/* Overall Condition is its own row right below Pin ID / Description.
+   Drops the upper rule (the Pin ID row already carries one) and uses
+   a single column since it's only one labeled value. */
+.sr-info-row-overall {
+  grid-template-columns: auto;
+  border-bottom: 1px solid var(--rule);
+}
 .sr-info-row-loc {
   display: flex; flex-wrap: nowrap;
   justify-content: space-between;
@@ -31510,15 +31517,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Row 2: STA · MP · Lat/Lng
       // Row 3: Side · EOP Offset
       var signIdStr  = (sec.id ? sec.id + '-' : '') + (pin.id || '');
-      var firstPanel = panelsSorted[0] && panelsSorted[0].pn || {};
-      var panelDescStr = firstPanel.panel_description
-        || firstPanel.sign_code
-        || '';
+      // Join every panel's description (or sign_code as fallback) with
+      // ' / ' so a sign with two panels reads "NO U-TURN / KEEP RIGHT".
+      var panelDescStr = panelsSorted.map(function (e) {
+        return (e.pn.panel_description || e.pn.sign_code || '').trim();
+      }).filter(Boolean).join(' / ');
       var mpStr = mpDisplay
         || (a.mp_start != null ? (+a.mp_start).toFixed(4) : '');
+      // Compute the worst condition across every post + panel + sheet
+      // condition on this pin. Falls back to whichever code is present.
+      var _ovCondCodes = [];
+      (Array.isArray(a.posts) ? a.posts : []).forEach(function (po) {
+        if (po) _ovCondCodes.push(po.post_condition);
+      });
+      (Array.isArray(a.panels) ? a.panels : []).forEach(function (pn) {
+        if (pn) { _ovCondCodes.push(pn.panel_condition); _ovCondCodes.push(pn.sheeting_condition); }
+      });
+      var _ovCond = (typeof _worstCondition === 'function')
+        ? _worstCondition(_ovCondCodes)
+        : null;
       var idBlock =
         '<div class="sr-info-block">' +
-          // Row 1 (12 px): Pin ID + first panel description, both as
+          // Row 1 (12 px): Pin ID + every panel description, both as
           // inline labeled values.
           '<div class="sr-info-row-name">' +
             '<div>'
@@ -31528,6 +31548,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '<div>'
               + '<span class="sr-info-name-lbl">Description:</span>'
               + '<span class="sr-info-name-val">' + _esc(panelDescStr || '—') + '</span>'
+            + '</div>' +
+          '</div>' +
+          // Row 1.5: OVERALL CONDITION — worst of every post / panel /
+          // sheet condition on this pin, spelled and color-coded.
+          '<div class="sr-info-row-name sr-info-row-overall">' +
+            '<div>'
+              + '<span class="sr-info-name-lbl">Overall Condition:</span>'
+              + '<span class="sr-info-name-val">' + _coloredCond(_ovCond) + '</span>'
             + '</div>' +
           '</div>' +
           // Row 2 (11 px): MP · STA · Side · Offset · Lat/Lng, all on
@@ -31551,10 +31579,50 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         else display = String(val);
         var cls    = 'sr-fld' + (opts.full ? ' sr-fld-full' : '');
         var valCls = 'sr-fval' + (opts.wrap ? ' sr-fval-wrap' : '');
+        // opts.raw = pass val through as already-built HTML (used for
+        // the colored condition / retro spans).
+        var valHtml = opts.raw ? display : _esc(display);
         return '<div class="' + cls + '">'
           + '<span class="sr-flbl">' + _esc(label) + '</span>'
-          + '<span class="' + valCls + '">' + _esc(display) + '</span>'
+          + '<span class="' + valCls + '">' + valHtml + '</span>'
           + '</div>';
+      }
+
+      // Condition palette for the printed report. Distinct from the
+      // form's _condColorFor — that one collapses E and G into the
+      // same green; this one keeps them separate per user spec.
+      var _SR_COND_COLOR = {
+        E: '#15803d', // Excellent — dark green
+        G: '#22c55e', // Good — green
+        F: '#ca8a04', // Fair — mustard yellow (readable on white)
+        P: '#b91c1c', // Poor — red
+        X: '#111111', // Failed — black
+      };
+      function _condTextColor(code) {
+        if (!code) return null;
+        var s = String(code).trim().toUpperCase().charAt(0);
+        return _SR_COND_COLOR[s] || null;
+      }
+      // Render a condition letter as a spelled, colored, bolded span.
+      // Returns '—' when blank so the caller can stuff it straight
+      // into a _field({ raw: true }) cell.
+      function _coloredCond(code) {
+        if (!code) return '—';
+        var spelled = _spellCondition(code);
+        var color = _condTextColor(code);
+        if (!color) return _esc(String(spelled));
+        return '<span style="color:' + color + ';font-weight:700">'
+             + _esc(String(spelled))
+             + '</span>';
+      }
+      // Worst-of-two retro reader that returns the LETTER (E/G/F/P/X)
+      // instead of the spelled word. Lets the caller color the
+      // output via _coloredCond.
+      function _worstRetroLtr(r1, r2) {
+        var v1 = _RETRO_ORDER[(r1 || '').toString().toUpperCase()] || 0;
+        var v2 = _RETRO_ORDER[(r2 || '').toString().toUpperCase()] || 0;
+        var worst = Math.max(v1, v2);
+        return worst === 0 ? null : _RETRO_TO_LTR[worst];
       }
 
       // Per-post card — matches the post_* fields in the export spec.
@@ -31575,7 +31643,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             _field('Foundation', po.post_foundation) +
             _field('Finish',     po.post_finish) +
             _field('Breakaway',  po.post_breakaway) +
-            _field('Condition',  _spellCondition(po.post_condition)) +
+            _field('Condition',  _coloredCond(po.post_condition), { raw: true }) +
             _field('Damage', damage, { full: true, wrap: true }) +
             (po.notes ? _field('Notes', po.notes, { full: true, wrap: true }) : '') +
           '</div>' +
@@ -31655,9 +31723,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           : pn.damage_flags;
         var hdr = 'PANEL ' + (displayIdx + 1);
         if (facingLbl) hdr += ' · ' + facingLbl;
-        if (pn.sign_code) hdr += ' · ' + pn.sign_code;
-        var retroDayLbl   = _worstRetro(pn.retro_day_r1,   pn.retro_day_r2);
-        var retroNightLbl = _worstRetro(pn.retro_night_r1, pn.retro_night_r2);
+        if (pn.sign_code) {
+          hdr += ' · ' + pn.sign_code;
+          // Append the panel description in parens after the sign
+          // code (e.g. "R3-4 (NO U-TURN)") so the reader doesn't
+          // have to drop down to the Description row to know what
+          // the panel says.
+          if (pn.panel_description) hdr += ' (' + pn.panel_description + ')';
+        } else if (pn.panel_description) {
+          hdr += ' · ' + pn.panel_description;
+        }
+        var retroDayLtr   = _worstRetroLtr(pn.retro_day_r1,   pn.retro_day_r2);
+        var retroNightLtr = _worstRetroLtr(pn.retro_night_r1, pn.retro_night_r2);
         // Per-panel delete button — small red X in the sub-header.
         // Keyed by ULID so the splice survives any re-render that
         // shuffles index positions.
@@ -31691,13 +31768,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             _field('Sheeting Type',   _spellSheeting(pn.sheeting_type)) +
             // Row 2 — description moved up; sheet condition follows
             _field('Description', pn.panel_description, { wrap: true }) +
-            _field('Sheet Condition', _spellCondition(pn.sheeting_condition)) +
+            _field('Sheet Condition', _coloredCond(pn.sheeting_condition), { raw: true }) +
             // Row 3 — primary condition assessments
-            _field('Panel Condition', _spellCondition(pn.panel_condition)) +
-            _field('Retro Day',       retroDayLbl) +
+            _field('Panel Condition', _coloredCond(pn.panel_condition), { raw: true }) +
+            _field('Retro Day',       _coloredCond(retroDayLtr),         { raw: true }) +
             // Row 4 — damage + nighttime retro
             _field('Damage', dmg, { wrap: true }) +
-            _field('Retro Night',     retroNightLbl) +
+            _field('Retro Night',     _coloredCond(retroNightLtr),       { raw: true }) +
             // Row 5 — physical dimensions / hardware
             _field('Panel Size',      pn.panel_size) +
             _field('Mounting',        _mountLabel(pn.mounting_hardware)) +
