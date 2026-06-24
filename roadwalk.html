@@ -13892,47 +13892,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   window._RW = window._RW || {};
   window._RW.toAltSta   = _toAltSta;
   window._RW.fromAltSta = _fromAltSta;
-
-  // ── Section management ─────────────────────────────────────────
-  // Lets the culvert report's "Manage sections…" modal list and
-  // delete sections that don't belong in the project (e.g. stray
-  // sections dragged in from another job). list() returns a thin
-  // {id, name, pinCount} so the modal doesn't have to clone full
-  // section records. deleteById() drops the section from both
-  // SECTIONS (in memory) and BUNDLE.sections (the persisted source
-  // of truth), writes the updated bundle back to IDB, and triggers
-  // a dashboard re-render so list views drop the deleted entry
-  // immediately. Returns true if a section was removed, false if
-  // the id wasn't found.
-  window._RW.sections = {
-    list: function () {
-      return (SECTIONS || []).map(function (s) {
-        return {
-          id:        s && s.id,
-          name:      (s && s.name) || '',
-          pinCount:  (s && Array.isArray(s.pins)) ? s.pins.length : 0,
-          mpStart:   (s && typeof s.mpStart === 'number') ? s.mpStart : null,
-          mpEnd:     (s && typeof s.mpEnd   === 'number') ? s.mpEnd   : null,
-        };
-      });
-    },
-    deleteById: function (id) {
-      if (!id) return Promise.resolve(false);
-      var idx = SECTIONS.findIndex(function (s) { return s && s.id === id; });
-      if (idx < 0) return Promise.resolve(false);
-      SECTIONS.splice(idx, 1);
-      if (BUNDLE && Array.isArray(BUNDLE.sections)) {
-        BUNDLE.sections = BUNDLE.sections.filter(function (s) { return s && s.id !== id; });
-      }
-      var save = BUNDLE ? _saveProjectToDB(BUNDLE) : Promise.resolve();
-      return save.then(function () {
-        if (typeof window.renderDashboard === 'function') {
-          try { window.renderDashboard('all'); } catch (_) {}
-        }
-        return true;
-      }, function () { return true; });          // keep in-memory removal even if persist fails
-    },
-  };
   // Determine which side of the alignment a point sits on (L = left of
   // direction of travel, R = right, on = within ~5ft of centerline).
   function sideOfAlignment(cursorLL, coords) {
@@ -15073,6 +15032,48 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       console.log('[RW.toggleLayer] kind=', kind, 'visible=', visible,
                   'layersVis in LS=', (_tlLsFn ? _tlLsFn().layersVis : 'N/A'));
       if (typeof this.rerender === 'function') this.rerender();
+    },
+  };
+
+  // ── Section management ─────────────────────────────────────────
+  // Placed AFTER the window._RW = {...} hard-reset above so it
+  // doesn't get clobbered. Lets the culvert report's "Manage
+  // sections…" modal list and delete sections that don't belong in
+  // the project (e.g. stray sections dragged in from another job).
+  // list() returns a thin {id, name, pinCount, mpStart, mpEnd} per
+  // section so the modal doesn't have to clone full section records.
+  // deleteById() drops the section from both SECTIONS (in memory)
+  // and BUNDLE.sections (the persisted source of truth), writes the
+  // updated bundle back to IDB, and triggers a dashboard re-render
+  // so list views drop the deleted entry immediately. Returns true
+  // if a section was removed, false if the id wasn't found.
+  window._RW.sections = {
+    list: function () {
+      return (SECTIONS || []).map(function (s) {
+        return {
+          id:        s && s.id,
+          name:      (s && s.name) || '',
+          pinCount:  (s && Array.isArray(s.pins)) ? s.pins.length : 0,
+          mpStart:   (s && typeof s.mpStart === 'number') ? s.mpStart : null,
+          mpEnd:     (s && typeof s.mpEnd   === 'number') ? s.mpEnd   : null,
+        };
+      });
+    },
+    deleteById: function (id) {
+      if (!id) return Promise.resolve(false);
+      var idx = SECTIONS.findIndex(function (s) { return s && s.id === id; });
+      if (idx < 0) return Promise.resolve(false);
+      SECTIONS.splice(idx, 1);
+      if (BUNDLE && Array.isArray(BUNDLE.sections)) {
+        BUNDLE.sections = BUNDLE.sections.filter(function (s) { return s && s.id !== id; });
+      }
+      var save = BUNDLE ? _saveProjectToDB(BUNDLE) : Promise.resolve();
+      return save.then(function () {
+        if (typeof window.renderDashboard === 'function') {
+          try { window.renderDashboard('all'); } catch (_) {}
+        }
+        return true;
+      }, function () { return true; });          // keep in-memory removal even if persist fails
     },
   };
 
