@@ -34524,16 +34524,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
       boxZoom: false, keyboard: false, touchZoom: false, tap: false,
     });
-    // Nearmap aerial — Section A is fully covered, so the inset
-    // shows the actual roadbed instead of the cartoon street map.
-    // offlineTileLayer falls back to live tiles if no prebake is
-    // cached; the layer-name arg keys any prebake the user has loaded.
-    var nearmapKey = 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5';
+    // ESRI World Street Map — same layer the sign report inset uses.
+    // Lighter to load than the Nearmap aerial (single HTTP path, no
+    // API key auth, smaller PNG tiles) and the user prefers the
+    // consistent look across reports. offlineTileLayer falls back to
+    // live tiles if no prebake is cached.
     var tileFn = window.offlineTileLayer || L.tileLayer;
     tileFn(
-      'https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.jpg?apikey=' + nearmapKey,
-      { maxZoom: 24, attribution: '© Nearmap' },
-      'nearmap'
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19 },
+      'esri_street'
     ).addTo(map);
     // The culvert line + endpoint pips. Blue per spec to read as the
     // drainage feature rather than the road centerline.
