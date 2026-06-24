@@ -39236,19 +39236,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _selectRow('Downstream headwall', 'hw_downstream', a.hw_downstream || 'None / Natural', _o(hwTypes), true) +
         _otherRow('Downstream headwall', 'hw_downstream_other', a.hw_downstream, a.hw_downstream_other) +
         _sectionHdr('UPSTREAM HEADWALL / WINGWALL DIMENSIONS') +
-        _inputRow('HW height (ft)',      'hw_us_height',      a.hw_us_height,      'number') +
-        _inputRow('HW width (ft)',       'hw_us_width',       a.hw_us_width,       'number') +
-        _inputRow('HW thickness (in)',   'hw_us_thickness',   a.hw_us_thickness,   'number') +
-        _inputRow('HW skew (°)',         'hw_us_skew',        a.hw_us_skew,        'number') +
+        _inputRow('Headwall height (ft)',    'hw_us_height',    a.hw_us_height,    'number') +
+        _inputRow('Headwall width (ft)',     'hw_us_width',     a.hw_us_width,     'number') +
+        _inputRow('Headwall thickness (in)', 'hw_us_thickness', a.hw_us_thickness, 'number') +
+        _inputRow('Headwall skew (°)',       'hw_us_skew',      a.hw_us_skew,      'number') +
         _inputRow('Wingwall L (ft)',     'hw_us_wing_left',   a.hw_us_wing_left,   'number') +
         _inputRow('Wingwall R (ft)',     'hw_us_wing_right',  a.hw_us_wing_right,  'number') +
         _inputRow('Wingwall angle (°)',  'hw_us_wing_angle',  a.hw_us_wing_angle,  'number') +
         _inputRow('Wingwall height (ft)','hw_us_wing_height', a.hw_us_wing_height, 'number') +
         _sectionHdr('DOWNSTREAM HEADWALL / WINGWALL DIMENSIONS') +
-        _inputRow('HW height (ft)',      'hw_ds_height',      a.hw_ds_height,      'number') +
-        _inputRow('HW width (ft)',       'hw_ds_width',       a.hw_ds_width,       'number') +
-        _inputRow('HW thickness (in)',   'hw_ds_thickness',   a.hw_ds_thickness,   'number') +
-        _inputRow('HW skew (°)',         'hw_ds_skew',        a.hw_ds_skew,        'number') +
+        _inputRow('Headwall height (ft)',    'hw_ds_height',    a.hw_ds_height,    'number') +
+        _inputRow('Headwall width (ft)',     'hw_ds_width',     a.hw_ds_width,     'number') +
+        _inputRow('Headwall thickness (in)', 'hw_ds_thickness', a.hw_ds_thickness, 'number') +
+        _inputRow('Headwall skew (°)',       'hw_ds_skew',      a.hw_ds_skew,      'number') +
         _inputRow('Wingwall L (ft)',     'hw_ds_wing_left',   a.hw_ds_wing_left,   'number') +
         _inputRow('Wingwall R (ft)',     'hw_ds_wing_right',  a.hw_ds_wing_right,  'number') +
         _inputRow('Wingwall angle (°)',  'hw_ds_wing_angle',  a.hw_ds_wing_angle,  'number') +
@@ -39269,9 +39269,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _selectRow('Outlet condition',    'outlet_condition',    a.outlet_condition    || '2 – Good', _o(_CULV_COND)) +
         _inputRow ('Outlet notes',        'outlet_condition_notes',  a.outlet_condition_notes,  'text') +
         _selectRow('Upstream headwall',   'hw_upstream_cond',    a.hw_upstream_cond    || '2 – Good', _o(_CULV_COND)) +
-        _inputRow ('Upstream HW notes',   'hw_upstream_cond_notes',  a.hw_upstream_cond_notes,  'text') +
+        _inputRow ('Upstream Headwall notes',   'hw_upstream_cond_notes',  a.hw_upstream_cond_notes,  'text') +
         _selectRow('Downstream headwall', 'hw_downstream_cond',  a.hw_downstream_cond  || '2 – Good', _o(_CULV_COND)) +
-        _inputRow ('Downstream HW notes', 'hw_downstream_cond_notes',a.hw_downstream_cond_notes,'text') +
+        _inputRow ('Downstream Headwall notes', 'hw_downstream_cond_notes',a.hw_downstream_cond_notes,'text') +
         _sectionHdr('INLET — OBSERVED ISSUES')  + _culvObsGrid(a, 'inlet') +
         _sectionHdr('OUTLET — OBSERVED ISSUES') + _culvObsGrid(a, 'outlet') +
         _sectionHdr('BARREL — OBSERVED ISSUES') + _culvObsGrid(a, 'barrel');
