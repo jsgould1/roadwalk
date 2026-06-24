@@ -7151,6 +7151,18 @@ input.fs-slider::-webkit-slider-thumb {
   margin: 0 12px;
   flex-shrink: 0;
 }
+#app-nav .program-name .sw-ver-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  font: 600 9px 'IBM Plex Mono', monospace;
+  letter-spacing: .5px;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border-radius: 3px;
+  vertical-align: middle;
+  opacity: 0.8;
+}
 #app-nav .program-name {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 16px;
@@ -12442,6 +12454,37 @@ body.mobile-mode #app {
 
 <script>
 console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight:bold;font-size:14px');
+
+/* Fetch the service worker's CACHE_VERSION and reflect it in the page
+   title + the nav-bar program-name chip so the user can tell at a
+   glance whether their cached app matches the latest deploy. Self-
+   syncing — every SW bump shows up automatically, no second constant
+   to maintain. Cache-busted so a stale HTTP cache cannot mask a fresh
+   deploy. Offline: leaves the title alone. */
+(function () {
+  fetch('./sw.js?cb=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (txt) {
+      var m = txt.match(/CACHE_VERSION\s*=\s*['"]roadwalk-([^'"]+)['"]/);
+      if (!m) return;
+      var swVer = m[1];
+      // Strip any prior " (SW vN)" before re-appending so a hot reload
+      // doesn't stack chips.
+      document.title = document.title.replace(/\s*\(SW [^)]+\)\s*$/, '')
+                     + ' (SW ' + swVer + ')';
+      var brand = document.querySelector('#app-nav .program-name');
+      if (brand) {
+        var existing = brand.querySelector('.sw-ver-chip');
+        if (existing) existing.remove();
+        var chip = document.createElement('span');
+        chip.className = 'sw-ver-chip';
+        chip.textContent = swVer;
+        chip.title = 'Service worker cache version (current build)';
+        brand.appendChild(chip);
+      }
+    })
+    .catch(function () { /* offline — leave title alone */ });
+})();
 /* ============================================================
    Roadwalk · prototype JS · v0.1
    In-memory mock data for first stab.
