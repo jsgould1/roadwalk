@@ -31708,6 +31708,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     H: { route: 'NB Gatlinburg Bypass Ramp to Gatlinburg Spur Road (Northbound)',  route_id: 'GRSM-0012AZ', fmss: 57674,  mp_start: 0,      mp_end: 0.21  },
     I: { route: 'NB Gatlinburg Bypass Ramp to Gatlinburg Spur Road (Southbound)',  route_id: 'GRSM-0012BZ', fmss: 57674,  mp_start: 0,      mp_end: 0.08  },
   };
+  // Mirror to window so the culvert report (different IIFE scope) reads
+  // the same route / route_id / FMSS / MP table the sign report uses,
+  // giving culvert cards the identical "{secId} · {route}" sub-line and
+  // "{route_id} · FMSS {fmss} · MP {start} – {end}" meta-line. Without
+  // this assignment the culvert report saw window._SR_SECTION_INFO ===
+  // undefined and fell back to sec.id · sec.name.
+  window._SR_SECTION_INFO = _SR_SECTION_INFO;
 
   // Project numbers strip — sits in the footer middle of every printed
   // sign card. One static string for the whole project; bump here when
