@@ -33931,14 +33931,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // Pure SVG so it renders the same on screen and in print. Reads the
   // pin attrs.in_type / out_type strings via keyword matching:
   //   "headwall"                 → filled rectangle (mass)
+  //   "type 4b" / "4b"           → tall rectangle outline (drop-style
+  //                                inlet box — same proportions as the
+  //                                headwall but unfilled to read as
+  //                                hollow)
+  //   "type 6b" / "6b"           → square outline (smaller junction
+  //                                box — Type 6B is a square inlet)
   //   "manhole" / "man hole" /
-  //     "drop inlet"             → outline rectangle (hollow)
+  //     "drop inlet"             → tall rectangle outline (same shape
+  //                                as Type 4B; label disambiguates)
   //   "flange" / "flared"        → triangular flare opening outward
   //   (anything else / blank)    → no end shape, barrel ends open
   function _cvEndTypeShape(type) {
     if (!type) return '';
     var s = String(type).toLowerCase();
     if (s.indexOf('headwall')   !== -1) return 'headwall';
+    if (s.indexOf('4b')         !== -1) return 'type_4b';
+    if (s.indexOf('6b')         !== -1) return 'type_6b';
     if (s.indexOf('manhole')    !== -1) return 'open_box';
     if (s.indexOf('man hole')   !== -1) return 'open_box';
     if (s.indexOf('drop inlet') !== -1) return 'open_box';
@@ -34003,6 +34012,32 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + 'fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
           + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
             + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">' + label + '</text>'
+          + '</g>';
+      }
+      if (shape === 'type_4b') {
+        // Same tall-rectangle proportions as the headwall, drawn as
+        // an outline only — Type 4B drop-style inlet box.
+        return '<g>'
+          + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
+            + 'fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
+          + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Type 4B</text>'
+          + '</g>';
+      }
+      if (shape === 'type_6b') {
+        // Square outline — Type 6B junction box. Sized smaller than
+        // the Type 4B / headwall tall rectangle so the proportion
+        // reads as square at a glance. Centered vertically on the
+        // barrel midline.
+        var sqSide = 28;
+        var sqX    = isInlet ? (anchorX - sqSide) : anchorX;
+        var sqY    = barrelY + (barrelH / 2) - (sqSide / 2);
+        var sqLbl  = sqY + sqSide + 14;
+        return '<g>'
+          + '<rect x="' + sqX + '" y="' + sqY + '" width="' + sqSide + '" height="' + sqSide + '" '
+            + 'fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
+          + '<text x="' + (sqX + sqSide/2) + '" y="' + sqLbl + '" text-anchor="middle" '
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Type 6B</text>'
           + '</g>';
       }
       if (shape === 'flange') {
