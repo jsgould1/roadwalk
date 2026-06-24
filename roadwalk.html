@@ -34510,25 +34510,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var inletShape  = _cvEndTypeShape(a.in_type);
     var outletShape = _cvEndTypeShape(a.out_type);
 
-    // Component coloring helpers. Barrel reads off barrel_condition;
-    // each end fitting (headwall, manhole/drop, flange) reads off the
-    // most-specific rating that applies — if the end is a headwall use
-    // the upstream/downstream headwall rating, otherwise fall back to
-    // the generic inlet/outlet rating. Unrated fittings stay gray.
+    // Component coloring helpers. The pipe cross-section now reads
+    // three independent ratings — inlet (the 10% closest to the
+    // inlet end), barrel (the middle 80%), and outlet (the 10%
+    // closest to the outlet) — so each segment paints its own
+    // condition. End structures (headwall, Type 4A/4B/6B, manhole,
+    // flared end) read off the structure-condition fields
+    // (hw_upstream_cond / hw_downstream_cond) when one is defined;
+    // otherwise stay neutral gray.
     function _ratingColor(v) {
       var n = _cvCondLetter(v);
       return n ? _CV_COND_COLOR[n] : '#9ca3af';
     }
-    function _endRatingColor(side, shape) {
-      var isInlet = (side === 'inlet');
-      if (shape === 'headwall') {
-        return _ratingColor(_cvEffectiveCond(pin, isInlet ? 'hw_upstream_cond' : 'hw_downstream_cond'));
-      }
-      return _ratingColor(_cvEffectiveCond(pin, isInlet ? 'inlet_condition' : 'outlet_condition'));
+    function _endRatingColor(side /* 'inlet' | 'outlet' */) {
+      return _ratingColor(_cvEffectiveCond(pin,
+        side === 'inlet' ? 'hw_upstream_cond' : 'hw_downstream_cond'));
     }
+    var _inletEff  = _cvEffectiveCond(pin, 'inlet_condition');
     var _barrelEff = _cvEffectiveCond(pin, 'barrel_condition');
+    var _outletEff = _cvEffectiveCond(pin, 'outlet_condition');
+    var inletColor  = _ratingColor(_inletEff);
     var barrelColor = _ratingColor(_barrelEff);
-    var barrelLabel = _barrelEff ? String(_barrelEff) : 'No barrel rating';
+    var outletColor = _ratingColor(_outletEff);
 
     function _endShape(side, shape, anchorX) {
       var isInlet = (side === 'inlet');
@@ -34537,7 +34540,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var boxY = barrelY - 8;        // schematic fits in 118 px tall
       var boxX = isInlet ? (anchorX - boxW) : anchorX;
       var labelY = boxY + boxH + 12;
-      var color  = _endRatingColor(side, shape);
+      var color  = _endRatingColor(side);
 
       if (shape === 'headwall') {
         return '<g>'
@@ -34642,11 +34645,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 6) + '" text-anchor="end" '
         + 'font-size="12" font-family="sans-serif" fill="#374151" font-weight="700" '
         + 'letter-spacing=".6">OUTLET</text>'
-      // Barrel — colored by condition
-      + '<rect x="' + barrelStartX + '" y="' + barrelY + '" '
-        + 'width="' + (barrelEndX - barrelStartX) + '" height="' + barrelH + '" '
-        + 'fill="' + barrelColor + '" fill-opacity="0.78" stroke="#111" stroke-width="1.2" />'
-      // End fittings
+      // Barrel — three segments (10% inlet · 80% middle · 80% outlet)
+      // each painted by its own condition rating. Inner separators
+      // are dropped so the pipe still reads as one continuous tube;
+      // a single outer rect supplies the black border around all
+      // three fills. Internal seam lines mark the segment boundaries
+      // at quarter-opacity so the inlet/outlet zones are still
+      // visible when their rating happens to match the barrel.
+      + (function () {
+          var totalW   = barrelEndX - barrelStartX;
+          var inletW   = totalW * 0.1;
+          var outletW  = totalW * 0.1;
+          var midW     = totalW - inletW - outletW;
+          var inletX   = barrelStartX;
+          var midX_    = barrelStartX + inletW;
+          var outletX  = barrelStartX + inletW + midW;
+          return ''
+            + '<rect x="' + inletX  + '" y="' + barrelY + '" width="' + inletW  + '" height="' + barrelH + '" fill="' + inletColor  + '" fill-opacity="0.78" />'
+            + '<rect x="' + midX_   + '" y="' + barrelY + '" width="' + midW    + '" height="' + barrelH + '" fill="' + barrelColor + '" fill-opacity="0.78" />'
+            + '<rect x="' + outletX + '" y="' + barrelY + '" width="' + outletW + '" height="' + barrelH + '" fill="' + outletColor + '" fill-opacity="0.78" />'
+            // Internal seam lines (dashed, low opacity) between segments
+            + '<line x1="' + midX_   + '" y1="' + barrelY + '" x2="' + midX_   + '" y2="' + (barrelY + barrelH) + '" stroke="#111" stroke-width="0.6" stroke-opacity="0.35" stroke-dasharray="2 2" />'
+            + '<line x1="' + outletX + '" y1="' + barrelY + '" x2="' + outletX + '" y2="' + (barrelY + barrelH) + '" stroke="#111" stroke-width="0.6" stroke-opacity="0.35" stroke-dasharray="2 2" />'
+            // Single outer border around the whole pipe
+            + '<rect x="' + barrelStartX + '" y="' + barrelY + '" width="' + totalW + '" height="' + barrelH + '" fill="none" stroke="#111" stroke-width="1.2" />';
+        })()
+      // End structures (Headwall, Type 4A/4B/6B, manhole, flared end)
+      // sit OUTSIDE the colored pipe segments — drawn only when the
+      // user has identified an end type (empty → nothing rendered).
       + _endShape('inlet',  inletShape,  barrelStartX)
       + _endShape('outlet', outletShape, barrelEndX)
       // FLOW arrow + label — barrel rating label dropped because it's
