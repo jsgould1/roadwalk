@@ -5041,6 +5041,42 @@ body.rw-sld-photo-dragging .strip-pin {
 .cv-photo-actions .cv-auto-btn:hover  { background: var(--paper-2); }
 .cv-photo-actions .cv-pick-btn:hover  { filter: brightness(1.05); }
 @media print { .cv-photo-actions { display: none !important; } }
+/* Culvert Properties layout — each row is a flex container with one
+   or two label+value pairs. justify-content:space-between lands the
+   first pair on the left and the second pair on the right with the
+   gap landing between them, while the .cv-pair flex tightens the
+   label against its own value. Full-width rows (Inlet Type / Outlet
+   Type / Notes) span the row by setting flex:1 1 100% on the pair. */
+.cv-prop-list { padding: 4px 0; }
+.cv-prop-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 3px 0;
+}
+.cv-pair {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.cv-pair-full { flex: 1 1 100%; }
+.cv-lbl {
+  color: var(--ink-3);
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .35px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cv-val {
+  color: var(--ink);
+  font: 400 11px var(--sans, system-ui);
+  min-width: 0;
+}
+.cv-pair-full .cv-val { white-space: normal; }
+
 /* Inline-editable controls inside the Culvert Conditions card —
    styled as plain text on screen so the table reads the same as the
    sign report, then locked to read-only in print. The <select> and
@@ -34746,39 +34782,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '</div>' +
         '</div>';
 
-      // Properties card. Match the sign report's panel-card aesthetic:
-      // small mono uppercase labels in ink-3, normal-weight 11px sans
-      // values in ink. Labels stay bold to read as a header row;
-      // values are normal weight so the data, not the label, draws
-      // attention.
-      var _lblS = 'padding:3px 12px 3px 0;color:var(--ink-3);font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.35px;text-transform:uppercase;white-space:nowrap;vertical-align:top;';
-      var _valS = 'padding:3px 14px 3px 0;color:var(--ink);font:400 11px var(--sans,system-ui);vertical-align:top;';
-      function _row4(l1, v1, l2, v2) {
-        return '<tr>'
-          + '<td style="' + _lblS + '">' + l1 + '</td>'
-          + '<td style="' + _valS + '">' + _cvCell(v1) + '</td>'
-          + '<td style="' + _lblS + '">' + (l2 || '') + '</td>'
-          + '<td style="' + _valS + '">' + (l2 ? _cvCell(v2) : '') + '</td>'
-          + '</tr>';
+      // Properties card. Each row is a flex container with one or
+      // two label+value pairs; .cv-pair flex tightens each label
+      // against its own value, and the parent row's
+      // justify-content:space-between pushes the two pairs to
+      // opposite edges so the gap reads between the pairs rather
+      // than inside them. Full-width rows (Inlet Type / Outlet Type
+      // / Notes) take up the whole row via .cv-pair-full.
+      function _pair(label, val) {
+        return '<div class="cv-pair">'
+          + '<span class="cv-lbl">' + label + '</span>'
+          + '<span class="cv-val">' + _cvCell(val) + '</span>'
+          + '</div>';
       }
-      function _rowFull(label, val) {
-        return '<tr>'
-          + '<td style="' + _lblS + '">' + label + '</td>'
-          + '<td colspan="3" style="' + _valS + '">' + _cvCell(val) + '</td>'
-          + '</tr>';
+      function _pairFull(label, val) {
+        return '<div class="cv-pair cv-pair-full">'
+          + '<span class="cv-lbl">' + label + '</span>'
+          + '<span class="cv-val">' + _cvCell(val) + '</span>'
+          + '</div>';
+      }
+      function _propsRow(left, right) {
+        return '<div class="cv-prop-row">' + left + (right || '') + '</div>';
       }
       var propsBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CULVERT PROPERTIES</span></div>'
-          + '<table style="border-collapse:collapse;width:100%;">'
-            + _row4('Material',  a.material,
-                    'Coating',   a.coating)
-            + _row4('Size (in)', a.size_in,
-                    'Length (ft)', a.length_ft)
-            + _rowFull('Inlet Type',  a.in_type)
-            + _rowFull('Outlet Type', a.out_type)
-            + (a.notes ? _rowFull('Notes', a.notes) : '')
-          + '</table>'
+          + '<div class="cv-prop-list">'
+            + _propsRow(_pair('Material',  a.material),    _pair('Coating',     a.coating))
+            + _propsRow(_pair('Size (in)', a.size_in),     _pair('Length (ft)', a.length_ft))
+            + _propsRow(_pairFull('Inlet Type',  a.in_type))
+            + _propsRow(_pairFull('Outlet Type', a.out_type))
+            + (a.notes ? _propsRow(_pairFull('Notes', a.notes)) : '')
+          + '</div>'
         + '</div>';
 
       // Conditions card — three columns: label, colored rating word
