@@ -3382,14 +3382,24 @@ body.rw-sld-photo-dragging .strip-pin {
   border-color: var(--orange, #C85A2B); border-width: 3px;
   box-shadow: 0 0 0 2px rgba(200,90,43,0.18);
 }
-.rw-nbp-tile.already-linked::after {
-  content: '🔗 linked';
+/* Tile badges:
+   - .linked-here     → green "✓ here"  (photo is linked to THIS culvert/sign already)
+   - .linked-elsewhere→ amber "↗ elsewhere" + pin id (linked to a DIFFERENT pin)
+   The old .already-linked rule flagged BOTH as "🔗 linked", which made
+   every previously-tagged photo (regardless of target pin) look like a
+   duplicate to the user. Differentiating them lets you see at a glance
+   which tiles would actually be new additions and which would steal a
+   link from another pin. */
+.rw-nbp-tile.linked-here::after,
+.rw-nbp-tile.linked-elsewhere::after {
   position: absolute; top: 4px; left: 4px;
-  background: rgba(0,0,0,0.7); color: #fff;
   font: 600 9px 'IBM Plex Sans', sans-serif;
   padding: 2px 5px; border-radius: 2px;
   pointer-events: none;
+  color: #fff;
 }
+.rw-nbp-tile.linked-here::after        { content: '✓ here';      background: rgba(5,150,105,0.92); }
+.rw-nbp-tile.linked-elsewhere::after   { content: '↗ elsewhere'; background: rgba(217,119,6,0.92); }
 .rw-nbp-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .rw-nbp-tile-meta {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -30939,7 +30949,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
             var tile = document.createElement('div');
             tile.className = 'rw-nbp-tile' + (selectedIds.has(p.id) ? ' selected' : '');
-            if (p.linked_pin_id) tile.classList.add('already-linked');
+            // Differentiate already-linked tiles by whether the link
+            // points at THIS pin or a different one. The old single
+            // ".already-linked" badge made every previously-tagged
+            // photo (even ones linked to a sign two sections away)
+            // look like "this is already on this culvert," which is
+            // what was confusing the user about the photo count.
+            if (p.linked_pin_id) {
+              var _curLink = (opts.secId && opts.pin && opts.pin.id)
+                ? opts.secId + '::' + opts.pin.id : '';
+              if (_curLink && p.linked_pin_id === _curLink) {
+                tile.classList.add('linked-here');
+              } else {
+                tile.classList.add('linked-elsewhere');
+              }
+            }
             var dt = p.ts ? new Date(p.ts) : null;
             var time = dt ? dt.toLocaleString([], {
               month: 'short', day: 'numeric',
