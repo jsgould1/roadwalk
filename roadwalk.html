@@ -5004,17 +5004,13 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-identity-left > :last-child { margin-top: 0; }
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
-   Light card-like frame so it reads as a diagram, not body text. */
+   No card frame — diagram floats in the white space. */
 .cv-schematic {
-  margin-top: 6px;
-  padding: 4px;
-  background: #fafafa;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  margin-top: 10px;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.cv-schematic svg { display: block; max-width: 100%; }
+.cv-schematic svg { display: block; max-width: 100%; margin: 0 auto; }
 /* Per-culvert action buttons (Select Nearby Photos, Auto-add nearby)
    sit in the Photos section header. They are screen-only — the print
    stylesheet hides .sr-photo-actions, so we route through the same
@@ -33954,8 +33950,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _cvBarrelSchematicSvg(pin) {
     var a = pin.attrs || {};
 
-    var W = 520, H = 175;
-    var barrelY = 70;
+    var W = 520, H = 165;
+    var barrelY = 68;
     var barrelH = 22;
     var barrelStartX = 100;
     var barrelEndX   = W - 100;
@@ -33963,9 +33959,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var inletShape  = _cvEndTypeShape(a.in_type);
     var outletShape = _cvEndTypeShape(a.out_type);
 
-    // Barrel color from the parsed 1–5 condition rating.
-    var cn = _cvCondLetter(a.barrel_condition);
-    var barrelColor = cn ? _CV_COND_COLOR[cn] : '#9ca3af';
+    // Component coloring helpers. Barrel reads off barrel_condition;
+    // each end fitting (headwall, manhole/drop, flange) reads off the
+    // most-specific rating that applies — if the end is a headwall use
+    // the upstream/downstream headwall rating, otherwise fall back to
+    // the generic inlet/outlet rating. Unrated fittings stay gray.
+    function _ratingColor(v) {
+      var n = _cvCondLetter(v);
+      return n ? _CV_COND_COLOR[n] : '#9ca3af';
+    }
+    function _endRatingColor(side, shape) {
+      var isInlet = (side === 'inlet');
+      if (shape === 'headwall') {
+        return _ratingColor(isInlet ? a.hw_upstream_cond : a.hw_downstream_cond);
+      }
+      return _ratingColor(isInlet ? a.inlet_condition : a.outlet_condition);
+    }
+    var barrelColor = _ratingColor(a.barrel_condition);
     var barrelLabel = a.barrel_condition ? String(a.barrel_condition) : 'No barrel rating';
 
     function _endShape(side, shape, anchorX) {
@@ -33975,13 +33985,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var boxY = barrelY - 14;
       var boxX = isInlet ? (anchorX - boxW) : anchorX;
       var labelY = boxY + boxH + 14;
+      var color  = _endRatingColor(side, shape);
 
       if (shape === 'headwall') {
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
-            + 'fill="#374151" stroke="#111" stroke-width="1.2" />'
+            + 'fill="' + color + '" stroke="#111" stroke-width="1.2" />'
           + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
-            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">Headwall</text>'
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Headwall</text>'
           + '</g>';
       }
       if (shape === 'open_box') {
@@ -33989,14 +34000,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var label = (String(ot || '').toLowerCase().indexOf('drop') !== -1) ? 'Drop Inlet' : 'Manhole';
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
-            + 'fill="#fff" stroke="#111" stroke-width="2" />'
+            + 'fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
           + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
-            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">' + label + '</text>'
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">' + label + '</text>'
           + '</g>';
       }
       if (shape === 'flange') {
-        // Triangular flare — outer mouth ~2x the barrel height, anchored
-        // to the barrel face, flaring outward (inlet=left, outlet=right).
         var depth     = 30;
         var halfBarrel = barrelH / 2;
         var halfFlare  = barrelH;
@@ -34011,18 +34020,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 + x1 + ',' + botOuter + ' '
                 + x0 + ',' + botInner;
         return '<g>'
-          + '<polygon points="' + pts + '" fill="#fff" stroke="#111" stroke-width="2" />'
+          + '<polygon points="' + pts + '" fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
           + '<text x="' + ((x0 + x1)/2) + '" y="' + labelY + '" text-anchor="middle" '
-            + 'font-size="10" font-family="sans-serif" fill="#111" font-weight="700">Flared End</text>'
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Flared End</text>'
           + '</g>';
       }
       return ''; // open barrel end
     }
 
-    // Pipe spec text label above the barrel — replaces the previous
-    // callout + leader line. Format: "{length} foot, {size}" {material} pipe"
-    // e.g. "150 foot, 18\" RCP pipe". Skips gracefully when any of
-    // the three fields is missing.
+    // Pipe spec caption — sits directly above the barrel.
+    // "{length} foot, {size}" {material} pipe"
     var midX = (barrelStartX + barrelEndX) / 2;
     var leadBit = a.length_ft ? (a.length_ft + ' foot') : '';
     var tailBits = [];
@@ -34031,11 +34038,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     tailBits.push('pipe');
     var pipeLabel = leadBit ? (leadBit + ', ' + tailBits.join(' ')) : tailBits.join(' ');
 
-    // FLOW arrow — sits below the barrel, points from inlet (left) to
-    // outlet (right), blue to match the inset map's culvert line.
-    var flowY     = barrelY + barrelH + 60;   // ≈ 152
-    var flowStart = barrelStartX + 16;
-    var flowEnd   = barrelEndX   - 16;
+    // FLOW arrow — sits just under the barrel, much shorter than
+    // before (about a third of the barrel width, centered). Direction
+    // is inlet (left) → outlet (right), drawn in the same blue as the
+    // inset map's culvert line.
+    var flowY     = barrelY + barrelH + 12;        // ≈ 102 — directly under barrel
+    var flowSpan  = (barrelEndX - barrelStartX) * 0.32; // ~110 px
+    var flowStart = midX - flowSpan / 2;
+    var flowEnd   = midX + flowSpan / 2;
     var arrowHead = flowEnd + ',' + flowY + ' '
                   + (flowEnd - 9) + ',' + (flowY - 6) + ' '
                   + (flowEnd - 9) + ',' + (flowY + 6);
@@ -34043,10 +34053,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return '<div class="cv-schematic">'
       + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" '
         + 'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
-      // Pipe spec text (plain caption, no bubble)
-      + '<text x="' + midX + '" y="22" text-anchor="middle" '
+      // Pipe spec caption — directly above pipe (only 16 px gap)
+      + '<text x="' + midX + '" y="' + (barrelY - 30) + '" text-anchor="middle" '
         + 'font-size="13" font-weight="700" font-family="sans-serif" fill="#111">'
         + _esc(pipeLabel) + '</text>'
+      // Direction labels (above barrel, at each end) — bigger so they
+      // read at print size
+      + '<text x="' + (barrelStartX + 4) + '" y="' + (barrelY - 8) + '" '
+        + 'font-size="12" font-family="sans-serif" fill="#374151" font-weight="700" '
+        + 'letter-spacing=".6">INLET</text>'
+      + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 8) + '" text-anchor="end" '
+        + 'font-size="12" font-family="sans-serif" fill="#374151" font-weight="700" '
+        + 'letter-spacing=".6">OUTLET</text>'
       // Barrel — colored by condition
       + '<rect x="' + barrelStartX + '" y="' + barrelY + '" '
         + 'width="' + (barrelEndX - barrelStartX) + '" height="' + barrelH + '" '
@@ -34054,24 +34072,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // End fittings
       + _endShape('inlet',  inletShape,  barrelStartX)
       + _endShape('outlet', outletShape, barrelEndX)
-      // Direction labels (above barrel, at each end)
-      + '<text x="' + (barrelStartX + 4) + '" y="' + (barrelY - 8) + '" '
-        + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">INLET</text>'
-      + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 8) + '" text-anchor="end" '
-        + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">OUTLET</text>'
-      // Barrel condition label centered just under the barrel
-      + '<text x="' + midX + '" y="' + (barrelY + barrelH + 38) + '" text-anchor="middle" '
-        + 'font-size="10.5" font-family="sans-serif" fill="' + barrelColor + '" font-weight="700">'
-        + 'Barrel: ' + _esc(barrelLabel) + '</text>'
-      // FLOW arrow line + arrowhead pointing inlet → outlet
+      // FLOW arrow — short, centered, just under barrel
       + '<line x1="' + flowStart + '" y1="' + flowY + '" '
         + 'x2="' + (flowEnd - 7) + '" y2="' + flowY + '" '
         + 'stroke="#1d4ed8" stroke-width="2" />'
       + '<polygon points="' + arrowHead + '" fill="#1d4ed8" />'
-      // FLOW label centered below the line
-      + '<text x="' + midX + '" y="' + (flowY + 15) + '" text-anchor="middle" '
+      + '<text x="' + midX + '" y="' + (flowY + 14) + '" text-anchor="middle" '
         + 'font-size="11" font-weight="700" font-family="sans-serif" fill="#1d4ed8" '
         + 'letter-spacing="2">FLOW</text>'
+      // Barrel condition label below FLOW arrow
+      + '<text x="' + midX + '" y="' + (barrelY + barrelH + 60) + '" text-anchor="middle" '
+        + 'font-size="10.5" font-family="sans-serif" fill="' + barrelColor + '" font-weight="700">'
+        + 'Barrel: ' + _esc(barrelLabel) + '</text>'
       + '</svg>'
       + '</div>';
   }
