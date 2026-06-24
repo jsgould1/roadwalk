@@ -4959,11 +4959,23 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 /* Identity grid narrows to 3 cols when sharing the row with the map. */
 .sr-identity-left .sr-id-grid { grid-template-columns: repeat(3, 1fr); }
-/* When the cards-2col grid is nested inside identity-left, force a
-   single column at 50%-page-width so the post card outline lines up
-   with a panel card outline. Multiple posts stack vertically here. */
+/* Posts inside identity-left stretch the full 2/3-page width to the
+   embedded maplet's left edge. Multiple posts stack vertically. The
+   wider container gives the 2-column field grid significantly more
+   horizontal room than the v118 50%-page-width version. */
 .sr-identity-left .sr-cards-2col {
-  grid-template-columns: 3.7in;
+  grid-template-columns: 1fr;
+}
+/* Inside identity-left, post cards get a 3-column field grid so the
+   extra horizontal space turns into denser rows (3 fields per row
+   instead of 2). Damage and Notes stay full-width. */
+.sr-identity-left .sr-post-card .sr-field-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+.sr-identity-left .sr-post-card .sr-flbl {
+  /* Shrink the label column a touch in 3-col mode so the value has
+     room. 88 px still holds 'FOUNDATION' / 'BREAKAWAY' / 'CONDITION'. */
+  flex: 0 0 88px;
 }
 
 /* Posts and Panels both render in a 2-column grid so their bordered
