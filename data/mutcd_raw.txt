@@ -1,0 +1,830 @@
+# MUTCD sign catalog scraped from https://www.trafficsign.us/
+# Format: CODE|NAME|SIZE|IMAGE_FILENAME    (— means not specified)
+# Sections: W (warning), R (regulatory), M (route markers), D (guide), OM (object markers)
+# Source pages: w1-w25, r1-r16, m1-m6, d1-d17 (d7 + d16 returned 404), om
+# Generated 2026-06-24
+
+# === W series — Warning ===
+W1-1L|Turn|—|w1-1l.gif
+W1-1R|Turn|—|w1-1r.gif
+W1-1aL|Combination Turn / Advisory Speed|—|w1-1al.gif
+W1-1aR|Combination Turn / Advisory Speed|—|w1-1ar.gif
+W1-2L|Curve|—|w1-2l.gif
+W1-2R|Curve|—|w1-2r.gif
+W1-2aL|Combination Curve / Advisory Speed|—|w1-2al.gif
+W1-2aR|Combination Curve / Advisory Speed|—|w1-2ar.gif
+W1-3L|Reverse Turn|—|w1-3l.gif
+W1-3R|Reverse Turn|—|w1-3r.gif
+W1-4L|Reverse Curve|—|w1-4l.gif
+W1-4R|Reverse Curve|—|w1-4r.gif
+W1-4bL|Reverse Curve (2 lanes)|—|w1-4bl.gif
+W1-4bR|Reverse Curve (2 lanes)|—|w1-4br.gif
+W1-4cL|Reverse Curve (3 lanes)|—|w1-4cl.gif
+W1-4cR|Reverse Curve (3 lanes)|—|w1-4cr.gif
+W1-5L|Winding Road|—|w1-5l.gif
+W1-5R|Winding Road|—|w1-5r.gif
+W1-6L|One Direction Large Arrow|—|w1-6l.gif
+W1-6R|One Direction Large Arrow|—|w1-6r.gif
+W1-7|Two Direction Large Arrow|—|w1-7.gif
+W1-8L|Chevron Alignment|—|w1-8l.gif
+W1-8R|Chevron Alignment|—|w1-8r.gif
+W1-10L|Combination Curve / Side Road Intersection|—|w1-10l.gif
+W1-10R|Combination Curve / Side Road Intersection|—|w1-10r.gif
+W1-10aL|Combination Curve / Cross Road Intersection|—|w1-10al.gif
+W1-10aR|Combination Curve / Cross Road Intersection|—|w1-10ar.gif
+W1-10bL|Combination Curve / Side Road Intersection (Tangent)|—|w1-10bl.gif
+W1-10bR|Combination Curve / Side Road Intersection (Tangent)|—|w1-10br.gif
+W1-10cL|Combination Curve / Cross Road Intersection (Tangent From Side)|—|w1-10cl.gif
+W1-10cR|Combination Curve / Cross Road Intersection (Tangent From Side)|—|w1-10cr.gif
+W1-10dL|Combination Reverse Curve / Side Road Intersection|—|w1-10dl.gif
+W1-10dR|Combination Reverse Curve / Side Road Intersection|—|w1-10dr.gif
+W1-10eL|Combination Reverse Curve / Cross Road Intersection|—|w1-10el.gif
+W1-10eR|Combination Reverse Curve / Cross Road Intersection|—|w1-10er.gif
+W1-11L|180 Degree (Hairpin) Curve|—|w1-11l.gif
+W1-11R|180 Degree (Hairpin) Curve|—|w1-11r.gif
+W1-13L|Truck Rollover|—|w1-13l.gif
+W1-13R|Truck Rollover|—|w1-13r.gif
+W1-15L|270 Degree (Loop) Curve|—|w1-15l.gif
+W1-15R|270 Degree (Loop) Curve|—|w1-15r.gif
+W2-1|Cross Road Intersection|—|w2-1.gif
+W2-2L|Side Road Intersection|—|w2-2l.gif
+W2-2R|Side Road Intersection|—|w2-2r.gif
+W2-3L|Diagonal Side Road Intersection|—|w2-3l.gif
+W2-3R|Diagonal Side Road Intersection|—|w2-3r.gif
+W2-4|T Intersection|—|w2-4.gif
+W2-5|Y Intersection|—|w2-5.gif
+W2-6|Roundabout Intersection|—|w2-6.gif
+W2-7L|Offset Side Road Intersection|—|w2-7l.gif
+W2-7R|Offset Side Road Intersection|—|w2-7r.gif
+W2-8L|Double Side Road Intersection|—|w2-8l.gif
+W2-8R|Double Side Road Intersection|—|w2-8r.gif
+W3-1|Stop Ahead|—|w3-1.gif
+W3-2|Yield Ahead|—|w3-2.gif
+W3-3|Signal Ahead|—|w3-3.gif
+W3-4|Be Prepared to Stop|—|w3-4.gif
+W3-5|Reduced Speed Limit Ahead|—|w3-5.gif
+W3-5a|(Speed) Zone Ahead|—|w3-5a.gif
+W3-6|Draw Bridge|—|w3-6.gif
+W3-7|Ramp Meter Ahead|—|w3-7.gif
+W3-8|Ramp Metered When Flashing|—|w3-8.gif
+W4-1L|Merge|—|w4-1l.gif
+W4-1R|Merge|—|w4-1r.gif
+W4-1Lmod|Merge (Modified For Preferential Lane Barrier)|—|w4-1modl.gif
+W4-1Rmod|Merge (Modified For Preferential Lane Barrier)|—|w4-1modr.gif
+W4-2L|Lane Ends|—|w4-2l.gif
+W4-2R|Lane Ends|—|w4-2r.gif
+W4-2Lmod|Lane Ends (Modified For Preferential Lane Barrier)|—|w4-2modl.gif
+W4-2Rmod|Lane Ends (Modified For Preferential Lane Barrier)|—|w4-2modr.gif
+W4-3L|Added Lane|—|w4-3l.gif
+W4-3R|Added Lane|—|w4-3r.gif
+W4-4P|Cross Traffic Does Not Stop (plaque)|—|w4-4p.gif
+W4-4aLP|Traffic From Left Does Not Stop (plaque)|—|w4-4alp.gif
+W4-4aRP|Traffic From Right Does Not Stop (plaque)|—|w4-4arp.gif
+W4-4bP|Oncoming Traffic Does Not Stop (plaque)|—|w4-4bp.gif
+W4-5L|Entering Roadway Merge|—|w4-5l.gif
+W4-5R|Entering Roadway Merge|—|w4-5r.gif
+W4-5P|No Merge Area (plaque)|—|w4-5p.gif
+W4-6L|Entering Roadway Added Lane|—|w4-6l.gif
+W4-6R|Entering Roadway Added Lane|—|w4-6r.gif
+W5-1|Road Narrows|—|w5-1.gif
+W5-2|Narrow Bridge|—|w5-2.gif
+W5-3|One Lane Bridge|—|w5-3.gif
+W5-4|Ramp Narrows|—|w5-4.gif
+W5-4a|Path Narrows|—|w5-4a.gif
+W6-1|Divided Highway|—|w6-1.gif
+W6-2|Divided Highway Ends|—|w6-2.gif
+W6-3|Two Way Traffic|—|w6-3.gif
+W6-4|Opposing Traffic Divider|—|w6-4.gif
+W7-1|Hill|—|w7-1.gif
+W7-1a|Hill (Percent Grade)|—|w7-1a.gif
+W7-2P|Use Low Gear (plaque)|—|w7-2p.gif
+W7-2bP|Trucks Use Lower Gear (plaque)|—|w7-2bp.gif
+W7-3P|Percent Grade (plaque)|—|w7-3p.gif
+W7-3aP|Next (Distance) Miles (plaque)|—|w7-3ap.gif
+W7-3bP|Percent Grade (Distance) Miles (plaque)|—|w7-3bp.gif
+W7-4|Runaway Truck Ramp (Distance)|—|w7-4.gif
+W7-4bL|Runaway Truck Ramp (Arrow)|—|w7-4bl.gif
+W7-4bR|Runaway Truck Ramp (Arrow)|—|w7-4br.gif
+W7-4c|Truck Escape Ramp|—|w7-4c.gif
+W7-4dP|Sand (plaque)|—|w7-4dp.gif
+W7-4eP|Gravel (plaque)|—|w7-4ep.gif
+W7-4fP|Paved (plaque)|—|w7-4fp.gif
+W7-5|Hill (Bicycle)|—|w7-5.gif
+W7-6|Hill Blocks View|—|w7-6.gif
+W8-1|Bump|—|w8-1.gif
+W8-2|Dip|—|w8-2.gif
+W8-3|Pavement Ends|—|w8-3.gif
+W8-4|Soft Shoulder|—|w8-4.gif
+W8-5|Slippery When Wet|—|w8-5.gif
+W8-5P|When Wet (plaque)|—|w8-5p.gif
+W8-5aP|Ice (plaque)|—|w8-5ap.gif
+W8-5bP|Steel Deck (plaque)|—|w8-5bp.gif
+W8-5cP|Excess Oil (plaque)|—|w8-5cp.gif
+W8-6|Truck Crossing|—|w8-6.gif
+W8-7|Loose Gravel|—|w8-7.gif
+W8-8|Rough Road|—|w8-8.gif
+W8-9|Low Shoulder|—|w8-9.gif
+W8-10|Bicycle Surface Condition|—|w8-10.gif
+W8-10P|Slippery When Wet (plaque)|—|w8-10p.gif
+W8-11|Uneven Lanes|—|w8-11.gif
+W8-12|No Center Line|—|w8-12.gif
+W8-13|Bridge Ices Before Road|—|w8-13.gif
+W8-14|Fallen Rocks|—|w8-14.gif
+W8-15|Grooved Pavement|—|w8-15.gif
+W8-15P|Motorcycle (plaque)|—|w8-15p.gif
+W8-16|Metal Bridge Deck|—|w8-16.gif
+W8-17L|Shoulder Drop Off (symbol)|—|w8-17l.gif
+W8-17R|Shoulder Drop Off (symbol)|—|w8-17r.gif
+W8-17P|Shoulder Drop Off (plaque)|—|w8-17p.gif
+W8-18|Road May Flood|—|w8-18.gif
+W8-19|Flood Depth Gauge|—|w8-19.gif
+W8-21|Gusty Winds Area|—|w8-21.gif
+W8-22|Fog Area|—|w8-22.gif
+W8-23|No Shoulder|—|w8-23.gif
+W8-24|Steel Plate Ahead|—|w8-24.gif
+W8-25|Shoulder Ends|—|w8-25.gif
+W9-1L|Left Lane Ends|—|w9-1l.gif
+W9-1R|Right Lane Ends|—|w9-1r.gif
+W9-2L|Lane Ends Merge Left|—|w9-2l.gif
+W9-2R|Lane Ends Merge Right|—|w9-2r.gif
+W9-3|Center Lane Closed Ahead|—|w9-3.gif
+W9-6|Pay Toll (Distance) (Price)|—|w9-6.gif
+W9-6P|Pay Toll (Distance) (Price) (plaque)|—|w9-6p.gif
+W9-6a|Stop Ahead Pay Toll (Price)|—|w9-6a.gif
+W9-6aP|Stop Ahead Pay Toll (plaque)|—|w9-6ap.gif
+W9-7L|Left Lane Exit Only Ahead|—|w9-7l.gif
+W9-7R|Right Lane Exit Only Ahead|—|w9-7r.gif
+W10-1|Railroad Crossing Warning|—|w10-1.gif
+W10-1aP|Exempt (plaque)|—|w10-1ap.gif
+W10-2L|Railroad Crossing (On Crossroad)|—|w10-2l.gif
+W10-2R|Railroad Crossing (On Crossroad)|—|w10-2r.gif
+W10-3L|Railroad Crossing (On Side Road)|—|w10-3l.gif
+W10-3R|Railroad Crossing (On Side Road)|—|w10-3r.gif
+W10-4L|Railroad Crossing (On Side of T Intersection)|—|w10-4l.gif
+W10-4R|Railroad Crossing (On Side of T Intersection)|—|w10-4r.gif
+W10-5|Low Ground Clearance|—|w10-5.gif
+W10-5P|Low Ground Clearance (plaque)|—|w10-5p.gif
+W10-7|Light Rail Transit Approaching (blankout)|—|w10-7.gif
+W10-8|Trains May Exceed 80 MPH|—|w10-8.gif
+W10-9|No Train Horn|—|w10-9.gif
+W10-9P|No Train Horn (plaque)|—|w10-9p.gif
+W10-11|Railroad Crossing Storage Space|—|w10-11t.gif
+W10-11a|(Distance) Between Tracks And Highway|—|w10-11a.gif
+W10-11b|(Distance) Between Highway And Tracks Behind You|—|w10-11b.gif
+W10-12L|Skewed Railroad Crossing|—|w10-12l.gif
+W10-12R|Skewed Railroad Crossing|—|w10-12r.gif
+W10-13P|No Gates or Lights (plaque)|—|w10-13p.gif
+W10-14P|Next Crossing (plaque)|—|w10-14p.gif
+W10-14aP|Use Next Crossing (plaque)|—|w10-14ap.gif
+W10-15P|Rough Crossing (plaque)|—|w10-15p.gif
+W11-1|Bicycle|—|w11-1.gif
+W11-2|Pedestrian|—|w11-2.gif
+W11-3|Deer|—|w11-3.gif
+W11-4|Cattle|—|w11-4.gif
+W11-5|Farm Equipment|—|w11-5.gif
+W11-5a|Farm Equipment (Alternate)|—|w11-5a.gif
+W11-6|Snowmobile|—|w11-6.gif
+W11-7|Equestrian|—|w11-7.gif
+W11-8|Emergency Vehicle|—|w11-8.gif
+W11-9|Handicapped|—|w11-9.gif
+W11-10|Truck|—|w11-10.gif
+W11-11|Golf Cart|—|w11-11.gif
+W11-12P|Emergency Signal Ahead (plaque)|—|w11-12p.gif
+W11-14|Horse-Drawn Vehicle|—|w11-14.gif
+W11-15|Bicycle & Pedestrian|—|w11-15.gif
+W11-15P|Trail X-ing (plaque)|—|w11-15p.gif
+W11-15a|Trail Crossing|—|w11-15a.gif
+W11-16|Bear|—|w11-16.gif
+W11-17|Sheep|—|w11-17.gif
+W11-18|Bighorn Sheep|—|w11-18.gif
+W11-19|Donkey|—|w11-19.gif
+W11-20|Elk|—|w11-20.gif
+W11-21|Moose|—|w11-21.gif
+W11-22|Horse|—|w11-22.gif
+W12-1|Double Arrow|—|w12-1.gif
+W12-2|Low Clearance|—|w12-2.gif
+W12-2a|Low Clearance (Overhead)|—|w12-2a.gif
+W13-1P|Advisory Speed (plaque)|—|w13-1p.gif
+W13-2|Advisory Exit Speed|—|w13-2.gif
+W13-2mod|Advisory Exit Speed (Modified For Preferential Lane Barrier)|—|w13-2mod.gif
+W13-3|Advisory Ramp Speed|—|w13-3.gif
+W13-4P|On Ramp (plaque)|—|w13-4p.gif
+W13-6|Combination Loop Curve / Exit Speed|—|w13-6.gif
+W13-7|Combination Loop Curve / Ramp Speed|—|w13-7.gif
+W14-1|Dead End|—|w14-1.gif
+W14-1aL|Dead End (Arrow)|—|w14-1al.gif
+W14-1aR|Dead End (Arrow)|—|w14-1ar.gif
+W14-2|No Outlet|—|w14-2.gif
+W14-2aL|No Outlet (Arrow)|—|w14-2al.gif
+W14-2aR|No Outlet (Arrow)|—|w14-2ar.gif
+W14-3|No Passing Zone|—|w14-3.gif
+W15-1|Playground|—|w15-1.gif
+W16-1P|Share the Road (plaque)|—|w16-1p.gif
+W16-2P|(Distance) Feet (2 line) (plaque)|—|w16-2p.gif
+W16-2aP|(Distance) Feet (1 line) (plaque)|—|w16-2ap.gif
+W16-3P|(Distance) Miles (2 line) (plaque)|—|w16-3p.gif
+W16-3aP|(Distance) Miles (1 line) (plaque)|—|w16-3ap.gif
+W16-4P|Next (Distance) Feet (plaque)|—|w16-4p.gif
+W16-5PL|Supplemental Arrow (plaque)|—|w16-5pl.gif
+W16-5PR|Supplemental Arrow (plaque)|—|w16-5pr.gif
+W16-6PL|Supplemental Advance Arrow (plaque)|—|w16-6pl.gif
+W16-6PR|Supplemental Advance Arrow (plaque)|—|w16-6pr.gif
+W16-7PL|Downward Diagonal Arrow (plaque)|—|w16-7pl.gif
+W16-7PR|Downward Diagonal Arrow (plaque)|—|w16-7pr.gif
+W16-8P|Street Name (1 line) (plaque)|—|w16-8p.gif
+W16-8aP|Street Name (2 line) (plaque)|—|w16-8ap.gif
+W16-9P|Ahead (plaque)|—|w16-9p.gif
+W16-10P|Photo Enforced (symbol) (plaque)|—|w16-10p.gif
+W16-10aP|Photo Enforced (word message) (plaque)|—|w16-10ap.gif
+W16-11P|HOV (plaque)|—|w16-11p.gif
+W16-12P|Traffic Circle (plaque)|—|w16-12p.gif
+W16-13P|When Flashing (plaque)|—|w16-13p.gif
+W16-15P|New (plaque)|—|w16-15p.gif
+W16-16P|Last Exit Before Toll (plaque)|—|w16-16p.gif
+W16-17P|Roundabout (plaque)|—|w16-17p.gif
+W16-18P|Notice (plaque)|—|w16-18p.gif
+W17-1|Speed Hump|—|w17-1.gif
+W18-1|No Traffic Signs|—|w18-1.gif
+W19-1|Freeway Ends (Distance)|—|w19-1.gif
+W19-2|Expressway Ends (Distance)|—|w19-2.gif
+W19-3|Freeway Ends|—|w19-3.gif
+W19-4|Expressway Ends|—|w19-4.gif
+W19-5|All Traffic Must Exit|—|w19-5.gif
+W20-1|Road Work (Distance)|—|w20-1.gif
+W20-2|Detour (Distance)|—|w20-2.gif
+W20-3|Road Closed (Distance)|—|w20-3.gif
+W20-4|One Lane Road (Distance)|—|w20-4.gif
+W20-5L|Left Lane Closed (Distance)|—|w20-5l.gif
+W20-5C|Center Lane Closed (Distance)|—|w20-5c.gif
+W20-5R|Right Lane Closed (Distance)|—|w20-5r.gif
+W20-5aL|(Number) Left Lanes Closed (Distance)|—|w20-5al.gif
+W20-5aR|(Number) Right Lanes Closed (Distance)|—|w20-5ar.gif
+W20-7|Flagger (symbol)|—|w20-7.gif
+W20-7a|Flagger (Distance)|—|w20-7a.gif
+W20-8|Slow (on Stop/Slow Paddle)|—|w20-8.gif
+W21-1|Workers (symbol)|—|w21-1.gif
+W21-1a|Workers (word message)|—|w21-1a.gif
+W21-2|Fresh Oil (Tar)|—|w21-2.gif
+W21-3|Road Machinery (Distance)|—|w21-3.gif
+W21-4|Slow Moving Vehicle|—|w21-4.gif
+W21-5|Shoulder Work|—|w21-5.gif
+W21-5aL|Left Shoulder Closed|—|w21-5al.gif
+W21-5aR|Right Shoulder Closed|—|w21-5ar.gif
+W21-5bL|Left Shoulder Closed (Distance)|—|w21-5bl.gif
+W21-5bR|Right Shoulder Closed (Distance)|—|w21-5br.gif
+W21-6|Survey Crew|—|w21-6.gif
+W21-7|Utility Work (Distance)|—|w21-7.gif
+W21-8|Mowing (Distance)|—|w21-8.gif
+W22-1|Blasting Zone (Distance)|—|w22-1.gif
+W22-2|Turn Off 2-Way Radio and Cell Phone|—|w22-2.gif
+W22-3|End Blasting Zone|—|w22-3.gif
+W23-1|Slow Traffic Ahead|—|w23-1.gif
+W23-2|New Traffic Pattern Ahead|—|w23-2.gif
+W24-1L|Double Reverse Curve (1 lane)|—|w24-1l.gif
+W24-1R|Double Reverse Curve (1 lane)|—|w24-1r.gif
+W24-1aL|Double Reverse Curve (2 lanes)|—|w24-1al.gif
+W24-1aR|Double Reverse Curve (2 lanes)|—|w24-1ar.gif
+W24-1bL|Double Reverse Curve (3 lanes)|—|w24-1bl.gif
+W24-1bR|Double Reverse Curve (3 lanes)|—|w24-1br.gif
+W24-1cP|All Lanes (plaque)|—|w24-1cp.gif
+W25-1|Oncoming Traffic Has Extended Green|—|w25-1.gif
+W25-2|Oncoming Traffic May Have Extended Green|—|w25-2.gif
+
+# === R series — Regulatory ===
+R1-1|Stop|—|r1-1.gif
+R1-2|Yield|—|r1-2.gif
+R1-2aP|To Oncoming Traffic (plaque)|—|r1-2ap.gif
+R1-3P|All Way (plaque)|—|r1-3p.gif
+R1-5|Yield Here to Peds|—|r1-5l.gif
+R1-5a|Yield Here to Pedestrians|—|r1-5ar.gif
+R1-5b|Stop Here For Peds|—|r1-5bl.gif
+R1-5c|Stop Here For Pedestrians|—|r1-5cr.gif
+R1-6|In-Street Pedestrian Crossing (Yield)|—|r1-6ylw.gif
+R1-6a|In-Street Pedestrian Crossing (Stop)|—|r1-6aylw.gif
+R1-6b|In-Street School Crossing (Yield)|—|r1-6b.gif
+R1-6c|In-Street School Crossing (Stop)|—|r1-6c.gif
+R1-7|Wait On Stop|—|r1-7.gif
+R1-8|Go On Slow|—|r1-8.gif
+R1-9|Overhead Pedestrian Crossing (Yield)|—|r1-9ylw.gif
+R1-9a|Overhead Pedestrian Crossing (Stop)|—|r1-9aylw.gif
+R1-10P|Except Right Turn (plaque)|—|r1-10p.gif
+R2-1|Speed Limit|—|r2-1.gif
+R2-2P|Truck Speed (plaque)|—|r2-2p.gif
+R2-3P|Night Speed (plaque)|—|r2-3p.gif
+R2-4P|Minimum Speed (plaque)|—|r2-4p.gif
+R2-4a|Speed Limit With Minimum Speed|—|r2-4a.gif
+R2-5P|Unless Otherwise Posted (plaque)|—|r2-5p.gif
+R2-5aP|Citywide (plaque)|—|r2-5ap.gif
+R2-5bP|Neighborhood (plaque)|—|r2-5bp.gif
+R2-5cP|Residential (plaque)|—|r2-5cp.gif
+R2-6P|Fines Higher (plaque)|—|r2-6p.gif
+R2-6aP|Fines Double (plaque)|—|r2-6ap.gif
+R2-6bP|$ Fine (plaque)|—|r2-6bp.gif
+R2-10|Begin Higher Fines Zone|—|r2-10.gif
+R2-11|End Higher Fines Zone|—|r2-11.gif
+R2-12|End Work Zone Speed Limit|—|r2-12.gif
+R3-1|No Right Turn|—|r3-1.gif
+R3-1a|No Right Turn Across Tracks (blankout)|—|r3-1a.gif
+R3-2|No Left Turn|—|r3-2.gif
+R3-2a|No Left Turn Across Tracks (blankout)|—|r3-2a.gif
+R3-3|No Turns|—|r3-3.gif
+R3-4|No U Turn|—|r3-4.gif
+R3-5L|Left Turn Only|—|r3-5l.gif
+R3-5R|Right Turn Only|—|r3-5r.gif
+R3-5a|Straight Only|—|r3-5a.gif
+R3-5bP|Left Lane (plaque)|—|r3-5bp.gif
+R3-5cP|HOV (plaque)|—|r3-5cp.gif
+R3-5dP|Taxi Lane (plaque)|—|r3-5dp.gif
+R3-5eP|Center Lane (plaque)|—|r3-5ep.gif
+R3-5fP|Right Lane (plaque)|—|r3-5fp.gif
+R3-5gP|Bus Lane (plaque)|—|r3-5gp.gif
+R3-6L|Optional Movement (Straight and Left)|—|r3-6l.gif
+R3-6R|Optional Movement (Straight and Right)|—|r3-6r.gif
+R3-7L|Left Lane Must Turn Left|—|r3-7l.gif
+R3-7R|Right Lane Must Turn Right|—|r3-7r.gif
+R3-7bP|Except Bicycles (plaque)|—|r3-7bp.gif
+R3-8|Intersection Lane Control (2 Lane)|—|r3-8l.gif
+R3-8rdbt2|Intersection Lane Control (2 Lane, Roundabout)|—|r3-8rdbt2.gif
+R3-8a|Intersection Lane Control (3 Lane)|—|r3-8ar.gif
+R3-8b|Intersection Lane Control (3 Lane, Left / Straight / Right)|—|r3-8b.gif
+R3-9a|Two Way Left Turn Only (Overhead)|—|r3-9a.gif
+R3-9b|Two Way Left Turn Only (Post-mount)|—|r3-9b.gif
+R3-9cP|Begin (plaque)|—|r3-9cp.gif
+R3-9dP|End (plaque)|—|r3-9dp.gif
+R3-9e|Reversible Lane Control (Overhead)|—|r3-9e.gif
+R3-9f|Reversible Lane Control (Post-mount)|—|r3-9f.gif
+R3-9g|End Reverse Lane (Overhead)|—|r3-9g.gif
+R3-9h|Begin Reverse Lane (Overhead)|—|r3-9h.gif
+R3-9i|End Reverse Lane Turn Only (Overhead)|—|r3-9i.gif
+R3-10|HOV Occupancy Definition (Post-mount)|—|r3-10.gif
+R3-10a|ILEV Allowed (Post-mount)|—|r3-10a.gif
+R3-11|HOV Only (Days & Times) (Post-mount)|—|r3-11.gif
+R3-11P|Motorcycles Allowed (plaque)|—|r3-11p.gif
+R3-11a|HOV Only Lane (Days & Times) (Post-mount)|—|r3-11a.gif
+R3-11b|Buses Only Lane (Days & Times) (Post-mount)|—|r3-11b.gif
+R3-11c|HOV Only Lane 24 Hours (Post-mount)|—|r3-11c.gif
+R3-12|HOV Only Lane Ahead (Post-mount)|—|r3-12.gif
+R3-12a|HOV Lane Ends (Post-mount)|—|r3-12a.gif
+R3-12b|HOV Lane Ends (Distance) (Post-mount)|—|r3-12b.gif
+R3-12c|HOV Restriction Ends (Post-mount)|—|r3-12c.gif
+R3-12d|HOV Restriction Ends (Distance) (Post-mount)|—|r3-12d.gif
+R3-12e|HOV Only Lane (Distance) (Post-mount)|—|r3-12e.gif
+R3-12f|Bus Lane Ahead (Post-mount)|—|r3-12f.gif
+R3-12g|Bus Lane Ends (Post-mount)|—|r3-12g.gif
+R3-12h|Bus Lane Ends (Distance) (Post-mount)|—|r3-12h.gif
+R3-13|HOV Definition (Overhead)|—|r3-13.gif
+R3-13a|HOV Definition (Days & Times) (Overhead)|—|r3-13a.gif
+R3-14|HOV Only (Days & Times) (Overhead)|—|r3-14.gif
+R3-14a|HOV Only (Days & Times) (Overhead)|—|r3-14a.gif
+R3-14b|HOV Only (Overhead)|—|r3-14b.gif
+R3-14c|Buses - Taxis Only (Days & Times) (Overhead)|—|r3-14c.gif
+R3-15|HOV Only Lane Ahead (Overhead)|—|r3-15.gif
+R3-15a|HOV Begins (Distance) (Overhead)|—|r3-15a.gif
+R3-15b|HOV Lane Ends (Overhead)|—|r3-15b.gif
+R3-15c|HOV Restriction Ends (Overhead)|—|r3-15c.gif
+R3-15d|Bus Lane Ahead (Overhead)|—|r3-15d.gif
+R3-15e|Bus Lane Ends (Overhead)|—|r3-15e.gif
+R3-17|Bike Lane|—|r3-17.gif
+R3-17aP|Ahead (for use with R3-17)|—|r3-17ap.gif
+R3-17bP|Ends (for use with R3-17)|—|r3-17bp.gif
+R3-18|No Left or U Turn|—|r3-18.gif
+R3-20L|Begin Left Turn Lane|—|r3-20l.gif
+R3-20R|Begin Right Turn Lane|—|r3-20r.gif
+R3-23|All Turns From Right Lane|—|r3-23.gif
+R3-23a|U Turns From Right Lane|—|r3-23a.gif
+R3-24|All Turns (Diagonal Arrow)|—|r3-24.gif
+R3-24a|U And Left Turns (Diagonal Arrow)|—|r3-24a.gif
+R3-24b|U Turn (Diagonal Arrow)|—|r3-24b.gif
+R3-25|All Turns (Arrow)|—|r3-25.gif
+R3-25a|U And Left Turns (Arrow)|—|r3-25a.gif
+R3-25b|U Turn (Arrow)|—|r3-25b.gif
+R3-26|U And Left Turns (Straight Arrow)|—|r3-26.gif
+R3-26a|U Turn (Straight Arrow)|—|r3-26a.gif
+R3-27|No Thru Movement|—|r3-27.gif
+R3-28|Toll Rate|—|r3-28.gif
+R3-29P|Pay Toll (plaque)|—|r3-29p.gif
+R3-30P|Take Ticket (plaque)|—|r3-30p.gif
+R3-33|Lane Must Exit (Left or Right)|—|r3-33.gif
+R3-40|Managed Lane HOV Definition (Post-mount)|—|r3-40.gif
+R3-42|Express Lane Ends (Post-mount)|—|r3-42.gif
+R3-42a|Express Lane Ends (Distance) (Post-mount)|—|r3-42a.gif
+R3-42b|Express Restriction Ends (Post-mount)|—|r3-42b.gif
+R3-42c|Express Restriction Ends (Distance) (Post-mount)|—|r3-42c.gif
+R3-43|Managed Lane HOV Definition (Overhead)|—|r3-43.gif
+R3-44|Toll Only (Overhead)|—|r3-44.gif
+R3-44a|Toll Or HOV Only (Overhead)|—|r3-44a.gif
+R3-45|Express Lane Ends (Overhead)|—|r3-45.gif
+R3-45a|Express Restriction Ends (Overhead)|—|r3-45a.gif
+R3-48|Express Lane Toll Rate (Overhead)|—|r3-48.gif
+R3-48a|Express Lane Toll Rate / HOV No Toll (Overhead)|—|r3-48a.gif
+R4-1|Do Not Pass|—|r4-1.gif
+R4-2|Pass With Care|—|r4-2.gif
+R4-3|Slower Traffic Keep Right|—|r4-3.gif
+R4-4|Begin Right Turn Lane Yield To Bikes|—|r4-4.gif
+R4-5|Trucks Use Right Lane|—|r4-5.gif
+R4-7|Keep Right|—|r4-7.gif
+R4-7a|Keep Right (Horizontal Arrow)|—|r4-7a.gif
+R4-7b|Keep Right (Diagonal Arrow)|—|r4-7b.gif
+R4-7c|Keep Right (Narrow)|—|r4-7c.gif
+R4-8|Keep Left|—|r4-8.gif
+R4-8a|Keep Left (Horizontal Arrow)|—|r4-8a.gif
+R4-8b|Keep Left (Diagonal Arrow)|—|r4-8b.gif
+R4-8c|Keep Left (Narrow)|—|r4-8c.gif
+R4-9|Stay In Lane|—|r4-9.gif
+R4-10|Runaway Vehicles Only|—|r4-10.gif
+R4-11|Bicycles May Use Full Lane|—|r4-11.gif
+R4-12|Slow Vehicles Must Use Turnout|—|r4-12.gif
+R4-13|Slow Vehicles Use Turnout Ahead|—|r4-13.gif
+R4-14|Slow Vehicles Must Turn Out|—|r4-14.gif
+R4-16|Keep Right Except To Pass|—|r4-16.gif
+R4-17|Do Not Drive On Shoulder|—|r4-17.gif
+R4-18|Do Not Pass On Shoulder|—|r4-18.gif
+R5-1|Do Not Enter|—|r5-1.gif
+R5-1a|Wrong Way|—|r5-1a.gif
+R5-1b|Bicycle Wrong Way|—|r5-1b.gif
+R5-2|No Trucks (symbol)|—|r5-2.gif
+R5-2a|No Trucks (word message)|—|r5-2a.gif
+R5-3|No Motor Vehicles|—|r5-3.gif
+R5-4|No Commercial Vehicles|—|r5-4.gif
+R5-5|No Vehicles With Lugs|—|r5-5.gif
+R5-6|No Bicycles|—|r5-6.gif
+R5-7|No Non-Motorized Traffic|—|r5-7.gif
+R5-8|No Motor-Driven Cycles|—|r5-8.gif
+R5-10a|No Pedestrians Bicycles Motor Driven Cycles|—|r5-10a.gif
+R5-10b|No Pedestrians Or Bicycles|—|r5-10b.gif
+R5-10c|No Pedestrians|—|r5-10c.gif
+R5-11|Authorized Vehicles Only|—|r5-11.gif
+R6-1L|One Way (In Arrow)|—|r6-1l.gif
+R6-1R|One Way (In Arrow)|—|r6-1r.gif
+R6-2L|One Way (Arrow)|—|r6-2l.gif
+R6-2R|One Way (Arrow)|—|r6-2r.gif
+R6-3|Divided Highway Crossing|—|r6-3.gif
+R6-3a|Divided Highway Crossing (T Intersection)|—|r6-3a.gif
+R6-4|Roundabout Directional (2 Chevrons)|—|r6-4.gif
+R6-4a|Roundabout Directional (3 Chevrons)|—|r6-4a.gif
+R6-4b|Roundabout Directional (4 Chevrons)|—|r6-4b.gif
+R6-5P|Roundabout Circulation (plaque)|—|r6-5p.gif
+R6-6|Begin One Way|—|r6-6.gif
+R6-7|End One Way|—|r6-7.gif
+R7-1|No Parking Any Time|—|r7-1.gif
+R7-2|No Parking (symbol) (Times)|—|r7-2.gif
+R7-2a|No Parking (Times)|—|r7-2a.gif
+R7-3|No Parking Except (Days)|—|r7-3.gif
+R7-4|No Standing Any Time|—|r7-4.gif
+R7-5|(Time) Parking (Times)|—|r7-5.gif
+R7-6|No Parking Loading Zone|—|r7-6.gif
+R7-7|No Parking Bus Stop|—|r7-7.gif
+R7-8|Reserved Parking (Accessible)|—|r7-8.gif
+R7-8P|Van Accessible (plaque)|—|r7-8p.gif
+R7-9|No Parking Bike Lane|—|r7-9.gif
+R7-9a|No Parking (symbol) Bike Lane|—|r7-9a.gif
+R7-20|Parking Fee Station|—|r7-20.gif
+R7-21|(Time) Pay Parking|—|r7-21.gif
+R7-21a|Pay Parking (Time Limit)|—|r7-21a.gif
+R7-22|Pay Parking|—|r7-22.gif
+R7-23|Pay Parking (Times)|—|r7-23.gif
+R7-23a|Parking (Limit & Time)|—|r7-23a.gif
+R7-107|No Parking Bus Stop|—|r7-107.gif
+R7-107a|No Parking Transit Logo|—|r7-107a.gif
+R7-108|(Time Limit) Parking (Times)|—|r7-108.gif
+R7-200|No Parking / Restricted Parking Combo (Side By Side)|—|r7-200.gif
+R7-200a|No Parking / Restricted Parking Combo (Stacked)|—|r7-200a.gif
+R7-201P|Tow Away Zone (symbol) (plaque)|—|r7-201p.gif
+R7-201aP|Tow Away Zone (word message) (plaque)|—|r7-201ap.gif
+R7-202P|This Side Of Sign (plaque)|—|r7-202p.gif
+R7-203|Emergency Snow Route|—|r7-203.gif
+R8-1|No Parking On Pavement|—|r8-1.gif
+R8-2|No Parking Except On Shoulder|—|r8-2.gif
+R8-3|No Parking (symbol)|—|r8-3.gif
+R8-3a|No Parking (word message)|—|r8-3a.gif
+R8-3bP|Except (Days) (plaque)|—|r8-3bp.gif
+R8-3cP|On Pavement (plaque)|—|r8-3cp.gif
+R8-3dP|On Bridge (plaque)|—|r8-3dp.gif
+R8-3eP|On Tracks (plaque)|—|r8-3ep.gif
+R8-3fP|Except On Shoulder (plaque)|—|r8-3fp.gif
+R8-3gP|Loading Zone (plaque)|—|r8-3gp.gif
+R8-3hP|Times Of Day (plaque)|—|r8-3hp.gif
+R8-4|Emergency Parking Only|—|r8-4.gif
+R8-5|No Stopping On Pavement|—|r8-5.gif
+R8-6|No Stopping Except On Shoulder|—|r8-6.gif
+R8-7|Emergency Stopping Only|—|r8-7.gif
+R8-8|Do Not Stop On Tracks|—|r8-8.gif
+R8-9|Tracks Out Of Service|—|r8-9.gif
+R8-10|Stop Here When Flashing|—|r8-10.gif
+R8-10a|Stop Here When Flashing|—|r8-10a.gif
+R9-1|Walk On Left Facing Traffic|—|r9-1.gif
+R9-2|Cross Only At Crosswalks|—|r9-2.gif
+R9-3|No Pedestrians|—|r9-3.gif
+R9-3a|No Pedestrian Crossing|—|r9-3a.gif
+R9-3bP|Use Crosswalk (plaque)|—|r9-3bp.gif
+R9-3cP|Ride With Traffic (plaque)|—|r9-3cp.gif
+R9-4|No Hitchhiking (symbol)|—|r9-4.gif
+R9-4a|No Hitchhiking (word message)|—|r9-4a.gif
+R9-5|Bicycles Use Ped Signal|—|r9-5.gif
+R9-6|Bicycles Yield To Peds|—|r9-6.gif
+R9-7|(Bicycles/Peds) Keep (Left/Right)|—|r9-7.gif
+R9-8|Pedestrian Crosswalk|—|r9-8.gif
+R9-9|Sidewalk Closed|—|r9-9.gif
+R9-10|Sidewalk Closed Use Other Side|—|r9-10.gif
+R9-11|Sidewalk Closed Ahead Cross Here|—|r9-11.gif
+R9-11a|Sidewalk Closed Cross Here|—|r9-11a.gif
+R9-13|No Skaters|—|r9-13.gif
+R9-14|No Equestrians|—|r9-14.gif
+R9-23|Bicycle All Turns From Bike Lane|—|r9-23.gif
+R9-23aL|Bicycle Left Turn Must Use Turn Box|—|r9-23a.gif
+R9-23aR|Bicycle Right Turn Must Use Turn Box|—|r9-23a.gif
+R9-23bL|Bicycle Left Turn Must Use Turn Box (Arrow)|—|r9-23b.gif
+R9-23bR|Bicycle Right Turn Must Use Turn Box (Arrow)|—|r9-23b.gif
+R10-1|Cross Only On Green|—|r10-1.gif
+R10-2|Cross Only On Walk Signal|—|r10-2.gif
+R10-3|Push Button For Walk Signal|—|r10-3.gif
+R10-3a|Push Button To Cross Street Wait For Walk Signal|—|r10-3a.gif
+R10-3b|Pedestrian Signal Information (Symbol)|—|r10-3b.gif
+R10-3c|Pedestrian Signal Information (Walk/Dont Walk)|—|r10-3c.gif
+R10-3d|Pedestrian Signal Information (Two-Stage Crossing)|—|r10-3d.gif
+R10-3e|Pedestrian Signal Information (Countdown)|—|r10-3e.gif
+R10-3f|Pedestrian Signal Information (Symbol) (Street Name)|—|r10-3f.gif
+R10-3g|Pedestrian Signal Information (Walk/Dont Walk) (Street Name)|—|r10-3g.gif
+R10-3h|Pedestrian Signal Information (Two-Stage Crossing) (Street Name)|—|r10-3h.gif
+R10-3i|Pedestrian Signal Information (Countdown) (Street Name)|—|r10-3i.gif
+R10-4|Push Button For Green|—|r10-4.gif
+R10-4a|Push Button To Cross Street Wait For Green|—|r10-4a.gif
+R10-5|Left On Green Arrow Only|—|r10-5.gif
+R10-5a|Right On Green Arrow Only|—|r10-5a.gif
+R10-6|Stop Here On Red|—|r10-6.gif
+R10-6a|Stop Here On Red|—|r10-6a.gif
+R10-7|Do Not Block Intersection|—|r10-7.gif
+R10-8|Use Lane(s) With Green Arrow|—|r10-8.gif
+R10-10L|Left Turn Signal|—|r10-10l.gif
+R10-10R|Right Turn Signal|—|r10-10r.gif
+R10-10b|Bicycle Signal|—|r10-10b.gif
+R10-11|No Turn On Red (Symbol)|—|r10-11.gif
+R10-11a|No Turn On Red|—|r10-11a.gif
+R10-11b|No Turn On Red|—|r10-11b.gif
+R10-11c|No Turn On Red Except From Right Lane|—|r10-11c.gif
+R10-11d|No Turn On Red From This Lane|—|r10-11d.gif
+R10-12|Left Turn Yield On Green|—|r10-12.gif
+R10-13|Emergency Signal|—|r10-13.gif
+R10-14|Emergency Signal Stop On Flashing Red (Post-mount)|—|r10-14.gif
+R10-14a|Emergency Signal Stop On Flashing Red (Overhead)|—|r10-14a.gif
+R10-14b|Stop Here On Flashing Red|—|r10-14b.gif
+R10-15L|Turning Vehicles Yield To Pedestrians|—|r10-15l.gif
+R10-15R|Turning Vehicles Yield To Pedestrians|—|r10-15r.gif
+R10-16|U-turn Yield To Right Turn|—|r10-16.gif
+R10-17a|Right On Red Arrow After Stop|—|r10-17a.gif
+R10-18|Traffic Laws Photo Enforced|—|r10-18.gif
+R10-18a|Traffic Signal Photo Enforced|—|r10-18a.gif
+R10-19P|Photo Enforced (symbol) (plaque)|—|r10-19p.gif
+R10-19aP|Photo Enforced (word message) (plaque)|—|r10-19ap.gif
+R10-20aP|Days & Times (plaque)|—|r10-20ap.gif
+R10-22|To Request Green Wait On Bicycle Symbol|—|r10-22.gif
+R10-23|Crosswalk Stop On Red|—|r10-23.gif
+R10-24|Bicycle Push Button For Green Light|—|r10-24.gif
+R10-25|Push Button To Turn On Warning Lights|—|r10-25.gif
+R10-26|Bicycle Push Button For Green Light (Arrow)|—|r10-26.gif
+R10-27|Left Turn Yield On Flashing Red Arrow After Stop|—|r10-27.gif
+R10-28|Vehicles Per Green|—|r10-28.gif
+R10-29|Vehicles Per Green Each Lane|—|r10-29.gif
+R10-30|Right Turn On Red Must Yield To U-turn|—|r10-30.gif
+R10-31P|At Signal (plaque)|—|r10-31p.gif
+R10-32P|Push Button For Extra Crossing Time (plaque)|—|r10-32p.gif
+R11-1|Keep Off Median|—|r11-1.gif
+R11-2|Road Closed|—|r11-2.gif
+R11-3a|Road Closed Ahead Local Traffic Only|—|r11-3a.gif
+R11-3b|Bridge Out Ahead Local Traffic Only|—|r11-3b.gif
+R11-4|Road Closed To Thru Traffic|—|r11-4.gif
+R12-1|Weight Limit|—|r12-1.gif
+R12-2|Axle Weight Limit|—|r12-2.gif
+R12-3|No Trucks Over Empty Weight|—|r12-3.gif
+R12-4|Weight Limit - Axle & Gross|—|r12-4.gif
+R12-5|Weight Limit (symbols)|—|r12-5.gif
+R13-1|Weigh Station|—|r13-1.gif
+R14-1|Truck Route|—|r14-1.gif
+R14-2|Hazardous Material Permitted|—|r14-2.gif
+R14-3|Hazardous Material Prohibited|—|r14-3.gif
+R14-4|National Network Permitted|—|r14-4.gif
+R14-5|National Network Prohibited|—|r14-5.gif
+R15-1|Railroad Crossing|—|r15-1.gif
+R15-2P|Number Of Tracks (plaque)|—|r15-2p.gif
+R15-3P|Exempt (plaque)|—|r15-3p.gif
+R15-4a|Right Lane Light Rail Only|—|r15-4a.gif
+R15-4b|Left Lane Light Rail Only|—|r15-4b.gif
+R15-4c|Center Lane Light Rail Only|—|r15-4c.gif
+R15-5|Light Rail Do Not Pass|—|r15-5.gif
+R15-5a|Do Not Pass Stopped Train|—|r15-5a.gif
+R15-6|No Motor Vehicles On Tracks (symbol)|—|r15-6.gif
+R15-6a|Do Not Drive On Tracks|—|r15-6a.gif
+R15-7|Divided Highway (Rail)|—|r15-7.gif
+R15-7a|Divided Highway (Rail) (T Intersection)|—|r15-7a.gif
+R15-8|Look|—|r15-8.gif
+R16-1|Seat Belt|—|r16-1.gif
+R16-4|Fender Bender Move Vehicles From Travel Lanes|—|r16-4.gif
+R16-5|Lights On When Using Wipers|—|r16-5.gif
+R16-6|Lights On When Raining|—|r16-6.gif
+R16-7|Turn On Headlights (Distance)|—|r16-7.gif
+R16-8|Turn On Headlights|—|r16-8.gif
+R16-9|Check Headlights|—|r16-9.gif
+R16-10|Begin Daytime Headlight Section|—|r16-10.gif
+R16-11|End Daytime Headlight Section|—|r16-11.gif
+
+# === M series — Route markers ===
+M1-1|Interstate Route|—|m1-1.gif
+M1-2|Interstate Business Loop|—|m1-2.gif
+M1-3|Interstate Business Spur|—|m1-3.gif
+M1-4|US Highway Route|—|m1-4.gif
+M1-5|State Highway Route|—|m1-5.gif
+M1-6|County Route|—|m1-6.gif
+M1-7|National Forest Route|—|m1-7.gif
+M1-8|Bicycle Route (Local Numbered)|—|m1-8.gif
+M1-8a|Bicycle Route (Local Numbered With Pictograph)|—|m1-8a.gif
+M1-9|US Bicycle Route|—|m1-9.gif
+M1-10|Eisenhower Interstate System|—|m1-10.gif
+M2-1|Junction (Auxiliary)|—|m2-1.gif
+M2-2|Combination Junction|—|m2-2.gif
+M3-1|North (Auxiliary)|—|m3-1.gif
+M3-2|East (Auxiliary)|—|m3-2.gif
+M3-3|South (Auxiliary)|—|m3-3.gif
+M3-4|West (Auxiliary)|—|m3-4.gif
+M4-1|Alternate (Auxiliary)|—|m4-1.gif
+M4-1a|Alt (Auxiliary)|—|m4-1a.gif
+M4-2|By-Pass (Auxiliary)|—|m4-2.gif
+M4-3|Business (Auxiliary)|—|m4-3.gif
+M4-4|Truck (Auxiliary)|—|m4-4.gif
+M4-5|To (Auxiliary)|—|m4-5.gif
+M4-6|End (Auxiliary)|—|m4-6.gif
+M4-7|Temporary (Auxiliary)|—|m4-7.gif
+M4-7a|Temp (Auxiliary)|—|m4-7a.gif
+M4-8|Detour (Auxiliary)|—|m4-8.gif
+M4-8a|End Detour|—|m4-8a.gif
+M4-8b|End (Auxiliary)|—|m4-8b.gif
+M4-9L|Detour (Arrow)|—|m4-9l.gif
+M4-9R|Detour (Arrow)|—|m4-9r.gif
+M4-9aL|Detour (Pedestrian & Bicycle)|—|m4-9al.gif
+M4-9aR|Detour (Pedestrian & Bicycle)|—|m4-9ar.gif
+M4-9bL|Detour (Pedestrian)|—|m4-9bl.gif
+M4-9bR|Detour (Pedestrian)|—|m4-9br.gif
+M4-9cL|Detour (Bicycle)|—|m4-9cl.gif
+M4-9cR|Detour (Bicycle)|—|m4-9cr.gif
+M4-10L|Detour Arrow|—|m4-10l.gif
+M4-10R|Detour Arrow|—|m4-10r.gif
+M4-14|Begin (Auxiliary)|—|m4-14.gif
+M4-15|Toll (Auxiliary)|—|m4-15.gif
+M4-16|No Cash (Auxiliary)|—|m4-16.gif
+M4-17|Toll Collector|—|m4-17.gif
+M4-18|Exact Change|—|m4-18.gif
+M4-20|Electronic Toll Collection Only (Auxiliary)|—|m4-20.gif
+M5-1L|Advance Turn (Auxiliary)|—|m5-1l.gif
+M5-1R|Advance Turn (Auxiliary)|—|m5-1r.gif
+M5-2L|Advance Angle Turn (Auxiliary)|—|m5-2l.gif
+M5-2R|Advance Angle Turn (Auxiliary)|—|m5-2r.gif
+M5-3|Advance Roundabout Left Turn (Auxiliary)|—|m5-3.gif
+M5-4|Left Lane (Auxiliary)|—|m5-4.gif
+M5-5|Center Lane (Auxiliary)|—|m5-5.gif
+M5-6|Right Lane (Auxiliary)|—|m5-6.gif
+M6-1L|Turn Arrow (Auxiliary)|—|m6-1l.gif
+M6-1R|Turn Arrow (Auxiliary)|—|m6-1r.gif
+M6-2L|Diagonal Turn Arrow (Auxiliary)|—|m6-2l.gif
+M6-2R|Diagonal Turn Arrow (Auxiliary)|—|m6-2r.gif
+M6-2aL|Downward Diagonal Arrow (Auxiliary)|—|m6-2al.gif
+M6-2aR|Downward Diagonal Arrow (Auxiliary)|—|m6-2ar.gif
+M6-3|Straight Arrow (Auxiliary)|—|m6-3.gif
+M6-4|Two-Direction Left / Right Turn Arrow (Auxiliary)|—|m6-4.gif
+M6-5L|Two-Direction Diagonal Turn Arrow (Auxiliary)|—|m6-5l.gif
+M6-5R|Two-Direction Diagonal Turn Arrow (Auxiliary)|—|m6-5r.gif
+M6-6L|Two-Direction Straight / Turn Arrow (Auxiliary)|—|m6-6l.gif
+M6-6R|Two-Direction Straight / Turn Arrow (Auxiliary)|—|m6-6r.gif
+M6-7L|Two-Direction Straight / Diagonal Turn Arrow (Auxiliary)|—|m6-7l.gif
+M6-7R|Two-Direction Straight / Diagonal Turn Arrow (Auxiliary)|—|m6-7r.gif
+
+# === D series — Guide / Destination ===
+D1-1|Destination (Arrow) (1 direction)|—|d1-1.gif
+D1-1a|Destination and Distance (Arrow) (1 direction)|—|d1-1a.gif
+D1-1b|Bicycle Destination (Arrow) (1 direction)|—|d1-1b.gif
+D1-1c|Bicycle Destination and Distance (Arrow) (1 direction)|—|d1-1c.gif
+D1-1d|Destination (Diagonal Arrow) (for use at circular intersections)|—|d1-1d.gif
+D1-1e|Route / Direction / Destination (Diagonal Arrow) (for use at circular intersections)|—|d1-1e.gif
+D1-2|Destinations (Arrows) (2 directions)|—|d1-2.gif
+D1-2a|Destinations and Distances (Arrows) (2 directions)|—|d1-2a.gif
+D1-2b|Bicycle Destinations (Arrows) (2 directions)|—|d1-2b.gif
+D1-2c|Bicycle Destinations and Distances (Arrows) (2 directions)|—|d1-2c.gif
+D1-2d|Destinations (Arrows) (2 directions) (for use at circular intersections)|—|d1-2d.gif
+D1-3|Destinations (Arrows) (3 directions)|—|d1-3.gif
+D1-3a|Destinations and Distances (Arrows) (3 directions)|—|d1-3a.gif
+D1-3b|Bicycle Destinations (Arrows) (3 directions)|—|d1-3b.gif
+D1-3c|Bicycle Destinations and Distances (Arrows) (3 directions)|—|d1-3c.gif
+D1-3d|Destinations (Arrows) (3 directions) (for use at circular intersections)|—|d1-3d.gif
+D1-5|Roundabout Diagrammatic|—|d1-5.gif
+D2-1|Distance (1 destination)|—|d2-1.gif
+D2-2|Distance (2 destinations)|—|d2-2.gif
+D2-3|Distance (3 destinations)|—|d2-3.gif
+D3-1|Street Name|—|d3-1.gif
+D3-1a|Street Name with Route|—|d3-1a.gif
+D3-2|Advance Street Name|—|d3-2.gif
+D4-1|Parking Area|—|d4-1.gif
+D4-2|Park - Ride (Arrow)|—|d4-2.gif
+D4-3|Bicycle Parking (Arrow)|—|d4-3.gif
+D5-1|Rest Area (Distance)|—|d5-1.gif
+D5-1a|Rest Area Next Right|—|d5-1a.gif
+D5-2|Rest Area (Diagonal Arrow)|—|d5-2.gif
+D5-2a|Rest Area (Diagonal Arrow) (for use in exit gore)|—|d5-2a.gif
+D5-5|Rest Area (Horizontal Arrow)|—|d5-5.gif
+D5-6|Next Rest Area (Distance)|—|d5-6.gif
+D5-7|Rest Area Tourist Info Center (Distance)|—|d5-7.gif
+D5-8|Rest Area Tourist Info Center (Diagonal Arrow)|—|d5-8.gif
+D5-11|Rest Area Tourist Info Center Next Right|—|d5-11.gif
+D5-12|Interstate Oasis|—|d5-12.gif
+D5-12P|Interstate Oasis (plaque)|—|d5-12p.gif
+D5-13|Brake Check Area (Distance)|—|d5-13.gif
+D5-14|Brake Check Area (Diagonal Arrow)|—|d5-14.gif
+D5-15|Chain Up Area (Distance)|—|d5-15.gif
+D5-16|Chain Up Area (Diagonal Arrow)|—|d5-16.gif
+D6-4|America's Byways|large|d6-4.gif
+D6-4a|America's Byways|small|d6-4a.gif
+D8-1|Weigh Station (Distance)|—|d8-1.gif
+D8-2|Weigh Station Next Right|—|d8-2.gif
+D8-3|Weigh Station (Diagonal Arrow)|—|d8-3.gif
+D9-1|Telephone|—|d9-1.gif
+D9-2|Hospital|—|d9-2.gif
+D9-3|Camping|—|d9-3.gif
+D9-3a|Trailer Camping|—|d9-3a.gif
+D9-4|Litter Container|—|d9-4.gif
+D9-6|Handicapped Accessible|—|d9-6.gif
+D9-6P|Van Accessible (plaque)|—|d9-6p.gif
+D9-7|Gas|—|d9-7.gif
+D9-8|Food|—|d9-8.gif
+D9-9|Lodging|—|d9-9.gif
+D9-10|Tourist Information|—|d9-10.gif
+D9-11|Diesel Fuel|—|d9-11.gif
+D9-11a|Compressed Natural Gas|—|d9-11a.gif
+D9-11b|Electric Vehicle Charging|—|d9-11b.gif
+D9-11bP|Electric Vehicle Charging (plaque)|—|d9-11bp.gif
+D9-11c|Ethanol|—|d9-11c.gif
+D9-12|RV Sanitary Station|—|d9-12.gif
+D9-13|Emergency Medical Services|—|d9-13.gif
+D9-13aP|Hospital (plaque)|—|d9-13ap.gif
+D9-13bP|Ambulance Station (plaque)|—|d9-13bp.gif
+D9-13cP|Emergency Medical Care (plaque)|—|d9-13cp.gif
+D9-13dP|Trauma Center (plaque)|—|d9-13dp.gif
+D9-14|Police|—|d9-14.gif
+D9-15|Propane|—|d9-15.gif
+D9-16|Truck Parking|—|d9-16.gif
+D9-17P|Next Services (Distance) (plaque)|—|d9-17p.gif
+D9-18|General Services (symbols)|—|d9-18.gif
+D9-18a|General Services (word message)|—|d9-18a.gif
+D9-18b|General Services With Action / Exit Information (symbols)|—|d9-18b.gif
+D9-18c|General Services with Action / Exit Information (word message)|—|d9-18c.gif
+D9-20|Pharmacy|—|d9-20.gif
+D9-20aP|24 Hour (plaque)|—|d9-20ap.gif
+D9-21|Telecommunication Device for the Deaf|—|d9-21.gif
+D9-22|Wireless Internet|—|d9-22.gif
+D10-1|Reference Location (Milepost) (1 digit)|—|d10-1.gif
+D10-1a|Intermediate Reference Location (2 digits)|—|d10-1a.gif
+D10-2|Reference Location (Milepost) (2 digits)|—|d10-2.gif
+D10-2a|Intermediate Reference Location (3 digits)|—|d10-2a.gif
+D10-3|Reference Location (Milepost) (3 digits)|—|d10-3.gif
+D10-3a|Intermediate Reference Location (4 digits)|—|d10-3a.gif
+D10-4|Enhanced Reference Location|—|d10-4.gif
+D10-5|Intermediate Enhanced Reference Location|—|d10-5.gif
+D11-1|Bike Route|—|d11-1.gif
+D11-1a|Bicycles Permitted|—|d11-1a.gif
+D11-1bP|Bike Route (plaque)|—|d11-1bp.gif
+D11-1c|Bike Route (Destination)|—|d11-1c.gif
+D11-2|Pedestrians Permitted|—|d11-2.gif
+D11-3|Skaters Permitted|—|d11-3.gif
+D11-4|Equestrians Permitted|—|d11-4.gif
+D11-20L|Bicycle Left Turn May Use Turn Box|—|d11-20l.gif
+D11-20R|Bicycle Right Turn May Use Turn Box|—|d11-20r.gif
+D11-20aL|Bicycle Left Turn Box (Left Downward Diagonal Arrow)|—|d11-20al.gif
+D11-20aR|Bicycle Right Turn Box (Right Downward Diagonal Arrow)|—|d11-20ar.gif
+D12-1|Weather Information|—|d12-1.gif
+D12-2|Carpool Information|—|d12-2.gif
+D12-3|Channel 9 Monitored|—|d12-3.gif
+D12-4|Emergency Call 911|—|d12-4.gif
+D12-5|Travel Info Call 511 (pictograph)|—|d12-5.gif
+D12-5a|Travel Info Call 511|—|d12-5a.gif
+D13-1|Crossover (Arrow)|—|d13-1.gif
+D13-2|Crossover (Distance)|—|d13-2.gif
+D13-3|Freeway Entrance|—|d13-3.gif
+D13-3a|Freeway Entrance (Downward Diagonal Arrow)|—|d13-3a.gif
+D14-1|Sponsored By|—|d14-1.gif
+D14-2|Adopt A Roadway By Sponsor|—|d14-2.gif
+D14-3|Adopt A Roadway Sponsored By|—|d14-3.gif
+D15-1|Combination Lane Use / Destination|—|d15-1.gif
+D17-1|Next Truck Lane (Distance)|—|d17-1.gif
+D17-2|Truck Lane (Distance)|—|d17-2.gif
+D17-7|Slow Vehicle Turnout (Distance)|—|d17-7.gif
+
+# === OM series — Object markers ===
+OM1-1|Type 1 Object Marker (yellow diamond)|—|om1-1.gif
+OM1-2|Type 1 Object Marker (variant)|—|om1-2.gif
+OM1-3|Type 1 Object Marker (variant)|—|om1-3.gif
+OM2-1H|Type 2 Object Marker (Horizontal)|—|om2-1h.gif
+OM2-1V|Type 2 Object Marker (Vertical)|—|om2-1v.gif
+OM2-2H|Type 2 Object Marker (Horizontal)|—|om2-2h.gif
+OM2-2V|Type 2 Object Marker (Vertical)|—|om2-2v.gif
+OM3-L|Type 3 Object Marker (Left)|—|om3-l.gif
+OM3-C|Type 3 Object Marker (Center)|—|om3-c.gif
+OM3-R|Type 3 Object Marker (Right)|—|om3-r.gif
+OM4-1|Type 4 Object Marker|—|om4-1.gif
+OM4-2|Type 4 Object Marker|—|om4-2.gif
+OM4-3|Type 4 Object Marker|—|om4-3.gif

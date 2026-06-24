@@ -1,0 +1,4906 @@
+{
+  "generated": "2026-06-24",
+  "source": "https://www.trafficsign.us/",
+  "categories": {
+    "W": "warning",
+    "R": "regulatory",
+    "M": "route_marker",
+    "D": "guide",
+    "OM": "object_marker"
+  },
+  "count": 815,
+  "signs": [
+    {
+      "c": "W1-1L",
+      "n": "Turn",
+      "cat": "W",
+      "img": "w1-1l.gif"
+    },
+    {
+      "c": "W1-1R",
+      "n": "Turn",
+      "cat": "W",
+      "img": "w1-1r.gif"
+    },
+    {
+      "c": "W1-1aL",
+      "n": "Combination Turn / Advisory Speed",
+      "cat": "W",
+      "img": "w1-1al.gif"
+    },
+    {
+      "c": "W1-1aR",
+      "n": "Combination Turn / Advisory Speed",
+      "cat": "W",
+      "img": "w1-1ar.gif"
+    },
+    {
+      "c": "W1-2L",
+      "n": "Curve",
+      "cat": "W",
+      "img": "w1-2l.gif"
+    },
+    {
+      "c": "W1-2R",
+      "n": "Curve",
+      "cat": "W",
+      "img": "w1-2r.gif"
+    },
+    {
+      "c": "W1-2aL",
+      "n": "Combination Curve / Advisory Speed",
+      "cat": "W",
+      "img": "w1-2al.gif"
+    },
+    {
+      "c": "W1-2aR",
+      "n": "Combination Curve / Advisory Speed",
+      "cat": "W",
+      "img": "w1-2ar.gif"
+    },
+    {
+      "c": "W1-3L",
+      "n": "Reverse Turn",
+      "cat": "W",
+      "img": "w1-3l.gif"
+    },
+    {
+      "c": "W1-3R",
+      "n": "Reverse Turn",
+      "cat": "W",
+      "img": "w1-3r.gif"
+    },
+    {
+      "c": "W1-4L",
+      "n": "Reverse Curve",
+      "cat": "W",
+      "img": "w1-4l.gif"
+    },
+    {
+      "c": "W1-4R",
+      "n": "Reverse Curve",
+      "cat": "W",
+      "img": "w1-4r.gif"
+    },
+    {
+      "c": "W1-4bL",
+      "n": "Reverse Curve (2 lanes)",
+      "cat": "W",
+      "img": "w1-4bl.gif"
+    },
+    {
+      "c": "W1-4bR",
+      "n": "Reverse Curve (2 lanes)",
+      "cat": "W",
+      "img": "w1-4br.gif"
+    },
+    {
+      "c": "W1-4cL",
+      "n": "Reverse Curve (3 lanes)",
+      "cat": "W",
+      "img": "w1-4cl.gif"
+    },
+    {
+      "c": "W1-4cR",
+      "n": "Reverse Curve (3 lanes)",
+      "cat": "W",
+      "img": "w1-4cr.gif"
+    },
+    {
+      "c": "W1-5L",
+      "n": "Winding Road",
+      "cat": "W",
+      "img": "w1-5l.gif"
+    },
+    {
+      "c": "W1-5R",
+      "n": "Winding Road",
+      "cat": "W",
+      "img": "w1-5r.gif"
+    },
+    {
+      "c": "W1-6L",
+      "n": "One Direction Large Arrow",
+      "cat": "W",
+      "img": "w1-6l.gif"
+    },
+    {
+      "c": "W1-6R",
+      "n": "One Direction Large Arrow",
+      "cat": "W",
+      "img": "w1-6r.gif"
+    },
+    {
+      "c": "W1-7",
+      "n": "Two Direction Large Arrow",
+      "cat": "W",
+      "img": "w1-7.gif"
+    },
+    {
+      "c": "W1-8L",
+      "n": "Chevron Alignment",
+      "cat": "W",
+      "img": "w1-8l.gif"
+    },
+    {
+      "c": "W1-8R",
+      "n": "Chevron Alignment",
+      "cat": "W",
+      "img": "w1-8r.gif"
+    },
+    {
+      "c": "W1-10L",
+      "n": "Combination Curve / Side Road Intersection",
+      "cat": "W",
+      "img": "w1-10l.gif"
+    },
+    {
+      "c": "W1-10R",
+      "n": "Combination Curve / Side Road Intersection",
+      "cat": "W",
+      "img": "w1-10r.gif"
+    },
+    {
+      "c": "W1-10aL",
+      "n": "Combination Curve / Cross Road Intersection",
+      "cat": "W",
+      "img": "w1-10al.gif"
+    },
+    {
+      "c": "W1-10aR",
+      "n": "Combination Curve / Cross Road Intersection",
+      "cat": "W",
+      "img": "w1-10ar.gif"
+    },
+    {
+      "c": "W1-10bL",
+      "n": "Combination Curve / Side Road Intersection (Tangent)",
+      "cat": "W",
+      "img": "w1-10bl.gif"
+    },
+    {
+      "c": "W1-10bR",
+      "n": "Combination Curve / Side Road Intersection (Tangent)",
+      "cat": "W",
+      "img": "w1-10br.gif"
+    },
+    {
+      "c": "W1-10cL",
+      "n": "Combination Curve / Cross Road Intersection (Tangent From Side)",
+      "cat": "W",
+      "img": "w1-10cl.gif"
+    },
+    {
+      "c": "W1-10cR",
+      "n": "Combination Curve / Cross Road Intersection (Tangent From Side)",
+      "cat": "W",
+      "img": "w1-10cr.gif"
+    },
+    {
+      "c": "W1-10dL",
+      "n": "Combination Reverse Curve / Side Road Intersection",
+      "cat": "W",
+      "img": "w1-10dl.gif"
+    },
+    {
+      "c": "W1-10dR",
+      "n": "Combination Reverse Curve / Side Road Intersection",
+      "cat": "W",
+      "img": "w1-10dr.gif"
+    },
+    {
+      "c": "W1-10eL",
+      "n": "Combination Reverse Curve / Cross Road Intersection",
+      "cat": "W",
+      "img": "w1-10el.gif"
+    },
+    {
+      "c": "W1-10eR",
+      "n": "Combination Reverse Curve / Cross Road Intersection",
+      "cat": "W",
+      "img": "w1-10er.gif"
+    },
+    {
+      "c": "W1-11L",
+      "n": "180 Degree (Hairpin) Curve",
+      "cat": "W",
+      "img": "w1-11l.gif"
+    },
+    {
+      "c": "W1-11R",
+      "n": "180 Degree (Hairpin) Curve",
+      "cat": "W",
+      "img": "w1-11r.gif"
+    },
+    {
+      "c": "W1-13L",
+      "n": "Truck Rollover",
+      "cat": "W",
+      "img": "w1-13l.gif"
+    },
+    {
+      "c": "W1-13R",
+      "n": "Truck Rollover",
+      "cat": "W",
+      "img": "w1-13r.gif"
+    },
+    {
+      "c": "W1-15L",
+      "n": "270 Degree (Loop) Curve",
+      "cat": "W",
+      "img": "w1-15l.gif"
+    },
+    {
+      "c": "W1-15R",
+      "n": "270 Degree (Loop) Curve",
+      "cat": "W",
+      "img": "w1-15r.gif"
+    },
+    {
+      "c": "W2-1",
+      "n": "Cross Road Intersection",
+      "cat": "W",
+      "img": "w2-1.gif"
+    },
+    {
+      "c": "W2-2L",
+      "n": "Side Road Intersection",
+      "cat": "W",
+      "img": "w2-2l.gif"
+    },
+    {
+      "c": "W2-2R",
+      "n": "Side Road Intersection",
+      "cat": "W",
+      "img": "w2-2r.gif"
+    },
+    {
+      "c": "W2-3L",
+      "n": "Diagonal Side Road Intersection",
+      "cat": "W",
+      "img": "w2-3l.gif"
+    },
+    {
+      "c": "W2-3R",
+      "n": "Diagonal Side Road Intersection",
+      "cat": "W",
+      "img": "w2-3r.gif"
+    },
+    {
+      "c": "W2-4",
+      "n": "T Intersection",
+      "cat": "W",
+      "img": "w2-4.gif"
+    },
+    {
+      "c": "W2-5",
+      "n": "Y Intersection",
+      "cat": "W",
+      "img": "w2-5.gif"
+    },
+    {
+      "c": "W2-6",
+      "n": "Roundabout Intersection",
+      "cat": "W",
+      "img": "w2-6.gif"
+    },
+    {
+      "c": "W2-7L",
+      "n": "Offset Side Road Intersection",
+      "cat": "W",
+      "img": "w2-7l.gif"
+    },
+    {
+      "c": "W2-7R",
+      "n": "Offset Side Road Intersection",
+      "cat": "W",
+      "img": "w2-7r.gif"
+    },
+    {
+      "c": "W2-8L",
+      "n": "Double Side Road Intersection",
+      "cat": "W",
+      "img": "w2-8l.gif"
+    },
+    {
+      "c": "W2-8R",
+      "n": "Double Side Road Intersection",
+      "cat": "W",
+      "img": "w2-8r.gif"
+    },
+    {
+      "c": "W3-1",
+      "n": "Stop Ahead",
+      "cat": "W",
+      "img": "w3-1.gif"
+    },
+    {
+      "c": "W3-2",
+      "n": "Yield Ahead",
+      "cat": "W",
+      "img": "w3-2.gif"
+    },
+    {
+      "c": "W3-3",
+      "n": "Signal Ahead",
+      "cat": "W",
+      "img": "w3-3.gif"
+    },
+    {
+      "c": "W3-4",
+      "n": "Be Prepared to Stop",
+      "cat": "W",
+      "img": "w3-4.gif"
+    },
+    {
+      "c": "W3-5",
+      "n": "Reduced Speed Limit Ahead",
+      "cat": "W",
+      "img": "w3-5.gif"
+    },
+    {
+      "c": "W3-5a",
+      "n": "(Speed) Zone Ahead",
+      "cat": "W",
+      "img": "w3-5a.gif"
+    },
+    {
+      "c": "W3-6",
+      "n": "Draw Bridge",
+      "cat": "W",
+      "img": "w3-6.gif"
+    },
+    {
+      "c": "W3-7",
+      "n": "Ramp Meter Ahead",
+      "cat": "W",
+      "img": "w3-7.gif"
+    },
+    {
+      "c": "W3-8",
+      "n": "Ramp Metered When Flashing",
+      "cat": "W",
+      "img": "w3-8.gif"
+    },
+    {
+      "c": "W4-1L",
+      "n": "Merge",
+      "cat": "W",
+      "img": "w4-1l.gif"
+    },
+    {
+      "c": "W4-1Lmod",
+      "n": "Merge (Modified For Preferential Lane Barrier)",
+      "cat": "W",
+      "img": "w4-1modl.gif"
+    },
+    {
+      "c": "W4-1R",
+      "n": "Merge",
+      "cat": "W",
+      "img": "w4-1r.gif"
+    },
+    {
+      "c": "W4-1Rmod",
+      "n": "Merge (Modified For Preferential Lane Barrier)",
+      "cat": "W",
+      "img": "w4-1modr.gif"
+    },
+    {
+      "c": "W4-2L",
+      "n": "Lane Ends",
+      "cat": "W",
+      "img": "w4-2l.gif"
+    },
+    {
+      "c": "W4-2Lmod",
+      "n": "Lane Ends (Modified For Preferential Lane Barrier)",
+      "cat": "W",
+      "img": "w4-2modl.gif"
+    },
+    {
+      "c": "W4-2R",
+      "n": "Lane Ends",
+      "cat": "W",
+      "img": "w4-2r.gif"
+    },
+    {
+      "c": "W4-2Rmod",
+      "n": "Lane Ends (Modified For Preferential Lane Barrier)",
+      "cat": "W",
+      "img": "w4-2modr.gif"
+    },
+    {
+      "c": "W4-3L",
+      "n": "Added Lane",
+      "cat": "W",
+      "img": "w4-3l.gif"
+    },
+    {
+      "c": "W4-3R",
+      "n": "Added Lane",
+      "cat": "W",
+      "img": "w4-3r.gif"
+    },
+    {
+      "c": "W4-4P",
+      "n": "Cross Traffic Does Not Stop (plaque)",
+      "cat": "W",
+      "img": "w4-4p.gif"
+    },
+    {
+      "c": "W4-4aLP",
+      "n": "Traffic From Left Does Not Stop (plaque)",
+      "cat": "W",
+      "img": "w4-4alp.gif"
+    },
+    {
+      "c": "W4-4aRP",
+      "n": "Traffic From Right Does Not Stop (plaque)",
+      "cat": "W",
+      "img": "w4-4arp.gif"
+    },
+    {
+      "c": "W4-4bP",
+      "n": "Oncoming Traffic Does Not Stop (plaque)",
+      "cat": "W",
+      "img": "w4-4bp.gif"
+    },
+    {
+      "c": "W4-5L",
+      "n": "Entering Roadway Merge",
+      "cat": "W",
+      "img": "w4-5l.gif"
+    },
+    {
+      "c": "W4-5P",
+      "n": "No Merge Area (plaque)",
+      "cat": "W",
+      "img": "w4-5p.gif"
+    },
+    {
+      "c": "W4-5R",
+      "n": "Entering Roadway Merge",
+      "cat": "W",
+      "img": "w4-5r.gif"
+    },
+    {
+      "c": "W4-6L",
+      "n": "Entering Roadway Added Lane",
+      "cat": "W",
+      "img": "w4-6l.gif"
+    },
+    {
+      "c": "W4-6R",
+      "n": "Entering Roadway Added Lane",
+      "cat": "W",
+      "img": "w4-6r.gif"
+    },
+    {
+      "c": "W5-1",
+      "n": "Road Narrows",
+      "cat": "W",
+      "img": "w5-1.gif"
+    },
+    {
+      "c": "W5-2",
+      "n": "Narrow Bridge",
+      "cat": "W",
+      "img": "w5-2.gif"
+    },
+    {
+      "c": "W5-3",
+      "n": "One Lane Bridge",
+      "cat": "W",
+      "img": "w5-3.gif"
+    },
+    {
+      "c": "W5-4",
+      "n": "Ramp Narrows",
+      "cat": "W",
+      "img": "w5-4.gif"
+    },
+    {
+      "c": "W5-4a",
+      "n": "Path Narrows",
+      "cat": "W",
+      "img": "w5-4a.gif"
+    },
+    {
+      "c": "W6-1",
+      "n": "Divided Highway",
+      "cat": "W",
+      "img": "w6-1.gif"
+    },
+    {
+      "c": "W6-2",
+      "n": "Divided Highway Ends",
+      "cat": "W",
+      "img": "w6-2.gif"
+    },
+    {
+      "c": "W6-3",
+      "n": "Two Way Traffic",
+      "cat": "W",
+      "img": "w6-3.gif"
+    },
+    {
+      "c": "W6-4",
+      "n": "Opposing Traffic Divider",
+      "cat": "W",
+      "img": "w6-4.gif"
+    },
+    {
+      "c": "W7-1",
+      "n": "Hill",
+      "cat": "W",
+      "img": "w7-1.gif"
+    },
+    {
+      "c": "W7-1a",
+      "n": "Hill (Percent Grade)",
+      "cat": "W",
+      "img": "w7-1a.gif"
+    },
+    {
+      "c": "W7-2P",
+      "n": "Use Low Gear (plaque)",
+      "cat": "W",
+      "img": "w7-2p.gif"
+    },
+    {
+      "c": "W7-2bP",
+      "n": "Trucks Use Lower Gear (plaque)",
+      "cat": "W",
+      "img": "w7-2bp.gif"
+    },
+    {
+      "c": "W7-3P",
+      "n": "Percent Grade (plaque)",
+      "cat": "W",
+      "img": "w7-3p.gif"
+    },
+    {
+      "c": "W7-3aP",
+      "n": "Next (Distance) Miles (plaque)",
+      "cat": "W",
+      "img": "w7-3ap.gif"
+    },
+    {
+      "c": "W7-3bP",
+      "n": "Percent Grade (Distance) Miles (plaque)",
+      "cat": "W",
+      "img": "w7-3bp.gif"
+    },
+    {
+      "c": "W7-4",
+      "n": "Runaway Truck Ramp (Distance)",
+      "cat": "W",
+      "img": "w7-4.gif"
+    },
+    {
+      "c": "W7-4bL",
+      "n": "Runaway Truck Ramp (Arrow)",
+      "cat": "W",
+      "img": "w7-4bl.gif"
+    },
+    {
+      "c": "W7-4bR",
+      "n": "Runaway Truck Ramp (Arrow)",
+      "cat": "W",
+      "img": "w7-4br.gif"
+    },
+    {
+      "c": "W7-4c",
+      "n": "Truck Escape Ramp",
+      "cat": "W",
+      "img": "w7-4c.gif"
+    },
+    {
+      "c": "W7-4dP",
+      "n": "Sand (plaque)",
+      "cat": "W",
+      "img": "w7-4dp.gif"
+    },
+    {
+      "c": "W7-4eP",
+      "n": "Gravel (plaque)",
+      "cat": "W",
+      "img": "w7-4ep.gif"
+    },
+    {
+      "c": "W7-4fP",
+      "n": "Paved (plaque)",
+      "cat": "W",
+      "img": "w7-4fp.gif"
+    },
+    {
+      "c": "W7-5",
+      "n": "Hill (Bicycle)",
+      "cat": "W",
+      "img": "w7-5.gif"
+    },
+    {
+      "c": "W7-6",
+      "n": "Hill Blocks View",
+      "cat": "W",
+      "img": "w7-6.gif"
+    },
+    {
+      "c": "W8-1",
+      "n": "Bump",
+      "cat": "W",
+      "img": "w8-1.gif"
+    },
+    {
+      "c": "W8-2",
+      "n": "Dip",
+      "cat": "W",
+      "img": "w8-2.gif"
+    },
+    {
+      "c": "W8-3",
+      "n": "Pavement Ends",
+      "cat": "W",
+      "img": "w8-3.gif"
+    },
+    {
+      "c": "W8-4",
+      "n": "Soft Shoulder",
+      "cat": "W",
+      "img": "w8-4.gif"
+    },
+    {
+      "c": "W8-5",
+      "n": "Slippery When Wet",
+      "cat": "W",
+      "img": "w8-5.gif"
+    },
+    {
+      "c": "W8-5P",
+      "n": "When Wet (plaque)",
+      "cat": "W",
+      "img": "w8-5p.gif"
+    },
+    {
+      "c": "W8-5aP",
+      "n": "Ice (plaque)",
+      "cat": "W",
+      "img": "w8-5ap.gif"
+    },
+    {
+      "c": "W8-5bP",
+      "n": "Steel Deck (plaque)",
+      "cat": "W",
+      "img": "w8-5bp.gif"
+    },
+    {
+      "c": "W8-5cP",
+      "n": "Excess Oil (plaque)",
+      "cat": "W",
+      "img": "w8-5cp.gif"
+    },
+    {
+      "c": "W8-6",
+      "n": "Truck Crossing",
+      "cat": "W",
+      "img": "w8-6.gif"
+    },
+    {
+      "c": "W8-7",
+      "n": "Loose Gravel",
+      "cat": "W",
+      "img": "w8-7.gif"
+    },
+    {
+      "c": "W8-8",
+      "n": "Rough Road",
+      "cat": "W",
+      "img": "w8-8.gif"
+    },
+    {
+      "c": "W8-9",
+      "n": "Low Shoulder",
+      "cat": "W",
+      "img": "w8-9.gif"
+    },
+    {
+      "c": "W8-10",
+      "n": "Bicycle Surface Condition",
+      "cat": "W",
+      "img": "w8-10.gif"
+    },
+    {
+      "c": "W8-10P",
+      "n": "Slippery When Wet (plaque)",
+      "cat": "W",
+      "img": "w8-10p.gif"
+    },
+    {
+      "c": "W8-11",
+      "n": "Uneven Lanes",
+      "cat": "W",
+      "img": "w8-11.gif"
+    },
+    {
+      "c": "W8-12",
+      "n": "No Center Line",
+      "cat": "W",
+      "img": "w8-12.gif"
+    },
+    {
+      "c": "W8-13",
+      "n": "Bridge Ices Before Road",
+      "cat": "W",
+      "img": "w8-13.gif"
+    },
+    {
+      "c": "W8-14",
+      "n": "Fallen Rocks",
+      "cat": "W",
+      "img": "w8-14.gif"
+    },
+    {
+      "c": "W8-15",
+      "n": "Grooved Pavement",
+      "cat": "W",
+      "img": "w8-15.gif"
+    },
+    {
+      "c": "W8-15P",
+      "n": "Motorcycle (plaque)",
+      "cat": "W",
+      "img": "w8-15p.gif"
+    },
+    {
+      "c": "W8-16",
+      "n": "Metal Bridge Deck",
+      "cat": "W",
+      "img": "w8-16.gif"
+    },
+    {
+      "c": "W8-17L",
+      "n": "Shoulder Drop Off (symbol)",
+      "cat": "W",
+      "img": "w8-17l.gif"
+    },
+    {
+      "c": "W8-17P",
+      "n": "Shoulder Drop Off (plaque)",
+      "cat": "W",
+      "img": "w8-17p.gif"
+    },
+    {
+      "c": "W8-17R",
+      "n": "Shoulder Drop Off (symbol)",
+      "cat": "W",
+      "img": "w8-17r.gif"
+    },
+    {
+      "c": "W8-18",
+      "n": "Road May Flood",
+      "cat": "W",
+      "img": "w8-18.gif"
+    },
+    {
+      "c": "W8-19",
+      "n": "Flood Depth Gauge",
+      "cat": "W",
+      "img": "w8-19.gif"
+    },
+    {
+      "c": "W8-21",
+      "n": "Gusty Winds Area",
+      "cat": "W",
+      "img": "w8-21.gif"
+    },
+    {
+      "c": "W8-22",
+      "n": "Fog Area",
+      "cat": "W",
+      "img": "w8-22.gif"
+    },
+    {
+      "c": "W8-23",
+      "n": "No Shoulder",
+      "cat": "W",
+      "img": "w8-23.gif"
+    },
+    {
+      "c": "W8-24",
+      "n": "Steel Plate Ahead",
+      "cat": "W",
+      "img": "w8-24.gif"
+    },
+    {
+      "c": "W8-25",
+      "n": "Shoulder Ends",
+      "cat": "W",
+      "img": "w8-25.gif"
+    },
+    {
+      "c": "W9-1L",
+      "n": "Left Lane Ends",
+      "cat": "W",
+      "img": "w9-1l.gif"
+    },
+    {
+      "c": "W9-1R",
+      "n": "Right Lane Ends",
+      "cat": "W",
+      "img": "w9-1r.gif"
+    },
+    {
+      "c": "W9-2L",
+      "n": "Lane Ends Merge Left",
+      "cat": "W",
+      "img": "w9-2l.gif"
+    },
+    {
+      "c": "W9-2R",
+      "n": "Lane Ends Merge Right",
+      "cat": "W",
+      "img": "w9-2r.gif"
+    },
+    {
+      "c": "W9-3",
+      "n": "Center Lane Closed Ahead",
+      "cat": "W",
+      "img": "w9-3.gif"
+    },
+    {
+      "c": "W9-6",
+      "n": "Pay Toll (Distance) (Price)",
+      "cat": "W",
+      "img": "w9-6.gif"
+    },
+    {
+      "c": "W9-6P",
+      "n": "Pay Toll (Distance) (Price) (plaque)",
+      "cat": "W",
+      "img": "w9-6p.gif"
+    },
+    {
+      "c": "W9-6a",
+      "n": "Stop Ahead Pay Toll (Price)",
+      "cat": "W",
+      "img": "w9-6a.gif"
+    },
+    {
+      "c": "W9-6aP",
+      "n": "Stop Ahead Pay Toll (plaque)",
+      "cat": "W",
+      "img": "w9-6ap.gif"
+    },
+    {
+      "c": "W9-7L",
+      "n": "Left Lane Exit Only Ahead",
+      "cat": "W",
+      "img": "w9-7l.gif"
+    },
+    {
+      "c": "W9-7R",
+      "n": "Right Lane Exit Only Ahead",
+      "cat": "W",
+      "img": "w9-7r.gif"
+    },
+    {
+      "c": "W10-1",
+      "n": "Railroad Crossing Warning",
+      "cat": "W",
+      "img": "w10-1.gif"
+    },
+    {
+      "c": "W10-1aP",
+      "n": "Exempt (plaque)",
+      "cat": "W",
+      "img": "w10-1ap.gif"
+    },
+    {
+      "c": "W10-2L",
+      "n": "Railroad Crossing (On Crossroad)",
+      "cat": "W",
+      "img": "w10-2l.gif"
+    },
+    {
+      "c": "W10-2R",
+      "n": "Railroad Crossing (On Crossroad)",
+      "cat": "W",
+      "img": "w10-2r.gif"
+    },
+    {
+      "c": "W10-3L",
+      "n": "Railroad Crossing (On Side Road)",
+      "cat": "W",
+      "img": "w10-3l.gif"
+    },
+    {
+      "c": "W10-3R",
+      "n": "Railroad Crossing (On Side Road)",
+      "cat": "W",
+      "img": "w10-3r.gif"
+    },
+    {
+      "c": "W10-4L",
+      "n": "Railroad Crossing (On Side of T Intersection)",
+      "cat": "W",
+      "img": "w10-4l.gif"
+    },
+    {
+      "c": "W10-4R",
+      "n": "Railroad Crossing (On Side of T Intersection)",
+      "cat": "W",
+      "img": "w10-4r.gif"
+    },
+    {
+      "c": "W10-5",
+      "n": "Low Ground Clearance",
+      "cat": "W",
+      "img": "w10-5.gif"
+    },
+    {
+      "c": "W10-5P",
+      "n": "Low Ground Clearance (plaque)",
+      "cat": "W",
+      "img": "w10-5p.gif"
+    },
+    {
+      "c": "W10-7",
+      "n": "Light Rail Transit Approaching (blankout)",
+      "cat": "W",
+      "img": "w10-7.gif"
+    },
+    {
+      "c": "W10-8",
+      "n": "Trains May Exceed 80 MPH",
+      "cat": "W",
+      "img": "w10-8.gif"
+    },
+    {
+      "c": "W10-9",
+      "n": "No Train Horn",
+      "cat": "W",
+      "img": "w10-9.gif"
+    },
+    {
+      "c": "W10-9P",
+      "n": "No Train Horn (plaque)",
+      "cat": "W",
+      "img": "w10-9p.gif"
+    },
+    {
+      "c": "W10-11",
+      "n": "Railroad Crossing Storage Space",
+      "cat": "W",
+      "img": "w10-11t.gif"
+    },
+    {
+      "c": "W10-11a",
+      "n": "(Distance) Between Tracks And Highway",
+      "cat": "W",
+      "img": "w10-11a.gif"
+    },
+    {
+      "c": "W10-11b",
+      "n": "(Distance) Between Highway And Tracks Behind You",
+      "cat": "W",
+      "img": "w10-11b.gif"
+    },
+    {
+      "c": "W10-12L",
+      "n": "Skewed Railroad Crossing",
+      "cat": "W",
+      "img": "w10-12l.gif"
+    },
+    {
+      "c": "W10-12R",
+      "n": "Skewed Railroad Crossing",
+      "cat": "W",
+      "img": "w10-12r.gif"
+    },
+    {
+      "c": "W10-13P",
+      "n": "No Gates or Lights (plaque)",
+      "cat": "W",
+      "img": "w10-13p.gif"
+    },
+    {
+      "c": "W10-14P",
+      "n": "Next Crossing (plaque)",
+      "cat": "W",
+      "img": "w10-14p.gif"
+    },
+    {
+      "c": "W10-14aP",
+      "n": "Use Next Crossing (plaque)",
+      "cat": "W",
+      "img": "w10-14ap.gif"
+    },
+    {
+      "c": "W10-15P",
+      "n": "Rough Crossing (plaque)",
+      "cat": "W",
+      "img": "w10-15p.gif"
+    },
+    {
+      "c": "W11-1",
+      "n": "Bicycle",
+      "cat": "W",
+      "img": "w11-1.gif"
+    },
+    {
+      "c": "W11-2",
+      "n": "Pedestrian",
+      "cat": "W",
+      "img": "w11-2.gif"
+    },
+    {
+      "c": "W11-3",
+      "n": "Deer",
+      "cat": "W",
+      "img": "w11-3.gif"
+    },
+    {
+      "c": "W11-4",
+      "n": "Cattle",
+      "cat": "W",
+      "img": "w11-4.gif"
+    },
+    {
+      "c": "W11-5",
+      "n": "Farm Equipment",
+      "cat": "W",
+      "img": "w11-5.gif"
+    },
+    {
+      "c": "W11-5a",
+      "n": "Farm Equipment (Alternate)",
+      "cat": "W",
+      "img": "w11-5a.gif"
+    },
+    {
+      "c": "W11-6",
+      "n": "Snowmobile",
+      "cat": "W",
+      "img": "w11-6.gif"
+    },
+    {
+      "c": "W11-7",
+      "n": "Equestrian",
+      "cat": "W",
+      "img": "w11-7.gif"
+    },
+    {
+      "c": "W11-8",
+      "n": "Emergency Vehicle",
+      "cat": "W",
+      "img": "w11-8.gif"
+    },
+    {
+      "c": "W11-9",
+      "n": "Handicapped",
+      "cat": "W",
+      "img": "w11-9.gif"
+    },
+    {
+      "c": "W11-10",
+      "n": "Truck",
+      "cat": "W",
+      "img": "w11-10.gif"
+    },
+    {
+      "c": "W11-11",
+      "n": "Golf Cart",
+      "cat": "W",
+      "img": "w11-11.gif"
+    },
+    {
+      "c": "W11-12P",
+      "n": "Emergency Signal Ahead (plaque)",
+      "cat": "W",
+      "img": "w11-12p.gif"
+    },
+    {
+      "c": "W11-14",
+      "n": "Horse-Drawn Vehicle",
+      "cat": "W",
+      "img": "w11-14.gif"
+    },
+    {
+      "c": "W11-15",
+      "n": "Bicycle & Pedestrian",
+      "cat": "W",
+      "img": "w11-15.gif"
+    },
+    {
+      "c": "W11-15P",
+      "n": "Trail X-ing (plaque)",
+      "cat": "W",
+      "img": "w11-15p.gif"
+    },
+    {
+      "c": "W11-15a",
+      "n": "Trail Crossing",
+      "cat": "W",
+      "img": "w11-15a.gif"
+    },
+    {
+      "c": "W11-16",
+      "n": "Bear",
+      "cat": "W",
+      "img": "w11-16.gif"
+    },
+    {
+      "c": "W11-17",
+      "n": "Sheep",
+      "cat": "W",
+      "img": "w11-17.gif"
+    },
+    {
+      "c": "W11-18",
+      "n": "Bighorn Sheep",
+      "cat": "W",
+      "img": "w11-18.gif"
+    },
+    {
+      "c": "W11-19",
+      "n": "Donkey",
+      "cat": "W",
+      "img": "w11-19.gif"
+    },
+    {
+      "c": "W11-20",
+      "n": "Elk",
+      "cat": "W",
+      "img": "w11-20.gif"
+    },
+    {
+      "c": "W11-21",
+      "n": "Moose",
+      "cat": "W",
+      "img": "w11-21.gif"
+    },
+    {
+      "c": "W11-22",
+      "n": "Horse",
+      "cat": "W",
+      "img": "w11-22.gif"
+    },
+    {
+      "c": "W12-1",
+      "n": "Double Arrow",
+      "cat": "W",
+      "img": "w12-1.gif"
+    },
+    {
+      "c": "W12-2",
+      "n": "Low Clearance",
+      "cat": "W",
+      "img": "w12-2.gif"
+    },
+    {
+      "c": "W12-2a",
+      "n": "Low Clearance (Overhead)",
+      "cat": "W",
+      "img": "w12-2a.gif"
+    },
+    {
+      "c": "W13-1P",
+      "n": "Advisory Speed (plaque)",
+      "cat": "W",
+      "img": "w13-1p.gif"
+    },
+    {
+      "c": "W13-2",
+      "n": "Advisory Exit Speed",
+      "cat": "W",
+      "img": "w13-2.gif"
+    },
+    {
+      "c": "W13-2mod",
+      "n": "Advisory Exit Speed (Modified For Preferential Lane Barrier)",
+      "cat": "W",
+      "img": "w13-2mod.gif"
+    },
+    {
+      "c": "W13-3",
+      "n": "Advisory Ramp Speed",
+      "cat": "W",
+      "img": "w13-3.gif"
+    },
+    {
+      "c": "W13-4P",
+      "n": "On Ramp (plaque)",
+      "cat": "W",
+      "img": "w13-4p.gif"
+    },
+    {
+      "c": "W13-6",
+      "n": "Combination Loop Curve / Exit Speed",
+      "cat": "W",
+      "img": "w13-6.gif"
+    },
+    {
+      "c": "W13-7",
+      "n": "Combination Loop Curve / Ramp Speed",
+      "cat": "W",
+      "img": "w13-7.gif"
+    },
+    {
+      "c": "W14-1",
+      "n": "Dead End",
+      "cat": "W",
+      "img": "w14-1.gif"
+    },
+    {
+      "c": "W14-1aL",
+      "n": "Dead End (Arrow)",
+      "cat": "W",
+      "img": "w14-1al.gif"
+    },
+    {
+      "c": "W14-1aR",
+      "n": "Dead End (Arrow)",
+      "cat": "W",
+      "img": "w14-1ar.gif"
+    },
+    {
+      "c": "W14-2",
+      "n": "No Outlet",
+      "cat": "W",
+      "img": "w14-2.gif"
+    },
+    {
+      "c": "W14-2aL",
+      "n": "No Outlet (Arrow)",
+      "cat": "W",
+      "img": "w14-2al.gif"
+    },
+    {
+      "c": "W14-2aR",
+      "n": "No Outlet (Arrow)",
+      "cat": "W",
+      "img": "w14-2ar.gif"
+    },
+    {
+      "c": "W14-3",
+      "n": "No Passing Zone",
+      "cat": "W",
+      "img": "w14-3.gif"
+    },
+    {
+      "c": "W15-1",
+      "n": "Playground",
+      "cat": "W",
+      "img": "w15-1.gif"
+    },
+    {
+      "c": "W16-1P",
+      "n": "Share the Road (plaque)",
+      "cat": "W",
+      "img": "w16-1p.gif"
+    },
+    {
+      "c": "W16-2P",
+      "n": "(Distance) Feet (2 line) (plaque)",
+      "cat": "W",
+      "img": "w16-2p.gif"
+    },
+    {
+      "c": "W16-2aP",
+      "n": "(Distance) Feet (1 line) (plaque)",
+      "cat": "W",
+      "img": "w16-2ap.gif"
+    },
+    {
+      "c": "W16-3P",
+      "n": "(Distance) Miles (2 line) (plaque)",
+      "cat": "W",
+      "img": "w16-3p.gif"
+    },
+    {
+      "c": "W16-3aP",
+      "n": "(Distance) Miles (1 line) (plaque)",
+      "cat": "W",
+      "img": "w16-3ap.gif"
+    },
+    {
+      "c": "W16-4P",
+      "n": "Next (Distance) Feet (plaque)",
+      "cat": "W",
+      "img": "w16-4p.gif"
+    },
+    {
+      "c": "W16-5PL",
+      "n": "Supplemental Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-5pl.gif"
+    },
+    {
+      "c": "W16-5PR",
+      "n": "Supplemental Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-5pr.gif"
+    },
+    {
+      "c": "W16-6PL",
+      "n": "Supplemental Advance Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-6pl.gif"
+    },
+    {
+      "c": "W16-6PR",
+      "n": "Supplemental Advance Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-6pr.gif"
+    },
+    {
+      "c": "W16-7PL",
+      "n": "Downward Diagonal Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-7pl.gif"
+    },
+    {
+      "c": "W16-7PR",
+      "n": "Downward Diagonal Arrow (plaque)",
+      "cat": "W",
+      "img": "w16-7pr.gif"
+    },
+    {
+      "c": "W16-8P",
+      "n": "Street Name (1 line) (plaque)",
+      "cat": "W",
+      "img": "w16-8p.gif"
+    },
+    {
+      "c": "W16-8aP",
+      "n": "Street Name (2 line) (plaque)",
+      "cat": "W",
+      "img": "w16-8ap.gif"
+    },
+    {
+      "c": "W16-9P",
+      "n": "Ahead (plaque)",
+      "cat": "W",
+      "img": "w16-9p.gif"
+    },
+    {
+      "c": "W16-10P",
+      "n": "Photo Enforced (symbol) (plaque)",
+      "cat": "W",
+      "img": "w16-10p.gif"
+    },
+    {
+      "c": "W16-10aP",
+      "n": "Photo Enforced (word message) (plaque)",
+      "cat": "W",
+      "img": "w16-10ap.gif"
+    },
+    {
+      "c": "W16-11P",
+      "n": "HOV (plaque)",
+      "cat": "W",
+      "img": "w16-11p.gif"
+    },
+    {
+      "c": "W16-12P",
+      "n": "Traffic Circle (plaque)",
+      "cat": "W",
+      "img": "w16-12p.gif"
+    },
+    {
+      "c": "W16-13P",
+      "n": "When Flashing (plaque)",
+      "cat": "W",
+      "img": "w16-13p.gif"
+    },
+    {
+      "c": "W16-15P",
+      "n": "New (plaque)",
+      "cat": "W",
+      "img": "w16-15p.gif"
+    },
+    {
+      "c": "W16-16P",
+      "n": "Last Exit Before Toll (plaque)",
+      "cat": "W",
+      "img": "w16-16p.gif"
+    },
+    {
+      "c": "W16-17P",
+      "n": "Roundabout (plaque)",
+      "cat": "W",
+      "img": "w16-17p.gif"
+    },
+    {
+      "c": "W16-18P",
+      "n": "Notice (plaque)",
+      "cat": "W",
+      "img": "w16-18p.gif"
+    },
+    {
+      "c": "W17-1",
+      "n": "Speed Hump",
+      "cat": "W",
+      "img": "w17-1.gif"
+    },
+    {
+      "c": "W18-1",
+      "n": "No Traffic Signs",
+      "cat": "W",
+      "img": "w18-1.gif"
+    },
+    {
+      "c": "W19-1",
+      "n": "Freeway Ends (Distance)",
+      "cat": "W",
+      "img": "w19-1.gif"
+    },
+    {
+      "c": "W19-2",
+      "n": "Expressway Ends (Distance)",
+      "cat": "W",
+      "img": "w19-2.gif"
+    },
+    {
+      "c": "W19-3",
+      "n": "Freeway Ends",
+      "cat": "W",
+      "img": "w19-3.gif"
+    },
+    {
+      "c": "W19-4",
+      "n": "Expressway Ends",
+      "cat": "W",
+      "img": "w19-4.gif"
+    },
+    {
+      "c": "W19-5",
+      "n": "All Traffic Must Exit",
+      "cat": "W",
+      "img": "w19-5.gif"
+    },
+    {
+      "c": "W20-1",
+      "n": "Road Work (Distance)",
+      "cat": "W",
+      "img": "w20-1.gif"
+    },
+    {
+      "c": "W20-2",
+      "n": "Detour (Distance)",
+      "cat": "W",
+      "img": "w20-2.gif"
+    },
+    {
+      "c": "W20-3",
+      "n": "Road Closed (Distance)",
+      "cat": "W",
+      "img": "w20-3.gif"
+    },
+    {
+      "c": "W20-4",
+      "n": "One Lane Road (Distance)",
+      "cat": "W",
+      "img": "w20-4.gif"
+    },
+    {
+      "c": "W20-5C",
+      "n": "Center Lane Closed (Distance)",
+      "cat": "W",
+      "img": "w20-5c.gif"
+    },
+    {
+      "c": "W20-5L",
+      "n": "Left Lane Closed (Distance)",
+      "cat": "W",
+      "img": "w20-5l.gif"
+    },
+    {
+      "c": "W20-5R",
+      "n": "Right Lane Closed (Distance)",
+      "cat": "W",
+      "img": "w20-5r.gif"
+    },
+    {
+      "c": "W20-5aL",
+      "n": "(Number) Left Lanes Closed (Distance)",
+      "cat": "W",
+      "img": "w20-5al.gif"
+    },
+    {
+      "c": "W20-5aR",
+      "n": "(Number) Right Lanes Closed (Distance)",
+      "cat": "W",
+      "img": "w20-5ar.gif"
+    },
+    {
+      "c": "W20-7",
+      "n": "Flagger (symbol)",
+      "cat": "W",
+      "img": "w20-7.gif"
+    },
+    {
+      "c": "W20-7a",
+      "n": "Flagger (Distance)",
+      "cat": "W",
+      "img": "w20-7a.gif"
+    },
+    {
+      "c": "W20-8",
+      "n": "Slow (on Stop/Slow Paddle)",
+      "cat": "W",
+      "img": "w20-8.gif"
+    },
+    {
+      "c": "W21-1",
+      "n": "Workers (symbol)",
+      "cat": "W",
+      "img": "w21-1.gif"
+    },
+    {
+      "c": "W21-1a",
+      "n": "Workers (word message)",
+      "cat": "W",
+      "img": "w21-1a.gif"
+    },
+    {
+      "c": "W21-2",
+      "n": "Fresh Oil (Tar)",
+      "cat": "W",
+      "img": "w21-2.gif"
+    },
+    {
+      "c": "W21-3",
+      "n": "Road Machinery (Distance)",
+      "cat": "W",
+      "img": "w21-3.gif"
+    },
+    {
+      "c": "W21-4",
+      "n": "Slow Moving Vehicle",
+      "cat": "W",
+      "img": "w21-4.gif"
+    },
+    {
+      "c": "W21-5",
+      "n": "Shoulder Work",
+      "cat": "W",
+      "img": "w21-5.gif"
+    },
+    {
+      "c": "W21-5aL",
+      "n": "Left Shoulder Closed",
+      "cat": "W",
+      "img": "w21-5al.gif"
+    },
+    {
+      "c": "W21-5aR",
+      "n": "Right Shoulder Closed",
+      "cat": "W",
+      "img": "w21-5ar.gif"
+    },
+    {
+      "c": "W21-5bL",
+      "n": "Left Shoulder Closed (Distance)",
+      "cat": "W",
+      "img": "w21-5bl.gif"
+    },
+    {
+      "c": "W21-5bR",
+      "n": "Right Shoulder Closed (Distance)",
+      "cat": "W",
+      "img": "w21-5br.gif"
+    },
+    {
+      "c": "W21-6",
+      "n": "Survey Crew",
+      "cat": "W",
+      "img": "w21-6.gif"
+    },
+    {
+      "c": "W21-7",
+      "n": "Utility Work (Distance)",
+      "cat": "W",
+      "img": "w21-7.gif"
+    },
+    {
+      "c": "W21-8",
+      "n": "Mowing (Distance)",
+      "cat": "W",
+      "img": "w21-8.gif"
+    },
+    {
+      "c": "W22-1",
+      "n": "Blasting Zone (Distance)",
+      "cat": "W",
+      "img": "w22-1.gif"
+    },
+    {
+      "c": "W22-2",
+      "n": "Turn Off 2-Way Radio and Cell Phone",
+      "cat": "W",
+      "img": "w22-2.gif"
+    },
+    {
+      "c": "W22-3",
+      "n": "End Blasting Zone",
+      "cat": "W",
+      "img": "w22-3.gif"
+    },
+    {
+      "c": "W23-1",
+      "n": "Slow Traffic Ahead",
+      "cat": "W",
+      "img": "w23-1.gif"
+    },
+    {
+      "c": "W23-2",
+      "n": "New Traffic Pattern Ahead",
+      "cat": "W",
+      "img": "w23-2.gif"
+    },
+    {
+      "c": "W24-1L",
+      "n": "Double Reverse Curve (1 lane)",
+      "cat": "W",
+      "img": "w24-1l.gif"
+    },
+    {
+      "c": "W24-1R",
+      "n": "Double Reverse Curve (1 lane)",
+      "cat": "W",
+      "img": "w24-1r.gif"
+    },
+    {
+      "c": "W24-1aL",
+      "n": "Double Reverse Curve (2 lanes)",
+      "cat": "W",
+      "img": "w24-1al.gif"
+    },
+    {
+      "c": "W24-1aR",
+      "n": "Double Reverse Curve (2 lanes)",
+      "cat": "W",
+      "img": "w24-1ar.gif"
+    },
+    {
+      "c": "W24-1bL",
+      "n": "Double Reverse Curve (3 lanes)",
+      "cat": "W",
+      "img": "w24-1bl.gif"
+    },
+    {
+      "c": "W24-1bR",
+      "n": "Double Reverse Curve (3 lanes)",
+      "cat": "W",
+      "img": "w24-1br.gif"
+    },
+    {
+      "c": "W24-1cP",
+      "n": "All Lanes (plaque)",
+      "cat": "W",
+      "img": "w24-1cp.gif"
+    },
+    {
+      "c": "W25-1",
+      "n": "Oncoming Traffic Has Extended Green",
+      "cat": "W",
+      "img": "w25-1.gif"
+    },
+    {
+      "c": "W25-2",
+      "n": "Oncoming Traffic May Have Extended Green",
+      "cat": "W",
+      "img": "w25-2.gif"
+    },
+    {
+      "c": "R1-1",
+      "n": "Stop",
+      "cat": "R",
+      "img": "r1-1.gif"
+    },
+    {
+      "c": "R1-2",
+      "n": "Yield",
+      "cat": "R",
+      "img": "r1-2.gif"
+    },
+    {
+      "c": "R1-2aP",
+      "n": "To Oncoming Traffic (plaque)",
+      "cat": "R",
+      "img": "r1-2ap.gif"
+    },
+    {
+      "c": "R1-3P",
+      "n": "All Way (plaque)",
+      "cat": "R",
+      "img": "r1-3p.gif"
+    },
+    {
+      "c": "R1-5",
+      "n": "Yield Here to Peds",
+      "cat": "R",
+      "img": "r1-5l.gif"
+    },
+    {
+      "c": "R1-5a",
+      "n": "Yield Here to Pedestrians",
+      "cat": "R",
+      "img": "r1-5ar.gif"
+    },
+    {
+      "c": "R1-5b",
+      "n": "Stop Here For Peds",
+      "cat": "R",
+      "img": "r1-5bl.gif"
+    },
+    {
+      "c": "R1-5c",
+      "n": "Stop Here For Pedestrians",
+      "cat": "R",
+      "img": "r1-5cr.gif"
+    },
+    {
+      "c": "R1-6",
+      "n": "In-Street Pedestrian Crossing (Yield)",
+      "cat": "R",
+      "img": "r1-6ylw.gif"
+    },
+    {
+      "c": "R1-6a",
+      "n": "In-Street Pedestrian Crossing (Stop)",
+      "cat": "R",
+      "img": "r1-6aylw.gif"
+    },
+    {
+      "c": "R1-6b",
+      "n": "In-Street School Crossing (Yield)",
+      "cat": "R",
+      "img": "r1-6b.gif"
+    },
+    {
+      "c": "R1-6c",
+      "n": "In-Street School Crossing (Stop)",
+      "cat": "R",
+      "img": "r1-6c.gif"
+    },
+    {
+      "c": "R1-7",
+      "n": "Wait On Stop",
+      "cat": "R",
+      "img": "r1-7.gif"
+    },
+    {
+      "c": "R1-8",
+      "n": "Go On Slow",
+      "cat": "R",
+      "img": "r1-8.gif"
+    },
+    {
+      "c": "R1-9",
+      "n": "Overhead Pedestrian Crossing (Yield)",
+      "cat": "R",
+      "img": "r1-9ylw.gif"
+    },
+    {
+      "c": "R1-9a",
+      "n": "Overhead Pedestrian Crossing (Stop)",
+      "cat": "R",
+      "img": "r1-9aylw.gif"
+    },
+    {
+      "c": "R1-10P",
+      "n": "Except Right Turn (plaque)",
+      "cat": "R",
+      "img": "r1-10p.gif"
+    },
+    {
+      "c": "R2-1",
+      "n": "Speed Limit",
+      "cat": "R",
+      "img": "r2-1.gif"
+    },
+    {
+      "c": "R2-2P",
+      "n": "Truck Speed (plaque)",
+      "cat": "R",
+      "img": "r2-2p.gif"
+    },
+    {
+      "c": "R2-3P",
+      "n": "Night Speed (plaque)",
+      "cat": "R",
+      "img": "r2-3p.gif"
+    },
+    {
+      "c": "R2-4P",
+      "n": "Minimum Speed (plaque)",
+      "cat": "R",
+      "img": "r2-4p.gif"
+    },
+    {
+      "c": "R2-4a",
+      "n": "Speed Limit With Minimum Speed",
+      "cat": "R",
+      "img": "r2-4a.gif"
+    },
+    {
+      "c": "R2-5P",
+      "n": "Unless Otherwise Posted (plaque)",
+      "cat": "R",
+      "img": "r2-5p.gif"
+    },
+    {
+      "c": "R2-5aP",
+      "n": "Citywide (plaque)",
+      "cat": "R",
+      "img": "r2-5ap.gif"
+    },
+    {
+      "c": "R2-5bP",
+      "n": "Neighborhood (plaque)",
+      "cat": "R",
+      "img": "r2-5bp.gif"
+    },
+    {
+      "c": "R2-5cP",
+      "n": "Residential (plaque)",
+      "cat": "R",
+      "img": "r2-5cp.gif"
+    },
+    {
+      "c": "R2-6P",
+      "n": "Fines Higher (plaque)",
+      "cat": "R",
+      "img": "r2-6p.gif"
+    },
+    {
+      "c": "R2-6aP",
+      "n": "Fines Double (plaque)",
+      "cat": "R",
+      "img": "r2-6ap.gif"
+    },
+    {
+      "c": "R2-6bP",
+      "n": "$ Fine (plaque)",
+      "cat": "R",
+      "img": "r2-6bp.gif"
+    },
+    {
+      "c": "R2-10",
+      "n": "Begin Higher Fines Zone",
+      "cat": "R",
+      "img": "r2-10.gif"
+    },
+    {
+      "c": "R2-11",
+      "n": "End Higher Fines Zone",
+      "cat": "R",
+      "img": "r2-11.gif"
+    },
+    {
+      "c": "R2-12",
+      "n": "End Work Zone Speed Limit",
+      "cat": "R",
+      "img": "r2-12.gif"
+    },
+    {
+      "c": "R3-1",
+      "n": "No Right Turn",
+      "cat": "R",
+      "img": "r3-1.gif"
+    },
+    {
+      "c": "R3-1a",
+      "n": "No Right Turn Across Tracks (blankout)",
+      "cat": "R",
+      "img": "r3-1a.gif"
+    },
+    {
+      "c": "R3-2",
+      "n": "No Left Turn",
+      "cat": "R",
+      "img": "r3-2.gif"
+    },
+    {
+      "c": "R3-2a",
+      "n": "No Left Turn Across Tracks (blankout)",
+      "cat": "R",
+      "img": "r3-2a.gif"
+    },
+    {
+      "c": "R3-3",
+      "n": "No Turns",
+      "cat": "R",
+      "img": "r3-3.gif"
+    },
+    {
+      "c": "R3-4",
+      "n": "No U Turn",
+      "cat": "R",
+      "img": "r3-4.gif"
+    },
+    {
+      "c": "R3-5L",
+      "n": "Left Turn Only",
+      "cat": "R",
+      "img": "r3-5l.gif"
+    },
+    {
+      "c": "R3-5R",
+      "n": "Right Turn Only",
+      "cat": "R",
+      "img": "r3-5r.gif"
+    },
+    {
+      "c": "R3-5a",
+      "n": "Straight Only",
+      "cat": "R",
+      "img": "r3-5a.gif"
+    },
+    {
+      "c": "R3-5bP",
+      "n": "Left Lane (plaque)",
+      "cat": "R",
+      "img": "r3-5bp.gif"
+    },
+    {
+      "c": "R3-5cP",
+      "n": "HOV (plaque)",
+      "cat": "R",
+      "img": "r3-5cp.gif"
+    },
+    {
+      "c": "R3-5dP",
+      "n": "Taxi Lane (plaque)",
+      "cat": "R",
+      "img": "r3-5dp.gif"
+    },
+    {
+      "c": "R3-5eP",
+      "n": "Center Lane (plaque)",
+      "cat": "R",
+      "img": "r3-5ep.gif"
+    },
+    {
+      "c": "R3-5fP",
+      "n": "Right Lane (plaque)",
+      "cat": "R",
+      "img": "r3-5fp.gif"
+    },
+    {
+      "c": "R3-5gP",
+      "n": "Bus Lane (plaque)",
+      "cat": "R",
+      "img": "r3-5gp.gif"
+    },
+    {
+      "c": "R3-6L",
+      "n": "Optional Movement (Straight and Left)",
+      "cat": "R",
+      "img": "r3-6l.gif"
+    },
+    {
+      "c": "R3-6R",
+      "n": "Optional Movement (Straight and Right)",
+      "cat": "R",
+      "img": "r3-6r.gif"
+    },
+    {
+      "c": "R3-7L",
+      "n": "Left Lane Must Turn Left",
+      "cat": "R",
+      "img": "r3-7l.gif"
+    },
+    {
+      "c": "R3-7R",
+      "n": "Right Lane Must Turn Right",
+      "cat": "R",
+      "img": "r3-7r.gif"
+    },
+    {
+      "c": "R3-7bP",
+      "n": "Except Bicycles (plaque)",
+      "cat": "R",
+      "img": "r3-7bp.gif"
+    },
+    {
+      "c": "R3-8",
+      "n": "Intersection Lane Control (2 Lane)",
+      "cat": "R",
+      "img": "r3-8l.gif"
+    },
+    {
+      "c": "R3-8a",
+      "n": "Intersection Lane Control (3 Lane)",
+      "cat": "R",
+      "img": "r3-8ar.gif"
+    },
+    {
+      "c": "R3-8b",
+      "n": "Intersection Lane Control (3 Lane, Left / Straight / Right)",
+      "cat": "R",
+      "img": "r3-8b.gif"
+    },
+    {
+      "c": "R3-8rdbt2",
+      "n": "Intersection Lane Control (2 Lane, Roundabout)",
+      "cat": "R",
+      "img": "r3-8rdbt2.gif"
+    },
+    {
+      "c": "R3-9a",
+      "n": "Two Way Left Turn Only (Overhead)",
+      "cat": "R",
+      "img": "r3-9a.gif"
+    },
+    {
+      "c": "R3-9b",
+      "n": "Two Way Left Turn Only (Post-mount)",
+      "cat": "R",
+      "img": "r3-9b.gif"
+    },
+    {
+      "c": "R3-9cP",
+      "n": "Begin (plaque)",
+      "cat": "R",
+      "img": "r3-9cp.gif"
+    },
+    {
+      "c": "R3-9dP",
+      "n": "End (plaque)",
+      "cat": "R",
+      "img": "r3-9dp.gif"
+    },
+    {
+      "c": "R3-9e",
+      "n": "Reversible Lane Control (Overhead)",
+      "cat": "R",
+      "img": "r3-9e.gif"
+    },
+    {
+      "c": "R3-9f",
+      "n": "Reversible Lane Control (Post-mount)",
+      "cat": "R",
+      "img": "r3-9f.gif"
+    },
+    {
+      "c": "R3-9g",
+      "n": "End Reverse Lane (Overhead)",
+      "cat": "R",
+      "img": "r3-9g.gif"
+    },
+    {
+      "c": "R3-9h",
+      "n": "Begin Reverse Lane (Overhead)",
+      "cat": "R",
+      "img": "r3-9h.gif"
+    },
+    {
+      "c": "R3-9i",
+      "n": "End Reverse Lane Turn Only (Overhead)",
+      "cat": "R",
+      "img": "r3-9i.gif"
+    },
+    {
+      "c": "R3-10",
+      "n": "HOV Occupancy Definition (Post-mount)",
+      "cat": "R",
+      "img": "r3-10.gif"
+    },
+    {
+      "c": "R3-10a",
+      "n": "ILEV Allowed (Post-mount)",
+      "cat": "R",
+      "img": "r3-10a.gif"
+    },
+    {
+      "c": "R3-11",
+      "n": "HOV Only (Days & Times) (Post-mount)",
+      "cat": "R",
+      "img": "r3-11.gif"
+    },
+    {
+      "c": "R3-11P",
+      "n": "Motorcycles Allowed (plaque)",
+      "cat": "R",
+      "img": "r3-11p.gif"
+    },
+    {
+      "c": "R3-11a",
+      "n": "HOV Only Lane (Days & Times) (Post-mount)",
+      "cat": "R",
+      "img": "r3-11a.gif"
+    },
+    {
+      "c": "R3-11b",
+      "n": "Buses Only Lane (Days & Times) (Post-mount)",
+      "cat": "R",
+      "img": "r3-11b.gif"
+    },
+    {
+      "c": "R3-11c",
+      "n": "HOV Only Lane 24 Hours (Post-mount)",
+      "cat": "R",
+      "img": "r3-11c.gif"
+    },
+    {
+      "c": "R3-12",
+      "n": "HOV Only Lane Ahead (Post-mount)",
+      "cat": "R",
+      "img": "r3-12.gif"
+    },
+    {
+      "c": "R3-12a",
+      "n": "HOV Lane Ends (Post-mount)",
+      "cat": "R",
+      "img": "r3-12a.gif"
+    },
+    {
+      "c": "R3-12b",
+      "n": "HOV Lane Ends (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-12b.gif"
+    },
+    {
+      "c": "R3-12c",
+      "n": "HOV Restriction Ends (Post-mount)",
+      "cat": "R",
+      "img": "r3-12c.gif"
+    },
+    {
+      "c": "R3-12d",
+      "n": "HOV Restriction Ends (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-12d.gif"
+    },
+    {
+      "c": "R3-12e",
+      "n": "HOV Only Lane (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-12e.gif"
+    },
+    {
+      "c": "R3-12f",
+      "n": "Bus Lane Ahead (Post-mount)",
+      "cat": "R",
+      "img": "r3-12f.gif"
+    },
+    {
+      "c": "R3-12g",
+      "n": "Bus Lane Ends (Post-mount)",
+      "cat": "R",
+      "img": "r3-12g.gif"
+    },
+    {
+      "c": "R3-12h",
+      "n": "Bus Lane Ends (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-12h.gif"
+    },
+    {
+      "c": "R3-13",
+      "n": "HOV Definition (Overhead)",
+      "cat": "R",
+      "img": "r3-13.gif"
+    },
+    {
+      "c": "R3-13a",
+      "n": "HOV Definition (Days & Times) (Overhead)",
+      "cat": "R",
+      "img": "r3-13a.gif"
+    },
+    {
+      "c": "R3-14",
+      "n": "HOV Only (Days & Times) (Overhead)",
+      "cat": "R",
+      "img": "r3-14.gif"
+    },
+    {
+      "c": "R3-14a",
+      "n": "HOV Only (Days & Times) (Overhead)",
+      "cat": "R",
+      "img": "r3-14a.gif"
+    },
+    {
+      "c": "R3-14b",
+      "n": "HOV Only (Overhead)",
+      "cat": "R",
+      "img": "r3-14b.gif"
+    },
+    {
+      "c": "R3-14c",
+      "n": "Buses - Taxis Only (Days & Times) (Overhead)",
+      "cat": "R",
+      "img": "r3-14c.gif"
+    },
+    {
+      "c": "R3-15",
+      "n": "HOV Only Lane Ahead (Overhead)",
+      "cat": "R",
+      "img": "r3-15.gif"
+    },
+    {
+      "c": "R3-15a",
+      "n": "HOV Begins (Distance) (Overhead)",
+      "cat": "R",
+      "img": "r3-15a.gif"
+    },
+    {
+      "c": "R3-15b",
+      "n": "HOV Lane Ends (Overhead)",
+      "cat": "R",
+      "img": "r3-15b.gif"
+    },
+    {
+      "c": "R3-15c",
+      "n": "HOV Restriction Ends (Overhead)",
+      "cat": "R",
+      "img": "r3-15c.gif"
+    },
+    {
+      "c": "R3-15d",
+      "n": "Bus Lane Ahead (Overhead)",
+      "cat": "R",
+      "img": "r3-15d.gif"
+    },
+    {
+      "c": "R3-15e",
+      "n": "Bus Lane Ends (Overhead)",
+      "cat": "R",
+      "img": "r3-15e.gif"
+    },
+    {
+      "c": "R3-17",
+      "n": "Bike Lane",
+      "cat": "R",
+      "img": "r3-17.gif"
+    },
+    {
+      "c": "R3-17aP",
+      "n": "Ahead (for use with R3-17)",
+      "cat": "R",
+      "img": "r3-17ap.gif"
+    },
+    {
+      "c": "R3-17bP",
+      "n": "Ends (for use with R3-17)",
+      "cat": "R",
+      "img": "r3-17bp.gif"
+    },
+    {
+      "c": "R3-18",
+      "n": "No Left or U Turn",
+      "cat": "R",
+      "img": "r3-18.gif"
+    },
+    {
+      "c": "R3-20L",
+      "n": "Begin Left Turn Lane",
+      "cat": "R",
+      "img": "r3-20l.gif"
+    },
+    {
+      "c": "R3-20R",
+      "n": "Begin Right Turn Lane",
+      "cat": "R",
+      "img": "r3-20r.gif"
+    },
+    {
+      "c": "R3-23",
+      "n": "All Turns From Right Lane",
+      "cat": "R",
+      "img": "r3-23.gif"
+    },
+    {
+      "c": "R3-23a",
+      "n": "U Turns From Right Lane",
+      "cat": "R",
+      "img": "r3-23a.gif"
+    },
+    {
+      "c": "R3-24",
+      "n": "All Turns (Diagonal Arrow)",
+      "cat": "R",
+      "img": "r3-24.gif"
+    },
+    {
+      "c": "R3-24a",
+      "n": "U And Left Turns (Diagonal Arrow)",
+      "cat": "R",
+      "img": "r3-24a.gif"
+    },
+    {
+      "c": "R3-24b",
+      "n": "U Turn (Diagonal Arrow)",
+      "cat": "R",
+      "img": "r3-24b.gif"
+    },
+    {
+      "c": "R3-25",
+      "n": "All Turns (Arrow)",
+      "cat": "R",
+      "img": "r3-25.gif"
+    },
+    {
+      "c": "R3-25a",
+      "n": "U And Left Turns (Arrow)",
+      "cat": "R",
+      "img": "r3-25a.gif"
+    },
+    {
+      "c": "R3-25b",
+      "n": "U Turn (Arrow)",
+      "cat": "R",
+      "img": "r3-25b.gif"
+    },
+    {
+      "c": "R3-26",
+      "n": "U And Left Turns (Straight Arrow)",
+      "cat": "R",
+      "img": "r3-26.gif"
+    },
+    {
+      "c": "R3-26a",
+      "n": "U Turn (Straight Arrow)",
+      "cat": "R",
+      "img": "r3-26a.gif"
+    },
+    {
+      "c": "R3-27",
+      "n": "No Thru Movement",
+      "cat": "R",
+      "img": "r3-27.gif"
+    },
+    {
+      "c": "R3-28",
+      "n": "Toll Rate",
+      "cat": "R",
+      "img": "r3-28.gif"
+    },
+    {
+      "c": "R3-29P",
+      "n": "Pay Toll (plaque)",
+      "cat": "R",
+      "img": "r3-29p.gif"
+    },
+    {
+      "c": "R3-30P",
+      "n": "Take Ticket (plaque)",
+      "cat": "R",
+      "img": "r3-30p.gif"
+    },
+    {
+      "c": "R3-33",
+      "n": "Lane Must Exit (Left or Right)",
+      "cat": "R",
+      "img": "r3-33.gif"
+    },
+    {
+      "c": "R3-40",
+      "n": "Managed Lane HOV Definition (Post-mount)",
+      "cat": "R",
+      "img": "r3-40.gif"
+    },
+    {
+      "c": "R3-42",
+      "n": "Express Lane Ends (Post-mount)",
+      "cat": "R",
+      "img": "r3-42.gif"
+    },
+    {
+      "c": "R3-42a",
+      "n": "Express Lane Ends (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-42a.gif"
+    },
+    {
+      "c": "R3-42b",
+      "n": "Express Restriction Ends (Post-mount)",
+      "cat": "R",
+      "img": "r3-42b.gif"
+    },
+    {
+      "c": "R3-42c",
+      "n": "Express Restriction Ends (Distance) (Post-mount)",
+      "cat": "R",
+      "img": "r3-42c.gif"
+    },
+    {
+      "c": "R3-43",
+      "n": "Managed Lane HOV Definition (Overhead)",
+      "cat": "R",
+      "img": "r3-43.gif"
+    },
+    {
+      "c": "R3-44",
+      "n": "Toll Only (Overhead)",
+      "cat": "R",
+      "img": "r3-44.gif"
+    },
+    {
+      "c": "R3-44a",
+      "n": "Toll Or HOV Only (Overhead)",
+      "cat": "R",
+      "img": "r3-44a.gif"
+    },
+    {
+      "c": "R3-45",
+      "n": "Express Lane Ends (Overhead)",
+      "cat": "R",
+      "img": "r3-45.gif"
+    },
+    {
+      "c": "R3-45a",
+      "n": "Express Restriction Ends (Overhead)",
+      "cat": "R",
+      "img": "r3-45a.gif"
+    },
+    {
+      "c": "R3-48",
+      "n": "Express Lane Toll Rate (Overhead)",
+      "cat": "R",
+      "img": "r3-48.gif"
+    },
+    {
+      "c": "R3-48a",
+      "n": "Express Lane Toll Rate / HOV No Toll (Overhead)",
+      "cat": "R",
+      "img": "r3-48a.gif"
+    },
+    {
+      "c": "R4-1",
+      "n": "Do Not Pass",
+      "cat": "R",
+      "img": "r4-1.gif"
+    },
+    {
+      "c": "R4-2",
+      "n": "Pass With Care",
+      "cat": "R",
+      "img": "r4-2.gif"
+    },
+    {
+      "c": "R4-3",
+      "n": "Slower Traffic Keep Right",
+      "cat": "R",
+      "img": "r4-3.gif"
+    },
+    {
+      "c": "R4-4",
+      "n": "Begin Right Turn Lane Yield To Bikes",
+      "cat": "R",
+      "img": "r4-4.gif"
+    },
+    {
+      "c": "R4-5",
+      "n": "Trucks Use Right Lane",
+      "cat": "R",
+      "img": "r4-5.gif"
+    },
+    {
+      "c": "R4-7",
+      "n": "Keep Right",
+      "cat": "R",
+      "img": "r4-7.gif"
+    },
+    {
+      "c": "R4-7a",
+      "n": "Keep Right (Horizontal Arrow)",
+      "cat": "R",
+      "img": "r4-7a.gif"
+    },
+    {
+      "c": "R4-7b",
+      "n": "Keep Right (Diagonal Arrow)",
+      "cat": "R",
+      "img": "r4-7b.gif"
+    },
+    {
+      "c": "R4-7c",
+      "n": "Keep Right (Narrow)",
+      "cat": "R",
+      "img": "r4-7c.gif"
+    },
+    {
+      "c": "R4-8",
+      "n": "Keep Left",
+      "cat": "R",
+      "img": "r4-8.gif"
+    },
+    {
+      "c": "R4-8a",
+      "n": "Keep Left (Horizontal Arrow)",
+      "cat": "R",
+      "img": "r4-8a.gif"
+    },
+    {
+      "c": "R4-8b",
+      "n": "Keep Left (Diagonal Arrow)",
+      "cat": "R",
+      "img": "r4-8b.gif"
+    },
+    {
+      "c": "R4-8c",
+      "n": "Keep Left (Narrow)",
+      "cat": "R",
+      "img": "r4-8c.gif"
+    },
+    {
+      "c": "R4-9",
+      "n": "Stay In Lane",
+      "cat": "R",
+      "img": "r4-9.gif"
+    },
+    {
+      "c": "R4-10",
+      "n": "Runaway Vehicles Only",
+      "cat": "R",
+      "img": "r4-10.gif"
+    },
+    {
+      "c": "R4-11",
+      "n": "Bicycles May Use Full Lane",
+      "cat": "R",
+      "img": "r4-11.gif"
+    },
+    {
+      "c": "R4-12",
+      "n": "Slow Vehicles Must Use Turnout",
+      "cat": "R",
+      "img": "r4-12.gif"
+    },
+    {
+      "c": "R4-13",
+      "n": "Slow Vehicles Use Turnout Ahead",
+      "cat": "R",
+      "img": "r4-13.gif"
+    },
+    {
+      "c": "R4-14",
+      "n": "Slow Vehicles Must Turn Out",
+      "cat": "R",
+      "img": "r4-14.gif"
+    },
+    {
+      "c": "R4-16",
+      "n": "Keep Right Except To Pass",
+      "cat": "R",
+      "img": "r4-16.gif"
+    },
+    {
+      "c": "R4-17",
+      "n": "Do Not Drive On Shoulder",
+      "cat": "R",
+      "img": "r4-17.gif"
+    },
+    {
+      "c": "R4-18",
+      "n": "Do Not Pass On Shoulder",
+      "cat": "R",
+      "img": "r4-18.gif"
+    },
+    {
+      "c": "R5-1",
+      "n": "Do Not Enter",
+      "cat": "R",
+      "img": "r5-1.gif"
+    },
+    {
+      "c": "R5-1a",
+      "n": "Wrong Way",
+      "cat": "R",
+      "img": "r5-1a.gif"
+    },
+    {
+      "c": "R5-1b",
+      "n": "Bicycle Wrong Way",
+      "cat": "R",
+      "img": "r5-1b.gif"
+    },
+    {
+      "c": "R5-2",
+      "n": "No Trucks (symbol)",
+      "cat": "R",
+      "img": "r5-2.gif"
+    },
+    {
+      "c": "R5-2a",
+      "n": "No Trucks (word message)",
+      "cat": "R",
+      "img": "r5-2a.gif"
+    },
+    {
+      "c": "R5-3",
+      "n": "No Motor Vehicles",
+      "cat": "R",
+      "img": "r5-3.gif"
+    },
+    {
+      "c": "R5-4",
+      "n": "No Commercial Vehicles",
+      "cat": "R",
+      "img": "r5-4.gif"
+    },
+    {
+      "c": "R5-5",
+      "n": "No Vehicles With Lugs",
+      "cat": "R",
+      "img": "r5-5.gif"
+    },
+    {
+      "c": "R5-6",
+      "n": "No Bicycles",
+      "cat": "R",
+      "img": "r5-6.gif"
+    },
+    {
+      "c": "R5-7",
+      "n": "No Non-Motorized Traffic",
+      "cat": "R",
+      "img": "r5-7.gif"
+    },
+    {
+      "c": "R5-8",
+      "n": "No Motor-Driven Cycles",
+      "cat": "R",
+      "img": "r5-8.gif"
+    },
+    {
+      "c": "R5-10a",
+      "n": "No Pedestrians Bicycles Motor Driven Cycles",
+      "cat": "R",
+      "img": "r5-10a.gif"
+    },
+    {
+      "c": "R5-10b",
+      "n": "No Pedestrians Or Bicycles",
+      "cat": "R",
+      "img": "r5-10b.gif"
+    },
+    {
+      "c": "R5-10c",
+      "n": "No Pedestrians",
+      "cat": "R",
+      "img": "r5-10c.gif"
+    },
+    {
+      "c": "R5-11",
+      "n": "Authorized Vehicles Only",
+      "cat": "R",
+      "img": "r5-11.gif"
+    },
+    {
+      "c": "R6-1L",
+      "n": "One Way (In Arrow)",
+      "cat": "R",
+      "img": "r6-1l.gif"
+    },
+    {
+      "c": "R6-1R",
+      "n": "One Way (In Arrow)",
+      "cat": "R",
+      "img": "r6-1r.gif"
+    },
+    {
+      "c": "R6-2L",
+      "n": "One Way (Arrow)",
+      "cat": "R",
+      "img": "r6-2l.gif"
+    },
+    {
+      "c": "R6-2R",
+      "n": "One Way (Arrow)",
+      "cat": "R",
+      "img": "r6-2r.gif"
+    },
+    {
+      "c": "R6-3",
+      "n": "Divided Highway Crossing",
+      "cat": "R",
+      "img": "r6-3.gif"
+    },
+    {
+      "c": "R6-3a",
+      "n": "Divided Highway Crossing (T Intersection)",
+      "cat": "R",
+      "img": "r6-3a.gif"
+    },
+    {
+      "c": "R6-4",
+      "n": "Roundabout Directional (2 Chevrons)",
+      "cat": "R",
+      "img": "r6-4.gif"
+    },
+    {
+      "c": "R6-4a",
+      "n": "Roundabout Directional (3 Chevrons)",
+      "cat": "R",
+      "img": "r6-4a.gif"
+    },
+    {
+      "c": "R6-4b",
+      "n": "Roundabout Directional (4 Chevrons)",
+      "cat": "R",
+      "img": "r6-4b.gif"
+    },
+    {
+      "c": "R6-5P",
+      "n": "Roundabout Circulation (plaque)",
+      "cat": "R",
+      "img": "r6-5p.gif"
+    },
+    {
+      "c": "R6-6",
+      "n": "Begin One Way",
+      "cat": "R",
+      "img": "r6-6.gif"
+    },
+    {
+      "c": "R6-7",
+      "n": "End One Way",
+      "cat": "R",
+      "img": "r6-7.gif"
+    },
+    {
+      "c": "R7-1",
+      "n": "No Parking Any Time",
+      "cat": "R",
+      "img": "r7-1.gif"
+    },
+    {
+      "c": "R7-2",
+      "n": "No Parking (symbol) (Times)",
+      "cat": "R",
+      "img": "r7-2.gif"
+    },
+    {
+      "c": "R7-2a",
+      "n": "No Parking (Times)",
+      "cat": "R",
+      "img": "r7-2a.gif"
+    },
+    {
+      "c": "R7-3",
+      "n": "No Parking Except (Days)",
+      "cat": "R",
+      "img": "r7-3.gif"
+    },
+    {
+      "c": "R7-4",
+      "n": "No Standing Any Time",
+      "cat": "R",
+      "img": "r7-4.gif"
+    },
+    {
+      "c": "R7-5",
+      "n": "(Time) Parking (Times)",
+      "cat": "R",
+      "img": "r7-5.gif"
+    },
+    {
+      "c": "R7-6",
+      "n": "No Parking Loading Zone",
+      "cat": "R",
+      "img": "r7-6.gif"
+    },
+    {
+      "c": "R7-7",
+      "n": "No Parking Bus Stop",
+      "cat": "R",
+      "img": "r7-7.gif"
+    },
+    {
+      "c": "R7-8",
+      "n": "Reserved Parking (Accessible)",
+      "cat": "R",
+      "img": "r7-8.gif"
+    },
+    {
+      "c": "R7-8P",
+      "n": "Van Accessible (plaque)",
+      "cat": "R",
+      "img": "r7-8p.gif"
+    },
+    {
+      "c": "R7-9",
+      "n": "No Parking Bike Lane",
+      "cat": "R",
+      "img": "r7-9.gif"
+    },
+    {
+      "c": "R7-9a",
+      "n": "No Parking (symbol) Bike Lane",
+      "cat": "R",
+      "img": "r7-9a.gif"
+    },
+    {
+      "c": "R7-20",
+      "n": "Parking Fee Station",
+      "cat": "R",
+      "img": "r7-20.gif"
+    },
+    {
+      "c": "R7-21",
+      "n": "(Time) Pay Parking",
+      "cat": "R",
+      "img": "r7-21.gif"
+    },
+    {
+      "c": "R7-21a",
+      "n": "Pay Parking (Time Limit)",
+      "cat": "R",
+      "img": "r7-21a.gif"
+    },
+    {
+      "c": "R7-22",
+      "n": "Pay Parking",
+      "cat": "R",
+      "img": "r7-22.gif"
+    },
+    {
+      "c": "R7-23",
+      "n": "Pay Parking (Times)",
+      "cat": "R",
+      "img": "r7-23.gif"
+    },
+    {
+      "c": "R7-23a",
+      "n": "Parking (Limit & Time)",
+      "cat": "R",
+      "img": "r7-23a.gif"
+    },
+    {
+      "c": "R7-107",
+      "n": "No Parking Bus Stop",
+      "cat": "R",
+      "img": "r7-107.gif"
+    },
+    {
+      "c": "R7-107a",
+      "n": "No Parking Transit Logo",
+      "cat": "R",
+      "img": "r7-107a.gif"
+    },
+    {
+      "c": "R7-108",
+      "n": "(Time Limit) Parking (Times)",
+      "cat": "R",
+      "img": "r7-108.gif"
+    },
+    {
+      "c": "R7-200",
+      "n": "No Parking / Restricted Parking Combo (Side By Side)",
+      "cat": "R",
+      "img": "r7-200.gif"
+    },
+    {
+      "c": "R7-200a",
+      "n": "No Parking / Restricted Parking Combo (Stacked)",
+      "cat": "R",
+      "img": "r7-200a.gif"
+    },
+    {
+      "c": "R7-201P",
+      "n": "Tow Away Zone (symbol) (plaque)",
+      "cat": "R",
+      "img": "r7-201p.gif"
+    },
+    {
+      "c": "R7-201aP",
+      "n": "Tow Away Zone (word message) (plaque)",
+      "cat": "R",
+      "img": "r7-201ap.gif"
+    },
+    {
+      "c": "R7-202P",
+      "n": "This Side Of Sign (plaque)",
+      "cat": "R",
+      "img": "r7-202p.gif"
+    },
+    {
+      "c": "R7-203",
+      "n": "Emergency Snow Route",
+      "cat": "R",
+      "img": "r7-203.gif"
+    },
+    {
+      "c": "R8-1",
+      "n": "No Parking On Pavement",
+      "cat": "R",
+      "img": "r8-1.gif"
+    },
+    {
+      "c": "R8-2",
+      "n": "No Parking Except On Shoulder",
+      "cat": "R",
+      "img": "r8-2.gif"
+    },
+    {
+      "c": "R8-3",
+      "n": "No Parking (symbol)",
+      "cat": "R",
+      "img": "r8-3.gif"
+    },
+    {
+      "c": "R8-3a",
+      "n": "No Parking (word message)",
+      "cat": "R",
+      "img": "r8-3a.gif"
+    },
+    {
+      "c": "R8-3bP",
+      "n": "Except (Days) (plaque)",
+      "cat": "R",
+      "img": "r8-3bp.gif"
+    },
+    {
+      "c": "R8-3cP",
+      "n": "On Pavement (plaque)",
+      "cat": "R",
+      "img": "r8-3cp.gif"
+    },
+    {
+      "c": "R8-3dP",
+      "n": "On Bridge (plaque)",
+      "cat": "R",
+      "img": "r8-3dp.gif"
+    },
+    {
+      "c": "R8-3eP",
+      "n": "On Tracks (plaque)",
+      "cat": "R",
+      "img": "r8-3ep.gif"
+    },
+    {
+      "c": "R8-3fP",
+      "n": "Except On Shoulder (plaque)",
+      "cat": "R",
+      "img": "r8-3fp.gif"
+    },
+    {
+      "c": "R8-3gP",
+      "n": "Loading Zone (plaque)",
+      "cat": "R",
+      "img": "r8-3gp.gif"
+    },
+    {
+      "c": "R8-3hP",
+      "n": "Times Of Day (plaque)",
+      "cat": "R",
+      "img": "r8-3hp.gif"
+    },
+    {
+      "c": "R8-4",
+      "n": "Emergency Parking Only",
+      "cat": "R",
+      "img": "r8-4.gif"
+    },
+    {
+      "c": "R8-5",
+      "n": "No Stopping On Pavement",
+      "cat": "R",
+      "img": "r8-5.gif"
+    },
+    {
+      "c": "R8-6",
+      "n": "No Stopping Except On Shoulder",
+      "cat": "R",
+      "img": "r8-6.gif"
+    },
+    {
+      "c": "R8-7",
+      "n": "Emergency Stopping Only",
+      "cat": "R",
+      "img": "r8-7.gif"
+    },
+    {
+      "c": "R8-8",
+      "n": "Do Not Stop On Tracks",
+      "cat": "R",
+      "img": "r8-8.gif"
+    },
+    {
+      "c": "R8-9",
+      "n": "Tracks Out Of Service",
+      "cat": "R",
+      "img": "r8-9.gif"
+    },
+    {
+      "c": "R8-10",
+      "n": "Stop Here When Flashing",
+      "cat": "R",
+      "img": "r8-10.gif"
+    },
+    {
+      "c": "R8-10a",
+      "n": "Stop Here When Flashing",
+      "cat": "R",
+      "img": "r8-10a.gif"
+    },
+    {
+      "c": "R9-1",
+      "n": "Walk On Left Facing Traffic",
+      "cat": "R",
+      "img": "r9-1.gif"
+    },
+    {
+      "c": "R9-2",
+      "n": "Cross Only At Crosswalks",
+      "cat": "R",
+      "img": "r9-2.gif"
+    },
+    {
+      "c": "R9-3",
+      "n": "No Pedestrians",
+      "cat": "R",
+      "img": "r9-3.gif"
+    },
+    {
+      "c": "R9-3a",
+      "n": "No Pedestrian Crossing",
+      "cat": "R",
+      "img": "r9-3a.gif"
+    },
+    {
+      "c": "R9-3bP",
+      "n": "Use Crosswalk (plaque)",
+      "cat": "R",
+      "img": "r9-3bp.gif"
+    },
+    {
+      "c": "R9-3cP",
+      "n": "Ride With Traffic (plaque)",
+      "cat": "R",
+      "img": "r9-3cp.gif"
+    },
+    {
+      "c": "R9-4",
+      "n": "No Hitchhiking (symbol)",
+      "cat": "R",
+      "img": "r9-4.gif"
+    },
+    {
+      "c": "R9-4a",
+      "n": "No Hitchhiking (word message)",
+      "cat": "R",
+      "img": "r9-4a.gif"
+    },
+    {
+      "c": "R9-5",
+      "n": "Bicycles Use Ped Signal",
+      "cat": "R",
+      "img": "r9-5.gif"
+    },
+    {
+      "c": "R9-6",
+      "n": "Bicycles Yield To Peds",
+      "cat": "R",
+      "img": "r9-6.gif"
+    },
+    {
+      "c": "R9-7",
+      "n": "(Bicycles/Peds) Keep (Left/Right)",
+      "cat": "R",
+      "img": "r9-7.gif"
+    },
+    {
+      "c": "R9-8",
+      "n": "Pedestrian Crosswalk",
+      "cat": "R",
+      "img": "r9-8.gif"
+    },
+    {
+      "c": "R9-9",
+      "n": "Sidewalk Closed",
+      "cat": "R",
+      "img": "r9-9.gif"
+    },
+    {
+      "c": "R9-10",
+      "n": "Sidewalk Closed Use Other Side",
+      "cat": "R",
+      "img": "r9-10.gif"
+    },
+    {
+      "c": "R9-11",
+      "n": "Sidewalk Closed Ahead Cross Here",
+      "cat": "R",
+      "img": "r9-11.gif"
+    },
+    {
+      "c": "R9-11a",
+      "n": "Sidewalk Closed Cross Here",
+      "cat": "R",
+      "img": "r9-11a.gif"
+    },
+    {
+      "c": "R9-13",
+      "n": "No Skaters",
+      "cat": "R",
+      "img": "r9-13.gif"
+    },
+    {
+      "c": "R9-14",
+      "n": "No Equestrians",
+      "cat": "R",
+      "img": "r9-14.gif"
+    },
+    {
+      "c": "R9-23",
+      "n": "Bicycle All Turns From Bike Lane",
+      "cat": "R",
+      "img": "r9-23.gif"
+    },
+    {
+      "c": "R9-23aL",
+      "n": "Bicycle Left Turn Must Use Turn Box",
+      "cat": "R",
+      "img": "r9-23a.gif"
+    },
+    {
+      "c": "R9-23aR",
+      "n": "Bicycle Right Turn Must Use Turn Box",
+      "cat": "R",
+      "img": "r9-23a.gif"
+    },
+    {
+      "c": "R9-23bL",
+      "n": "Bicycle Left Turn Must Use Turn Box (Arrow)",
+      "cat": "R",
+      "img": "r9-23b.gif"
+    },
+    {
+      "c": "R9-23bR",
+      "n": "Bicycle Right Turn Must Use Turn Box (Arrow)",
+      "cat": "R",
+      "img": "r9-23b.gif"
+    },
+    {
+      "c": "R10-1",
+      "n": "Cross Only On Green",
+      "cat": "R",
+      "img": "r10-1.gif"
+    },
+    {
+      "c": "R10-2",
+      "n": "Cross Only On Walk Signal",
+      "cat": "R",
+      "img": "r10-2.gif"
+    },
+    {
+      "c": "R10-3",
+      "n": "Push Button For Walk Signal",
+      "cat": "R",
+      "img": "r10-3.gif"
+    },
+    {
+      "c": "R10-3a",
+      "n": "Push Button To Cross Street Wait For Walk Signal",
+      "cat": "R",
+      "img": "r10-3a.gif"
+    },
+    {
+      "c": "R10-3b",
+      "n": "Pedestrian Signal Information (Symbol)",
+      "cat": "R",
+      "img": "r10-3b.gif"
+    },
+    {
+      "c": "R10-3c",
+      "n": "Pedestrian Signal Information (Walk/Dont Walk)",
+      "cat": "R",
+      "img": "r10-3c.gif"
+    },
+    {
+      "c": "R10-3d",
+      "n": "Pedestrian Signal Information (Two-Stage Crossing)",
+      "cat": "R",
+      "img": "r10-3d.gif"
+    },
+    {
+      "c": "R10-3e",
+      "n": "Pedestrian Signal Information (Countdown)",
+      "cat": "R",
+      "img": "r10-3e.gif"
+    },
+    {
+      "c": "R10-3f",
+      "n": "Pedestrian Signal Information (Symbol) (Street Name)",
+      "cat": "R",
+      "img": "r10-3f.gif"
+    },
+    {
+      "c": "R10-3g",
+      "n": "Pedestrian Signal Information (Walk/Dont Walk) (Street Name)",
+      "cat": "R",
+      "img": "r10-3g.gif"
+    },
+    {
+      "c": "R10-3h",
+      "n": "Pedestrian Signal Information (Two-Stage Crossing) (Street Name)",
+      "cat": "R",
+      "img": "r10-3h.gif"
+    },
+    {
+      "c": "R10-3i",
+      "n": "Pedestrian Signal Information (Countdown) (Street Name)",
+      "cat": "R",
+      "img": "r10-3i.gif"
+    },
+    {
+      "c": "R10-4",
+      "n": "Push Button For Green",
+      "cat": "R",
+      "img": "r10-4.gif"
+    },
+    {
+      "c": "R10-4a",
+      "n": "Push Button To Cross Street Wait For Green",
+      "cat": "R",
+      "img": "r10-4a.gif"
+    },
+    {
+      "c": "R10-5",
+      "n": "Left On Green Arrow Only",
+      "cat": "R",
+      "img": "r10-5.gif"
+    },
+    {
+      "c": "R10-5a",
+      "n": "Right On Green Arrow Only",
+      "cat": "R",
+      "img": "r10-5a.gif"
+    },
+    {
+      "c": "R10-6",
+      "n": "Stop Here On Red",
+      "cat": "R",
+      "img": "r10-6.gif"
+    },
+    {
+      "c": "R10-6a",
+      "n": "Stop Here On Red",
+      "cat": "R",
+      "img": "r10-6a.gif"
+    },
+    {
+      "c": "R10-7",
+      "n": "Do Not Block Intersection",
+      "cat": "R",
+      "img": "r10-7.gif"
+    },
+    {
+      "c": "R10-8",
+      "n": "Use Lane(s) With Green Arrow",
+      "cat": "R",
+      "img": "r10-8.gif"
+    },
+    {
+      "c": "R10-10L",
+      "n": "Left Turn Signal",
+      "cat": "R",
+      "img": "r10-10l.gif"
+    },
+    {
+      "c": "R10-10R",
+      "n": "Right Turn Signal",
+      "cat": "R",
+      "img": "r10-10r.gif"
+    },
+    {
+      "c": "R10-10b",
+      "n": "Bicycle Signal",
+      "cat": "R",
+      "img": "r10-10b.gif"
+    },
+    {
+      "c": "R10-11",
+      "n": "No Turn On Red (Symbol)",
+      "cat": "R",
+      "img": "r10-11.gif"
+    },
+    {
+      "c": "R10-11a",
+      "n": "No Turn On Red",
+      "cat": "R",
+      "img": "r10-11a.gif"
+    },
+    {
+      "c": "R10-11b",
+      "n": "No Turn On Red",
+      "cat": "R",
+      "img": "r10-11b.gif"
+    },
+    {
+      "c": "R10-11c",
+      "n": "No Turn On Red Except From Right Lane",
+      "cat": "R",
+      "img": "r10-11c.gif"
+    },
+    {
+      "c": "R10-11d",
+      "n": "No Turn On Red From This Lane",
+      "cat": "R",
+      "img": "r10-11d.gif"
+    },
+    {
+      "c": "R10-12",
+      "n": "Left Turn Yield On Green",
+      "cat": "R",
+      "img": "r10-12.gif"
+    },
+    {
+      "c": "R10-13",
+      "n": "Emergency Signal",
+      "cat": "R",
+      "img": "r10-13.gif"
+    },
+    {
+      "c": "R10-14",
+      "n": "Emergency Signal Stop On Flashing Red (Post-mount)",
+      "cat": "R",
+      "img": "r10-14.gif"
+    },
+    {
+      "c": "R10-14a",
+      "n": "Emergency Signal Stop On Flashing Red (Overhead)",
+      "cat": "R",
+      "img": "r10-14a.gif"
+    },
+    {
+      "c": "R10-14b",
+      "n": "Stop Here On Flashing Red",
+      "cat": "R",
+      "img": "r10-14b.gif"
+    },
+    {
+      "c": "R10-15L",
+      "n": "Turning Vehicles Yield To Pedestrians",
+      "cat": "R",
+      "img": "r10-15l.gif"
+    },
+    {
+      "c": "R10-15R",
+      "n": "Turning Vehicles Yield To Pedestrians",
+      "cat": "R",
+      "img": "r10-15r.gif"
+    },
+    {
+      "c": "R10-16",
+      "n": "U-turn Yield To Right Turn",
+      "cat": "R",
+      "img": "r10-16.gif"
+    },
+    {
+      "c": "R10-17a",
+      "n": "Right On Red Arrow After Stop",
+      "cat": "R",
+      "img": "r10-17a.gif"
+    },
+    {
+      "c": "R10-18",
+      "n": "Traffic Laws Photo Enforced",
+      "cat": "R",
+      "img": "r10-18.gif"
+    },
+    {
+      "c": "R10-18a",
+      "n": "Traffic Signal Photo Enforced",
+      "cat": "R",
+      "img": "r10-18a.gif"
+    },
+    {
+      "c": "R10-19P",
+      "n": "Photo Enforced (symbol) (plaque)",
+      "cat": "R",
+      "img": "r10-19p.gif"
+    },
+    {
+      "c": "R10-19aP",
+      "n": "Photo Enforced (word message) (plaque)",
+      "cat": "R",
+      "img": "r10-19ap.gif"
+    },
+    {
+      "c": "R10-20aP",
+      "n": "Days & Times (plaque)",
+      "cat": "R",
+      "img": "r10-20ap.gif"
+    },
+    {
+      "c": "R10-22",
+      "n": "To Request Green Wait On Bicycle Symbol",
+      "cat": "R",
+      "img": "r10-22.gif"
+    },
+    {
+      "c": "R10-23",
+      "n": "Crosswalk Stop On Red",
+      "cat": "R",
+      "img": "r10-23.gif"
+    },
+    {
+      "c": "R10-24",
+      "n": "Bicycle Push Button For Green Light",
+      "cat": "R",
+      "img": "r10-24.gif"
+    },
+    {
+      "c": "R10-25",
+      "n": "Push Button To Turn On Warning Lights",
+      "cat": "R",
+      "img": "r10-25.gif"
+    },
+    {
+      "c": "R10-26",
+      "n": "Bicycle Push Button For Green Light (Arrow)",
+      "cat": "R",
+      "img": "r10-26.gif"
+    },
+    {
+      "c": "R10-27",
+      "n": "Left Turn Yield On Flashing Red Arrow After Stop",
+      "cat": "R",
+      "img": "r10-27.gif"
+    },
+    {
+      "c": "R10-28",
+      "n": "Vehicles Per Green",
+      "cat": "R",
+      "img": "r10-28.gif"
+    },
+    {
+      "c": "R10-29",
+      "n": "Vehicles Per Green Each Lane",
+      "cat": "R",
+      "img": "r10-29.gif"
+    },
+    {
+      "c": "R10-30",
+      "n": "Right Turn On Red Must Yield To U-turn",
+      "cat": "R",
+      "img": "r10-30.gif"
+    },
+    {
+      "c": "R10-31P",
+      "n": "At Signal (plaque)",
+      "cat": "R",
+      "img": "r10-31p.gif"
+    },
+    {
+      "c": "R10-32P",
+      "n": "Push Button For Extra Crossing Time (plaque)",
+      "cat": "R",
+      "img": "r10-32p.gif"
+    },
+    {
+      "c": "R11-1",
+      "n": "Keep Off Median",
+      "cat": "R",
+      "img": "r11-1.gif"
+    },
+    {
+      "c": "R11-2",
+      "n": "Road Closed",
+      "cat": "R",
+      "img": "r11-2.gif"
+    },
+    {
+      "c": "R11-3a",
+      "n": "Road Closed Ahead Local Traffic Only",
+      "cat": "R",
+      "img": "r11-3a.gif"
+    },
+    {
+      "c": "R11-3b",
+      "n": "Bridge Out Ahead Local Traffic Only",
+      "cat": "R",
+      "img": "r11-3b.gif"
+    },
+    {
+      "c": "R11-4",
+      "n": "Road Closed To Thru Traffic",
+      "cat": "R",
+      "img": "r11-4.gif"
+    },
+    {
+      "c": "R12-1",
+      "n": "Weight Limit",
+      "cat": "R",
+      "img": "r12-1.gif"
+    },
+    {
+      "c": "R12-2",
+      "n": "Axle Weight Limit",
+      "cat": "R",
+      "img": "r12-2.gif"
+    },
+    {
+      "c": "R12-3",
+      "n": "No Trucks Over Empty Weight",
+      "cat": "R",
+      "img": "r12-3.gif"
+    },
+    {
+      "c": "R12-4",
+      "n": "Weight Limit - Axle & Gross",
+      "cat": "R",
+      "img": "r12-4.gif"
+    },
+    {
+      "c": "R12-5",
+      "n": "Weight Limit (symbols)",
+      "cat": "R",
+      "img": "r12-5.gif"
+    },
+    {
+      "c": "R13-1",
+      "n": "Weigh Station",
+      "cat": "R",
+      "img": "r13-1.gif"
+    },
+    {
+      "c": "R14-1",
+      "n": "Truck Route",
+      "cat": "R",
+      "img": "r14-1.gif"
+    },
+    {
+      "c": "R14-2",
+      "n": "Hazardous Material Permitted",
+      "cat": "R",
+      "img": "r14-2.gif"
+    },
+    {
+      "c": "R14-3",
+      "n": "Hazardous Material Prohibited",
+      "cat": "R",
+      "img": "r14-3.gif"
+    },
+    {
+      "c": "R14-4",
+      "n": "National Network Permitted",
+      "cat": "R",
+      "img": "r14-4.gif"
+    },
+    {
+      "c": "R14-5",
+      "n": "National Network Prohibited",
+      "cat": "R",
+      "img": "r14-5.gif"
+    },
+    {
+      "c": "R15-1",
+      "n": "Railroad Crossing",
+      "cat": "R",
+      "img": "r15-1.gif"
+    },
+    {
+      "c": "R15-2P",
+      "n": "Number Of Tracks (plaque)",
+      "cat": "R",
+      "img": "r15-2p.gif"
+    },
+    {
+      "c": "R15-3P",
+      "n": "Exempt (plaque)",
+      "cat": "R",
+      "img": "r15-3p.gif"
+    },
+    {
+      "c": "R15-4a",
+      "n": "Right Lane Light Rail Only",
+      "cat": "R",
+      "img": "r15-4a.gif"
+    },
+    {
+      "c": "R15-4b",
+      "n": "Left Lane Light Rail Only",
+      "cat": "R",
+      "img": "r15-4b.gif"
+    },
+    {
+      "c": "R15-4c",
+      "n": "Center Lane Light Rail Only",
+      "cat": "R",
+      "img": "r15-4c.gif"
+    },
+    {
+      "c": "R15-5",
+      "n": "Light Rail Do Not Pass",
+      "cat": "R",
+      "img": "r15-5.gif"
+    },
+    {
+      "c": "R15-5a",
+      "n": "Do Not Pass Stopped Train",
+      "cat": "R",
+      "img": "r15-5a.gif"
+    },
+    {
+      "c": "R15-6",
+      "n": "No Motor Vehicles On Tracks (symbol)",
+      "cat": "R",
+      "img": "r15-6.gif"
+    },
+    {
+      "c": "R15-6a",
+      "n": "Do Not Drive On Tracks",
+      "cat": "R",
+      "img": "r15-6a.gif"
+    },
+    {
+      "c": "R15-7",
+      "n": "Divided Highway (Rail)",
+      "cat": "R",
+      "img": "r15-7.gif"
+    },
+    {
+      "c": "R15-7a",
+      "n": "Divided Highway (Rail) (T Intersection)",
+      "cat": "R",
+      "img": "r15-7a.gif"
+    },
+    {
+      "c": "R15-8",
+      "n": "Look",
+      "cat": "R",
+      "img": "r15-8.gif"
+    },
+    {
+      "c": "R16-1",
+      "n": "Seat Belt",
+      "cat": "R",
+      "img": "r16-1.gif"
+    },
+    {
+      "c": "R16-4",
+      "n": "Fender Bender Move Vehicles From Travel Lanes",
+      "cat": "R",
+      "img": "r16-4.gif"
+    },
+    {
+      "c": "R16-5",
+      "n": "Lights On When Using Wipers",
+      "cat": "R",
+      "img": "r16-5.gif"
+    },
+    {
+      "c": "R16-6",
+      "n": "Lights On When Raining",
+      "cat": "R",
+      "img": "r16-6.gif"
+    },
+    {
+      "c": "R16-7",
+      "n": "Turn On Headlights (Distance)",
+      "cat": "R",
+      "img": "r16-7.gif"
+    },
+    {
+      "c": "R16-8",
+      "n": "Turn On Headlights",
+      "cat": "R",
+      "img": "r16-8.gif"
+    },
+    {
+      "c": "R16-9",
+      "n": "Check Headlights",
+      "cat": "R",
+      "img": "r16-9.gif"
+    },
+    {
+      "c": "R16-10",
+      "n": "Begin Daytime Headlight Section",
+      "cat": "R",
+      "img": "r16-10.gif"
+    },
+    {
+      "c": "R16-11",
+      "n": "End Daytime Headlight Section",
+      "cat": "R",
+      "img": "r16-11.gif"
+    },
+    {
+      "c": "M1-1",
+      "n": "Interstate Route",
+      "cat": "M",
+      "img": "m1-1.gif"
+    },
+    {
+      "c": "M1-2",
+      "n": "Interstate Business Loop",
+      "cat": "M",
+      "img": "m1-2.gif"
+    },
+    {
+      "c": "M1-3",
+      "n": "Interstate Business Spur",
+      "cat": "M",
+      "img": "m1-3.gif"
+    },
+    {
+      "c": "M1-4",
+      "n": "US Highway Route",
+      "cat": "M",
+      "img": "m1-4.gif"
+    },
+    {
+      "c": "M1-5",
+      "n": "State Highway Route",
+      "cat": "M",
+      "img": "m1-5.gif"
+    },
+    {
+      "c": "M1-6",
+      "n": "County Route",
+      "cat": "M",
+      "img": "m1-6.gif"
+    },
+    {
+      "c": "M1-7",
+      "n": "National Forest Route",
+      "cat": "M",
+      "img": "m1-7.gif"
+    },
+    {
+      "c": "M1-8",
+      "n": "Bicycle Route (Local Numbered)",
+      "cat": "M",
+      "img": "m1-8.gif"
+    },
+    {
+      "c": "M1-8a",
+      "n": "Bicycle Route (Local Numbered With Pictograph)",
+      "cat": "M",
+      "img": "m1-8a.gif"
+    },
+    {
+      "c": "M1-9",
+      "n": "US Bicycle Route",
+      "cat": "M",
+      "img": "m1-9.gif"
+    },
+    {
+      "c": "M1-10",
+      "n": "Eisenhower Interstate System",
+      "cat": "M",
+      "img": "m1-10.gif"
+    },
+    {
+      "c": "M2-1",
+      "n": "Junction (Auxiliary)",
+      "cat": "M",
+      "img": "m2-1.gif"
+    },
+    {
+      "c": "M2-2",
+      "n": "Combination Junction",
+      "cat": "M",
+      "img": "m2-2.gif"
+    },
+    {
+      "c": "M3-1",
+      "n": "North (Auxiliary)",
+      "cat": "M",
+      "img": "m3-1.gif"
+    },
+    {
+      "c": "M3-2",
+      "n": "East (Auxiliary)",
+      "cat": "M",
+      "img": "m3-2.gif"
+    },
+    {
+      "c": "M3-3",
+      "n": "South (Auxiliary)",
+      "cat": "M",
+      "img": "m3-3.gif"
+    },
+    {
+      "c": "M3-4",
+      "n": "West (Auxiliary)",
+      "cat": "M",
+      "img": "m3-4.gif"
+    },
+    {
+      "c": "M4-1",
+      "n": "Alternate (Auxiliary)",
+      "cat": "M",
+      "img": "m4-1.gif"
+    },
+    {
+      "c": "M4-1a",
+      "n": "Alt (Auxiliary)",
+      "cat": "M",
+      "img": "m4-1a.gif"
+    },
+    {
+      "c": "M4-2",
+      "n": "By-Pass (Auxiliary)",
+      "cat": "M",
+      "img": "m4-2.gif"
+    },
+    {
+      "c": "M4-3",
+      "n": "Business (Auxiliary)",
+      "cat": "M",
+      "img": "m4-3.gif"
+    },
+    {
+      "c": "M4-4",
+      "n": "Truck (Auxiliary)",
+      "cat": "M",
+      "img": "m4-4.gif"
+    },
+    {
+      "c": "M4-5",
+      "n": "To (Auxiliary)",
+      "cat": "M",
+      "img": "m4-5.gif"
+    },
+    {
+      "c": "M4-6",
+      "n": "End (Auxiliary)",
+      "cat": "M",
+      "img": "m4-6.gif"
+    },
+    {
+      "c": "M4-7",
+      "n": "Temporary (Auxiliary)",
+      "cat": "M",
+      "img": "m4-7.gif"
+    },
+    {
+      "c": "M4-7a",
+      "n": "Temp (Auxiliary)",
+      "cat": "M",
+      "img": "m4-7a.gif"
+    },
+    {
+      "c": "M4-8",
+      "n": "Detour (Auxiliary)",
+      "cat": "M",
+      "img": "m4-8.gif"
+    },
+    {
+      "c": "M4-8a",
+      "n": "End Detour",
+      "cat": "M",
+      "img": "m4-8a.gif"
+    },
+    {
+      "c": "M4-8b",
+      "n": "End (Auxiliary)",
+      "cat": "M",
+      "img": "m4-8b.gif"
+    },
+    {
+      "c": "M4-9L",
+      "n": "Detour (Arrow)",
+      "cat": "M",
+      "img": "m4-9l.gif"
+    },
+    {
+      "c": "M4-9R",
+      "n": "Detour (Arrow)",
+      "cat": "M",
+      "img": "m4-9r.gif"
+    },
+    {
+      "c": "M4-9aL",
+      "n": "Detour (Pedestrian & Bicycle)",
+      "cat": "M",
+      "img": "m4-9al.gif"
+    },
+    {
+      "c": "M4-9aR",
+      "n": "Detour (Pedestrian & Bicycle)",
+      "cat": "M",
+      "img": "m4-9ar.gif"
+    },
+    {
+      "c": "M4-9bL",
+      "n": "Detour (Pedestrian)",
+      "cat": "M",
+      "img": "m4-9bl.gif"
+    },
+    {
+      "c": "M4-9bR",
+      "n": "Detour (Pedestrian)",
+      "cat": "M",
+      "img": "m4-9br.gif"
+    },
+    {
+      "c": "M4-9cL",
+      "n": "Detour (Bicycle)",
+      "cat": "M",
+      "img": "m4-9cl.gif"
+    },
+    {
+      "c": "M4-9cR",
+      "n": "Detour (Bicycle)",
+      "cat": "M",
+      "img": "m4-9cr.gif"
+    },
+    {
+      "c": "M4-10L",
+      "n": "Detour Arrow",
+      "cat": "M",
+      "img": "m4-10l.gif"
+    },
+    {
+      "c": "M4-10R",
+      "n": "Detour Arrow",
+      "cat": "M",
+      "img": "m4-10r.gif"
+    },
+    {
+      "c": "M4-14",
+      "n": "Begin (Auxiliary)",
+      "cat": "M",
+      "img": "m4-14.gif"
+    },
+    {
+      "c": "M4-15",
+      "n": "Toll (Auxiliary)",
+      "cat": "M",
+      "img": "m4-15.gif"
+    },
+    {
+      "c": "M4-16",
+      "n": "No Cash (Auxiliary)",
+      "cat": "M",
+      "img": "m4-16.gif"
+    },
+    {
+      "c": "M4-17",
+      "n": "Toll Collector",
+      "cat": "M",
+      "img": "m4-17.gif"
+    },
+    {
+      "c": "M4-18",
+      "n": "Exact Change",
+      "cat": "M",
+      "img": "m4-18.gif"
+    },
+    {
+      "c": "M4-20",
+      "n": "Electronic Toll Collection Only (Auxiliary)",
+      "cat": "M",
+      "img": "m4-20.gif"
+    },
+    {
+      "c": "M5-1L",
+      "n": "Advance Turn (Auxiliary)",
+      "cat": "M",
+      "img": "m5-1l.gif"
+    },
+    {
+      "c": "M5-1R",
+      "n": "Advance Turn (Auxiliary)",
+      "cat": "M",
+      "img": "m5-1r.gif"
+    },
+    {
+      "c": "M5-2L",
+      "n": "Advance Angle Turn (Auxiliary)",
+      "cat": "M",
+      "img": "m5-2l.gif"
+    },
+    {
+      "c": "M5-2R",
+      "n": "Advance Angle Turn (Auxiliary)",
+      "cat": "M",
+      "img": "m5-2r.gif"
+    },
+    {
+      "c": "M5-3",
+      "n": "Advance Roundabout Left Turn (Auxiliary)",
+      "cat": "M",
+      "img": "m5-3.gif"
+    },
+    {
+      "c": "M5-4",
+      "n": "Left Lane (Auxiliary)",
+      "cat": "M",
+      "img": "m5-4.gif"
+    },
+    {
+      "c": "M5-5",
+      "n": "Center Lane (Auxiliary)",
+      "cat": "M",
+      "img": "m5-5.gif"
+    },
+    {
+      "c": "M5-6",
+      "n": "Right Lane (Auxiliary)",
+      "cat": "M",
+      "img": "m5-6.gif"
+    },
+    {
+      "c": "M6-1L",
+      "n": "Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-1l.gif"
+    },
+    {
+      "c": "M6-1R",
+      "n": "Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-1r.gif"
+    },
+    {
+      "c": "M6-2L",
+      "n": "Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-2l.gif"
+    },
+    {
+      "c": "M6-2R",
+      "n": "Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-2r.gif"
+    },
+    {
+      "c": "M6-2aL",
+      "n": "Downward Diagonal Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-2al.gif"
+    },
+    {
+      "c": "M6-2aR",
+      "n": "Downward Diagonal Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-2ar.gif"
+    },
+    {
+      "c": "M6-3",
+      "n": "Straight Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-3.gif"
+    },
+    {
+      "c": "M6-4",
+      "n": "Two-Direction Left / Right Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-4.gif"
+    },
+    {
+      "c": "M6-5L",
+      "n": "Two-Direction Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-5l.gif"
+    },
+    {
+      "c": "M6-5R",
+      "n": "Two-Direction Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-5r.gif"
+    },
+    {
+      "c": "M6-6L",
+      "n": "Two-Direction Straight / Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-6l.gif"
+    },
+    {
+      "c": "M6-6R",
+      "n": "Two-Direction Straight / Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-6r.gif"
+    },
+    {
+      "c": "M6-7L",
+      "n": "Two-Direction Straight / Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-7l.gif"
+    },
+    {
+      "c": "M6-7R",
+      "n": "Two-Direction Straight / Diagonal Turn Arrow (Auxiliary)",
+      "cat": "M",
+      "img": "m6-7r.gif"
+    },
+    {
+      "c": "D1-1",
+      "n": "Destination (Arrow) (1 direction)",
+      "cat": "D",
+      "img": "d1-1.gif"
+    },
+    {
+      "c": "D1-1a",
+      "n": "Destination and Distance (Arrow) (1 direction)",
+      "cat": "D",
+      "img": "d1-1a.gif"
+    },
+    {
+      "c": "D1-1b",
+      "n": "Bicycle Destination (Arrow) (1 direction)",
+      "cat": "D",
+      "img": "d1-1b.gif"
+    },
+    {
+      "c": "D1-1c",
+      "n": "Bicycle Destination and Distance (Arrow) (1 direction)",
+      "cat": "D",
+      "img": "d1-1c.gif"
+    },
+    {
+      "c": "D1-1d",
+      "n": "Destination (Diagonal Arrow) (for use at circular intersections)",
+      "cat": "D",
+      "img": "d1-1d.gif"
+    },
+    {
+      "c": "D1-1e",
+      "n": "Route / Direction / Destination (Diagonal Arrow) (for use at circular intersections)",
+      "cat": "D",
+      "img": "d1-1e.gif"
+    },
+    {
+      "c": "D1-2",
+      "n": "Destinations (Arrows) (2 directions)",
+      "cat": "D",
+      "img": "d1-2.gif"
+    },
+    {
+      "c": "D1-2a",
+      "n": "Destinations and Distances (Arrows) (2 directions)",
+      "cat": "D",
+      "img": "d1-2a.gif"
+    },
+    {
+      "c": "D1-2b",
+      "n": "Bicycle Destinations (Arrows) (2 directions)",
+      "cat": "D",
+      "img": "d1-2b.gif"
+    },
+    {
+      "c": "D1-2c",
+      "n": "Bicycle Destinations and Distances (Arrows) (2 directions)",
+      "cat": "D",
+      "img": "d1-2c.gif"
+    },
+    {
+      "c": "D1-2d",
+      "n": "Destinations (Arrows) (2 directions) (for use at circular intersections)",
+      "cat": "D",
+      "img": "d1-2d.gif"
+    },
+    {
+      "c": "D1-3",
+      "n": "Destinations (Arrows) (3 directions)",
+      "cat": "D",
+      "img": "d1-3.gif"
+    },
+    {
+      "c": "D1-3a",
+      "n": "Destinations and Distances (Arrows) (3 directions)",
+      "cat": "D",
+      "img": "d1-3a.gif"
+    },
+    {
+      "c": "D1-3b",
+      "n": "Bicycle Destinations (Arrows) (3 directions)",
+      "cat": "D",
+      "img": "d1-3b.gif"
+    },
+    {
+      "c": "D1-3c",
+      "n": "Bicycle Destinations and Distances (Arrows) (3 directions)",
+      "cat": "D",
+      "img": "d1-3c.gif"
+    },
+    {
+      "c": "D1-3d",
+      "n": "Destinations (Arrows) (3 directions) (for use at circular intersections)",
+      "cat": "D",
+      "img": "d1-3d.gif"
+    },
+    {
+      "c": "D1-5",
+      "n": "Roundabout Diagrammatic",
+      "cat": "D",
+      "img": "d1-5.gif"
+    },
+    {
+      "c": "D2-1",
+      "n": "Distance (1 destination)",
+      "cat": "D",
+      "img": "d2-1.gif"
+    },
+    {
+      "c": "D2-2",
+      "n": "Distance (2 destinations)",
+      "cat": "D",
+      "img": "d2-2.gif"
+    },
+    {
+      "c": "D2-3",
+      "n": "Distance (3 destinations)",
+      "cat": "D",
+      "img": "d2-3.gif"
+    },
+    {
+      "c": "D3-1",
+      "n": "Street Name",
+      "cat": "D",
+      "img": "d3-1.gif"
+    },
+    {
+      "c": "D3-1a",
+      "n": "Street Name with Route",
+      "cat": "D",
+      "img": "d3-1a.gif"
+    },
+    {
+      "c": "D3-2",
+      "n": "Advance Street Name",
+      "cat": "D",
+      "img": "d3-2.gif"
+    },
+    {
+      "c": "D4-1",
+      "n": "Parking Area",
+      "cat": "D",
+      "img": "d4-1.gif"
+    },
+    {
+      "c": "D4-2",
+      "n": "Park - Ride (Arrow)",
+      "cat": "D",
+      "img": "d4-2.gif"
+    },
+    {
+      "c": "D4-3",
+      "n": "Bicycle Parking (Arrow)",
+      "cat": "D",
+      "img": "d4-3.gif"
+    },
+    {
+      "c": "D5-1",
+      "n": "Rest Area (Distance)",
+      "cat": "D",
+      "img": "d5-1.gif"
+    },
+    {
+      "c": "D5-1a",
+      "n": "Rest Area Next Right",
+      "cat": "D",
+      "img": "d5-1a.gif"
+    },
+    {
+      "c": "D5-2",
+      "n": "Rest Area (Diagonal Arrow)",
+      "cat": "D",
+      "img": "d5-2.gif"
+    },
+    {
+      "c": "D5-2a",
+      "n": "Rest Area (Diagonal Arrow) (for use in exit gore)",
+      "cat": "D",
+      "img": "d5-2a.gif"
+    },
+    {
+      "c": "D5-5",
+      "n": "Rest Area (Horizontal Arrow)",
+      "cat": "D",
+      "img": "d5-5.gif"
+    },
+    {
+      "c": "D5-6",
+      "n": "Next Rest Area (Distance)",
+      "cat": "D",
+      "img": "d5-6.gif"
+    },
+    {
+      "c": "D5-7",
+      "n": "Rest Area Tourist Info Center (Distance)",
+      "cat": "D",
+      "img": "d5-7.gif"
+    },
+    {
+      "c": "D5-8",
+      "n": "Rest Area Tourist Info Center (Diagonal Arrow)",
+      "cat": "D",
+      "img": "d5-8.gif"
+    },
+    {
+      "c": "D5-11",
+      "n": "Rest Area Tourist Info Center Next Right",
+      "cat": "D",
+      "img": "d5-11.gif"
+    },
+    {
+      "c": "D5-12",
+      "n": "Interstate Oasis",
+      "cat": "D",
+      "img": "d5-12.gif"
+    },
+    {
+      "c": "D5-12P",
+      "n": "Interstate Oasis (plaque)",
+      "cat": "D",
+      "img": "d5-12p.gif"
+    },
+    {
+      "c": "D5-13",
+      "n": "Brake Check Area (Distance)",
+      "cat": "D",
+      "img": "d5-13.gif"
+    },
+    {
+      "c": "D5-14",
+      "n": "Brake Check Area (Diagonal Arrow)",
+      "cat": "D",
+      "img": "d5-14.gif"
+    },
+    {
+      "c": "D5-15",
+      "n": "Chain Up Area (Distance)",
+      "cat": "D",
+      "img": "d5-15.gif"
+    },
+    {
+      "c": "D5-16",
+      "n": "Chain Up Area (Diagonal Arrow)",
+      "cat": "D",
+      "img": "d5-16.gif"
+    },
+    {
+      "c": "D6-4",
+      "n": "America's Byways",
+      "cat": "D",
+      "img": "d6-4.gif",
+      "sz": "large"
+    },
+    {
+      "c": "D6-4a",
+      "n": "America's Byways",
+      "cat": "D",
+      "img": "d6-4a.gif",
+      "sz": "small"
+    },
+    {
+      "c": "D8-1",
+      "n": "Weigh Station (Distance)",
+      "cat": "D",
+      "img": "d8-1.gif"
+    },
+    {
+      "c": "D8-2",
+      "n": "Weigh Station Next Right",
+      "cat": "D",
+      "img": "d8-2.gif"
+    },
+    {
+      "c": "D8-3",
+      "n": "Weigh Station (Diagonal Arrow)",
+      "cat": "D",
+      "img": "d8-3.gif"
+    },
+    {
+      "c": "D9-1",
+      "n": "Telephone",
+      "cat": "D",
+      "img": "d9-1.gif"
+    },
+    {
+      "c": "D9-2",
+      "n": "Hospital",
+      "cat": "D",
+      "img": "d9-2.gif"
+    },
+    {
+      "c": "D9-3",
+      "n": "Camping",
+      "cat": "D",
+      "img": "d9-3.gif"
+    },
+    {
+      "c": "D9-3a",
+      "n": "Trailer Camping",
+      "cat": "D",
+      "img": "d9-3a.gif"
+    },
+    {
+      "c": "D9-4",
+      "n": "Litter Container",
+      "cat": "D",
+      "img": "d9-4.gif"
+    },
+    {
+      "c": "D9-6",
+      "n": "Handicapped Accessible",
+      "cat": "D",
+      "img": "d9-6.gif"
+    },
+    {
+      "c": "D9-6P",
+      "n": "Van Accessible (plaque)",
+      "cat": "D",
+      "img": "d9-6p.gif"
+    },
+    {
+      "c": "D9-7",
+      "n": "Gas",
+      "cat": "D",
+      "img": "d9-7.gif"
+    },
+    {
+      "c": "D9-8",
+      "n": "Food",
+      "cat": "D",
+      "img": "d9-8.gif"
+    },
+    {
+      "c": "D9-9",
+      "n": "Lodging",
+      "cat": "D",
+      "img": "d9-9.gif"
+    },
+    {
+      "c": "D9-10",
+      "n": "Tourist Information",
+      "cat": "D",
+      "img": "d9-10.gif"
+    },
+    {
+      "c": "D9-11",
+      "n": "Diesel Fuel",
+      "cat": "D",
+      "img": "d9-11.gif"
+    },
+    {
+      "c": "D9-11a",
+      "n": "Compressed Natural Gas",
+      "cat": "D",
+      "img": "d9-11a.gif"
+    },
+    {
+      "c": "D9-11b",
+      "n": "Electric Vehicle Charging",
+      "cat": "D",
+      "img": "d9-11b.gif"
+    },
+    {
+      "c": "D9-11bP",
+      "n": "Electric Vehicle Charging (plaque)",
+      "cat": "D",
+      "img": "d9-11bp.gif"
+    },
+    {
+      "c": "D9-11c",
+      "n": "Ethanol",
+      "cat": "D",
+      "img": "d9-11c.gif"
+    },
+    {
+      "c": "D9-12",
+      "n": "RV Sanitary Station",
+      "cat": "D",
+      "img": "d9-12.gif"
+    },
+    {
+      "c": "D9-13",
+      "n": "Emergency Medical Services",
+      "cat": "D",
+      "img": "d9-13.gif"
+    },
+    {
+      "c": "D9-13aP",
+      "n": "Hospital (plaque)",
+      "cat": "D",
+      "img": "d9-13ap.gif"
+    },
+    {
+      "c": "D9-13bP",
+      "n": "Ambulance Station (plaque)",
+      "cat": "D",
+      "img": "d9-13bp.gif"
+    },
+    {
+      "c": "D9-13cP",
+      "n": "Emergency Medical Care (plaque)",
+      "cat": "D",
+      "img": "d9-13cp.gif"
+    },
+    {
+      "c": "D9-13dP",
+      "n": "Trauma Center (plaque)",
+      "cat": "D",
+      "img": "d9-13dp.gif"
+    },
+    {
+      "c": "D9-14",
+      "n": "Police",
+      "cat": "D",
+      "img": "d9-14.gif"
+    },
+    {
+      "c": "D9-15",
+      "n": "Propane",
+      "cat": "D",
+      "img": "d9-15.gif"
+    },
+    {
+      "c": "D9-16",
+      "n": "Truck Parking",
+      "cat": "D",
+      "img": "d9-16.gif"
+    },
+    {
+      "c": "D9-17P",
+      "n": "Next Services (Distance) (plaque)",
+      "cat": "D",
+      "img": "d9-17p.gif"
+    },
+    {
+      "c": "D9-18",
+      "n": "General Services (symbols)",
+      "cat": "D",
+      "img": "d9-18.gif"
+    },
+    {
+      "c": "D9-18a",
+      "n": "General Services (word message)",
+      "cat": "D",
+      "img": "d9-18a.gif"
+    },
+    {
+      "c": "D9-18b",
+      "n": "General Services With Action / Exit Information (symbols)",
+      "cat": "D",
+      "img": "d9-18b.gif"
+    },
+    {
+      "c": "D9-18c",
+      "n": "General Services with Action / Exit Information (word message)",
+      "cat": "D",
+      "img": "d9-18c.gif"
+    },
+    {
+      "c": "D9-20",
+      "n": "Pharmacy",
+      "cat": "D",
+      "img": "d9-20.gif"
+    },
+    {
+      "c": "D9-20aP",
+      "n": "24 Hour (plaque)",
+      "cat": "D",
+      "img": "d9-20ap.gif"
+    },
+    {
+      "c": "D9-21",
+      "n": "Telecommunication Device for the Deaf",
+      "cat": "D",
+      "img": "d9-21.gif"
+    },
+    {
+      "c": "D9-22",
+      "n": "Wireless Internet",
+      "cat": "D",
+      "img": "d9-22.gif"
+    },
+    {
+      "c": "D10-1",
+      "n": "Reference Location (Milepost) (1 digit)",
+      "cat": "D",
+      "img": "d10-1.gif"
+    },
+    {
+      "c": "D10-1a",
+      "n": "Intermediate Reference Location (2 digits)",
+      "cat": "D",
+      "img": "d10-1a.gif"
+    },
+    {
+      "c": "D10-2",
+      "n": "Reference Location (Milepost) (2 digits)",
+      "cat": "D",
+      "img": "d10-2.gif"
+    },
+    {
+      "c": "D10-2a",
+      "n": "Intermediate Reference Location (3 digits)",
+      "cat": "D",
+      "img": "d10-2a.gif"
+    },
+    {
+      "c": "D10-3",
+      "n": "Reference Location (Milepost) (3 digits)",
+      "cat": "D",
+      "img": "d10-3.gif"
+    },
+    {
+      "c": "D10-3a",
+      "n": "Intermediate Reference Location (4 digits)",
+      "cat": "D",
+      "img": "d10-3a.gif"
+    },
+    {
+      "c": "D10-4",
+      "n": "Enhanced Reference Location",
+      "cat": "D",
+      "img": "d10-4.gif"
+    },
+    {
+      "c": "D10-5",
+      "n": "Intermediate Enhanced Reference Location",
+      "cat": "D",
+      "img": "d10-5.gif"
+    },
+    {
+      "c": "D11-1",
+      "n": "Bike Route",
+      "cat": "D",
+      "img": "d11-1.gif"
+    },
+    {
+      "c": "D11-1a",
+      "n": "Bicycles Permitted",
+      "cat": "D",
+      "img": "d11-1a.gif"
+    },
+    {
+      "c": "D11-1bP",
+      "n": "Bike Route (plaque)",
+      "cat": "D",
+      "img": "d11-1bp.gif"
+    },
+    {
+      "c": "D11-1c",
+      "n": "Bike Route (Destination)",
+      "cat": "D",
+      "img": "d11-1c.gif"
+    },
+    {
+      "c": "D11-2",
+      "n": "Pedestrians Permitted",
+      "cat": "D",
+      "img": "d11-2.gif"
+    },
+    {
+      "c": "D11-3",
+      "n": "Skaters Permitted",
+      "cat": "D",
+      "img": "d11-3.gif"
+    },
+    {
+      "c": "D11-4",
+      "n": "Equestrians Permitted",
+      "cat": "D",
+      "img": "d11-4.gif"
+    },
+    {
+      "c": "D11-20L",
+      "n": "Bicycle Left Turn May Use Turn Box",
+      "cat": "D",
+      "img": "d11-20l.gif"
+    },
+    {
+      "c": "D11-20R",
+      "n": "Bicycle Right Turn May Use Turn Box",
+      "cat": "D",
+      "img": "d11-20r.gif"
+    },
+    {
+      "c": "D11-20aL",
+      "n": "Bicycle Left Turn Box (Left Downward Diagonal Arrow)",
+      "cat": "D",
+      "img": "d11-20al.gif"
+    },
+    {
+      "c": "D11-20aR",
+      "n": "Bicycle Right Turn Box (Right Downward Diagonal Arrow)",
+      "cat": "D",
+      "img": "d11-20ar.gif"
+    },
+    {
+      "c": "D12-1",
+      "n": "Weather Information",
+      "cat": "D",
+      "img": "d12-1.gif"
+    },
+    {
+      "c": "D12-2",
+      "n": "Carpool Information",
+      "cat": "D",
+      "img": "d12-2.gif"
+    },
+    {
+      "c": "D12-3",
+      "n": "Channel 9 Monitored",
+      "cat": "D",
+      "img": "d12-3.gif"
+    },
+    {
+      "c": "D12-4",
+      "n": "Emergency Call 911",
+      "cat": "D",
+      "img": "d12-4.gif"
+    },
+    {
+      "c": "D12-5",
+      "n": "Travel Info Call 511 (pictograph)",
+      "cat": "D",
+      "img": "d12-5.gif"
+    },
+    {
+      "c": "D12-5a",
+      "n": "Travel Info Call 511",
+      "cat": "D",
+      "img": "d12-5a.gif"
+    },
+    {
+      "c": "D13-1",
+      "n": "Crossover (Arrow)",
+      "cat": "D",
+      "img": "d13-1.gif"
+    },
+    {
+      "c": "D13-2",
+      "n": "Crossover (Distance)",
+      "cat": "D",
+      "img": "d13-2.gif"
+    },
+    {
+      "c": "D13-3",
+      "n": "Freeway Entrance",
+      "cat": "D",
+      "img": "d13-3.gif"
+    },
+    {
+      "c": "D13-3a",
+      "n": "Freeway Entrance (Downward Diagonal Arrow)",
+      "cat": "D",
+      "img": "d13-3a.gif"
+    },
+    {
+      "c": "D14-1",
+      "n": "Sponsored By",
+      "cat": "D",
+      "img": "d14-1.gif"
+    },
+    {
+      "c": "D14-2",
+      "n": "Adopt A Roadway By Sponsor",
+      "cat": "D",
+      "img": "d14-2.gif"
+    },
+    {
+      "c": "D14-3",
+      "n": "Adopt A Roadway Sponsored By",
+      "cat": "D",
+      "img": "d14-3.gif"
+    },
+    {
+      "c": "D15-1",
+      "n": "Combination Lane Use / Destination",
+      "cat": "D",
+      "img": "d15-1.gif"
+    },
+    {
+      "c": "D17-1",
+      "n": "Next Truck Lane (Distance)",
+      "cat": "D",
+      "img": "d17-1.gif"
+    },
+    {
+      "c": "D17-2",
+      "n": "Truck Lane (Distance)",
+      "cat": "D",
+      "img": "d17-2.gif"
+    },
+    {
+      "c": "D17-7",
+      "n": "Slow Vehicle Turnout (Distance)",
+      "cat": "D",
+      "img": "d17-7.gif"
+    },
+    {
+      "c": "OM1-1",
+      "n": "Type 1 Object Marker (yellow diamond)",
+      "cat": "OM",
+      "img": "om1-1.gif"
+    },
+    {
+      "c": "OM1-2",
+      "n": "Type 1 Object Marker (variant)",
+      "cat": "OM",
+      "img": "om1-2.gif"
+    },
+    {
+      "c": "OM1-3",
+      "n": "Type 1 Object Marker (variant)",
+      "cat": "OM",
+      "img": "om1-3.gif"
+    },
+    {
+      "c": "OM2-1H",
+      "n": "Type 2 Object Marker (Horizontal)",
+      "cat": "OM",
+      "img": "om2-1h.gif"
+    },
+    {
+      "c": "OM2-1V",
+      "n": "Type 2 Object Marker (Vertical)",
+      "cat": "OM",
+      "img": "om2-1v.gif"
+    },
+    {
+      "c": "OM2-2H",
+      "n": "Type 2 Object Marker (Horizontal)",
+      "cat": "OM",
+      "img": "om2-2h.gif"
+    },
+    {
+      "c": "OM2-2V",
+      "n": "Type 2 Object Marker (Vertical)",
+      "cat": "OM",
+      "img": "om2-2v.gif"
+    },
+    {
+      "c": "OM4-1",
+      "n": "Type 4 Object Marker",
+      "cat": "OM",
+      "img": "om4-1.gif"
+    },
+    {
+      "c": "OM4-2",
+      "n": "Type 4 Object Marker",
+      "cat": "OM",
+      "img": "om4-2.gif"
+    },
+    {
+      "c": "OM4-3",
+      "n": "Type 4 Object Marker",
+      "cat": "OM",
+      "img": "om4-3.gif"
+    },
+    {
+      "c": "OM3-C",
+      "n": "Type 3 Object Marker (Center)",
+      "cat": "OM",
+      "img": "om3-c.gif"
+    },
+    {
+      "c": "OM3-L",
+      "n": "Type 3 Object Marker (Left)",
+      "cat": "OM",
+      "img": "om3-l.gif"
+    },
+    {
+      "c": "OM3-R",
+      "n": "Type 3 Object Marker (Right)",
+      "cat": "OM",
+      "img": "om3-r.gif"
+    }
+  ]
+}
