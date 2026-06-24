@@ -9625,6 +9625,32 @@ input.fs-slider::-webkit-slider-thumb {
   border-radius: 2px;
 }
 .df-sign-code:hover { border-color: var(--blue); }
+/* Sign code row — free-text input + small 🔍 picker button +
+   optional MUTCD name hint, with the search results panel allowed
+   to drop in below all of them. */
+.df-sign-code-ctrl {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+.df-sign-code-ctrl .ds-sign-code-input {
+  flex: 1 1 140px; min-width: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+}
+.df-sign-code-ctrl .ds-sign-code-btn {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2); color: var(--ink-2);
+  cursor: pointer; font-size: 14px; line-height: 1;
+  border-radius: 2px;
+}
+.df-sign-code-ctrl .ds-sign-code-btn:hover { border-color: var(--blue); color: var(--blue); }
+.df-sign-code-ctrl .ds-sign-code-meta {
+  flex: 0 1 auto; min-width: 0;
+  font-size: 11px; color: var(--ink-3); font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.df-sign-code-ctrl .ds-code-search { flex: 1 0 100%; }
 /* Inline sign search */
 .df-sign-search-wrap {
   border: 1px solid var(--blue);
@@ -35944,8 +35970,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         '<div class="sign-sub-hdr">PANEL ' + (idx + 1) +
           '<button class="sign-mini-del" data-del-panel="' + idx + '">✕</button>' +
           '<span class="sign-ulid">' + _esc(p.ulid || '') + '</span></div>' +
-        '<div class="df-row"><span class="df-lbl">Sign code</span><span class="df-ctrl">' +
-          '<button class="ds-sign-code-btn" data-panel-idx="' + idx + '">' + _esc(lbl) + '</button>' +
+        // Sign code — free text input so the user can type any code
+        // (including custom / non-MUTCD codes). The 🔍 button still
+        // opens the MUTCD search picker; selecting from the picker
+        // pre-fills the input + common size + description as before.
+        // The generic .df-input wiring at the bottom of _wireFormBody
+        // saves the typed value to the active panel's sign_code via
+        // _targetObj (data-panel-scope on the wrapper).
+        '<div class="df-row"><span class="df-lbl">Sign code</span><span class="df-ctrl df-sign-code-ctrl">' +
+          '<input class="df-input ds-sign-code-input" type="text" data-field="sign_code" '
+            + 'value="' + _esc(p.sign_code || '') + '" '
+            + 'placeholder="e.g. W6-3 or custom" autocomplete="off">' +
+          '<button class="ds-sign-code-btn" data-panel-idx="' + idx + '" '
+            + 'title="Browse MUTCD library" type="button">🔍</button>' +
+          (meta ? '<span class="ds-sign-code-meta">' + _esc(meta.n) + '</span>' : '') +
           '<div class="ds-code-search" data-panel-idx="' + idx + '" style="display:none"></div>' +
         '</span></div>' +
         _inputRow ('Description',  'panel_description',  p.panel_description, 'text') +
