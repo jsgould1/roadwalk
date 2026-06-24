@@ -31822,12 +31822,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                     { type: 'application/vnd.google-earth.kmz' });
   }
 
-  // Resize a dataUrl through a canvas and return the result as bytes
-  // (Uint8Array). Caller wraps in Promise.all so a parallel resize
-  // fleet runs while the rest of the section is being walked.
-  function _srResizeJpegBytes(dataUrl, maxWidth, quality) {
+  // Resize a dataUrl through a canvas and return the result as a
+  // data:image/jpeg;base64 URL. Returning a data URL (rather than raw
+  // bytes) lets us embed both the inline thumb and the click-to-zoom
+  // full image directly in the balloon HTML — Google Earth opens
+  // <a href> in the system browser, which can't resolve KMZ-relative
+  // paths, but a data: URI doesn't need any resolution at all.
+  function _srResizeJpegDataUrl(dataUrl, maxWidth, quality) {
     return new Promise(function (resolve) {
-      if (!dataUrl || dataUrl.indexOf('data:') !== 0) return resolve(null);
+      if (!dataUrl || dataUrl.indexOf('data:') !== 0) return resolve('');
       var img = new Image();
       img.onload = function () {
         try {
@@ -31837,10 +31840,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           var canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(_dataUrlToBytes(canvas.toDataURL('image/jpeg', quality)));
-        } catch (e) { resolve(null); }
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (e) { resolve(''); }
       };
-      img.onerror = function () { resolve(null); };
+      img.onerror = function () { resolve(''); };
       img.src = dataUrl;
     });
   }
@@ -32058,22 +32061,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
       pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
 
-      // For each pin: resize every photo (up to 12) into a single
-      // high-quality JPEG that lives in the KMZ's files/ folder. The
-      // previous build also stored a smaller thumb and wrapped it in
-      // an anchor pointing at the larger one, but Google Earth opens
-      // <a href> targets in the system browser, which can't resolve
-      // KMZ-internal relative paths, so the click was a no-op. The
-      // single high-res image now displays at 420 px in the balloon
-      // (downsampled from ~1400 px) — sharp enough for inspection
-      // without needing to click through.
+      // For each pin: resize every photo (up to 12) into TWO data
+      // URIs — a 540 px thumb for the inline <img> and a 1400 px full
+      // version for the <a href> click target. Embedding both as
+      // data: URIs means the browser can open the click target
+      // without needing to resolve a KMZ-relative path. The previous
+      // build stored a single JPEG as a real file inside the KMZ and
+      // the click anchor pointed at that file — Google Earth opened
+      // the anchor in the system browser, which couldn't fetch the
+      // KMZ-internal URL, so nothing happened.
       var pinBundles = pins.map(function (pin) {
         var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
         merged._secId = sec.id;
         var photos = _srPhotosForKml(merged).slice(0, 12);
         var photoPromises = photos.map(function (ph, idx) {
-          return _srResizeJpegBytes(ph.src, 1400, 0.72).then(function (bytes) {
-            return { bytes: bytes, caption: ph.caption, idx: idx };
+          return Promise.all([
+            _srResizeJpegDataUrl(ph.src,  540, 0.7),   // inline thumb
+            _srResizeJpegDataUrl(ph.src, 1400, 0.72),  // click-to-zoom
+          ]).then(function (pair) {
+            return { thumbUrl: pair[0], fullUrl: pair[1], caption: ph.caption, idx: idx };
           });
         });
         return Promise.all(photoPromises).then(function (resized) {
@@ -32333,11 +32339,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       }
 
-      // ── PHOTOS section — single high-quality JPEG per photo,
-      // displayed at 420 px in a 2-column grid. Drops the previous
-      // dual thumb/full pair + click-to-zoom because Google Earth
-      // can't resolve KMZ-relative <a href> targets reliably.
-      var realPhotos = bundle.photos.filter(function (ph) { return ph && ph.bytes; });
+      // ── PHOTOS section — thumb + click-to-zoom full image, both
+      // embedded as data: URIs so the browser can open the full image
+      // on click without needing to resolve any KMZ-relative path.
+      var realPhotos = bundle.photos.filter(function (ph) { return ph && ph.thumbUrl; });
       if (realPhotos.length) {
         html += _sectionHdr('PHOTOS (' + realPhotos.length + ')');
         html += '<table style="border-collapse:collapse;">';
@@ -32346,15 +32351,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           for (var j = 0; j < 2; j++) {
             var ph = realPhotos[i + j];
             if (!ph) { html += '<td></td>'; continue; }
-            var path = 'files/' + pinIdSafe + '_' + ph.idx + '.jpg';
-            files.push({ name: path, data: ph.bytes });
+            // Fall back to the thumb in href if the full pass failed.
+            var fullSrc = ph.fullUrl || ph.thumbUrl;
             html += '<td style="padding:6px;vertical-align:top;">'
-              + '<img src="' + path + '" style="width:420px;height:auto;display:block;border:1px solid #999;">'
+              + '<a href="' + fullSrc + '" target="_blank" title="Click to open full size">'
+                + '<img src="' + ph.thumbUrl + '" style="width:380px;height:auto;display:block;border:1px solid #999;cursor:zoom-in;">'
+              + '</a>'
               + '</td>';
           }
           html += '</tr>';
         }
         html += '</table>';
+        html += '<p style="margin:6px 0 0;font-family:sans-serif;font-size:11px;color:#888;">Click a thumbnail to open the full-size image in your browser.</p>';
       }
 
       // ExtendedData for analytics tools that read KML / KMZ fields.
