@@ -34108,6 +34108,83 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return best;
   }
 
+  // Side of a point relative to an alignment polyline. Returns 'L'
+  // (left of forward bearing), 'R' (right), or '' (on or off the
+  // alignment entirely). alignment is the GeoJSON [[lng,lat], …] list
+  // we store on sec.alignment converted to (lat,lng)-style segments.
+  // Used to label each culvert endpoint as left- or right-of-centerline
+  // in the description.
+  function _cvSideOfPoint(pt, alignment) {
+    if (!Array.isArray(alignment) || alignment.length < 2) return '';
+    var lat0 = pt.lat;
+    var coslat = Math.cos(lat0 * Math.PI / 180);
+    var FT = 364000;
+    var px = pt.lng * coslat * FT, py = pt.lat * FT;
+    var bestD = Infinity, bestSide = '';
+    for (var i = 0; i < alignment.length - 1; i++) {
+      var a = alignment[i], b = alignment[i + 1];
+      // Accept either [lng,lat] or {lat,lng} segment endpoints.
+      var aLng = Array.isArray(a) ? +a[0] : +a.lng;
+      var aLat = Array.isArray(a) ? +a[1] : +a.lat;
+      var bLng = Array.isArray(b) ? +b[0] : +b.lng;
+      var bLat = Array.isArray(b) ? +b[1] : +b.lat;
+      if (!isFinite(aLng) || !isFinite(bLng)) continue;
+      var ax = aLng * coslat * FT, ay = aLat * FT;
+      var bx = bLng * coslat * FT, by = bLat * FT;
+      var dx = bx - ax, dy = by - ay;
+      var len2 = dx * dx + dy * dy;
+      if (len2 === 0) continue;
+      var t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+      var projx = ax + t * dx, projy = ay + t * dy;
+      var ex = px - projx, ey = py - projy;
+      var d = ex * ex + ey * ey;
+      if (d < bestD) {
+        bestD = d;
+        // Cross product of segment vector × (point - segment start).
+        // Positive → left of forward bearing.
+        var cross = dx * (py - ay) - dy * (px - ax);
+        bestSide = cross > 0 ? 'L' : cross < 0 ? 'R' : '';
+      }
+    }
+    return bestSide;
+  }
+  function _cvSideWord(s) { return s === 'L' ? 'left' : s === 'R' ? 'right' : ''; }
+
+  // Build the culvert description per user spec:
+  //   "150' || 18" RCP pipe with Inlet (left), Armored outlet (right)"
+  // Concatenates length, diameter, material, plus inlet/outlet end
+  // types each tagged with the side of centerline they sit on (the
+  // first endpoint maps to the inlet, the last to the outlet). Skips
+  // gracefully when any of the fields is missing.
+  function _cvBuildDescription(pin, alignment) {
+    var a = pin.attrs || {};
+    var coords = (pin.geometry && pin.geometry.coordinates) || [];
+    var inSide = '', outSide = '';
+    if (Array.isArray(coords) && coords.length >= 2) {
+      var p0 = coords[0], pN = coords[coords.length - 1];
+      inSide  = _cvSideOfPoint({ lng: +p0[0], lat: +p0[1] }, alignment);
+      outSide = _cvSideOfPoint({ lng: +pN[0], lat: +pN[1] }, alignment);
+    }
+
+    var head = [];
+    if (a.length_ft) head.push(a.length_ft + "'");
+    if (a.size_in)   head.push(a.size_in   + '"');
+    var pipeBit = a.material ? (a.material + ' pipe') : 'pipe';
+    var headStr = head.length ? (head.join(' || ') + ' ' + pipeBit) : pipeBit;
+
+    var tail = [];
+    if (a.in_type) {
+      var w1 = _cvSideWord(inSide);
+      tail.push(a.in_type + (w1 ? ' (' + w1 + ')' : ''));
+    }
+    if (a.out_type) {
+      var w2 = _cvSideWord(outSide);
+      tail.push(a.out_type + (w2 ? ' (' + w2 + ')' : ''));
+    }
+    var withClause = tail.length ? (' with ' + tail.join(', ')) : '';
+    return headStr + withClause;
+  }
+
   // ── Auto-add nearby photos ──────────────────────────────────────
   // Pulls every geophoto whose lat/lng falls within `maxFt` of the
   // culvert polyline, dedups against anything already linked or
@@ -34365,14 +34442,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         a.hw_upstream_cond, a.hw_downstream_cond,
       ]);
 
-      // Description — concise summary of in/out type + material/size.
-      var descBits = [];
-      if (a.in_type)  descBits.push(a.in_type);
-      if (a.out_type && a.out_type !== a.in_type) descBits.push('→ ' + a.out_type);
-      if (a.material) descBits.push(a.material);
-      if (a.size_in)  descBits.push(a.size_in + '"');
-      if (a.length_ft) descBits.push(a.length_ft + ' ft');
-      var descStr = descBits.length ? descBits.join(' · ') : (a.name || '(culvert)');
+      // Description — concise summary built per spec:
+      //   {length}' || {diameter}" {material} pipe with
+      //     {in_type} ({L/R of CL}), {out_type} ({L/R of CL})
+      // Each endpoint's side is computed against the section's
+      // alignment so an inlet on the uphill bank reads (left) and
+      // the outlet on the downhill bank reads (right) — the two are
+      // independent so a same-side drain still gets the right label.
+      var descStr = _cvBuildDescription(pin, sec.alignment) || (a.name || '(culvert)');
 
       var pinIdStr = (sec.id ? sec.id + '-' : '') + (pin.id || '');
 
