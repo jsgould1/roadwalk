@@ -31492,6 +31492,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (s.length === 1 && _COND_SPELLED[s]) return _COND_SPELLED[s];
         return v;
       }
+      // Sheeting-type code → spelled product name. Form codes come
+      // from SIGN_SHEETING (EG / HIP / DG3 / FYG / FO / OTHER /
+      // UNKNOWN). Unknown codes pass through verbatim.
+      var _SHEETING_SPELLED = {
+        EG:      'Engineering Grade',
+        HIP:     'High Intensity',
+        DG3:     'Diamond Grade',
+        FYG:     'Fluorescent Yellow-Green',
+        FO:      'Fluorescent Orange',
+        OTHER:   'Other',
+        UNKNOWN: 'Unknown',
+      };
+      function _spellSheeting(v) {
+        if (v == null || v === '') return v;
+        var s = String(v).trim().toUpperCase();
+        if (_SHEETING_SPELLED[s]) return _SHEETING_SPELLED[s];
+        return v;
+      }
       // Panel type — Aluminum by default; Corrugated Aluminum when
       // the panel notes mention 'corrugat' (catches 'corrugated' and
       // the misspelled 'corrugates' from field entry).
@@ -31550,7 +31568,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '<div class="sr-field-grid">' +
             // Row 1
             _field('Sign Code',       pn.sign_code) +
-            _field('Sheeting Type',   pn.sheeting_type) +
+            _field('Sheeting Type',   _spellSheeting(pn.sheeting_type)) +
             // Row 2 — description moved up; sheet condition follows
             _field('Description', pn.panel_description, { wrap: true }) +
             _field('Sheet Condition', _spellCondition(pn.sheeting_condition)) +
