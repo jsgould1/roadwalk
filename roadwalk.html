@@ -4774,7 +4774,11 @@ body.rw-sld-photo-dragging .strip-pin {
   left: 0.5in; right: 0.5in; bottom: 0.3in;
   padding-top: 6px;
   border-top: 1px solid var(--ink);
-  display: flex; justify-content: space-between; align-items: baseline;
+  /* align-items:flex-end so the AECOM logo on the left and the
+     project-number strip in the middle both bottom-align with the
+     SECOND line of the right column (the file-wide Page N of XX)
+     instead of the first line. */
+  display: flex; justify-content: space-between; align-items: flex-end;
   font: 700 10px 'IBM Plex Mono', monospace;
   letter-spacing: .8px; text-transform: uppercase;
   color: var(--ink-2);
@@ -32631,7 +32635,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         G: '#22c55e', // Good — green
         F: '#ca8a04', // Fair — mustard yellow (readable on white)
         P: '#b91c1c', // Poor — red
-        X: '#111111', // Failed — black
+        X: '#ef4444', // Failed — bright red (per-user spec; distinct from Poor's darker red)
       };
       var _COND_SPELLED = { E: 'Excellent', G: 'Good', F: 'Fair', P: 'Poor', X: 'Failed' };
       var _RETRO_ORDER  = { E: 1, G: 2, F: 3, P: 4, X: 5 };
