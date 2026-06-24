@@ -5040,15 +5040,37 @@ body.rw-sld-photo-dragging .strip-pin {
 /* ── Print rules — collapse chrome, one card per page ────────────── */
 @media print {
   @page { size: letter; margin: 0; }
-  body { background: #fff !important; }
-  /* Hide everything except the signs-report module + its cards. */
-  header, #app-tabs, #header-settings-btn, #app-header,
+  /* Body + html lose the screen viewport-height constraint so the full
+     card stack flows onto its own pages instead of being clipped to
+     the first sheet. */
+  html, body {
+    background: #fff !important;
+    height: auto !important; min-height: 0 !important;
+    overflow: visible !important;
+  }
+  /* Hide everything except the signs-report module + its cards.
+     #app-nav is the real top nav element — the previous #app-header
+     selector matched nothing so the AECOM/RoadWalk header used to
+     bleed onto the first printed page and cover the report header. */
+  header, #app-nav, #app-tabs, #header-settings-btn, #app-header,
   .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-delete-btn,
   .sr-panel-del,
   .sr-restore-btn, .sr-photo-actions, #module-toolbar,
   .module-view:not(#mod-signs_report) { display: none !important; }
-  #mod-signs_report.active { display: block !important; overflow: visible !important; }
-  .sr-list { background: #fff !important; padding: 0 !important; gap: 0 !important; }
+  /* Module + list both have to drop their flex / overflow-y:auto
+     so the card stack isn't trapped inside a fixed-height scroll
+     container. Without these overrides only page 1 ever printed. */
+  #mod-signs_report.active {
+    display: block !important; overflow: visible !important;
+    height: auto !important; min-height: 0 !important;
+    flex: 0 0 auto !important;
+  }
+  .sr-list {
+    background: #fff !important; padding: 0 !important; gap: 0 !important;
+    overflow: visible !important;
+    height: auto !important; min-height: 0 !important;
+    flex: 0 0 auto !important;
+  }
   .sr-card {
     box-shadow: none !important; border: none !important;
     margin: 0 !important;
