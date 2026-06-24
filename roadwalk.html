@@ -33959,8 +33959,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _cvBarrelSchematicSvg(pin) {
     var a = pin.attrs || {};
 
-    var W = 520, H = 165;
-    var barrelY = 68;
+    var W = 520, H = 118;
+    var barrelY = 50;
     var barrelH = 22;
     var barrelStartX = 100;
     var barrelEndX   = W - 100;
@@ -33990,10 +33990,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     function _endShape(side, shape, anchorX) {
       var isInlet = (side === 'inlet');
       var boxW = 18;
-      var boxH = barrelH + 28;
-      var boxY = barrelY - 14;
+      var boxH = barrelH + 16;       // compressed from +28 so the
+      var boxY = barrelY - 8;        // schematic fits in 118 px tall
       var boxX = isInlet ? (anchorX - boxW) : anchorX;
-      var labelY = boxY + boxH + 14;
+      var labelY = boxY + boxH + 12;
       var color  = _endRatingColor(side, shape);
 
       if (shape === 'headwall') {
@@ -34073,12 +34073,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     tailBits.push('pipe');
     var pipeLabel = leadBit ? (leadBit + ', ' + tailBits.join(' ')) : tailBits.join(' ');
 
-    // FLOW arrow — sits just under the barrel, much shorter than
-    // before (about a third of the barrel width, centered). Direction
-    // is inlet (left) → outlet (right), drawn in the same blue as the
-    // inset map's culvert line.
-    var flowY     = barrelY + barrelH + 12;        // ≈ 102 — directly under barrel
-    var flowSpan  = (barrelEndX - barrelStartX) * 0.32; // ~110 px
+    // FLOW arrow — sits just under the barrel, short (~32% of barrel
+    // width), centered. Direction is inlet (left) → outlet (right),
+    // drawn in the same blue as the inset map's culvert line.
+    var flowY     = barrelY + barrelH + 12;        // just below barrel
+    var flowSpan  = (barrelEndX - barrelStartX) * 0.32;
     var flowStart = midX - flowSpan / 2;
     var flowEnd   = midX + flowSpan / 2;
     var arrowHead = flowEnd + ',' + flowY + ' '
@@ -34088,16 +34087,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     return '<div class="cv-schematic">'
       + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" '
         + 'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
-      // Pipe spec caption — directly above pipe (only 16 px gap)
-      + '<text x="' + midX + '" y="' + (barrelY - 30) + '" text-anchor="middle" '
+      // Pipe spec caption — directly above the pipe.
+      + '<text x="' + midX + '" y="' + (barrelY - 24) + '" text-anchor="middle" '
         + 'font-size="13" font-weight="700" font-family="sans-serif" fill="#111">'
         + _esc(pipeLabel) + '</text>'
-      // Direction labels (above barrel, at each end) — bigger so they
-      // read at print size
-      + '<text x="' + (barrelStartX + 4) + '" y="' + (barrelY - 8) + '" '
+      // Direction labels (above barrel, at each end)
+      + '<text x="' + (barrelStartX + 4) + '" y="' + (barrelY - 6) + '" '
         + 'font-size="12" font-family="sans-serif" fill="#374151" font-weight="700" '
         + 'letter-spacing=".6">INLET</text>'
-      + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 8) + '" text-anchor="end" '
+      + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 6) + '" text-anchor="end" '
         + 'font-size="12" font-family="sans-serif" fill="#374151" font-weight="700" '
         + 'letter-spacing=".6">OUTLET</text>'
       // Barrel — colored by condition
@@ -34107,7 +34105,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // End fittings
       + _endShape('inlet',  inletShape,  barrelStartX)
       + _endShape('outlet', outletShape, barrelEndX)
-      // FLOW arrow — short, centered, just under barrel
+      // FLOW arrow + label — barrel rating label dropped because it's
+      // redundant with the colored barrel itself + the conditions table
+      // immediately below the schematic.
       + '<line x1="' + flowStart + '" y1="' + flowY + '" '
         + 'x2="' + (flowEnd - 7) + '" y2="' + flowY + '" '
         + 'stroke="#1d4ed8" stroke-width="2" />'
@@ -34115,10 +34115,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + '<text x="' + midX + '" y="' + (flowY + 14) + '" text-anchor="middle" '
         + 'font-size="11" font-weight="700" font-family="sans-serif" fill="#1d4ed8" '
         + 'letter-spacing="2">FLOW</text>'
-      // Barrel condition label below FLOW arrow
-      + '<text x="' + midX + '" y="' + (barrelY + barrelH + 60) + '" text-anchor="middle" '
-        + 'font-size="10.5" font-family="sans-serif" fill="' + barrelColor + '" font-weight="700">'
-        + 'Barrel: ' + _esc(barrelLabel) + '</text>'
       + '</svg>'
       + '</div>';
   }
@@ -39070,7 +39066,28 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var sizes = ['','12"','15"','18"','24"','30"','36"','42"','48"','54"','60"','66"','72"','84"','96"','Other / Add Manually'];
       var hwTypes = ['None / Natural','Concrete','Corrugated Metal','Architectural Stone','Rip Rap','Gabion','Timber','Wingwalls','Other / Add Manually'];
       var riprap = ['N/A – None Present','Good','Displaced','Missing'];
-      return _sectionHdr('BARREL') +
+      // Standard end-fitting types — the same vocabulary the report
+      // schematic understands (headwall fills a tall rectangle, type 4b
+      // outlines one, type 6b outlines a square, flange flares
+      // outward, none leaves the barrel end open). If an existing pin
+      // already carries a freeform value (e.g. AECOM_FOX records ship
+      // with "Inlet" / "Armored outlet" / "Projected"), we prepend it
+      // to the options so saving the form doesn't silently overwrite
+      // legacy data — Other / Add Manually stays at the bottom so the
+      // user can switch to any new value they want.
+      var endTypes = ['Headwall','Type 4B','Type 6B','Flange','None','Other / Add Manually'];
+      function _endOpts(currentVal) {
+        if (currentVal && endTypes.indexOf(currentVal) === -1) {
+          return [currentVal].concat(endTypes);
+        }
+        return endTypes;
+      }
+      return _sectionHdr('END TYPE') +
+        _selectRow('Inlet type',  'in_type',  a.in_type  || 'None', _o(_endOpts(a.in_type)),  true) +
+        _otherRow('Inlet type',  'in_type_other',  a.in_type,  a.in_type_other) +
+        _selectRow('Outlet type', 'out_type', a.out_type || 'None', _o(_endOpts(a.out_type)), true) +
+        _otherRow('Outlet type', 'out_type_other', a.out_type, a.out_type_other) +
+        _sectionHdr('BARREL') +
         _selectRow('Material', 'material', a.material || 'Corrugated Metal (CMP)',
                    _o(['Corrugated Metal (CMP)','Reinforced Concrete (RCP)','HDPE (High-Density Polyethylene)','Plastic (PVC)','Aluminum','Steel','Cast Iron','Stone / Masonry / Brick','Precast Concrete Arch w/ Stone Veneer','Other / Add Manually']), true) +
         _otherRow('Material', 'material_other', a.material, a.material_other) +
