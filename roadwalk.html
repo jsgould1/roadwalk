@@ -33896,8 +33896,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function _cvBarrelSchematicSvg(pin) {
     var a = pin.attrs || {};
 
-    var W = 520, H = 150;
-    var barrelY = 68;
+    var W = 520, H = 175;
+    var barrelY = 70;
     var barrelH = 22;
     var barrelStartX = 100;
     var barrelEndX   = W - 100;
@@ -33961,31 +33961,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return ''; // open barrel end
     }
 
-    // Callout above the barrel — material · size · length, leader line
-    // drops to the barrel midpoint.
+    // Pipe spec text label above the barrel — replaces the previous
+    // callout + leader line. Format: "{length} foot, {size}" {material} pipe"
+    // e.g. "150 foot, 18\" RCP pipe". Skips gracefully when any of
+    // the three fields is missing.
     var midX = (barrelStartX + barrelEndX) / 2;
-    var calloutBits = [];
-    if (a.material)  calloutBits.push(a.material);
-    if (a.size_in)   calloutBits.push(a.size_in + '"');
-    if (a.length_ft) calloutBits.push(a.length_ft + ' ft');
-    var callout  = calloutBits.join(' · ') || '(no spec)';
-    var calloutW = Math.max(140, 18 + callout.length * 7);
-    var calloutX = midX - calloutW/2;
-    var calloutY = 6;
-    var calloutH = 22;
+    var leadBit = a.length_ft ? (a.length_ft + ' foot') : '';
+    var tailBits = [];
+    if (a.size_in)  tailBits.push(a.size_in + '"');
+    if (a.material) tailBits.push(a.material);
+    tailBits.push('pipe');
+    var pipeLabel = leadBit ? (leadBit + ', ' + tailBits.join(' ')) : tailBits.join(' ');
+
+    // FLOW arrow — sits below the barrel, points from inlet (left) to
+    // outlet (right), blue to match the inset map's culvert line.
+    var flowY     = barrelY + barrelH + 60;   // ≈ 152
+    var flowStart = barrelStartX + 16;
+    var flowEnd   = barrelEndX   - 16;
+    var arrowHead = flowEnd + ',' + flowY + ' '
+                  + (flowEnd - 9) + ',' + (flowY - 6) + ' '
+                  + (flowEnd - 9) + ',' + (flowY + 6);
 
     return '<div class="cv-schematic">'
       + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" '
         + 'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
-      // Callout box
-      + '<rect x="' + calloutX + '" y="' + calloutY + '" width="' + calloutW + '" height="' + calloutH + '" '
-        + 'fill="#fff" stroke="#111" stroke-width="1.2" rx="3" />'
-      + '<text x="' + midX + '" y="' + (calloutY + 15) + '" text-anchor="middle" '
-        + 'font-size="11" font-weight="700" font-family="sans-serif" fill="#111">'
-        + _esc(callout) + '</text>'
-      // Leader line down to barrel
-      + '<line x1="' + midX + '" y1="' + (calloutY + calloutH) + '" '
-        + 'x2="' + midX + '" y2="' + barrelY + '" stroke="#111" stroke-width="1" />'
+      // Pipe spec text (plain caption, no bubble)
+      + '<text x="' + midX + '" y="22" text-anchor="middle" '
+        + 'font-size="13" font-weight="700" font-family="sans-serif" fill="#111">'
+        + _esc(pipeLabel) + '</text>'
       // Barrel — colored by condition
       + '<rect x="' + barrelStartX + '" y="' + barrelY + '" '
         + 'width="' + (barrelEndX - barrelStartX) + '" height="' + barrelH + '" '
@@ -33998,12 +34001,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">INLET</text>'
       + '<text x="' + (barrelEndX - 4) + '" y="' + (barrelY - 8) + '" text-anchor="end" '
         + 'font-size="9" font-family="monospace" fill="#555" font-weight="700">OUTLET</text>'
-      // Barrel condition label centered under barrel — color tracks the
-      // barrel fill so an unrated barrel reads gray and a critical one
-      // pops red.
+      // Barrel condition label centered just under the barrel
       + '<text x="' + midX + '" y="' + (barrelY + barrelH + 38) + '" text-anchor="middle" '
         + 'font-size="10.5" font-family="sans-serif" fill="' + barrelColor + '" font-weight="700">'
         + 'Barrel: ' + _esc(barrelLabel) + '</text>'
+      // FLOW arrow line + arrowhead pointing inlet → outlet
+      + '<line x1="' + flowStart + '" y1="' + flowY + '" '
+        + 'x2="' + (flowEnd - 7) + '" y2="' + flowY + '" '
+        + 'stroke="#1d4ed8" stroke-width="2" />'
+      + '<polygon points="' + arrowHead + '" fill="#1d4ed8" />'
+      // FLOW label centered below the line
+      + '<text x="' + midX + '" y="' + (flowY + 15) + '" text-anchor="middle" '
+        + 'font-size="11" font-weight="700" font-family="sans-serif" fill="#1d4ed8" '
+        + 'letter-spacing="2">FLOW</text>'
       + '</svg>'
       + '</div>';
   }
