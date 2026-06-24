@@ -33931,6 +33931,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // Pure SVG so it renders the same on screen and in print. Reads the
   // pin attrs.in_type / out_type strings via keyword matching:
   //   "headwall"                 → filled rectangle (mass)
+  //   "type 4a" / "4a"           → tall rectangle outline (same shape
+  //                                as Type 4B; the A/B distinction
+  //                                rides in the label)
   //   "type 4b" / "4b"           → tall rectangle outline (drop-style
   //                                inlet box — same proportions as the
   //                                headwall but unfilled to read as
@@ -33946,6 +33949,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!type) return '';
     var s = String(type).toLowerCase();
     if (s.indexOf('headwall')   !== -1) return 'headwall';
+    if (s.indexOf('4a')         !== -1) return 'type_4a';
     if (s.indexOf('4b')         !== -1) return 'type_4b';
     if (s.indexOf('6b')         !== -1) return 'type_6b';
     if (s.indexOf('manhole')    !== -1) return 'open_box';
@@ -34014,14 +34018,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">' + label + '</text>'
           + '</g>';
       }
-      if (shape === 'type_4b') {
-        // Same tall-rectangle proportions as the headwall, drawn as
-        // an outline only — Type 4B drop-style inlet box.
+      if (shape === 'type_4a' || shape === 'type_4b') {
+        // Same tall-rectangle outline as the headwall — Type 4A and
+        // Type 4B share the geometry; label carries the distinction.
+        var t4Label = (shape === 'type_4a') ? 'Type 4A' : 'Type 4B';
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
             + 'fill="#fff" stroke="' + color + '" stroke-width="2.5" />'
           + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
-            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Type 4B</text>'
+            + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">' + t4Label + '</text>'
           + '</g>';
       }
       if (shape === 'type_6b') {
@@ -34724,7 +34729,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '</div>' +
         '</div>';
       }
-      function _headerBlock() {
+      // Per-card Edit + Delete buttons — only land on the main card
+      // (pi === 0). The .sr-card-hdr-actions container is already
+      // print:display:none so the deliverable stays clean.
+      var editBtn = '<button type="button" class="sr-edit-btn" '
+                  + 'data-cv-idx="' + idx + '">&#9998; Edit Data</button>';
+      var deleteBtn = '<button type="button" class="sr-delete-btn" '
+                    + 'data-cv-idx="' + idx + '" '
+                    + 'title="Delete this culvert from the inventory">'
+                    + '&#128465; Delete</button>';
+      function _headerBlock(includeActions) {
         return '<header class="sr-card-hdr">' +
           '<div class="sr-card-hdr-top">' +
             '<div class="sr-card-title-wrap">' +
@@ -34734,6 +34748,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '</div>' +
             '<div class="sr-card-hdr-right">' + logosBlock + '</div>' +
           '</div>' +
+          (includeActions
+            ? '<div class="sr-card-hdr-actions">' + editBtn + deleteBtn + '</div>'
+            : '') +
         '</header>';
       }
 
@@ -34745,7 +34762,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // remaining photos so each chunk lands on its own sheet.
         if (pi === 0) {
           return '<article class="sr-card" data-cv-idx="' + idx + '">' +
-            _headerBlock() +
+            _headerBlock(true) +
             '<section class="sr-section">' +
               '<div class="sr-identity-row">' +
                 '<div class="sr-identity-left">' +
@@ -34789,7 +34806,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var startNum = PHOTOS_PAGE_1 + (pi - 1) * PHOTOS_PAGE_N + 1;
         var endNum   = startNum + chunk.length - 1;
         return '<article class="sr-card sr-card-cont" data-cv-idx="' + idx + '">' +
-          _headerBlock() +
+          _headerBlock(false) +
           '<section class="sr-section">' +
             '<div class="sr-sec-hdr">Photos (continued · ' + startNum + '–' + endNum + ' of ' + visiblePhotos.length + ')</div>' +
             _photoGrid(chunk) +
@@ -34820,6 +34837,59 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     } else {
       insetDivs.forEach(_cvInitInsetMap);
     }
+
+    // ── Per-card Edit Data → reopen the culvert in the data form ─
+    list.querySelectorAll('.sr-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        if (typeof window.openDataForm !== 'function') {
+          alert('Data form not available.');
+          return;
+        }
+        // The Data module owns the form-pane DOM nodes, so we have to
+        // switch to it first or openDataForm builds into a hidden tree
+        // and the user sees nothing happen.
+        if (typeof window.showModule === 'function') window.showModule('data');
+        window.openDataForm(r.pin, r.sec, 'culverts-report');
+      });
+    });
+
+    // ── Per-card Delete Culvert ──
+    list.querySelectorAll('.sr-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = all[+btn.dataset.cvIdx];
+        if (!r) return;
+        var sec = r.sec, pin = r.pin;
+        var label = pin.id || pin.ulid || 'this culvert';
+        if (!window.confirm(
+              'Delete culvert "' + label + '" from the inventory?\n\n'
+            + 'This removes it from the project entirely and cannot be undone.'
+        )) return;
+        // 1) Drop from in-memory section pins.
+        if (sec && Array.isArray(sec.pins)) {
+          for (var di = 0; di < sec.pins.length; di++) {
+            if (sec.pins[di] === pin
+                || sec.pins[di].id === pin.id
+                || (pin.ulid && sec.pins[di].ulid === pin.ulid)) {
+              sec.pins.splice(di, 1);
+              break;
+            }
+          }
+        }
+        // 2) Drop the inspection record from IDB if it was saved.
+        if (pin.ulid && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+          window.RWIdb.openDB().then(function (db) {
+            var tx = db.transaction('inspections', 'readwrite');
+            tx.objectStore('inspections').delete(pin.ulid);
+          }).catch(function () {});
+        }
+        if (window._RW && typeof window._RW.persistSections === 'function') {
+          try { window._RW.persistSections(); } catch (_) {}
+        }
+        renderCulvertsReport();
+      });
+    });
 
     // ── Per-photo annotate / hide + per-card Restore ──
     // Mirrors _srSyncHiddenToIdb so the IDB inspection record's
@@ -39075,7 +39145,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // to the options so saving the form doesn't silently overwrite
       // legacy data — Other / Add Manually stays at the bottom so the
       // user can switch to any new value they want.
-      var endTypes = ['Headwall','Type 4B','Type 6B','Flange','None','Other / Add Manually'];
+      var endTypes = ['Headwall','Type 4A','Type 4B','Type 6B','Flange','None','Other / Add Manually'];
       function _endOpts(currentVal) {
         if (currentVal && endTypes.indexOf(currentVal) === -1) {
           return [currentVal].concat(endTypes);
