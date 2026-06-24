@@ -30945,8 +30945,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               month: 'short', day: 'numeric',
               hour: '2-digit', minute: '2-digit', second: '2-digit',
             }) : '';
+            // data-src so the dataUrl sits as an attribute string but
+            // is never decoded until the tile scrolls into the modal
+            // viewport. window._RW.lazyPhotos.observe() below picks
+            // them up after the grid is mounted.
             tile.innerHTML =
-              '<img src="' + p.dataUrl + '" alt="" loading="lazy">' +
+              '<img data-src="' + p.dataUrl + '" alt="" loading="lazy">' +
               '<div class="rw-nbp-tile-meta">' +
                 (time ? '<div class="rw-nbp-tile-time">' + time + '</div>' : '') +
                 '<div class="rw-nbp-tile-dist">' + Math.round(c.d) + ' ft</div>' +
@@ -30962,6 +30966,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           });
         }
         statusEl.textContent = currentCands.length + ' in range · sorted by ' + sortMode;
+        // Wire the shared lazy-photo observer so tile dataUrls only
+        // decode when the tile scrolls into the modal viewport.
+        // teardown() drops the previous render's registrations so we
+        // don't pin removed <img> elements when the grid re-renders
+        // on a sort / radius change.
+        if (window._RW && window._RW.lazyPhotos) {
+          window._RW.lazyPhotos.teardown();
+          window._RW.lazyPhotos.observe(grid);
+        }
       }
 
       radiusEl.oninput = render;
@@ -36151,7 +36164,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           secId: r.sec.id,
           maxFt: 150,
           title: 'Nearby field photos — ' + r.pin.id,
-          onPick: function () { renderCulvertsReport(); },
+          // Defer the report re-render so:
+          //   (1) the picker modal's DOM tears down + GC can reclaim
+          //       all its tile <img> dataUrl strings BEFORE we start
+          //       allocating a fresh 195-card report
+          //   (2) saveMany's chunked structured-clones finish writing
+          //       to IDB so we don't have two memory spikes stacked
+          // Without this defer the synchronous renderCulvertsReport()
+          // landed on top of the picker DOM + the in-flight saveMany,
+          // which is what was tipping the Edge tab budget on Apply.
+          onPick: function () {
+            setTimeout(function () {
+              try { renderCulvertsReport(); } catch (_) {}
+            }, 400);
+          },
         });
       });
     });
@@ -44430,20 +44456,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     },
-    // Chunked so the structured-clone budget stays bounded. Promise.all
-    // over every photo at once was OOMing the tab on photo-heavy
-    // selections — each dbPut structured-clones the geophoto record
-    // (incl. its dataUrl), and N parallel clones briefly hold N copies
-    // of the bytes in memory at the same time. Chunks of 2 keep at most
-    // two photo-sized clones in flight at any moment.
+    // Fully sequential — one dbPut at a time. Each structured-clone of
+    // a geophoto record carries the full ~5 MB dataUrl, and even
+    // chunk-of-2 was OOMing the tab when stacked on top of an
+    // in-flight report re-render. With chunk-of-1 there's at most one
+    // photo-sized clone in flight at any moment.
     saveMany:    function (ps) {
-      var CHUNK = 2;
-      function step(i) {
-        if (i >= ps.length) return Promise.resolve();
-        var batch = ps.slice(i, i + CHUNK);
-        return Promise.all(batch.map(dbPut)).then(function () { return step(i + CHUNK); });
-      }
-      return step(0);
+      return ps.reduce(function (chain, p) {
+        return chain.then(function () { return dbPut(p); });
+      }, Promise.resolve());
     },
     newGroupId:  _newGroupId,
     groupColor:  _groupColor,
