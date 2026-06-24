@@ -31701,7 +31701,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }, 500);
   }
 
-  // ── KML export ────────────────────────────────────────────────────
+  // ── KMZ export ────────────────────────────────────────────────────
+  // KMZ is a ZIP archive containing doc.kml + a files/ folder. The
+  // alternative — KML with inline data: URIs — works in Google Earth
+  // Pro but balloons render the images at thumbnail size with no way
+  // to click through to a bigger version. With KMZ, each photo lives
+  // as a real file inside the archive so the <a href="files/…"> on a
+  // thumbnail opens the full image in the user's default viewer.
+  //
+  // We can't pull JSZip through the AECOM proxy, so the ZIP encoder
+  // below uses the spec-minimum subset: STORE method (no DEFLATE),
+  // one local file header + central directory entry per file, one
+  // end-of-central-directory record. JPEG bytes are already
+  // compressed so STORE costs almost nothing vs DEFLATE for photos.
+
   // XML attribute / element text escape. CDATA bodies don't need it,
   // but everything outside a CDATA does.
   function _xmlEsc(s) {
@@ -31709,32 +31722,128 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
   }
-  // Resize a dataUrl to a max-width JPEG so a 50-sign × 6-photo KML
-  // ends in the tens of MB instead of a couple hundred. Canvas runs
-  // synchronously once Image.onload fires; we wrap in a Promise so the
-  // caller can await a parallel fleet.
-  function _srResizeDataUrl(dataUrl, maxWidth, quality) {
+
+  // CRC-32 (IEEE 802.3 polynomial, reversed) for ZIP entries.
+  var _crc32Table = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c;
+    }
+    return t;
+  })();
+  function _crc32(buf) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < buf.length; i++) c = _crc32Table[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function _dataUrlToBytes(dataUrl) {
+    var i = dataUrl.indexOf(',');
+    if (i < 0) return new Uint8Array(0);
+    var bin = atob(dataUrl.slice(i + 1));
+    var buf = new Uint8Array(bin.length);
+    for (var k = 0; k < bin.length; k++) buf[k] = bin.charCodeAt(k);
+    return buf;
+  }
+  function _strToBytes(s) { return new TextEncoder().encode(s); }
+
+  // Assemble a ZIP archive (STORE method only) and return it as a
+  // Blob. entries is [{name, data: Uint8Array}]; first entry is
+  // conventionally doc.kml so Google Earth knows what to open.
+  function _zipStore(entries) {
+    var localParts   = [];
+    var centralParts = [];
+    var offset = 0;
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var nameBytes = _strToBytes(e.name);
+      var data = e.data;
+      var crc  = _crc32(data);
+      var sz   = data.length;
+      // Local file header
+      var lh = new Uint8Array(30 + nameBytes.length);
+      var lv = new DataView(lh.buffer);
+      lv.setUint32(0,  0x04034b50, true);
+      lv.setUint16(4,  20, true);            // version needed
+      lv.setUint16(6,  0,  true);            // flags
+      lv.setUint16(8,  0,  true);            // STORE
+      lv.setUint16(10, 0,  true);            // mod time
+      lv.setUint16(12, 0x21, true);          // mod date (Jan 1 2000 — keeps a fixed timestamp)
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, sz,  true);
+      lv.setUint32(22, sz,  true);
+      lv.setUint16(26, nameBytes.length, true);
+      lv.setUint16(28, 0,   true);
+      lh.set(nameBytes, 30);
+      localParts.push(lh, data);
+      // Central directory entry
+      var ce = new Uint8Array(46 + nameBytes.length);
+      var cv = new DataView(ce.buffer);
+      cv.setUint32(0,  0x02014b50, true);
+      cv.setUint16(4,  20, true);
+      cv.setUint16(6,  20, true);
+      cv.setUint16(8,  0,  true);
+      cv.setUint16(10, 0,  true);
+      cv.setUint16(12, 0,  true);
+      cv.setUint16(14, 0x21, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, sz,  true);
+      cv.setUint32(24, sz,  true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint16(30, 0,  true);
+      cv.setUint16(32, 0,  true);
+      cv.setUint16(34, 0,  true);
+      cv.setUint16(36, 0,  true);
+      cv.setUint32(38, 0,  true);
+      cv.setUint32(42, offset, true);
+      ce.set(nameBytes, 46);
+      centralParts.push(ce);
+      offset += 30 + nameBytes.length + sz;
+    }
+    var cdStart = offset;
+    var cdSize  = 0;
+    for (var k = 0; k < centralParts.length; k++) cdSize += centralParts[k].length;
+    var eocd = new Uint8Array(22);
+    var ev = new DataView(eocd.buffer);
+    ev.setUint32(0,  0x06054b50, true);
+    ev.setUint16(4,  0, true);
+    ev.setUint16(6,  0, true);
+    ev.setUint16(8,  entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, cdSize,  true);
+    ev.setUint32(16, cdStart, true);
+    ev.setUint16(20, 0, true);
+    return new Blob(localParts.concat(centralParts).concat([eocd]),
+                    { type: 'application/vnd.google-earth.kmz' });
+  }
+
+  // Resize a dataUrl through a canvas and return the result as bytes
+  // (Uint8Array). Caller wraps in Promise.all so a parallel resize
+  // fleet runs while the rest of the section is being walked.
+  function _srResizeJpegBytes(dataUrl, maxWidth, quality) {
     return new Promise(function (resolve) {
-      if (!dataUrl || dataUrl.indexOf('data:') !== 0) return resolve('');
+      if (!dataUrl || dataUrl.indexOf('data:') !== 0) return resolve(null);
       var img = new Image();
       img.onload = function () {
         try {
           var ratio = Math.min(1, maxWidth / (img.width || maxWidth));
-          var w = Math.max(1, Math.round(img.width * ratio));
+          var w = Math.max(1, Math.round(img.width  * ratio));
           var h = Math.max(1, Math.round(img.height * ratio));
           var canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        } catch (e) { resolve(dataUrl); }
+          resolve(_dataUrlToBytes(canvas.toDataURL('image/jpeg', quality)));
+        } catch (e) { resolve(null); }
       };
-      img.onerror = function () { resolve(''); };
+      img.onerror = function () { resolve(null); };
       img.src = dataUrl;
     });
   }
+
   // Walk the same photo lookup the report uses — embedded
   // pin.attrs.photos + linked geophotos, deduped by dataUrl, skipping
-  // entries marked report_hidden so the KML matches what prints.
+  // entries marked report_hidden so the KMZ matches what prints.
   function _srPhotosForKml(pin) {
     var out = [];
     var seen = Object.create(null);
@@ -31763,8 +31872,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     return out;
   }
-  function _srKmlDownload(filename, content) {
-    var blob = new Blob([content], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+  function _srKmzDownload(filename, blob) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = filename;
@@ -31783,38 +31891,42 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var picked = sectionIds.map(function (id) { return byId[id]; }).filter(Boolean);
     if (!picked.length) { alert('No sections selected.'); return; }
 
-    // Progress toast — KML build is async on photo resizing so the
+    // Progress toast — KMZ build is async on photo resizing so the
     // user needs to see SOMETHING happen for a few seconds.
     var tip = document.createElement('div');
     tip.style.cssText = 'position:fixed;top:50%;left:50%;'
       + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
       + 'padding:14px 20px;font:600 12px monospace;z-index:99999;'
       + 'border:1px solid #fff;border-radius:4px;text-align:center;';
-    tip.textContent = 'Building KML for ' + picked.length + ' section(s)…';
+    tip.textContent = 'Building KMZ for ' + picked.length + ' section(s)…';
     document.body.appendChild(tip);
 
     var mutedSet = _srLoadMutedSources();
 
-    // Build all sections sequentially so the browser doesn't choke on
-    // dozens of parallel canvas operations.
+    // Run sections sequentially so the browser doesn't choke on dozens
+    // of parallel canvas operations.
     var allDone = Promise.resolve();
-    picked.forEach(function (sec, secIdx) {
-      allDone = allDone.then(function () { return _buildOneKml(sec); });
+    picked.forEach(function (sec) {
+      allDone = allDone.then(function () { return _buildOneKmz(sec); });
     });
     allDone.then(function () {
       if (tip.parentNode) tip.parentNode.removeChild(tip);
     }).catch(function (err) {
       if (tip.parentNode) tip.parentNode.removeChild(tip);
-      alert('KML build failed: ' + err);
+      alert('KMZ build failed: ' + err);
     });
 
-    function _buildOneKml(sec) {
+    // Sanitize a string for use as a ZIP entry path.
+    function _safeFileName(s) {
+      return String(s || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'pin';
+    }
+
+    function _buildOneKmz(sec) {
       var info = _SR_SECTION_INFO[sec.id];
       var sectionTitle = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
-      tip.textContent = 'Building KML for section ' + sec.id + '…';
+      tip.textContent = 'Building KMZ for section ' + sec.id + '…';
 
-      // Centerline coords. sec.alignment is [[lat, lng], ...] (Leaflet
-      // format); KML wants "lng,lat lng,lat …".
+      // Centerline. sec.alignment is [[lat, lng], …]; KML wants "lng,lat lng,lat …".
       var lineCoords = '';
       if (Array.isArray(sec.alignment) && sec.alignment.length >= 2) {
         lineCoords = sec.alignment.map(function (c) {
@@ -31823,8 +31935,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         }).filter(Boolean).join(' ');
       }
 
-      // Collect signs in this section that pass the source filter,
-      // sorted by station so the KML's pin order is intuitive.
       var pins = (sec.pins || []).filter(function (p) {
         if (!p || (p.kind !== 'sign' && p.kind !== 'pt_sign')) return false;
         if (mutedSet && mutedSet.has(_csvSrc(p))) return false;
@@ -31832,26 +31942,39 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
       pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
 
-      // Resize every photo for every pin in parallel. _srPhotosForKml
-      // returns photo refs in the same order the report renders, and
-      // we cap at the first 12 per pin so the file doesn't balloon.
+      // For each pin: resize every photo (up to 12) into a thumb + a
+      // full-size JPEG. Both go into the KMZ's files/ folder; the
+      // balloon HTML uses the thumb as the visible img and the full as
+      // the <a href> target.
       var pinBundles = pins.map(function (pin) {
         var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
-        // Stash sec id so _srPhotosForKml can build the geophoto link key.
         merged._secId = sec.id;
         var photos = _srPhotosForKml(merged).slice(0, 12);
-        var resizePromises = photos.map(function (ph) {
-          return _srResizeDataUrl(ph.src, 720, 0.6).then(function (small) {
-            return { src: small || ph.src, caption: ph.caption };
+        var photoPromises = photos.map(function (ph, idx) {
+          return Promise.all([
+            _srResizeJpegBytes(ph.src,  720, 0.7),   // thumb
+            _srResizeJpegBytes(ph.src, 1600, 0.78),  // full
+          ]).then(function (pair) {
+            return {
+              thumbBytes: pair[0],
+              fullBytes:  pair[1],
+              caption:    ph.caption,
+              idx:        idx,
+            };
           });
         });
-        return Promise.all(resizePromises).then(function (resized) {
+        return Promise.all(photoPromises).then(function (resized) {
           return { sec: sec, rawPin: pin, pin: merged, photos: resized };
         });
       });
 
       return Promise.all(pinBundles).then(function (bundles) {
-        var placemarks = bundles.map(_pinPlacemark).join('\n');
+        // Accumulate files for the KMZ archive as we walk bundles.
+        var files = [];
+        var placemarks = bundles.map(function (b) {
+          return _pinPlacemark(b, files);
+        }).join('\n');
+
         var centerline = lineCoords ? (
           '<Placemark>'
           + '<name>Centerline — ' + _xmlEsc(sec.id) + '</name>'
@@ -31875,10 +31998,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + '<LineStyle><color>ff2b6fff</color><width>4</width></LineStyle>'
           + '</Style>\n'
           + '<Style id="rw-sign">'
-            + '<IconStyle><scale>1.0</scale>'
+            + '<IconStyle><scale>1.1</scale>'
               + '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon>'
             + '</IconStyle>'
-            + '<LabelStyle><scale>0.75</scale></LabelStyle>'
+            + '<LabelStyle><scale>0.85</scale></LabelStyle>'
+            + '<BalloonStyle><text>$[description]</text></BalloonStyle>'
           + '</Style>\n'
           + '<Folder>\n'
           + '<name>' + _xmlEsc(sectionTitle) + '</name>\n'
@@ -31890,15 +32014,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '</Document>\n'
           + '</kml>\n';
 
+        // Assemble the KMZ archive: doc.kml first, then files/*.
+        var entries = [{ name: 'doc.kml', data: _strToBytes(kml) }].concat(files);
+        var blob = _zipStore(entries);
+
         var d = new Date();
         var pad = function (n) { return n < 10 ? '0' + n : n; };
         var ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
-        _srKmlDownload('roadwalk_' + sec.id.toLowerCase() + '_' + ts + '.kml', kml);
+        _srKmzDownload('roadwalk_' + sec.id.toLowerCase() + '_' + ts + '.kmz', blob);
       });
     }
 
-    function _pinPlacemark(bundle) {
-      var sec = bundle.sec, pin = bundle.pin, raw = bundle.rawPin;
+    function _pinPlacemark(bundle, files) {
+      var sec = bundle.sec, pin = bundle.pin;
       var a = pin.attrs || {};
       var g = pin.geometry && pin.geometry.coordinates;
       if (!Array.isArray(g) || g.length < 2) return '';
@@ -31906,6 +32034,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!isFinite(lng) || !isFinite(lat)) return '';
 
       var pinIdFull = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+      var pinIdSafe = _safeFileName(pinIdFull);
       var posts  = Array.isArray(a.posts)  ? a.posts  : [];
       var panels = Array.isArray(a.panels) ? a.panels : [];
 
@@ -31932,74 +32061,104 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       else if (a.mp_start != null) mpVal = +a.mp_start;
       if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
 
-      // Description joined from all panels.
+      // Description joined from all panels — used as the leading
+      // bold line in the balloon body. The Placemark <name> already
+      // renders the pin id automatically, so we don't repeat it here.
       var descStr = panels.map(function (pn) {
         return ((pn && (pn.panel_description || pn.sign_code)) || '').trim();
       }).filter(Boolean).join(' / ') || '(no description)';
 
-      // Build the HTML description body — Google Earth renders this in
-      // the balloon when the pin is clicked.
+      // Bigger fonts than the previous KML pass — 16 px for fact rows,
+      // 18 px for the description heading. Labels spelled out per
+      // user spec.
+      var lblStyle = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;';
+      var valStyle = 'padding:4px 0;color:#111;';
+      function _row(lbl, val, bold) {
+        return '<tr><td style="' + lblStyle + '">' + lbl + '</td>'
+          + '<td style="' + valStyle + '">' + (bold ? '<b>' : '') + val + (bold ? '</b>' : '') + '</td></tr>';
+      }
       var html = '';
-      html += '<h3 style="margin:0 0 4px;font-family:sans-serif;">' + _xmlEsc(pinIdFull) + '</h3>';
-      html += '<p style="margin:0 0 8px;font-family:sans-serif;font-size:13px;"><b>' + _xmlEsc(descStr) + '</b></p>';
-      html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;">';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Overall</td><td><b>' + _xmlEsc(_csvSpellCond(ovCond) || '—') + '</b></td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Retro</td><td><b>' + _xmlEsc(_csvSpellCond(retroCond) || '—') + '</b></td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">MP</td><td>' + _xmlEsc(mpStr || '—') + '</td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">STA</td><td>' + _xmlEsc(pin.sta || '—') + '</td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Side</td><td>' + _xmlEsc(a.side || '—') + '</td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">EOP Offset</td><td>' + _xmlEsc(a.eop_offset != null ? (a.eop_offset + ' ft') : '—') + '</td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Posts</td><td>' + posts.length + '</td></tr>';
-      html += '<tr><td style="padding:2px 8px 2px 0;color:#555;">Panels</td><td>' + panels.length + '</td></tr>';
+      html += '<p style="margin:0 0 10px;font-family:sans-serif;font-size:18px;color:#111;"><b>' + _xmlEsc(descStr) + '</b></p>';
+      html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:16px;">';
+      html += _row('Overall Condition',           _xmlEsc(_csvSpellCond(ovCond)    || '—'), true);
+      html += _row('Retro Condition',             _xmlEsc(_csvSpellCond(retroCond) || '—'), true);
+      html += _row('Milepost',                    _xmlEsc(mpStr || '—'));
+      html += _row('Station',                     _xmlEsc(pin.sta || '—'));
+      html += _row('Side',                        _xmlEsc(a.side || '—'));
+      html += _row('Edge of Pavement Offset',     _xmlEsc(a.eop_offset != null ? (a.eop_offset + ' ft') : '—'));
+      html += _row('Latitude',                    _xmlEsc(lat.toFixed(6)));
+      html += _row('Longitude',                   _xmlEsc(lng.toFixed(6)));
+      html += _row('Number of Posts',             posts.length);
+      html += _row('Number of Panels',            panels.length);
       html += '</table>';
 
-      // Per-panel summary table.
+      // Per-panel summary table — full headers, bigger text.
       if (panels.length) {
-        html += '<p style="margin:8px 0 4px;font-family:sans-serif;font-size:11px;font-weight:bold;color:#333;">PANELS</p>';
-        html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:11px;">';
-        html += '<tr style="color:#555;"><td style="padding:2px 6px 2px 0;">#</td><td style="padding:2px 6px 2px 0;">Code</td><td style="padding:2px 6px 2px 0;">Description</td><td style="padding:2px 6px 2px 0;">Cond</td><td style="padding:2px 6px 2px 0;">Sheet</td></tr>';
+        html += '<p style="margin:14px 0 6px;font-family:sans-serif;font-size:14px;font-weight:700;color:#333;letter-spacing:.5px;">PANELS</p>';
+        html += '<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">';
+        html += '<tr style="color:#555;font-weight:600;">'
+          + '<td style="padding:3px 10px 3px 0;">#</td>'
+          + '<td style="padding:3px 10px 3px 0;">Sign Code</td>'
+          + '<td style="padding:3px 10px 3px 0;">Description</td>'
+          + '<td style="padding:3px 10px 3px 0;">Panel Condition</td>'
+          + '<td style="padding:3px 10px 3px 0;">Sheet Condition</td>'
+          + '</tr>';
         panels.forEach(function (pn, i) {
           if (!pn) return;
           html += '<tr>'
-            + '<td style="padding:1px 6px 1px 0;">' + (i + 1) + '</td>'
-            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(pn.sign_code || '—') + '</td>'
-            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(pn.panel_description || '—') + '</td>'
-            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(_csvSpellCond(pn.panel_condition) || '—') + '</td>'
-            + '<td style="padding:1px 6px 1px 0;">' + _xmlEsc(_csvSpellCond(pn.sheeting_condition) || '—') + '</td>'
+            + '<td style="padding:2px 10px 2px 0;">' + (i + 1) + '</td>'
+            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(pn.sign_code || '—') + '</td>'
+            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(pn.panel_description || '—') + '</td>'
+            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(_csvSpellCond(pn.panel_condition) || '—') + '</td>'
+            + '<td style="padding:2px 10px 2px 0;">' + _xmlEsc(_csvSpellCond(pn.sheeting_condition) || '—') + '</td>'
             + '</tr>';
         });
         html += '</table>';
       }
 
-      // Photo thumbnails — 2-col grid of inline data: URIs.
-      if (bundle.photos.length) {
-        html += '<p style="margin:8px 0 4px;font-family:sans-serif;font-size:11px;font-weight:bold;color:#333;">PHOTOS (' + bundle.photos.length + ')</p>';
+      // Photo thumbnails — write each pair (thumb, full) into the KMZ
+      // and reference them with a relative path. Clicking the thumb
+      // opens the full-size JPEG via the default viewer.
+      var realPhotos = bundle.photos.filter(function (ph) { return ph && ph.thumbBytes; });
+      if (realPhotos.length) {
+        html += '<p style="margin:14px 0 6px;font-family:sans-serif;font-size:14px;font-weight:700;color:#333;letter-spacing:.5px;">PHOTOS (' + realPhotos.length + ')</p>';
         html += '<table style="border-collapse:collapse;">';
-        for (var i = 0; i < bundle.photos.length; i += 2) {
+        for (var i = 0; i < realPhotos.length; i += 2) {
           html += '<tr>';
           for (var j = 0; j < 2; j++) {
-            var ph = bundle.photos[i + j];
+            var ph = realPhotos[i + j];
             if (!ph) { html += '<td></td>'; continue; }
-            html += '<td style="padding:3px;vertical-align:top;">'
-              + '<img src="' + ph.src + '" style="width:280px;height:auto;display:block;border:1px solid #999;">'
+            var thumbPath = 'files/' + pinIdSafe + '_' + ph.idx + '.jpg';
+            var fullPath  = 'files/' + pinIdSafe + '_' + ph.idx + '_full.jpg';
+            files.push({ name: thumbPath, data: ph.thumbBytes });
+            if (ph.fullBytes) files.push({ name: fullPath, data: ph.fullBytes });
+            html += '<td style="padding:6px;vertical-align:top;">'
+              + '<a href="' + fullPath + '" target="_blank">'
+                + '<img src="' + thumbPath + '" style="width:340px;height:auto;display:block;border:1px solid #999;">'
+              + '</a>'
               + '</td>';
           }
           html += '</tr>';
         }
         html += '</table>';
+        html += '<p style="margin:6px 0 0;font-family:sans-serif;font-size:11px;color:#888;">Click a thumbnail to open the full-size image.</p>';
       }
 
-      // Build ExtendedData for analytics tools that read KML fields.
+      // ExtendedData for analytics tools that read KML / KMZ fields.
       var ext = ''
-        + '<Data name="section"><value>' + _xmlEsc(sec.id) + '</value></Data>'
-        + '<Data name="pin_id"><value>' + _xmlEsc(pin.id || '') + '</value></Data>'
-        + '<Data name="overall_condition"><value>' + _xmlEsc(_csvSpellCond(ovCond)) + '</value></Data>'
-        + '<Data name="retro_condition"><value>' + _xmlEsc(_csvSpellCond(retroCond)) + '</value></Data>'
-        + '<Data name="mp"><value>' + _xmlEsc(mpStr) + '</value></Data>'
-        + '<Data name="sta"><value>' + _xmlEsc(pin.sta || '') + '</value></Data>'
-        + '<Data name="side"><value>' + _xmlEsc(a.side || '') + '</value></Data>'
-        + '<Data name="n_posts"><value>' + posts.length + '</value></Data>'
-        + '<Data name="n_panels"><value>' + panels.length + '</value></Data>';
+        + '<Data name="section"><value>'             + _xmlEsc(sec.id)                       + '</value></Data>'
+        + '<Data name="pin_id"><value>'              + _xmlEsc(pin.id || '')                 + '</value></Data>'
+        + '<Data name="description"><value>'         + _xmlEsc(descStr)                      + '</value></Data>'
+        + '<Data name="overall_condition"><value>'   + _xmlEsc(_csvSpellCond(ovCond))        + '</value></Data>'
+        + '<Data name="retro_condition"><value>'     + _xmlEsc(_csvSpellCond(retroCond))     + '</value></Data>'
+        + '<Data name="milepost"><value>'            + _xmlEsc(mpStr)                        + '</value></Data>'
+        + '<Data name="station"><value>'             + _xmlEsc(pin.sta || '')                + '</value></Data>'
+        + '<Data name="side"><value>'                + _xmlEsc(a.side || '')                 + '</value></Data>'
+        + '<Data name="eop_offset_ft"><value>'       + _xmlEsc(a.eop_offset != null ? a.eop_offset : '') + '</value></Data>'
+        + '<Data name="latitude"><value>'            + lat.toFixed(6)                        + '</value></Data>'
+        + '<Data name="longitude"><value>'           + lng.toFixed(6)                        + '</value></Data>'
+        + '<Data name="n_posts"><value>'             + posts.length                          + '</value></Data>'
+        + '<Data name="n_panels"><value>'            + panels.length                         + '</value></Data>';
 
       return '<Placemark>'
         + '<name>' + _xmlEsc(pinIdFull) + '</name>'
