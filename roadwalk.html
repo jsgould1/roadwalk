@@ -34869,7 +34869,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // so PHOTOS shrinks immediately. Built as a one-shot modal so we
     // don't carry any panel DOM around when it's not open.
     function _cvOpenPhotoScopeModal() {
-      var secs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+      var rawSecs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+      // Dedup by id — the bundle sometimes carries the same section
+      // twice (drop-pin Triage sections appended on every load), and
+      // the modal's checkboxes would otherwise show two boxes for
+      // the same section id and confuse Apply.
+      var _seenSecIds = Object.create(null);
+      var secs = rawSecs.filter(function (s) {
+        if (!s || !s.id || _seenSecIds[s.id]) return false;
+        _seenSecIds[s.id] = true;
+        return true;
+      });
       var api = window._RW && window._RW.geophotos;
       if (!secs.length || !api || typeof api.reloadFromIdb !== 'function') {
         alert('Photo scope is unavailable — geophotos module not ready.');
@@ -34898,8 +34908,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       panel.innerHTML =
         '<h3 style="margin:0 0 6px;font-size:16px;">Photo scope</h3>'
         + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
-        + 'Only the checked sections\' geophotos load into memory. '
-        + 'Photos from unchecked sections stay in IDB and do not consume RAM.'
+        + 'Loads only photos already linked to pins in the checked sections '
+        + '— scanned via the by_linked_pin_id IDB index so even a 4500-photo '
+        + 'project loads in milliseconds. Photos from unchecked sections '
+        + 'stay in IDB (all links are preserved). Unlinked photos require '
+        + 'all sections to be checked, or use the Pick from folder button '
+        + 'on each culvert.'
         + '</p>'
         + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
         + '<button type="button" data-act="all" style="font:600 12px system-ui;padding:4px 10px;'
@@ -42798,13 +42812,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   /* ===================== GEO-PHOTOS — storage ===================== */
   var DB_NAME = 'RoadWalkGeoPhotos_v1', DB_STORE = 'geophotos';
+  // v2 adds a by_linked_pin_id index so Photo Scope can range-walk
+  // only the records linked to active sections instead of scanning
+  // every record to check its linked_pin_id field. At 4500 records
+  // the old full-scan approach pinned the main thread past Edge's
+  // "page not responding" threshold even for tiny scopes.
   function openDB() {
     return new Promise(function (res, rej) {
-      var rq = indexedDB.open(DB_NAME, 1);
+      var rq = indexedDB.open(DB_NAME, 2);
       rq.onupgradeneeded = function (e) {
         var db = e.target.result;
+        var tx = e.target.transaction;
+        var store;
         if (!db.objectStoreNames.contains(DB_STORE)) {
-          db.createObjectStore(DB_STORE, { keyPath: 'id' });
+          store = db.createObjectStore(DB_STORE, { keyPath: 'id' });
+        } else {
+          store = tx.objectStore(DB_STORE);
+        }
+        if (!store.indexNames.contains('by_linked_pin_id')) {
+          store.createIndex('by_linked_pin_id', 'linked_pin_id', { unique: false });
         }
       };
       rq.onsuccess = function (e) { res(e.target.result); };
@@ -42893,72 +42919,58 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function dbScoped() {
     var scope = _activePhotoScope();
     if (!scope) return dbAll();                    // fast path: all
-    var bboxes = _sectionBboxesForScope();
-    // Batched key→fetch loader for huge geophoto stores. The naive
-    // cursor walk reads cur.value (the FULL record, including the
-    // ~5 MB dataUrl) for every record — at 4500 records that's
-    // ~22 GB of allocations in rapid succession, far faster than GC
-    // can reclaim, and the Edge PWA tab OOMs.
+    // Index-driven loader: for each active section, range-walk the
+    // by_linked_pin_id index over keys starting with "{secId}::".
+    // The index only surfaces records whose linked_pin_id matches —
+    // we never touch the other 4400 records' values, so no 5 MB
+    // dataUrl gets read off disk for photos out of scope.
     //
-    // Instead we:
-    //   1. getAllKeys()   — tiny payload (just ids), one shot.
-    //   2. For each key in batches of 20, open a fresh read-only tx
-    //      and store.get(key). The structured-clone of each record
-    //      is its own micro-allocation; we keep in-scope ones and
-    //      drop out-of-scope ones to GC.
-    //   3. setTimeout between batches so the runtime can run GC and
-    //      reclaim memory before the next batch's 20 × 5 MB lands.
+    // Trade-off vs. the prior bbox approach: photos whose
+    // linked_pin_id is unset (never linked to any pin) are NOT
+    // loaded under a restricted scope. They stay in IDB and become
+    // visible again when the user widens scope back to all sections.
+    // For unlinked photos in proximity to a culvert, the new "Pick
+    // from folder" button is the recommended path.
     return openDB().then(function (db) {
       return new Promise(function (res, rej) {
-        var tx1 = db.transaction(DB_STORE, 'readonly');
-        var keyReq = tx1.objectStore(DB_STORE).getAllKeys();
-        keyReq.onsuccess = function () {
-          var keys = keyReq.result || [];
-          if (!keys.length) { res([]); return; }
-          var kept = [];
-          var BATCH = 20;
-          var i = 0;
-          function nextBatch() {
-            if (i >= keys.length) {
-              console.log('[RoadWalk] photo scope: kept ' + kept.length
-                         + ' / scanned ' + keys.length);
-              res(kept);
-              return;
-            }
-            openDB().then(function (db2) {
-              var tx2 = db2.transaction(DB_STORE, 'readonly');
-              var store = tx2.objectStore(DB_STORE);
-              var end = Math.min(i + BATCH, keys.length);
-              var pending = end - i;
-              for (var j = i; j < end; j++) {
-                (function (k) {
-                  var rq = store.get(k);
-                  rq.onsuccess = function () {
-                    var rec = rq.result;
-                    if (rec && rec.dataUrl && _photoInScope(rec, scope, bboxes)) {
-                      kept.push(rec);
-                    }
-                    rec = null;
-                    if (--pending === 0) {
-                      i = end;
-                      // Yield so GC can reclaim the just-dropped
-                      // dataUrls before we load 20 more.
-                      setTimeout(nextBatch, 8);
-                    }
-                  };
-                  rq.onerror = function () {
-                    if (--pending === 0) {
-                      i = end;
-                      setTimeout(nextBatch, 8);
-                    }
-                  };
-                })(keys[j]);
-              }
-            }).catch(function (err) { rej(err); });
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var store = tx.objectStore(DB_STORE);
+        var index;
+        try { index = store.index('by_linked_pin_id'); }
+        catch (e) {
+          // First-load on a pre-v2 DB before upgrade fired — bail
+          // out to the safe full-load so the user isn't stranded.
+          console.warn('[RoadWalk] by_linked_pin_id index missing, falling back to dbAll()');
+          return dbAll().then(res, rej);
+        }
+        var kept = [];
+        var sectionsRemaining = Array.from(scope);
+        function loadForSection() {
+          if (!sectionsRemaining.length) {
+            console.log('[RoadWalk] photo scope: kept ' + kept.length
+                       + ' linked photo(s) across ' + scope.size + ' section(s)');
+            res(kept);
+            return;
           }
-          nextBatch();
-        };
-        keyReq.onerror = function () { rej(keyReq.error); };
+          var sec = sectionsRemaining.shift();
+          // KeyRange "{sec}::" → "{sec}::￿" hits every record
+          // linked anywhere under this section's pins.
+          var range = IDBKeyRange.bound(sec + '::', sec + '::￿');
+          var req = index.openCursor(range);
+          req.onsuccess = function (e) {
+            var cur = e.target.result;
+            if (cur) {
+              var rec = cur.value;
+              if (rec && rec.dataUrl) kept.push(rec);
+              rec = null;
+              cur.continue();
+            } else {
+              loadForSection();                    // tail call to next section
+            }
+          };
+          req.onerror = function () { rej(req.error); };
+        }
+        loadForSection();
       });
     });
   }
