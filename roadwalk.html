@@ -12362,17 +12362,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         const added = _bundleSecs.filter(function (s) { return s && !savedIds.has(s.id); });
         SECTIONS = saved.sections.concat(added);
         window.SECTIONS = SECTIONS;
-        if (typeof renderSectionList === 'function') renderSectionList('all');
-        if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
-        console.log('[RoadWalk] Restored field working copy —',
-          saved.sections.length, 'edited section(s), +' + added.length +
-          ' new from bundle [' + added.map(function (s) { return s.id; }).join(',') +
-          '], saved', saved.saved_at);
-        // Persist the merged copy so the new sections survive the next
-        // reload (and are included in any export).
-        if (added.length && window._RW && typeof window._RW.persistSections === 'function') {
-          window._RW.persistSections();
-        }
+        // Hydrate per-pin photo dataUrls back from their own IDB
+        // records. _persistSections externalises them so the
+        // SECTIONS blob stays small (avoids structured-clone OOM).
+        // Records older than v138 keep ph.dataUrl inline — those
+        // pass through this loop untouched.
+        var hydrations = [];
+        SECTIONS.forEach(function (sec) {
+          (sec.pins || []).forEach(function (pin) {
+            if (!pin || !pin.attrs || !Array.isArray(pin.attrs.photos)) return;
+            pin.attrs.photos.forEach(function (ph) {
+              if (!ph || ph.dataUrl || !ph._photo_key) return;
+              hydrations.push(
+                window.RWIdb.get('safety', ph._photo_key).then(function (rec) {
+                  if (rec && rec.dataUrl) ph.dataUrl = rec.dataUrl;
+                }).catch(function () { /* missing record — skip */ })
+              );
+            });
+          });
+        });
+        Promise.all(hydrations).then(function () {
+          if (typeof renderSectionList === 'function') renderSectionList('all');
+          if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
+          console.log('[RoadWalk] Restored field working copy —',
+            saved.sections.length, 'edited section(s), +' + added.length +
+            ' new from bundle [' + added.map(function (s) { return s.id; }).join(',') +
+            '], hydrated ' + hydrations.length + ' photo dataUrl(s), saved', saved.saved_at);
+          // Persist the merged copy so the new sections survive the next
+          // reload (and are included in any export).
+          if (added.length && window._RW && typeof window._RW.persistSections === 'function') {
+            window._RW.persistSections();
+          }
+        });
       }).catch(function (e) { console.warn('[RoadWalk] working-copy restore failed:', e); });
     } catch (e) { console.warn('[RoadWalk] working-copy restore error:', e); }
   }
@@ -29276,10 +29297,56 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     try {
       if (!window.SECTIONS || !window.SECTIONS.length) return;
       var _pid = (window.PROJECT && window.PROJECT.id) || 'default';
-      idbPut('safety', { sections: window.SECTIONS, saved_at: new Date().toISOString() },
+
+      // Per-pin photo base64 dataUrls live in pin.attrs.photos[]. On
+      // a project with hundreds of pins × multiple photos each, that
+      // makes the SECTIONS object hundreds of MB. IDB's structured
+      // clone doubles that during the write and OOMs the browser
+      // (Edge: "Out of Memory" page-crash). Solution: write the lean
+      // SECTIONS shape to its existing 'rw_sections_<pid>' key, but
+      // strip every dataUrl and stash each one in its OWN IDB record
+      // under 'rw_pinphoto_<ulid>_<idx>'. Each clone stays tiny.
+      // In-memory pin.attrs.photos[i].dataUrl is left untouched so
+      // the data form keeps rendering thumbnails.
+      var photoWrites = [];
+      var lean = window.SECTIONS.map(function (sec) {
+        if (!sec || !Array.isArray(sec.pins)) return sec;
+        var leanPins = sec.pins.map(function (pin) {
+          if (!pin || !pin.attrs || !Array.isArray(pin.attrs.photos)) return pin;
+          var pinUlid = pin.ulid;
+          var leanPhotos = pin.attrs.photos.map(function (ph, i) {
+            if (!ph) return ph;
+            if (!ph.dataUrl || !pinUlid) return ph;
+            var key = 'rw_pinphoto_' + pinUlid + '_' + i;
+            photoWrites.push({ key: key, dataUrl: ph.dataUrl });
+            var copy = Object.assign({}, ph);
+            copy._photo_key = key;
+            delete copy.dataUrl;
+            return copy;
+          });
+          return Object.assign({}, pin, {
+            attrs: Object.assign({}, pin.attrs, { photos: leanPhotos }),
+          });
+        });
+        return Object.assign({}, sec, { pins: leanPins });
+      });
+
+      idbPut('safety',
+             { sections: lean, saved_at: new Date().toISOString() },
              'rw_sections_' + _pid)
         .then(function () { _updateSaveWidget(); })
         .catch(function (e) { console.warn('[RoadWalk] section persist failed:', e); });
+
+      // Each photo writes as its own IDB record. Sequential so the
+      // browser never holds more than one large clone at a time.
+      var pi = 0;
+      function nextPhoto() {
+        if (pi >= photoWrites.length) return;
+        var p = photoWrites[pi++];
+        idbPut('safety', { dataUrl: p.dataUrl }, p.key)
+          .then(nextPhoto, function () { nextPhoto(); });
+      }
+      nextPhoto();
     } catch (e) { console.warn('[RoadWalk] _persistSections error:', e); }
   }
   window._RW = window._RW || {};
