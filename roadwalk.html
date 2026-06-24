@@ -11758,6 +11758,7 @@ body.mobile-mode #app {
           <input type="text" id="cv-search" placeholder="id, name, material, notes…">
           <span class="sr-count" id="cv-count">— culverts</span>
           <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
             <button class="sr-btn" id="cv-print-all-btn" title="Pick which sections to print, wait for tiles, then open browser Print dialog">🖨 Print Sections…</button>
             <button class="sr-btn" id="cv-export-csv-btn" title="Pick which sections, then download CSVs of the culvert data">📥 Export CSV…</button>
@@ -34863,6 +34864,93 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // bytes), and a lightweight metadata entry is appended to
     // pin.attrs.photos so the report walk picks them up. dataUrls
     // never enter JS memory — that's the whole point.
+    // Photo scope modal — checkbox list of every section. Saves the
+    // active set to localStorage and calls geophotos.reloadFromIdb()
+    // so PHOTOS shrinks immediately. Built as a one-shot modal so we
+    // don't carry any panel DOM around when it's not open.
+    function _cvOpenPhotoScopeModal() {
+      var secs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+      var api = window._RW && window._RW.geophotos;
+      if (!secs.length || !api || typeof api.reloadFromIdb !== 'function') {
+        alert('Photo scope is unavailable — geophotos module not ready.');
+        return;
+      }
+      var current = api.getScope ? api.getScope() : null;       // null = all
+      var activeSet = current ? new Set(current) : null;
+
+      var backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:8px;max-width:480px;width:90%;'
+        + 'max-height:80vh;overflow:auto;padding:18px 20px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);'
+        + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
+      var rows = secs.map(function (s) {
+        var checked = !activeSet || activeSet.has(s.id);
+        return '<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;'
+          + 'border-bottom:1px solid #f1f5f9;cursor:pointer;">'
+          + '<input type="checkbox" data-sec-id="' + _esc(s.id) + '"' + (checked ? ' checked' : '') + '>'
+          + '<span style="font-weight:700;font-family:\'IBM Plex Mono\',monospace;font-size:12px;'
+          + 'min-width:32px;">' + _esc(s.id) + '</span>'
+          + '<span style="color:var(--ink-3);">' + _esc(s.name || '') + '</span>'
+          + '</label>';
+      }).join('');
+      panel.innerHTML =
+        '<h3 style="margin:0 0 6px;font-size:16px;">Photo scope</h3>'
+        + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
+        + 'Only the checked sections\' geophotos load into memory. '
+        + 'Photos from unchecked sections stay in IDB and do not consume RAM.'
+        + '</p>'
+        + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
+        + '<button type="button" data-act="all" style="font:600 12px system-ui;padding:4px 10px;'
+        + 'border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;cursor:pointer;">Select all</button>'
+        + '<button type="button" data-act="none" style="font:600 12px system-ui;padding:4px 10px;'
+        + 'border:1px solid #cbd5e1;border-radius:4px;background:#f8fafc;cursor:pointer;">Clear all</button>'
+        + '</div>'
+        + '<div id="cv-scope-rows" style="margin-bottom:14px;">' + rows + '</div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;">'
+        + '<button type="button" data-act="cancel" style="font:600 13px system-ui;padding:6px 14px;'
+        + 'border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">Cancel</button>'
+        + '<button type="button" data-act="apply" style="font:700 13px system-ui;padding:6px 14px;'
+        + 'border:none;border-radius:4px;background:#047857;color:#fff;cursor:pointer;">Apply &amp; reload</button>'
+        + '</div>'
+        + '<p id="cv-scope-status" style="margin:10px 0 0;color:var(--ink-3);font-size:12px;"></p>';
+      backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+
+      function close() { document.body.removeChild(backdrop); }
+      backdrop.addEventListener('click', function (ev) {
+        if (ev.target === backdrop) close();
+      });
+      panel.querySelector('[data-act="all"]').addEventListener('click', function () {
+        panel.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = true; });
+      });
+      panel.querySelector('[data-act="none"]').addEventListener('click', function () {
+        panel.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = false; });
+      });
+      panel.querySelector('[data-act="cancel"]').addEventListener('click', close);
+      panel.querySelector('[data-act="apply"]').addEventListener('click', function () {
+        var picked = Array.from(panel.querySelectorAll('input[type=checkbox]'))
+          .filter(function (cb) { return cb.checked; })
+          .map(function (cb) { return cb.dataset.secId; });
+        // All checked = clear the scope (null) so the fast-path
+        // dbAll() is used. Empty = an explicit empty scope (no
+        // photos load). Anything else = the picked subset.
+        var allChecked = picked.length === secs.length;
+        api.setScope(allChecked ? null : picked);
+        var status = panel.querySelector('#cv-scope-status');
+        status.textContent = 'Reloading photos…';
+        api.reloadFromIdb().then(function (n) {
+          status.textContent = 'Loaded ' + n + ' photo(s) in scope.';
+          // Re-render the report so the photo counts pick up the new
+          // PHOTOS set.
+          renderCulvertsReport();
+          setTimeout(close, 600);
+        }).catch(function () {
+          status.textContent = 'Reload failed.';
+        });
+      });
+    }
     function _cvOpenFolderPicker(pin) {
       if (!pin) return;
       var input = document.createElement('input');
@@ -35267,6 +35355,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // Placeholder wiring for the action buttons — full Print / CSV /
     // KMZ flows land in the follow-up commit.
+    // ── Photo scope modal ────────────────────────────────────────
+    // Lets the user limit which sections' geophotos load into the
+    // in-memory PHOTOS array. Out-of-scope photos stay in IDB —
+    // their dataUrls never enter JS memory — so a 4500-photo project
+    // stops blowing the Edge PWA budget when only Section A matters.
+    var scopeBtn = document.getElementById('cv-photo-scope-btn');
+    if (scopeBtn && !scopeBtn._wired) {
+      scopeBtn._wired = true;
+      scopeBtn.addEventListener('click', function () { _cvOpenPhotoScopeModal(); });
+    }
+
     ['cv-print-btn', 'cv-print-all-btn', 'cv-export-csv-btn', 'cv-export-kml-btn'].forEach(function (id) {
       var btn = document.getElementById(id);
       if (btn && !btn._wired) {
@@ -42716,6 +42815,105 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
     });
   }
+  // ── Section-scoped photo loading ───────────────────────────────────
+  // At 4500+ photos the in-memory PHOTOS array of base64 dataUrls
+  // exceeds the Edge PWA tab budget on its own. The "Photo scope"
+  // setting caps loading to the sections the user is actively
+  // working on; out-of-scope photo records are visited via cursor
+  // (one record at a time) and skipped — their dataUrls never enter
+  // memory.
+  function _activePhotoScope() {
+    try {
+      var raw = localStorage.getItem('rw_active_photo_sections');
+      if (!raw) return null;                       // null = all sections
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) && arr.length ? new Set(arr) : null;
+    } catch (_) { return null; }
+  }
+  function _setActivePhotoScope(sectionIds) {
+    try {
+      if (!sectionIds || !sectionIds.length) {
+        localStorage.removeItem('rw_active_photo_sections');
+      } else {
+        localStorage.setItem('rw_active_photo_sections', JSON.stringify(sectionIds));
+      }
+    } catch (_) {}
+  }
+  function _sectionBboxesForScope() {
+    var out = {};
+    var secs = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+    var BUFFER_DEG = 0.0015;                       // ~500 ft @ ~36°N
+    secs.forEach(function (s) {
+      var coords = (s && s.alignment) || [];
+      if (!coords.length) return;
+      var minLat = +Infinity, maxLat = -Infinity, minLng = +Infinity, maxLng = -Infinity;
+      coords.forEach(function (c) {
+        var lng = +c[0], lat = +c[1];
+        if (!isFinite(lng) || !isFinite(lat)) return;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+      });
+      if (minLat === +Infinity) return;
+      out[s.id] = {
+        minLat: minLat - BUFFER_DEG, maxLat: maxLat + BUFFER_DEG,
+        minLng: minLng - BUFFER_DEG, maxLng: maxLng + BUFFER_DEG,
+      };
+    });
+    return out;
+  }
+  function _photoInScope(rec, scopeSet, bboxes) {
+    if (!scopeSet) return true;                    // null = all sections
+    // Linked photo → carries the section in its linked_pin_id prefix.
+    if (rec.linked_pin_id) {
+      var sec = String(rec.linked_pin_id).split('::')[0];
+      if (scopeSet.has(sec)) return true;
+      // Still allow GPS bbox match — linked elsewhere but physically
+      // inside one of the active sections.
+    }
+    if (rec.lat == null || rec.lng == null) return false;
+    var lat = +rec.lat, lng = +rec.lng;
+    if (!isFinite(lat) || !isFinite(lng)) return false;
+    for (var sid in bboxes) {
+      if (!scopeSet.has(sid)) continue;
+      var b = bboxes[sid];
+      if (lat >= b.minLat && lat <= b.maxLat && lng >= b.minLng && lng <= b.maxLng) return true;
+    }
+    return false;
+  }
+  // Cursor-based loader: walks IDB one record at a time, keeps only
+  // photos in the active scope. Out-of-scope records are inspected
+  // briefly then dropped — they never accumulate in JS memory.
+  function dbScoped() {
+    var scope = _activePhotoScope();
+    if (!scope) return dbAll();                    // fast path: all
+    var bboxes = _sectionBboxesForScope();
+    return openDB().then(function (db) {
+      return new Promise(function (res, rej) {
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var store = tx.objectStore(DB_STORE);
+        var kept = [];
+        var seen = 0, dropped = 0;
+        var req = store.openCursor();
+        req.onsuccess = function (e) {
+          var cur = e.target.result;
+          if (!cur) {
+            console.log('[RoadWalk] photo scope: kept ' + kept.length
+                       + ' / scanned ' + seen + ' (' + dropped + ' out of scope)');
+            res(kept);
+            return;
+          }
+          seen++;
+          var rec = cur.value;
+          if (rec && rec.dataUrl && _photoInScope(rec, scope, bboxes)) kept.push(rec);
+          else dropped++;
+          cur.continue();
+        };
+        req.onerror = function () { rej(req.error); };
+      });
+    });
+  }
   function dbPut(rec) {
     return openDB().then(function (db) {
       return new Promise(function (res, rej) {
@@ -43501,7 +43699,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         fileInp.value = '';
       });
     }
-    dbAll().then(function (recs) {
+    dbScoped().then(function (recs) {
       PHOTOS = (recs || []).filter(function (r) { return r && r.dataUrl; });
       updateCount();
       waitForMap();
@@ -43521,6 +43719,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     list:        function () { return PHOTOS.slice(); },
     get:         function (id) { return PHOTOS.find(function (p) { return p.id === id; }) || null; },
     save:        function (p) { return dbPut(p); },
+    // Re-read PHOTOS from IDB under the current active-scope filter.
+    // Used after the Photo Scope modal saves a new selection so the
+    // in-memory PHOTOS array shrinks/grows immediately without a
+    // full page reload.
+    reloadFromIdb: function () {
+      return dbScoped().then(function (recs) {
+        PHOTOS = (recs || []).filter(function (r) { return r && r.dataUrl; });
+        try { updateCount(); } catch (_) {}
+        try { render(); } catch (_) {}
+        return PHOTOS.length;
+      });
+    },
+    setScope:    _setActivePhotoScope,
+    getScope:    function () {
+      var s = _activePhotoScope();
+      return s ? Array.from(s) : null;            // null = all sections
+    },
+    sectionBboxes: _sectionBboxesForScope,
     // Chunked so the structured-clone budget stays bounded. Promise.all
     // over every photo at once was OOMing the tab on photo-heavy
     // selections — each dbPut structured-clones the geophoto record
