@@ -34664,9 +34664,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + '<rect x="' + inletX  + '" y="' + barrelY + '" width="' + inletW  + '" height="' + barrelH + '" fill="' + inletColor  + '" fill-opacity="0.78" />'
             + '<rect x="' + midX_   + '" y="' + barrelY + '" width="' + midW    + '" height="' + barrelH + '" fill="' + barrelColor + '" fill-opacity="0.78" />'
             + '<rect x="' + outletX + '" y="' + barrelY + '" width="' + outletW + '" height="' + barrelH + '" fill="' + outletColor + '" fill-opacity="0.78" />'
-            // Internal seam lines (dashed, low opacity) between segments
-            + '<line x1="' + midX_   + '" y1="' + barrelY + '" x2="' + midX_   + '" y2="' + (barrelY + barrelH) + '" stroke="#111" stroke-width="0.6" stroke-opacity="0.35" stroke-dasharray="2 2" />'
-            + '<line x1="' + outletX + '" y1="' + barrelY + '" x2="' + outletX + '" y2="' + (barrelY + barrelH) + '" stroke="#111" stroke-width="0.6" stroke-opacity="0.35" stroke-dasharray="2 2" />'
+            // Vertical dashed lines at the 10% and 90% marks. They
+            // extend ~10 px above and below the pipe so the segment
+            // boundaries read at a glance even when adjacent ratings
+            // happen to paint the same color. Mid-darkness gray + a
+            // visible 4-on / 3-off dash gives a clear "this is a
+            // boundary" mark without competing with the colored fills.
+            + '<line x1="' + midX_   + '" y1="' + (barrelY - 10) + '" x2="' + midX_   + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
+            + '<line x1="' + outletX + '" y1="' + (barrelY - 10) + '" x2="' + outletX + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
             // Single outer border around the whole pipe
             + '<rect x="' + barrelStartX + '" y="' + barrelY + '" width="' + totalW + '" height="' + barrelH + '" fill="none" stroke="#111" stroke-width="1.2" />';
         })()
