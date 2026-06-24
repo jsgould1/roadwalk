@@ -34941,11 +34941,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var status = panel.querySelector('#cv-scope-status');
         status.textContent = 'Reloading photos…';
         api.reloadFromIdb().then(function (n) {
-          status.textContent = 'Loaded ' + n + ' photo(s) in scope.';
-          // Re-render the report so the photo counts pick up the new
-          // PHOTOS set.
-          renderCulvertsReport();
-          setTimeout(close, 600);
+          status.textContent = 'Loaded ' + n + ' photo(s) in scope. Refreshing report…';
+          // Defer the report re-render so the runtime has a chance to
+          // GC the freshly-dropped out-of-scope dataUrls BEFORE we
+          // spin up the next big DOM rebuild. Stacking the two
+          // back-to-back was tipping the PWA budget on Section A.
+          setTimeout(function () {
+            try { renderCulvertsReport(); } catch (_) {}
+            status.textContent = 'Loaded ' + n + ' photo(s) in scope.';
+            setTimeout(close, 400);
+          }, 250);
         }).catch(function () {
           status.textContent = 'Reload failed.';
         });
@@ -42889,28 +42894,71 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var scope = _activePhotoScope();
     if (!scope) return dbAll();                    // fast path: all
     var bboxes = _sectionBboxesForScope();
+    // Batched key→fetch loader for huge geophoto stores. The naive
+    // cursor walk reads cur.value (the FULL record, including the
+    // ~5 MB dataUrl) for every record — at 4500 records that's
+    // ~22 GB of allocations in rapid succession, far faster than GC
+    // can reclaim, and the Edge PWA tab OOMs.
+    //
+    // Instead we:
+    //   1. getAllKeys()   — tiny payload (just ids), one shot.
+    //   2. For each key in batches of 20, open a fresh read-only tx
+    //      and store.get(key). The structured-clone of each record
+    //      is its own micro-allocation; we keep in-scope ones and
+    //      drop out-of-scope ones to GC.
+    //   3. setTimeout between batches so the runtime can run GC and
+    //      reclaim memory before the next batch's 20 × 5 MB lands.
     return openDB().then(function (db) {
       return new Promise(function (res, rej) {
-        var tx = db.transaction(DB_STORE, 'readonly');
-        var store = tx.objectStore(DB_STORE);
-        var kept = [];
-        var seen = 0, dropped = 0;
-        var req = store.openCursor();
-        req.onsuccess = function (e) {
-          var cur = e.target.result;
-          if (!cur) {
-            console.log('[RoadWalk] photo scope: kept ' + kept.length
-                       + ' / scanned ' + seen + ' (' + dropped + ' out of scope)');
-            res(kept);
-            return;
+        var tx1 = db.transaction(DB_STORE, 'readonly');
+        var keyReq = tx1.objectStore(DB_STORE).getAllKeys();
+        keyReq.onsuccess = function () {
+          var keys = keyReq.result || [];
+          if (!keys.length) { res([]); return; }
+          var kept = [];
+          var BATCH = 20;
+          var i = 0;
+          function nextBatch() {
+            if (i >= keys.length) {
+              console.log('[RoadWalk] photo scope: kept ' + kept.length
+                         + ' / scanned ' + keys.length);
+              res(kept);
+              return;
+            }
+            openDB().then(function (db2) {
+              var tx2 = db2.transaction(DB_STORE, 'readonly');
+              var store = tx2.objectStore(DB_STORE);
+              var end = Math.min(i + BATCH, keys.length);
+              var pending = end - i;
+              for (var j = i; j < end; j++) {
+                (function (k) {
+                  var rq = store.get(k);
+                  rq.onsuccess = function () {
+                    var rec = rq.result;
+                    if (rec && rec.dataUrl && _photoInScope(rec, scope, bboxes)) {
+                      kept.push(rec);
+                    }
+                    rec = null;
+                    if (--pending === 0) {
+                      i = end;
+                      // Yield so GC can reclaim the just-dropped
+                      // dataUrls before we load 20 more.
+                      setTimeout(nextBatch, 8);
+                    }
+                  };
+                  rq.onerror = function () {
+                    if (--pending === 0) {
+                      i = end;
+                      setTimeout(nextBatch, 8);
+                    }
+                  };
+                })(keys[j]);
+              }
+            }).catch(function (err) { rej(err); });
           }
-          seen++;
-          var rec = cur.value;
-          if (rec && rec.dataUrl && _photoInScope(rec, scope, bboxes)) kept.push(rec);
-          else dropped++;
-          cur.continue();
+          nextBatch();
         };
-        req.onerror = function () { rej(req.error); };
+        keyReq.onerror = function () { rej(keyReq.error); };
       });
     });
   }
@@ -43723,12 +43771,32 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // Used after the Photo Scope modal saves a new selection so the
     // in-memory PHOTOS array shrinks/grows immediately without a
     // full page reload.
+    //
+    // CRITICAL: clear the OLD array + map layer BEFORE starting the
+    // cursor walk. The naive version held the old 4500 × ~5 MB
+    // dataUrl array AND the new (cursor-accumulating) array in
+    // memory at the same time — which is what was OOMing the
+    // reload. We also wait a tick after clearing so GC has a chance
+    // to reclaim before the cursor allocates new records.
     reloadFromIdb: function () {
-      return dbScoped().then(function (recs) {
-        PHOTOS = (recs || []).filter(function (r) { return r && r.dataUrl; });
-        try { updateCount(); } catch (_) {}
-        try { render(); } catch (_) {}
-        return PHOTOS.length;
+      var prevCount = PHOTOS.length;
+      // Wipe map markers first — they hold references back to the
+      // photo objects and would prevent GC from reclaiming them.
+      try { if (photoLayer && photoLayer.clearLayers) photoLayer.clearLayers(); } catch (_) {}
+      // Drop every reference to the old objects.
+      PHOTOS.length = 0;
+      console.log('[RoadWalk] photo scope reload: cleared ' + prevCount + ' from memory; waiting for GC then re-reading IDB…');
+      return new Promise(function (res) {
+        // Yield so the runtime can release the cleared array before
+        // we start allocating a new one.
+        setTimeout(function () {
+          dbScoped().then(function (recs) {
+            PHOTOS = (recs || []).filter(function (r) { return r && r.dataUrl; });
+            try { updateCount(); } catch (_) {}
+            try { render(); } catch (_) {}
+            res(PHOTOS.length);
+          }, function () { res(0); });
+        }, 150);
       });
     },
     setScope:    _setActivePhotoScope,
