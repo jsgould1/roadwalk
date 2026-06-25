@@ -34856,6 +34856,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
   });
 
+  // Multi-section Print Sections override — set by the Print
+  // Sections… picker to narrow renderCulvertsReport's output to a
+  // chosen subset of sections without touching the section dropdown.
+  // Cleared on the post-print restore so the on-screen view comes
+  // back exactly as the user left it.
+  var _cvSectionOverride = null;
+
   // ══════════════════════════════════════════════════════════════════
   // CSV + KMZ EXPORT (Culverts)
   // ══════════════════════════════════════════════════════════════════
@@ -35504,8 +35511,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // Apply section / source / search filters.
+    // _cvSectionOverride takes priority over the section dropdown so
+    // Print Sections… can render a multi-section subset without
+    // flipping the dropdown to a single value.
     var all = allUnfiltered.filter(function (r) {
-      if (fSec && r.sec.id !== fSec) return false;
+      if (_cvSectionOverride && _cvSectionOverride.size && !_cvSectionOverride.has(r.sec.id)) return false;
+      if (!_cvSectionOverride && fSec && r.sec.id !== fSec) return false;
       if (mutedSet && mutedSet.has(_cvSrc(r.pin))) return false;
       return true;
     });
@@ -36495,24 +36506,69 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     }
-    // Print buttons stay as placeholders for now — the on-screen
-    // report is already printable via the browser's File → Print, and
-    // the multi-section print flow needs the same pre-fetch tile
-    // dance the sign report does. Both wired but inert.
-    ['cv-print-btn', 'cv-print-all-btn'].forEach(function (id) {
-      var btn = document.getElementById(id);
-      if (btn && !btn._wired) {
-        btn._wired = true;
-        btn.addEventListener('click', function () {
-          if (id === 'cv-print-btn') {
-            // Direct File → Print on the current section dropdown.
-            try { window.print(); } catch (_) {}
-            return;
-          }
-          alert('Multi-section Print Sections… — coming in the next commit. For now use the section dropdown + 🖨 Print.');
+    // Shared pre-print sequence — force-init every inset map so
+    // print preview catches them, show a tile-fetch toast, wait, then
+    // open the browser print dialog. afterPrint runs once the dialog
+    // closes (window.print is synchronous in Chromium) so the on-
+    // screen view restores even if the user prints + cancels.
+    function _cvTriggerPrint(msg, delayMs, afterPrint) {
+      _cvForceInitAllMaps();
+      var tip = document.createElement('div');
+      tip.textContent = msg;
+      tip.style.cssText = 'position:fixed;top:50%;left:50%;'
+        + 'transform:translate(-50%,-50%);background:#000;color:#fff;'
+        + 'padding:10px 16px;font:600 12px monospace;z-index:99999;'
+        + 'border:1px solid #fff;border-radius:4px;';
+      document.body.appendChild(tip);
+      setTimeout(function () {
+        if (tip.parentNode) tip.parentNode.removeChild(tip);
+        try { window.print(); } catch (_) {}
+        if (typeof afterPrint === 'function') setTimeout(afterPrint, 0);
+      }, delayMs);
+    }
+
+    // 🖨 Print — print the current dropdown's section (or all sections
+    // if none). Force-init insets first so every card carries its
+    // map widget on the printed sheet.
+    var cvPrintBtn = document.getElementById('cv-print-btn');
+    if (cvPrintBtn && !cvPrintBtn._wired) {
+      cvPrintBtn._wired = true;
+      cvPrintBtn.addEventListener('click', function () {
+        _cvTriggerPrint('Loading map tiles…', 2500, null);
+      });
+    }
+
+    // 🖨 Print Sections… — pick a multi-section subset, narrow the
+    // render via _cvSectionOverride, give tiles time to land, open
+    // Print, then clear the override on dialog close so the on-screen
+    // view restores. Longer wait for larger subsets so the inset-map
+    // fleet has time to fetch every tile before the browser pauses
+    // scripts to open the print dialog.
+    var cvPrintAllBtn = document.getElementById('cv-print-all-btn');
+    if (cvPrintAllBtn && !cvPrintAllBtn._wired) {
+      cvPrintAllBtn._wired = true;
+      cvPrintAllBtn.addEventListener('click', function () {
+        _cvPickSections({
+          title: 'Pick sections to print',
+          sub:   'A separate page is printed for each culvert in the selected sections.',
+          actionLabel: 'Print',
+          persistKey:  'rw_cv_print_sections',
+          onConfirm: function (picked) {
+            if (!picked.length) return;
+            _cvSectionOverride = new Set(picked);
+            renderCulvertsReport();
+            _cvTriggerPrint(
+              'Loading map tiles for ' + picked.length + ' section(s)…',
+              picked.length > 2 ? 4500 : 3000,
+              function () {
+                _cvSectionOverride = null;
+                renderCulvertsReport();
+              }
+            );
+          },
         });
-      }
-    });
+      });
+    }
 
     // ── Drop stale Leaflet inset instances + lazy-init the new ones ──
     _cvTeardownInsetMaps();
