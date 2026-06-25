@@ -33759,13 +33759,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             }
             // Linked geophotos: tiny data-photo-id (observer looks up
             // dataUrl from PHOTOS at decode time). Embedded form-
-            // photos: data-src because their dataUrl isn't in any
-            // registry the observer can look up. Either way the
-            // dataUrl never gets duplicated into a DOM attribute
-            // string — that's what was OOM-ing on Apply.
+            // photos: direct src + native loading=lazy — the
+            // dataUrl is already in pin.attrs.photos[i].dataUrl so
+            // embedding it in src doesn't allocate new memory, and
+            // native lazy-decode defers the bitmap allocation. More
+            // reliable than the custom IntersectionObserver at
+            // full-report scale where the observer was missing imgs
+            // on continuation pages of multi-page deliverables.
             var imgTag = ph._gp_id
               ? '<img data-photo-id="' + ph._gp_id + '" alt="" loading="lazy">'
-              : '<img data-src="' + _esc(ph.src) + '" alt="" loading="lazy">';
+              : '<img src="' + _esc(ph.src) + '" alt="" loading="lazy" decoding="async">';
             return '<figure class="sr-photo">' +
               imgTag +
               (acts ? '<div class="sr-photo-actions">' + acts + '</div>' : '') +
@@ -35916,16 +35919,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               // data-cv-photo-id — _cvHydrateBlobImgs swaps in a blob
               // URL after the DOM mounts. Linked geophotos use
               // data-photo-id (tiny id string, observer looks up
-              // dataUrl from PHOTOS at decode time). Embedded form-
-              // photos still need data-src because their dataUrl
-              // isn't in a registry the observer can look up.
+              // dataUrl from PHOTOS at decode time, no multi-MB
+              // string per img). Embedded form-photos use direct src
+              // + native loading=lazy: the dataUrl is already in
+              // pin.attrs.photos[i].dataUrl so embedding it in src
+              // doesn't allocate new memory, and the browser's
+              // native lazy-decode defers the bitmap allocation
+              // until the img scrolls into the viewport. This path
+              // is more reliable than the custom IntersectionObserver
+              // at full-report scale where the observer was missing
+              // imgs on continuation pages.
               var imgTag;
               if (e._cv_photo_id != null) {
                 imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
               } else if (e._gp_id) {
                 imgTag = '<img data-photo-id="' + e._gp_id + '" alt="" loading="lazy">';
               } else {
-                imgTag = '<img data-src="' + e.src + '" alt="" loading="lazy">';
+                imgTag = '<img src="' + e.src + '" alt="" loading="lazy" decoding="async">';
               }
               return '<figure class="sr-photo">'
                 + imgTag
@@ -36356,16 +36366,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 + 'title="Hide from printed report (photo is kept)">&times;</button>';
           // Linked geophotos get a tiny data-photo-id (the lazy
           // observer looks up the dataUrl from PHOTOS on decode).
-          // Embedded form-photos still fall back to data-src because
-          // pin.attrs.photos[i].dataUrl isn't in any registry the
-          // observer can look up.
+          // Embedded form-photos use direct src + native loading=lazy
+          // — same path the full-report _photoGrid uses so surgical
+          // updates and re-renders behave consistently.
           var imgTag;
           if (e._cv_photo_id != null) {
             imgTag = '<img data-cv-photo-id="' + e._cv_photo_id + '" alt="" loading="lazy">';
           } else if (e._gp_id) {
             imgTag = '<img data-photo-id="' + e._gp_id + '" alt="" loading="lazy">';
           } else {
-            imgTag = '<img data-src="' + e.src + '" alt="" loading="lazy">';
+            imgTag = '<img src="' + e.src + '" alt="" loading="lazy" decoding="async">';
           }
           return '<figure class="sr-photo">' + imgTag
                + '<div class="sr-photo-actions">' + acts + '</div>'
