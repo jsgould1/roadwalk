@@ -35179,6 +35179,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var out = [];
       var seenSrc = Object.create(null);
       var hiddenCount = 0;
+      // Caption rewrite — the AECOM_FOX build script baked the Excel
+      // row order into captions like "Inlet — Culvert 3". Pins later
+      // get renumbered (sort, migration, merge) so that "Culvert 3"
+      // no longer matches the actual pin id. Swap any
+      // case-insensitive "Culvert <digits>" reference for the
+      // pin's current id so captions stay accurate.
+      function _fixCap(raw) {
+        if (!raw) return '';
+        if (!pin || !pin.id) return raw;
+        return String(raw).replace(/Culvert\s+\d+/gi, pin.id);
+      }
       // Pass 1 — embedded form-photos AND folder-picked blob refs.
       // A folder-picked photo carries _cv_photo_id (pointing into the
       // IDB 'photos' store as a Blob) instead of a base64 dataUrl, so
@@ -35197,7 +35208,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             p:         p,
             src:       '',
             _cv_photo_id: p._cv_photo_id,
-            caption:   p.caption || p.file_name || '',
+            caption:   _fixCap(p.caption || p.file_name || ''),
             _emb_idx:  i,
             _hide_key: key,
           });
@@ -35210,7 +35221,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           idx:       i,
           p:         p,
           src:       p.dataUrl,
-          caption:   p.caption || '',
+          caption:   _fixCap(p.caption || ''),
           _emb_idx:  i,
           _hide_key: key,
         });
@@ -35232,9 +35243,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           out.push({
             p:         gp,
             src:       src,
-            caption:   gp.description || (gp.captured_at
+            caption:   _fixCap(gp.description || (gp.captured_at
                           ? new Date(gp.captured_at).toLocaleString()
-                          : 'Linked photo'),
+                          : 'Linked photo')),
             _gp_id:    gp.id,
             _hide_key: key,
           });
