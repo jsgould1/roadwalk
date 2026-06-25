@@ -34875,15 +34875,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // thumb (inline) + 1400 px JPEG (click-to-zoom) so balloons stay
   // small in Google Earth Pro.
 
-  // ── Section picker (mini, reuses the sr-picker modal DOM) ────────
+  // ── Section picker — uses the culvert-dedicated cv-picker modal
+  //    scaffold defined in the static HTML (line ~11824). Earlier
+  //    versions of this helper grabbed the SIGN module's sr-picker
+  //    IDs, which silently did nothing because the cv-picker DOM
+  //    above intercepts those IDs in this page's namespace — the
+  //    selectors found the sr-picker nodes but their click handlers
+  //    were wired to _srPickerOnConfirm, not ours. Switching to the
+  //    cv-picker- ids that the HTML actually exposes for culverts
+  //    fixes Export CSV / Export KML / Print Sections in one shot.
   function _cvPickSections(opts) {
-    var modal     = document.getElementById('sr-picker');
-    var titleEl   = document.getElementById('sr-picker-title');
-    var subEl     = document.getElementById('sr-picker-sub');
-    var listEl    = document.getElementById('sr-picker-list');
-    var confirmBtn= document.getElementById('sr-picker-confirm');
+    var modal     = document.getElementById('cv-picker');
+    var titleEl   = document.getElementById('cv-picker-title');
+    var subEl     = document.getElementById('cv-picker-sub');
+    var listEl    = document.getElementById('cv-picker-list');
+    var confirmBtn= document.getElementById('cv-picker-confirm');
     if (!modal || !listEl) {
-      alert('Section picker DOM missing — open the Signs report once to initialise it.');
+      alert('Culvert section picker DOM missing — refresh the page.');
       return;
     }
     titleEl.textContent = opts.title || 'Pick sections';
@@ -34926,15 +34934,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }).join('') || '<div style="padding:20px;color:var(--ink-3);text-align:center;">No sections have culverts yet.</div>';
 
     // Wire the picker once. Subsequent opens reuse the same handlers
-    // and just update the list contents above.
+    // and just update the list contents above. All the cv-picker-*
+    // ids are the culvert-dedicated scaffold from the HTML.
     function _close() { modal.hidden = true; modal._cvOnConfirm = null; }
     if (!modal._cvWired) {
       modal._cvWired = true;
-      var closeBtn  = document.getElementById('sr-picker-close');
-      var cancelBtn = document.getElementById('sr-picker-cancel');
+      var closeBtn  = document.getElementById('cv-picker-close');
+      var cancelBtn = document.getElementById('cv-picker-cancel');
       var backdrop  = modal.querySelector('.sr-picker-backdrop');
-      var allBtn    = document.getElementById('sr-picker-all');
-      var noneBtn   = document.getElementById('sr-picker-none');
+      var allBtn    = document.getElementById('cv-picker-all');
+      var noneBtn   = document.getElementById('cv-picker-none');
       if (closeBtn)  closeBtn.addEventListener('click', _close);
       if (cancelBtn) cancelBtn.addEventListener('click', _close);
       if (backdrop)  backdrop.addEventListener('click', _close);
@@ -34945,11 +34954,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         listEl.querySelectorAll('input[type=checkbox]').forEach(function (i) { i.checked = false; });
       });
       confirmBtn.addEventListener('click', function () {
-        // Only fire if the OPEN call set _cvOnConfirm. When the picker
-        // was opened by the sign module instead, sr-picker's own
-        // _srPickerOnConfirm path takes over and ours stays null.
         var cb = modal._cvOnConfirm;
-        if (cb == null) return;
+        if (cb == null) return;                        // double-click safety
         var picked = Array.from(listEl.querySelectorAll('input[type=checkbox]:checked'))
                           .map(function (i) { return i.value; });
         modal.hidden = true;
