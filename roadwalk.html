@@ -5303,7 +5303,14 @@ body.rw-sld-photo-dragging .strip-pin {
   .filters, .sr-head, .sr-pick-btn, .sr-edit-btn, .sr-delete-btn,
   .sr-panel-del,
   .sr-restore-btn, .sr-photo-actions, #module-toolbar,
-  .module-view:not(#mod-signs_report) { display: none !important; }
+  /* Hide every module except whichever report is currently active.
+     The previous rule pinned this to #mod-signs_report only, which is
+     why printing from the Culvert report came out as one blank sheet
+     — the report DOM was display:none'd before the print pipeline
+     could paginate it. .module-view.active is set by showModule() on
+     whichever tab the user picked, so this generalises to both the
+     sign and culvert reports (and any future printable module). */
+  .module-view:not(.active) { display: none !important; }
   .app-main {
     position: static !important; overflow: visible !important;
     flex: 0 0 auto !important; height: auto !important;
