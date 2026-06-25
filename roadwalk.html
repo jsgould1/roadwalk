@@ -34895,7 +34895,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return;
     }
     titleEl.textContent = opts.title || 'Pick sections';
-    subEl.textContent   = opts.sub   || '';
+    // Stitch a "Source filter: …" hint onto the sub-line so the
+    // counts below read clearly when the user has hit "AECOM only"
+    // or muted some chips. No hint when the source row is fully
+    // open (everything counted, nothing muted).
+    var subText = opts.sub || '';
+    var hintMuted = _cvLoadMuted();
+    if (hintMuted && hintMuted.size) {
+      subText += (subText ? '  · ' : '') + 'Source filter active: '
+        + Array.from(hintMuted).join(', ') + ' muted.';
+    }
+    subEl.textContent   = subText;
     confirmBtn.textContent = opts.actionLabel || 'Continue';
 
     var sections = window.SECTIONS || [];
@@ -34919,11 +34929,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
       });
     };
+    // Respect the active source-mute so the count matches what will
+    // actually export/print. If the user has hit "AECOM only" or
+    // muted any source chip, the muted sources drop out here.
+    var pickerMuted = _cvLoadMuted();
     listEl.innerHTML = withCv.map(function (sec) {
       var info = (window._SR_SECTION_INFO || {})[sec.id];
       var label = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
       var cvCount = (sec.pins || []).filter(function (p) {
-        return p && p.kind === 'culvert';
+        if (!p || p.kind !== 'culvert') return false;
+        if (pickerMuted && pickerMuted.has(_cvSrc(p))) return false;
+        return true;
       }).length;
       var checked = prevSel.has(sec.id) ? ' checked' : '';
       return '<label class="sr-picker-item">'
@@ -34975,11 +34991,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // ── CSV ──────────────────────────────────────────────────────────
   function _cvExportCsv(sectionSet) {
     var sections = window.SECTIONS || [];
+    var mutedSet = _cvLoadMuted();
     var rows = [];
     sections.forEach(function (sec) {
       (sec.pins || []).forEach(function (p) {
         if (!p || p.kind !== 'culvert') return;
         if (sectionSet && sectionSet.size && !sectionSet.has(sec.id)) return;
+        // Respect the active source-mute (e.g. "AECOM only") so the
+        // CSV mirrors the on-screen report and the print path.
+        if (mutedSet && mutedSet.has(_cvSrc(p))) return;
         rows.push({ sec: sec, pin: p });
       });
     });
@@ -35105,7 +35125,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       }).filter(Boolean).join(' ');
     }
 
-    var pins = (sec.pins || []).filter(function (p) { return p && p.kind === 'culvert'; });
+    // Respect the active source-mute so the KMZ matches what the
+    // user sees in the on-screen report and the printed sheets.
+    var mutedSet = _cvLoadMuted();
+    var pins = (sec.pins || []).filter(function (p) {
+      if (!p || p.kind !== 'culvert') return false;
+      if (mutedSet && mutedSet.has(_cvSrc(p))) return false;
+      return true;
+    });
     pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
 
     // Resize embedded photos for each pin. Linked geophotos are
