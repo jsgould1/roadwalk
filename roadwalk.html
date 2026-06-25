@@ -34856,6 +34856,387 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
   });
 
+  // ══════════════════════════════════════════════════════════════════
+  // CSV + KMZ EXPORT (Culverts)
+  // ══════════════════════════════════════════════════════════════════
+  // Mirrors the sign report's _srExportCsv / _srExportKml pattern but
+  // tuned for the culvert schema (one row per pin — no separate
+  // panels/posts tables like signs). Reuses module-level helpers:
+  // _csvRow / _csvEsc / _csvDownload / _csvSpellCond / _csvSrc,
+  // _xmlEsc, _zipStore / _crc32 / _dataUrlToBytes / _strToBytes,
+  // _srResizeJpegDataUrl. KMZ photos are resized to a 540 px JPEG
+  // thumb (inline) + 1400 px JPEG (click-to-zoom) so balloons stay
+  // small in Google Earth Pro.
+
+  // ── Section picker (mini, reuses the sr-picker modal DOM) ────────
+  function _cvPickSections(opts) {
+    var modal     = document.getElementById('sr-picker');
+    var titleEl   = document.getElementById('sr-picker-title');
+    var subEl     = document.getElementById('sr-picker-sub');
+    var listEl    = document.getElementById('sr-picker-list');
+    var confirmBtn= document.getElementById('sr-picker-confirm');
+    if (!modal || !listEl) {
+      alert('Section picker DOM missing — open the Signs report once to initialise it.');
+      return;
+    }
+    titleEl.textContent = opts.title || 'Pick sections';
+    subEl.textContent   = opts.sub   || '';
+    confirmBtn.textContent = opts.actionLabel || 'Continue';
+
+    var sections = window.SECTIONS || [];
+    var withCv = sections.filter(function (sec) {
+      return (sec.pins || []).some(function (p) { return p && p.kind === 'culvert'; });
+    });
+
+    var prevSel = null;
+    if (opts.persistKey) {
+      try {
+        var raw = localStorage.getItem(opts.persistKey);
+        if (raw) prevSel = new Set(JSON.parse(raw));
+      } catch (_) {}
+    }
+    if (!prevSel || !prevSel.size) {
+      prevSel = new Set(withCv.map(function (s) { return s.id; }));
+    }
+
+    var esc = function (s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
+      });
+    };
+    listEl.innerHTML = withCv.map(function (sec) {
+      var info = (window._SR_SECTION_INFO || {})[sec.id];
+      var label = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
+      var cvCount = (sec.pins || []).filter(function (p) {
+        return p && p.kind === 'culvert';
+      }).length;
+      var checked = prevSel.has(sec.id) ? ' checked' : '';
+      return '<label class="sr-picker-item">'
+        + '<input type="checkbox" value="' + esc(sec.id) + '"' + checked + '>'
+        + '<span class="sr-picker-item-label">' + esc(label) + '</span>'
+        + '<span class="sr-picker-item-count">' + cvCount + ' culverts</span>'
+        + '</label>';
+    }).join('') || '<div style="padding:20px;color:var(--ink-3);text-align:center;">No sections have culverts yet.</div>';
+
+    // Wire the picker once. Subsequent opens reuse the same handlers
+    // and just update the list contents above.
+    function _close() { modal.hidden = true; modal._cvOnConfirm = null; }
+    if (!modal._cvWired) {
+      modal._cvWired = true;
+      var closeBtn  = document.getElementById('sr-picker-close');
+      var cancelBtn = document.getElementById('sr-picker-cancel');
+      var backdrop  = modal.querySelector('.sr-picker-backdrop');
+      var allBtn    = document.getElementById('sr-picker-all');
+      var noneBtn   = document.getElementById('sr-picker-none');
+      if (closeBtn)  closeBtn.addEventListener('click', _close);
+      if (cancelBtn) cancelBtn.addEventListener('click', _close);
+      if (backdrop)  backdrop.addEventListener('click', _close);
+      if (allBtn)    allBtn.addEventListener('click', function () {
+        listEl.querySelectorAll('input[type=checkbox]').forEach(function (i) { i.checked = true; });
+      });
+      if (noneBtn)   noneBtn.addEventListener('click', function () {
+        listEl.querySelectorAll('input[type=checkbox]').forEach(function (i) { i.checked = false; });
+      });
+      confirmBtn.addEventListener('click', function () {
+        // Only fire if the OPEN call set _cvOnConfirm. When the picker
+        // was opened by the sign module instead, sr-picker's own
+        // _srPickerOnConfirm path takes over and ours stays null.
+        var cb = modal._cvOnConfirm;
+        if (cb == null) return;
+        var picked = Array.from(listEl.querySelectorAll('input[type=checkbox]:checked'))
+                          .map(function (i) { return i.value; });
+        modal.hidden = true;
+        modal._cvOnConfirm = null;
+        if (opts.persistKey) {
+          try { localStorage.setItem(opts.persistKey, JSON.stringify(picked)); } catch (_) {}
+        }
+        cb(picked);
+      });
+    }
+    modal._cvOnConfirm = function (picked) {
+      if (typeof opts.onConfirm === 'function') opts.onConfirm(picked);
+    };
+    modal.hidden = false;
+  }
+
+  // ── CSV ──────────────────────────────────────────────────────────
+  function _cvExportCsv(sectionSet) {
+    var sections = window.SECTIONS || [];
+    var rows = [];
+    sections.forEach(function (sec) {
+      (sec.pins || []).forEach(function (p) {
+        if (!p || p.kind !== 'culvert') return;
+        if (sectionSet && sectionSet.size && !sectionSet.has(sec.id)) return;
+        rows.push({ sec: sec, pin: p });
+      });
+    });
+    rows.sort(function (a, b) {
+      if (a.sec.id !== b.sec.id) return a.sec.id < b.sec.id ? -1 : 1;
+      return (a.pin.sta_ft || 0) - (b.pin.sta_ft || 0);
+    });
+    if (!rows.length) { alert('No culverts in the selected section(s).'); return; }
+
+    var hdr = [
+      'section_id','pin_id','pin_ulid','description','overall_condition',
+      'inlet_condition','inlet_notes','barrel_condition','barrel_notes',
+      'outlet_condition','outlet_notes',
+      'inlet_structure_condition','inlet_structure_notes',
+      'outlet_structure_condition','outlet_structure_notes',
+      'material','coating','shape','size_in','length_ft','num_barrels','slope',
+      'in_type','out_type',
+      'mp','sta','sta_ft','lat','lng','source','n_photos','notes',
+    ];
+    var csv = [hdr.join(',')];
+
+    rows.forEach(function (r) {
+      var sec = r.sec;
+      var pin = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(r.pin) : r.pin;
+      var a   = pin.attrs || {};
+      // MP / lat / lng — same derivation the report card uses.
+      var mpStr = '';
+      var mpStartNum = (typeof sec.mpStart === 'number') ? sec.mpStart
+                    : (typeof sec.mp_start === 'number') ? sec.mp_start : null;
+      var mpVal = (mpStartNum != null && typeof pin.sta_ft === 'number')
+                ? mpStartNum + pin.sta_ft / 5280
+                : (a.mp_start != null ? +a.mp_start : null);
+      if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
+      var lat = '', lng = '';
+      var g = pin.geometry && pin.geometry.coordinates;
+      if (Array.isArray(g) && g.length) {
+        // Culverts are LineStrings — average the endpoints.
+        var lats = [], lngs = [];
+        g.forEach(function (c) {
+          if (Array.isArray(c) && c.length >= 2 && isFinite(+c[0]) && isFinite(+c[1])) {
+            lngs.push(+c[0]); lats.push(+c[1]);
+          }
+        });
+        if (lats.length) {
+          lat = (lats.reduce(function (x, y) { return x + y; }, 0) / lats.length).toFixed(6);
+          lng = (lngs.reduce(function (x, y) { return x + y; }, 0) / lngs.length).toFixed(6);
+        }
+      }
+      var ovCond = _cvWorstCond([
+        _cvEffectiveCond(pin, 'inlet_condition'),
+        _cvEffectiveCond(pin, 'barrel_condition'),
+        _cvEffectiveCond(pin, 'outlet_condition'),
+        _cvEffectiveCond(pin, 'hw_upstream_cond'),
+        _cvEffectiveCond(pin, 'hw_downstream_cond'),
+      ]);
+      var descStr = _cvBuildDescription(pin, sec.alignment) || '';
+      var photos = Array.isArray(a.photos) ? a.photos.length : 0;
+
+      csv.push(_csvRow([
+        sec.id || '', pin.id || '', pin.ulid || '', descStr,
+        _csvSpellCond(ovCond),
+        _csvSpellCond(_cvEffectiveCond(pin, 'inlet_condition')),  a.inlet_condition_notes  || '',
+        _csvSpellCond(_cvEffectiveCond(pin, 'barrel_condition')), a.barrel_condition_notes || '',
+        _csvSpellCond(_cvEffectiveCond(pin, 'outlet_condition')), a.outlet_condition_notes || '',
+        _csvSpellCond(_cvEffectiveCond(pin, 'hw_upstream_cond')),   a.hw_upstream_cond_notes   || '',
+        _csvSpellCond(_cvEffectiveCond(pin, 'hw_downstream_cond')), a.hw_downstream_cond_notes || '',
+        a.material || '', a.coating || '', a.shape || '',
+        a.size_in || '', a.length_ft || '', a.num_barrels || '', a.slope || '',
+        a.in_type || '', a.out_type || '',
+        mpStr, pin.sta || '', (pin.sta_ft != null ? pin.sta_ft : ''),
+        lat, lng, _csvSrc(pin), photos, a.notes || '',
+      ]));
+    });
+
+    var d = new Date(), pad = function (n) { return n < 10 ? '0' + n : n; };
+    var ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+           + '_' + pad(d.getHours()) + pad(d.getMinutes());
+    var scope = (sectionSet && sectionSet.size)
+      ? Array.from(sectionSet).sort().join('').toLowerCase()
+      : 'all';
+    _csvDownload('roadwalk_culverts_' + scope + '_' + ts + '.csv', csv.join('\r\n'));
+  }
+
+  // ── KMZ ──────────────────────────────────────────────────────────
+  function _cvExportKml(sectionIds) {
+    var sections = window.SECTIONS || [];
+    var byId = {};
+    sections.forEach(function (s) { if (s) byId[s.id] = s; });
+    var picked = sectionIds.map(function (id) { return byId[id]; }).filter(Boolean);
+    if (!picked.length) { alert('No sections selected.'); return; }
+
+    var tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);'
+      + 'background:#000;color:#fff;padding:14px 20px;font:600 12px monospace;z-index:99999;'
+      + 'border:1px solid #fff;border-radius:4px;text-align:center;';
+    tip.textContent = 'Building KMZ for ' + picked.length + ' section(s)…';
+    document.body.appendChild(tip);
+
+    var chain = Promise.resolve();
+    picked.forEach(function (sec) {
+      chain = chain.then(function () { return _cvBuildOneKmz(sec, tip); });
+    });
+    chain.then(function () {
+      if (tip.parentNode) tip.parentNode.removeChild(tip);
+    }).catch(function (err) {
+      if (tip.parentNode) tip.parentNode.removeChild(tip);
+      alert('KMZ build failed: ' + (err && err.message ? err.message : err));
+    });
+  }
+
+  function _cvBuildOneKmz(sec, tip) {
+    var info = (window._SR_SECTION_INFO || {})[sec.id];
+    var sectionTitle = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
+    if (tip) tip.textContent = 'Building KMZ for section ' + sec.id + '…';
+
+    // Centerline (LineString). sec.alignment is [[lat, lng], …]; KML
+    // wants "lng,lat lng,lat …".
+    var lineCoords = '';
+    if (Array.isArray(sec.alignment) && sec.alignment.length >= 2) {
+      lineCoords = sec.alignment.map(function (c) {
+        var lat = +c[0], lng = +c[1];
+        return (isFinite(lat) && isFinite(lng)) ? (lng + ',' + lat) : '';
+      }).filter(Boolean).join(' ');
+    }
+
+    var pins = (sec.pins || []).filter(function (p) { return p && p.kind === 'culvert'; });
+    pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
+
+    // Resize embedded photos for each pin. Linked geophotos are
+    // skipped here (they live in the geophotos store and may not be
+    // loaded under the current Photo Scope) — the report's full
+    // identity row already documents what's on disk.
+    var bundles = pins.map(function (pin) {
+      var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
+      var a = merged.attrs || {};
+      var photos = (Array.isArray(a.photos) ? a.photos : [])
+        .filter(function (ph) { return ph && ph.dataUrl; })
+        .slice(0, 8);
+      var photoPromises = photos.map(function (ph, idx) {
+        return Promise.all([
+          _srResizeJpegDataUrl(ph.dataUrl,  540, 0.7),
+          _srResizeJpegDataUrl(ph.dataUrl, 1400, 0.72),
+        ]).then(function (pair) {
+          return { thumbUrl: pair[0], fullUrl: pair[1], caption: ph.caption || '', idx: idx };
+        }).catch(function () { return null; });
+      });
+      return Promise.all(photoPromises).then(function (resized) {
+        return { sec: sec, pin: merged, photos: resized.filter(Boolean) };
+      });
+    });
+
+    return Promise.all(bundles).then(function (bs) {
+      var files = [];
+      var placemarks = bs.map(function (b) { return _cvPinPlacemark(b, files); }).join('\n');
+      var centerline = lineCoords ? (
+        '<Placemark><name>Centerline — ' + _xmlEsc(sec.id) + '</name>'
+        + '<styleUrl>#rw-centerline</styleUrl>'
+        + '<LineString><tessellate>1</tessellate><coordinates>' + lineCoords + '</coordinates></LineString>'
+        + '</Placemark>'
+      ) : '';
+      var metaLine = info
+        ? (_xmlEsc(info.route_id) + ' · FMSS ' + info.fmss
+           + ' · MP ' + info.mp_start.toFixed(2) + '–' + info.mp_end.toFixed(2))
+        : '';
+      var kml = ''
+        + '<?xml version="1.0" encoding="UTF-8"?>'
+        + '<kml xmlns="http://www.opengis.net/kml/2.2">'
+        + '<Document>'
+        +   '<name>' + _xmlEsc('Culverts — ' + sectionTitle) + '</name>'
+        + (metaLine ? '<description><![CDATA[' + metaLine + ']]></description>' : '')
+        +   '<Style id="rw-centerline"><LineStyle><color>ff1d4ed8</color><width>4</width></LineStyle></Style>'
+        +   '<Style id="rw-culvert"><LineStyle><color>ffEB4034</color><width>5</width></LineStyle></Style>'
+        +   centerline
+        +   placemarks
+        + '</Document>'
+        + '</kml>';
+
+      var entries = [{ name: 'doc.kml', data: _strToBytes(kml) }];
+      files.forEach(function (f) { entries.push(f); });
+      var blob = _zipStore(entries);
+      var url = URL.createObjectURL(blob);
+      var aEl = document.createElement('a');
+      aEl.href = url;
+      aEl.download = 'roadwalk_culverts_' + sec.id.toLowerCase() + '.kmz';
+      document.body.appendChild(aEl);
+      aEl.click();
+      setTimeout(function () {
+        document.body.removeChild(aEl);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    });
+  }
+
+  function _cvPinPlacemark(b, files) {
+    var sec = b.sec, pin = b.pin, a = pin.attrs || {};
+    var safe = String(pin.id || 'cv').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40);
+    // Culvert geometry is a LineString of [[lng, lat], [lng, lat], …].
+    var coords = (pin.geometry && pin.geometry.coordinates) || [];
+    var lineStr = '';
+    if (Array.isArray(coords) && coords.length >= 2) {
+      lineStr = coords.map(function (c) {
+        var lng = +c[0], lat = +c[1];
+        return (isFinite(lng) && isFinite(lat)) ? (lng + ',' + lat) : '';
+      }).filter(Boolean).join(' ');
+    }
+    var ovCond = _cvWorstCond([
+      _cvEffectiveCond(pin, 'inlet_condition'),
+      _cvEffectiveCond(pin, 'barrel_condition'),
+      _cvEffectiveCond(pin, 'outlet_condition'),
+      _cvEffectiveCond(pin, 'hw_upstream_cond'),
+      _cvEffectiveCond(pin, 'hw_downstream_cond'),
+    ]);
+    var descStr = _cvBuildDescription(pin, sec.alignment) || '';
+
+    // Embed photo files into the KMZ; balloon uses files/… refs.
+    var photoHtml = b.photos.map(function (ph) {
+      var thumbName = 'files/' + safe + '_' + ph.idx + '_thumb.jpg';
+      var fullName  = 'files/' + safe + '_' + ph.idx + '_full.jpg';
+      files.push({ name: thumbName, data: _dataUrlToBytes(ph.thumbUrl) });
+      files.push({ name: fullName,  data: _dataUrlToBytes(ph.fullUrl) });
+      var cap = ph.caption ? ('<div style="font:11px monospace;color:#444;margin-top:2px;">' + _xmlEsc(ph.caption) + '</div>') : '';
+      return '<a href="' + fullName + '"><img src="' + thumbName + '" style="width:260px;display:block;margin:6px 0;" /></a>' + cap;
+    }).join('');
+
+    var rowHtml = function (lbl, val) {
+      return '<tr><td style="font:600 11px monospace;color:#555;padding:2px 8px 2px 0;white-space:nowrap;">'
+        + _xmlEsc(lbl) + '</td><td style="font:13px sans-serif;color:#111;padding:2px 0;">'
+        + _xmlEsc(val == null ? '' : String(val)) + '</td></tr>';
+    };
+    var balloon = ''
+      + '<![CDATA['
+      + '<div style="font:14px sans-serif;color:#111;max-width:560px;">'
+      +   '<div style="font:700 16px sans-serif;border-bottom:2px solid #111;padding-bottom:4px;margin-bottom:6px;">'
+      +     _xmlEsc(pin.id || '') + ' — ' + _xmlEsc(descStr)
+      +   '</div>'
+      +   '<table style="border-collapse:collapse;margin-bottom:6px;">'
+      +     rowHtml('Overall', _cvSpellOrDash(ovCond))
+      +     rowHtml('Inlet',   _cvSpellOrDash(_cvEffectiveCond(pin, 'inlet_condition')))
+      +     rowHtml('Barrel',  _cvSpellOrDash(_cvEffectiveCond(pin, 'barrel_condition')))
+      +     rowHtml('Outlet',  _cvSpellOrDash(_cvEffectiveCond(pin, 'outlet_condition')))
+      +     rowHtml('Inlet Structure',  _cvSpellOrDash(_cvEffectiveCond(pin, 'hw_upstream_cond')))
+      +     rowHtml('Outlet Structure', _cvSpellOrDash(_cvEffectiveCond(pin, 'hw_downstream_cond')))
+      +     rowHtml('Material', a.material || '')
+      +     rowHtml('Size (in)',  a.size_in || '')
+      +     rowHtml('Length (ft)', a.length_ft || '')
+      +     rowHtml('Inlet Type',  a.in_type || '')
+      +     rowHtml('Outlet Type', a.out_type || '')
+      +     (a.notes ? rowHtml('Notes', a.notes) : '')
+      +   '</table>'
+      +   photoHtml
+      + '</div>'
+      + ']]>';
+
+    return '<Placemark>'
+      + '<name>' + _xmlEsc(pin.id || '') + '</name>'
+      + '<styleUrl>#rw-culvert</styleUrl>'
+      + '<description>' + balloon + '</description>'
+      + (lineStr
+          ? '<LineString><tessellate>1</tessellate><coordinates>' + lineStr + '</coordinates></LineString>'
+          : '')
+      + '</Placemark>';
+  }
+  // Spell out the condition word with a graceful em-dash for blanks
+  // so KMZ balloons read like the report's CONDITIONS card.
+  function _cvSpellOrDash(v) {
+    if (!v) return '—';
+    var n = _cvCondLetter(v);
+    return n ? (_CV_COND_SPELLED[n] || String(v).trim()) : String(v).trim();
+  }
+
   // ── Polyline distance (feet) for the Auto-add-nearby radius ─────
   // Equirectangular projection at the midpoint latitude — accurate at
   // the corridor scale we're checking against.
@@ -36081,12 +36462,54 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       mgrBtn.addEventListener('click', function () { _cvOpenManageSectionsModal(); });
     }
 
-    ['cv-print-btn', 'cv-print-all-btn', 'cv-export-csv-btn', 'cv-export-kml-btn'].forEach(function (id) {
+    // Export CSV — opens the section picker; on confirm, _cvExportCsv
+    // walks every culvert in the picked sections and writes a single
+    // wide CSV (one row per pin, conditions spelled out).
+    var cvExportCsvBtn = document.getElementById('cv-export-csv-btn');
+    if (cvExportCsvBtn && !cvExportCsvBtn._wired) {
+      cvExportCsvBtn._wired = true;
+      cvExportCsvBtn.addEventListener('click', function () {
+        _cvPickSections({
+          title: 'Pick sections to export',
+          sub:   'One wide CSV (roadwalk_culverts_…csv) covering every culvert in the picked sections will download.',
+          actionLabel: 'Export CSV',
+          persistKey:  'rw_cv_csv_sections',
+          onConfirm: function (picked) { if (picked.length) _cvExportCsv(new Set(picked)); },
+        });
+      });
+    }
+    // Export KML — opens the picker; _cvExportKml emits one KMZ per
+    // picked section. Each KMZ carries the centerline + every culvert
+    // as a LineString Placemark with condition / dimensions / photos
+    // in the balloon (540 px thumb + 1400 px click-to-zoom).
+    var cvExportKmlBtn = document.getElementById('cv-export-kml-btn');
+    if (cvExportKmlBtn && !cvExportKmlBtn._wired) {
+      cvExportKmlBtn._wired = true;
+      cvExportKmlBtn.addEventListener('click', function () {
+        _cvPickSections({
+          title: 'Pick sections to export as KML',
+          sub:   'One KMZ file per section. Each carries the centerline and every culvert with conditions, dimensions, and resized photo thumbs. Large photo counts may take a few seconds.',
+          actionLabel: 'Export KML',
+          persistKey:  'rw_cv_kml_sections',
+          onConfirm: function (picked) { if (picked.length) _cvExportKml(picked); },
+        });
+      });
+    }
+    // Print buttons stay as placeholders for now — the on-screen
+    // report is already printable via the browser's File → Print, and
+    // the multi-section print flow needs the same pre-fetch tile
+    // dance the sign report does. Both wired but inert.
+    ['cv-print-btn', 'cv-print-all-btn'].forEach(function (id) {
       var btn = document.getElementById(id);
       if (btn && !btn._wired) {
         btn._wired = true;
         btn.addEventListener('click', function () {
-          alert('Culvert ' + btn.textContent.trim() + ' — coming in the next commit.');
+          if (id === 'cv-print-btn') {
+            // Direct File → Print on the current section dropdown.
+            try { window.print(); } catch (_) {}
+            return;
+          }
+          alert('Multi-section Print Sections… — coming in the next commit. For now use the section dropdown + 🖨 Print.');
         });
       }
     });
