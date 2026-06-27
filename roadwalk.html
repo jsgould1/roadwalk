@@ -5079,6 +5079,31 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .cv-prop-grid > .cv-prop-row-start { grid-column-start: 1; }
 .cv-prop-grid > .cv-prop-notes-val { grid-column: 2 / -1; }
+/* Text-typed user fields render their stored value in all caps so
+   "Headwall" / "RCP" / "Wingwalls" line up visually in the report.
+   Number inputs are unaffected (digits don't carry case). The
+   uppercasing is purely visual via text-transform — the stored value
+   keeps its original casing so Pass 1b's "XLSX value vs working
+   copy" comparison stays accurate. */
+.cv-prop-grid input[type="text"] {
+  text-transform: uppercase;
+}
+/* Angle inputs (Bearing / Crossing Angle / Skew) wrap their <input>
+   in a flex span so a "°" suffix can sit immediately after the
+   typed value without inflating the input itself. The wrapper is
+   the grid item; the inner input still carries data-field and
+   .cv-notes-edit so the existing change handler picks it up. */
+.cv-prop-grid > .cv-prop-angle-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+}
+.cv-prop-grid > .cv-prop-angle-wrap > input { flex: 1; min-width: 0; }
+.cv-prop-grid > .cv-prop-angle-wrap::after {
+  content: '°';
+  color: var(--ink-3);
+  margin-left: 1px;
+}
 .cv-lbl {
   color: var(--ink-3);
   font: 700 10px 'IBM Plex Mono', monospace;
@@ -36732,6 +36757,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       function _propLblFirst(text) {
         return '<span class="cv-lbl cv-prop-row-start">' + text + '</span>';
       }
+      // Angle input — number value with a "°" suffix sitting just
+      // after the typed digits. The wrapping span lives as the grid
+      // cell (.cv-prop-angle-wrap CSS adds the suffix via ::after);
+      // the inner input still carries data-field + .cv-notes-edit so
+      // the existing change handler reads it like any other numeric.
+      function _propAngleInput(field, value) {
+        var v = (value == null ? '' : value);
+        return '<span class="cv-prop-angle-wrap">'
+          + '<input class="cv-notes-edit" type="number" step="any" '
+          + 'data-cv-idx="' + idx + '" '
+          + 'data-field="' + _esc(field) + '" '
+          + 'value="' + _esc(v) + '" '
+          + 'placeholder="—">'
+          + '</span>';
+      }
       // Slope display: nearest whole number (per spec). Bundle stores
       // either int or float; coerce + round + suffix here.
       function _fmtSlope(v) {
@@ -36764,10 +36804,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + _propLblFirst('Material')        + _propInput('material',  a.material,  'text')
             + _propLbl('Size (in)')            + _propInput('size_in',   a.size_in,   'number')
             + _propLbl('Length (ft)')          + _propInput('length_ft', a.length_ft, 'number')
-            // Row 2 — bearings / angles (3 pairs)
-            + _propLblFirst('Bearing (in→out)')+ _propInput('bearing_in_to_out_deg', _fmt1(a.bearing_in_to_out_deg), 'number')
-            + _propLbl('Crossing Angle')       + _propInput('crossing_angle_deg',    _fmt1(a.crossing_angle_deg),    'number')
-            + _propLbl('Skew from ⊥')          + _propInput('skew_from_perp_deg',    _fmt1(a.skew_from_perp_deg),    'number')
+            // Row 2 — bearings / angles (3 pairs). Angle values use
+            // _propAngleInput so the "°" suffix sits just after the
+            // typed number. "Skew from CL" replaces the prior "⊥"
+            // glyph per user request.
+            + _propLblFirst('Bearing (in→out)')+ _propAngleInput('bearing_in_to_out_deg', _fmt1(a.bearing_in_to_out_deg))
+            + _propLbl('Crossing Angle')       + _propAngleInput('crossing_angle_deg',    _fmt1(a.crossing_angle_deg))
+            + _propLbl('Skew from CL')         + _propAngleInput('skew_from_perp_deg',    _fmt1(a.skew_from_perp_deg))
             // Row 3 — inlet / outlet end fittings (4 pairs)
             + _propLblFirst('Inlet Type')      + _propInput('in_type',   a.in_type,   'text')
             + _propLbl('Inlet Side')           + _propInput('in_side',   a.in_side,   'text')
