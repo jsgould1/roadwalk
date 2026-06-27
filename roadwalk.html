@@ -11817,6 +11817,7 @@ body.mobile-mode #app {
             <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
             <button class="sr-btn" id="cv-prune-photos-btn" title="Find photos whose GPS coordinates fall outside your project area (likely stray imports from another project) and delete them.">🗑 Prune distant…</button>
             <button class="sr-btn" id="cv-manage-sections-btn" title="View all project sections and delete ones that don't belong (e.g. sections dragged in from another project).">📋 Manage sections…</button>
+            <button class="sr-btn" id="cv-import-photos-btn" title="Import the culvert_photos_manifest.json built by data/build_culvert_photos_manifest.py. Pre-matched + pre-watermarked photos auto-link to their culvert via linked_pin_id.">📋 Import matched photos…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
             <button class="sr-btn" id="cv-print-all-btn" title="Pick which sections to print, wait for tiles, then open browser Print dialog">🖨 Print Sections…</button>
             <button class="sr-btn" id="cv-export-csv-btn" title="Pick which sections, then download CSVs of the culvert data">📥 Export CSV…</button>
@@ -35864,6 +35865,229 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     }
+    // ── Import matched culvert photos ────────────────────────────
+    // Modal that accepts the JSON manifest produced by
+    // data/build_culvert_photos_manifest.py. Each entry is a pre-
+    // matched + pre-watermarked culvert photo with section_id,
+    // culvert_id, end, lat/lng, captured_at, and an embedded JPEG
+    // dataUrl. The importer:
+    //   1. Parses the manifest
+    //   2. Pre-flight: lists how many photos will land on how many
+    //      culverts, flags any culvert_ids that aren't in the bundle
+    //   3. Sequential save into the geophotos IDB store, one record
+    //      per entry, with linked_pin_id = "{section_id}::{culvert_id}".
+    //      Sequential to keep structured-clone memory bounded — at
+    //      most ~500 KB of dataUrl in flight at any time, regardless
+    //      of how big the full manifest is.
+    //   4. After import, calls _RW.geophotos.reloadFromIdb() so
+    //      PHOTOS picks up the new records, then re-renders the
+    //      report so they appear on each culvert's Photos section.
+    function _cvOpenImportPhotosModal() {
+      var api = window._RW && window._RW.geophotos;
+      if (!api || typeof api.save !== 'function' || typeof api.reloadFromIdb !== 'function') {
+        alert('Photo import unavailable — geophotos module not ready.');
+        return;
+      }
+      var backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:8px;max-width:600px;width:92%;'
+        + 'max-height:84vh;overflow:auto;padding:18px 20px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);'
+        + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
+      panel.innerHTML =
+        '<h3 style="margin:0 0 6px;font-size:16px;">Import matched culvert photos</h3>'
+        + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
+        + 'Pick the <code>culvert_photos_manifest.json</code> that '
+        + '<code>data/build_culvert_photos_manifest.py</code> wrote next to '
+        + 'the QC project\'s CSV. Each entry is a watermarked 1200-px JPEG '
+        + 'pre-matched to a culvert by id. They\'ll save as geophotos with '
+        + '<code>linked_pin_id</code> set, so they appear on each culvert '
+        + 'automatically and the Select Nearby Photos picker can re-assign '
+        + 'mis-matched ones later.'
+        + '</p>'
+        + '<input type="file" id="cv-imp-file" accept=".json,application/json" '
+        + 'style="display:block;margin-bottom:10px;font:13px system-ui;">'
+        + '<div id="cv-imp-status" style="padding:10px 12px;background:#f1f5f9;border-radius:4px;'
+        + 'font-family:\'IBM Plex Mono\',monospace;font-size:12px;min-height:20px;">'
+        + 'Waiting for manifest…</div>'
+        + '<div id="cv-imp-summary" style="display:none;margin-top:10px;font-size:13px;"></div>'
+        + '<progress id="cv-imp-progress" max="100" value="0" '
+        + 'style="display:none;width:100%;height:14px;margin-top:8px;"></progress>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">'
+        + '<button type="button" data-act="close" style="font:600 13px system-ui;padding:6px 14px;'
+        + 'border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">Close</button>'
+        + '<button type="button" data-act="import" disabled style="font:700 13px system-ui;padding:6px 14px;'
+        + 'border:none;border-radius:4px;background:#047857;color:#fff;cursor:pointer;opacity:.5;">Import</button>'
+        + '</div>';
+      backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+
+      var fileInp   = panel.querySelector('#cv-imp-file');
+      var statusEl  = panel.querySelector('#cv-imp-status');
+      var summaryEl = panel.querySelector('#cv-imp-summary');
+      var progEl    = panel.querySelector('#cv-imp-progress');
+      var importBtn = panel.querySelector('[data-act="import"]');
+      var closeBtn  = panel.querySelector('[data-act="close"]');
+
+      var manifest = null;          // parsed manifest, dropped after import
+      var importing = false;
+
+      function close() {
+        if (importing) return;      // don't yank the modal mid-write
+        try { document.body.removeChild(backdrop); } catch (_) {}
+      }
+      backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) close(); });
+      closeBtn.addEventListener('click', close);
+
+      // ── Manifest parse + pre-flight summary ───────────────────
+      fileInp.addEventListener('change', function () {
+        var f = fileInp.files && fileInp.files[0];
+        if (!f) return;
+        statusEl.textContent = 'Reading ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)…';
+        summaryEl.style.display = 'none';
+        importBtn.disabled = true;
+        importBtn.style.opacity = '.5';
+        var fr = new FileReader();
+        fr.onload = function () {
+          try {
+            var raw = fr.result;
+            statusEl.textContent = 'Parsing JSON…';
+            manifest = JSON.parse(raw);
+          } catch (e) {
+            statusEl.textContent = 'Parse error: ' + e.message;
+            manifest = null;
+            return;
+          }
+          if (!manifest || !Array.isArray(manifest.photos)) {
+            statusEl.textContent = 'Manifest missing a photos[] array.';
+            manifest = null;
+            return;
+          }
+          // Build sets we use to flag photos whose culvert_id has no
+          // matching bundle pin. Walks SECTIONS once.
+          var pinIds = Object.create(null);
+          (window.SECTIONS || []).forEach(function (sec) {
+            (sec.pins || []).forEach(function (p) {
+              if (p && p.kind === 'culvert' && p.id) pinIds[sec.id + '::' + p.id] = true;
+            });
+          });
+          var willLink = 0;
+          var orphanIds = Object.create(null);
+          var perPin = Object.create(null);
+          manifest.photos.forEach(function (ph) {
+            var k = (ph.section_id || '') + '::' + (ph.culvert_id || '');
+            if (pinIds[k]) {
+              willLink++;
+              perPin[k] = (perPin[k] || 0) + 1;
+            } else {
+              orphanIds[ph.culvert_id || '(blank)'] = (orphanIds[ph.culvert_id || '(blank)'] || 0) + 1;
+            }
+          });
+          var orphanList = Object.keys(orphanIds).sort();
+          var culvertsCovered = Object.keys(perPin).length;
+          statusEl.textContent = 'Manifest loaded: ' + manifest.photos.length + ' photo(s) total.'
+            + ' Built ' + (manifest.exported_at || 'unknown date') + '.';
+          summaryEl.style.display = 'block';
+          summaryEl.innerHTML =
+            '<p style="margin:4px 0;"><strong style="color:#047857;">'
+            + willLink + ' photo(s)</strong> will link to <strong>'
+            + culvertsCovered + ' culvert(s)</strong>.</p>'
+            + (orphanList.length
+                ? '<p style="margin:4px 0;color:#b45309;">'
+                  + '<strong>' + orphanList.length + ' culvert_id(s)</strong> in the manifest have no '
+                  + 'matching pin in the bundle — photos for them will be saved as geophotos with the '
+                  + 'linked_pin_id set, but no on-screen culvert card will show them. '
+                  + 'These usually appear after a Phase 1 sync that adds the missing pins.</p>'
+                  + '<p style="margin:0 0 6px;font-family:\'IBM Plex Mono\',monospace;font-size:11px;'
+                  + 'color:var(--ink-3);">Orphans: ' + orphanList.slice(0, 20).join(', ')
+                  + (orphanList.length > 20 ? ', …' : '') + '</p>'
+                : '<p style="margin:4px 0;color:var(--ink-3);">Every culvert_id matches a bundle pin.</p>');
+          importBtn.disabled = false;
+          importBtn.style.opacity = '1';
+          importBtn.textContent = 'Import ' + manifest.photos.length + ' photo(s)';
+        };
+        fr.onerror = function () { statusEl.textContent = 'File read failed.'; };
+        fr.readAsText(f);
+      });
+
+      // ── Sequential save ──────────────────────────────────────
+      importBtn.addEventListener('click', function () {
+        if (!manifest || importing) return;
+        importing = true;
+        closeBtn.disabled = true;
+        importBtn.disabled = true;
+        progEl.style.display = 'block';
+        progEl.value = 0;
+        progEl.max = manifest.photos.length;
+        var i = 0, ok = 0, fail = 0;
+        var t0 = (window.performance && performance.now) ? performance.now() : 0;
+
+        function step() {
+          if (i >= manifest.photos.length) {
+            statusEl.textContent = 'Import complete: ' + ok + ' saved, ' + fail + ' failed. '
+              + 'Reloading photos…';
+            // Drop the giant manifest reference so the runtime can GC
+            // before reload allocates the new PHOTOS array.
+            manifest = null;
+            setTimeout(function () {
+              api.reloadFromIdb().then(function (count) {
+                statusEl.textContent = 'Done. ' + ok + ' photo(s) imported. PHOTOS in scope: ' + count + '.';
+                try { renderCulvertsReport(); } catch (_) {}
+                closeBtn.disabled = false;
+                importing = false;
+                importBtn.textContent = 'Close';
+                importBtn.disabled = false;
+                importBtn.removeEventListener('click', arguments.callee);
+                importBtn.onclick = close;
+              }).catch(function () {
+                statusEl.textContent = 'Reload failed after import — try refreshing the page.';
+                closeBtn.disabled = false;
+                importing = false;
+              });
+            }, 200);
+            return;
+          }
+          var ph = manifest.photos[i];
+          var link = (ph.section_id || '') + '::' + (ph.culvert_id || '');
+          var rec = {
+            id:             ph.id || ('imp_' + i + '_' + Date.now()),
+            dataUrl:        ph.dataUrl,
+            lat:            ph.lat,
+            lng:            ph.lon,
+            bearing:        null,
+            description:    (ph.photo_set || '') + ' · ' + (ph.original_file || '')
+                              + (ph.end ? ' · ' + ph.end.charAt(0).toUpperCase() + ph.end.slice(1) : ''),
+            ts:             ph.captured_at
+                              ? new Date(ph.captured_at).toISOString()
+                              : new Date().toISOString(),
+            linked_pin_id:  link,
+            asset_group_id: null,
+          };
+          // Null the manifest entry's dataUrl AFTER kicking off the
+          // save so V8 can GC the string once the IDB structured-
+          // clone snapshot is taken. Keeps peak memory bounded to one
+          // photo-sized buffer regardless of manifest length.
+          api.save(rec).then(function () {
+            ok++;
+          }, function () {
+            fail++;
+          }).then(function () {
+            ph.dataUrl = null;
+            i++;
+            progEl.value = i;
+            if (i % 5 === 0) {
+              var pct = Math.round(100 * i / progEl.max);
+              statusEl.textContent = 'Saving ' + i + ' / ' + progEl.max + '  ('
+                + pct + '% · ' + ok + ' ok, ' + fail + ' failed)…';
+            }
+            setTimeout(step, 0);     // yield so progress paints
+          });
+        }
+        step();
+      });
+    }
+
     // Manage-sections modal: lists every project section with a
     // per-row Delete button. Used to drop stray sections that got
     // dragged in from another job. Each delete prompts native
@@ -36566,6 +36790,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (mgrBtn && !mgrBtn._wired) {
       mgrBtn._wired = true;
       mgrBtn.addEventListener('click', function () { _cvOpenManageSectionsModal(); });
+    }
+    var importBtn = document.getElementById('cv-import-photos-btn');
+    if (importBtn && !importBtn._wired) {
+      importBtn._wired = true;
+      importBtn.addEventListener('click', function () { _cvOpenImportPhotosModal(); });
     }
 
     // Export CSV — opens the section picker; on confirm, _cvExportCsv
