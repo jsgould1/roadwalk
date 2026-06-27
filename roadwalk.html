@@ -5089,16 +5089,31 @@ body.rw-sld-photo-dragging .strip-pin {
   text-transform: uppercase;
 }
 /* Angle inputs (Bearing / Crossing Angle / Skew) wrap their <input>
-   in a flex span so a "°" suffix can sit immediately after the
-   typed value without inflating the input itself. The wrapper is
-   the grid item; the inner input still carries data-field and
-   .cv-notes-edit so the existing change handler picks it up. */
+   in a flex span so a "°" suffix sits immediately after the typed
+   value. The wrapper is a grid item but justify-self:start makes
+   it hug its content rather than stretching to 1fr; the inner
+   input gets a fixed em width sized for typical values (~3 digits
+   + decimal) and the ::after lands flush against it. Number-input
+   spinners are hidden so the gap between digits and ° is just the
+   margin we declare here. */
 .cv-prop-grid > .cv-prop-angle-wrap {
   display: inline-flex;
   align-items: baseline;
+  justify-self: start;
   min-width: 0;
 }
-.cv-prop-grid > .cv-prop-angle-wrap > input { flex: 1; min-width: 0; }
+.cv-prop-grid > .cv-prop-angle-wrap > input {
+  flex: 0 0 auto;
+  width: 4em;
+  min-width: 0;
+  text-align: left;
+}
+.cv-prop-grid > .cv-prop-angle-wrap > input::-webkit-outer-spin-button,
+.cv-prop-grid > .cv-prop-angle-wrap > input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.cv-prop-grid > .cv-prop-angle-wrap > input { -moz-appearance: textfield; }
 .cv-prop-grid > .cv-prop-angle-wrap::after {
   content: '°';
   color: var(--ink-3);
