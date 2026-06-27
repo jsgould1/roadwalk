@@ -13069,6 +13069,68 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             });
           });
         });
+        // Pass 2b — drop duplicate pins in the same section. A pin
+        // can legitimately exist twice with different ULIDs when a
+        // prior Phase 1 sync (or Pass 2 above) inserted a "new"
+        // bundle pin even though the user's working copy already had
+        // one under a different ULID (different bundle epoch, same
+        // physical asset). The renderer picks the first match by
+        // sort order and the user sees an empty card while their
+        // real data + linked photos hide behind the phantom.
+        //
+        // Walk each section; for any (kind, id) pair occurring more
+        // than once, keep the pin with the most inspection data
+        // (photos, hide list, condition ratings, notes, non-zero
+        // sta_ft) and drop the others. ULIDs of dropped pins do NOT
+        // need rewriting on the geophotos store because linked_pin_id
+        // is keyed by section+id, not by ULID — Pass 1c's rewrite
+        // step (below) covers any renames that pass-through this
+        // dedupe untouched.
+        function _pinScore(p) {
+          if (!p || !p.attrs) return 0;
+          var a = p.attrs;
+          var s = 0;
+          if (Array.isArray(a.report_hidden_photos) && a.report_hidden_photos.length) s += 1000;
+          if (Array.isArray(a.photos) && a.photos.length) s += 1000;
+          ['inlet_condition','barrel_condition','outlet_condition',
+            'hw_upstream_cond','hw_downstream_cond'].forEach(function (k) {
+              if (a[k]) s += 50;
+            });
+          ['inlet_condition_notes','barrel_condition_notes','outlet_condition_notes',
+            'hw_upstream_cond_notes','hw_downstream_cond_notes'].forEach(function (k) {
+              if (a[k] && String(a[k]).trim()) s += 20;
+            });
+          if (a.notes && String(a.notes).trim()) s += 10;
+          if (Array.isArray(a._user_edited) && a._user_edited.length) s += a._user_edited.length;
+          if (p.sta_ft) s += 1;
+          return s;
+        }
+        var dedupedPinCount = 0;
+        SECTIONS.forEach(function (sec) {
+          if (!sec || !Array.isArray(sec.pins) || sec.pins.length < 2) return;
+          var byKey = new Map();
+          var order = [];
+          sec.pins.forEach(function (p) {
+            if (!p || !p.id || !p.kind) { order.push(p); return; }
+            var key = p.kind + '::' + p.id;
+            var prior = byKey.get(key);
+            if (!prior) { byKey.set(key, p); order.push(key); return; }
+            if (_pinScore(p) > _pinScore(prior)) byKey.set(key, p);
+            dedupedPinCount++;
+          });
+          if (dedupedPinCount > 0) {
+            var seen = new Set();
+            var keptPins = [];
+            order.forEach(function (item) {
+              if (item && typeof item === 'object') { keptPins.push(item); return; }
+              if (typeof item !== 'string' || seen.has(item)) return;
+              seen.add(item);
+              keptPins.push(byKey.get(item));
+            });
+            sec.pins = keptPins;
+          }
+        });
+
         // Pass 1c — rewrite geophoto.linked_pin_id for every pin
         // renamed above. Photo links are stored as "<sec_id>::<pin_id>"
         // using the MUTABLE pin_id, so any photo whose key matched a
@@ -13109,13 +13171,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             ' new section(s) from bundle [' + added.map(function (s) { return s.id; }).join(',') +
             '], +' + addedPinCount + ' new pin(s), ' + movedPinCount +
             ' pin(s) reassigned, ' + renamedSameSection +
-            ' pin(s) refreshed in place (id/geom), ' + photosRelinked +
+            ' pin(s) refreshed in place (id/geom), ' + dedupedPinCount +
+            ' duplicate pin(s) merged, ' + photosRelinked +
             ' geophoto(s) re-linked across rename, hydrated ' + hydrations.length +
             ' photo dataUrl(s), saved', saved.saved_at);
           // Persist the merged copy so the new sections + pins + moves
-          // + same-section refreshes survive the next reload (and are
-          // included in any export).
-          if ((added.length || addedPinCount || movedPinCount || renamedSameSection || photosRelinked)
+          // + same-section refreshes + dedupes survive the next reload
+          // (and are included in any export).
+          if ((added.length || addedPinCount || movedPinCount || renamedSameSection
+                || dedupedPinCount || photosRelinked)
               && window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
