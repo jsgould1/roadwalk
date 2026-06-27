@@ -12912,6 +12912,76 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           });
         });
 
+        // Pass 1b — same-section refresh. Same ULID, same section,
+        // but the BUNDLE has updates the working copy doesn't have
+        // (Phase 1 GRSM sync: pin id renames, new geometry attrs).
+        // Without this pass, those updates can never reach a user
+        // whose IDB already cached the pre-sync working copy.
+        //
+        // Rules — minimal touch so condition ratings, hidden-photo
+        // lists, and any other inspection data stay intact:
+        //   * id, sta_ft, sta, geometry: always overwrite with bundle's
+        //     value (Phase 1 may have renamed CV-007 -> A-CV-001 and
+        //     repositioned). These are spatial/identity fields, not
+        //     user input.
+        //   * Geometry attrs (bearing/skew/elevations/slopes/flow_check
+        //     + the perp_offset/perp_side/sta_formatted spatial keys):
+        //     always overwrite — they're computed, not field-typed.
+        //   * User-editable attrs (material, in_type, out_type, notes,
+        //     etc.): fill-if-empty only. Never clobber a value the
+        //     field crew typed in.
+        //   * Conditions (inlet/barrel/outlet + structure + their
+        //     _notes), attrs.photos, report_hidden_photos: NEVER
+        //     touched here.
+        var renamedSameSection = 0;
+        var GEOM_ATTRS = [
+          'bearing_in_to_out_deg', 'road_cl_bearing_deg', 'crossing_angle_deg',
+          'skew_from_perp_deg', 'inlet_elev_ditch_ft', 'outlet_elev_ditch_ft',
+          'drop_ditch_ft', 'slope_ditch_pct', 'slope_pipe_pct',
+          'inlet_elev_point_ft', 'outlet_elev_point_ft',
+          'drop_point_ft', 'slope_point_pct', 'flow_check', 'geom_note',
+          'pla94_sta_label', 'perp_offset_ft', 'perp_side', 'sta_formatted',
+        ];
+        var USER_FILL_TEXT = [
+          'material', 'coating', 'in_type', 'out_type', 'in_side', 'out_side',
+          'notes', 'stationing_label', 'drainage_direction',
+          'inlet_structure_label', 'outlet_structure_label',
+        ];
+        var USER_FILL_NUM = ['length_ft', 'size_in', 'drainage_basin_ac'];
+        _bundleSecs.forEach(function (bundleSec) {
+          if (!bundleSec || !Array.isArray(bundleSec.pins)) return;
+          bundleSec.pins.forEach(function (bp) {
+            if (!bp || !bp.ulid) return;
+            var entry = savedByUlid[bp.ulid];
+            if (!entry) return;                       // brand-new — handled in pass 2
+            if (entry.sec.id !== bundleSec.id) return; // cross-section — handled in pass 1
+            if (entry.sec._userAdded) return;          // hand-built — leave alone
+            var sp = entry.pin;
+            var changed = false;
+            // Identity / spatial overrides.
+            if (bp.id && sp.id !== bp.id) { sp.id = bp.id; changed = true; renamedSameSection++; }
+            if (bp.sta_ft !== undefined && sp.sta_ft !== bp.sta_ft) { sp.sta_ft = bp.sta_ft; changed = true; }
+            if (bp.sta !== undefined && sp.sta !== bp.sta) { sp.sta = bp.sta; changed = true; }
+            if (bp.geometry) { sp.geometry = bp.geometry; }
+            // Geometry attrs (overwrite) + user fields (fill-if-empty).
+            if (bp.attrs) {
+              var attrs = sp.attrs || (sp.attrs = {});
+              GEOM_ATTRS.forEach(function (k) {
+                if (k in bp.attrs) attrs[k] = bp.attrs[k];
+                else if (k in attrs && bp.attrs[k] === undefined) delete attrs[k];
+              });
+              USER_FILL_TEXT.forEach(function (k) {
+                var bv = bp.attrs[k];
+                if (bv && !(attrs[k] && String(attrs[k]).trim())) attrs[k] = bv;
+              });
+              USER_FILL_NUM.forEach(function (k) {
+                var bv = bp.attrs[k];
+                if (bv != null && (attrs[k] == null || attrs[k] === '')) attrs[k] = bv;
+              });
+            }
+          });
+        });
+
         // Pass 2 — append brand-new pins to the sections they belong on.
         SECTIONS.forEach(function (sec) {
           if (sec._userAdded) return;
@@ -12956,11 +13026,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             saved.sections.length, 'edited section(s), +' + added.length +
             ' new section(s) from bundle [' + added.map(function (s) { return s.id; }).join(',') +
             '], +' + addedPinCount + ' new pin(s), ' + movedPinCount +
-            ' pin(s) reassigned, hydrated ' + hydrations.length +
+            ' pin(s) reassigned, ' + renamedSameSection +
+            ' pin(s) refreshed in place (id/geom), hydrated ' + hydrations.length +
             ' photo dataUrl(s), saved', saved.saved_at);
           // Persist the merged copy so the new sections + pins + moves
-          // survive the next reload (and are included in any export).
-          if ((added.length || addedPinCount || movedPinCount)
+          // + same-section refreshes survive the next reload (and are
+          // included in any export).
+          if ((added.length || addedPinCount || movedPinCount || renamedSameSection)
               && window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
