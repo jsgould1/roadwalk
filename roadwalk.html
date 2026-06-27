@@ -4740,9 +4740,16 @@ body.rw-sld-photo-dragging .strip-pin {
   border-bottom: 1px solid var(--rule);
   padding-bottom: 4px;
 }
+/* Each cell (Pin ID, Description) is an inline 2-col mini-grid so a
+   long value wraps to a second line WITHIN its own value column
+   instead of flowing under the label. column-gap reserves the
+   breathing room formerly carried by the value's margin-left. */
 .sr-info-row-name > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: 4px;
   font: 400 12px var(--sans, system-ui); color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
 .sr-info-row-name .sr-info-name-lbl {
@@ -4752,7 +4759,10 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sr-info-row-name .sr-info-name-val {
   font: 700 12px var(--sans, system-ui); color: var(--ink);
-  margin-left: 4px;
+  margin-left: 0;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 /* Overall + Retro Condition share a row right below Pin ID / Description.
    Inherits the two-column grid from .sr-info-row-name. */
