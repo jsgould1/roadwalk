@@ -35651,8 +35651,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return hay.indexOf(fQ) !== -1;
       });
     }
+    // Sort each section by the culvert_id's numeric suffix so the
+    // QC project's authoritative numbering is honored (A-CV-001
+    // before A-CV-002 etc.). sta_ft alone occasionally puts two
+    // closely-spaced culverts in the wrong order — projecting two
+    // pin coordinates ~30 ft apart onto a polyline that's not
+    // exactly straight is sensitive to GPS-grade noise. sta_ft
+    // stays as a tiebreaker so legacy ids without a numeric suffix
+    // still land somewhere sensible.
+    function _cvIdSeq(id) {
+      var m = String(id || '').match(/(\d+)\s*$/);
+      return m ? parseInt(m[1], 10) : Number.POSITIVE_INFINITY;
+    }
     all.sort(function (a, b) {
       if (a.sec.id !== b.sec.id) return a.sec.id < b.sec.id ? -1 : 1;
+      var as = _cvIdSeq(a.pin.id);
+      var bs = _cvIdSeq(b.pin.id);
+      if (as !== bs) return as - bs;
       return (a.pin.sta_ft || 0) - (b.pin.sta_ft || 0);
     });
 
@@ -36564,7 +36579,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // independent so a same-side drain still gets the right label.
       var descStr = _cvBuildDescription(pin, sec.alignment) || (a.name || '(culvert)');
 
-      var pinIdStr = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+      // Phase 1 GRSM sync renames pins to their QC culvert_id (which
+      // already starts with the section prefix — A-CV-001 etc.) so
+      // we'd otherwise double-prefix to A-A-CV-001 here. Detect the
+      // existing prefix and skip the prepend in that case.
+      var pinIdStr;
+      if (pin.id && sec.id && String(pin.id).indexOf(sec.id + '-') === 0) {
+        pinIdStr = pin.id;
+      } else {
+        pinIdStr = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+      }
 
       // Header sub + meta line.
       var info = (window._SR_SECTION_INFO || {})[sec.id];
