@@ -36847,7 +36847,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!chunk.length) return '<div class="sr-tbl-empty">No photos linked yet.</div>';
         return '<div class="sr-photo-grid">'
           + chunk.map(function (e) {
-              var cap = e.caption ? '<figcaption>' + _esc(e.caption) + '</figcaption>' : '';
+              // Per-photo description caption removed per user
+              // request — the photo bottom-band watermark already
+              // carries the captured-at + culvert_id · end string,
+              // so the figcaption was duplicating that info under
+              // each thumb. The e.caption value still rides through
+              // for the print pipeline + KMZ / KML exporters, just
+              // no longer renders inline on the culvert card.
               // Annotate is available only for embedded form-photos
               // (those carry an _emb_idx into pin.attrs.photos that the
               // annotation modal needs); linked geophotos just get the
@@ -36888,7 +36894,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               return '<figure class="sr-photo">'
                 + imgTag
                 + '<div class="sr-photo-actions">' + acts + '</div>'
-                + cap
                 + '</figure>';
             }).join('')
           + '</div>';
@@ -37441,7 +37446,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         html = '<div class="sr-tbl-empty">No photos linked yet.</div>';
       } else {
         html = '<div class="sr-photo-grid">' + chunk.map(function (e) {
-          var cap = e.caption ? '<figcaption>' + _esc(e.caption) + '</figcaption>' : '';
+          // Per-photo description caption removed per user request;
+          // matches the initial _photoGrid render above.
           var acts = '';
           if (e._emb_idx != null) {
             acts += '<button type="button" class="sr-photo-act sr-photo-ann" '
@@ -37466,7 +37472,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
           return '<figure class="sr-photo">' + imgTag
                + '<div class="sr-photo-actions">' + acts + '</div>'
-               + cap + '</figure>';
+               + '</figure>';
         }).join('') + '</div>';
       }
       var tmp = document.createElement('div');
