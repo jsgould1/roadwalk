@@ -35898,15 +35898,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       panel.innerHTML =
         '<h3 style="margin:0 0 6px;font-size:16px;">Import matched culvert photos</h3>'
         + '<p style="margin:0 0 12px;color:var(--ink-3);font-size:13px;">'
-        + 'Pick the <code>culvert_photos_manifest.json</code> that '
-        + '<code>data/build_culvert_photos_manifest.py</code> wrote next to '
-        + 'the QC project\'s CSV. Each entry is a watermarked 1200-px JPEG '
-        + 'pre-matched to a culvert by id. They\'ll save as geophotos with '
-        + '<code>linked_pin_id</code> set, so they appear on each culvert '
-        + 'automatically and the Select Nearby Photos picker can re-assign '
-        + 'mis-matched ones later.'
+        + 'Pick the <code>culvert_photos_manifest.jsonl</code> that '
+        + '<code>data/convert_manifest_to_jsonl.py</code> wrote (or the '
+        + 'JSONL variant of the preprocessor). Streamed line-by-line so '
+        + 'a 250 MB manifest still fits in the tab budget. Each entry is '
+        + 'a watermarked 1200-px JPEG pre-matched to a culvert id; '
+        + 'they save as geophotos with <code>linked_pin_id</code> set so '
+        + 'they appear on each culvert automatically.'
         + '</p>'
-        + '<input type="file" id="cv-imp-file" accept=".json,application/json" '
+        + '<input type="file" id="cv-imp-file" accept=".jsonl,.json,application/json" '
         + 'style="display:block;margin-bottom:10px;font:13px system-ui;">'
         + '<div id="cv-imp-status" style="padding:10px 12px;background:#f1f5f9;border-radius:4px;'
         + 'font-family:\'IBM Plex Mono\',monospace;font-size:12px;min-height:20px;">'
@@ -35930,8 +35930,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var importBtn = panel.querySelector('[data-act="import"]');
       var closeBtn  = panel.querySelector('[data-act="close"]');
 
-      var manifest = null;          // parsed manifest, dropped after import
-      var importing = false;
+      var pickedFile = null;
+      var headerMeta = null;        // first-line metadata
+      var importing  = false;
 
       function close() {
         if (importing) return;      // don't yank the modal mid-write
@@ -35940,151 +35941,207 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) close(); });
       closeBtn.addEventListener('click', close);
 
-      // ── Manifest parse + pre-flight summary ───────────────────
+      // Read just the FIRST line of a File via streaming so we can
+      // build the pre-flight without loading the 250 MB body. Resolves
+      // to the parsed metadata object (or null if the first line isn't
+      // valid JSONL).
+      function _readHeaderLine(file) {
+        return new Promise(function (resolve, reject) {
+          if (!file.stream) { reject(new Error('Streaming not supported in this browser.')); return; }
+          var reader = file.stream().pipeThrough(new TextDecoderStream('utf-8')).getReader();
+          var buf = '';
+          (function pump() {
+            reader.read().then(function (r) {
+              if (r.value) buf += r.value;
+              var nl = buf.indexOf('\n');
+              if (nl !== -1) {
+                var line = buf.slice(0, nl).trim();
+                try { reader.cancel(); } catch (_) {}
+                if (!line) { resolve(null); return; }
+                try { resolve(JSON.parse(line)); } catch (e) { resolve(null); }
+                return;
+              }
+              if (r.done) {
+                var trimmed = buf.trim();
+                if (!trimmed) { resolve(null); return; }
+                try { resolve(JSON.parse(trimmed)); } catch (e) { resolve(null); }
+                return;
+              }
+              pump();
+            }).catch(reject);
+          })();
+        });
+      }
+
       fileInp.addEventListener('change', function () {
         var f = fileInp.files && fileInp.files[0];
         if (!f) return;
-        statusEl.textContent = 'Reading ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)…';
+        pickedFile = f;
+        headerMeta = null;
         summaryEl.style.display = 'none';
         importBtn.disabled = true;
         importBtn.style.opacity = '.5';
-        var fr = new FileReader();
-        fr.onload = function () {
-          try {
-            var raw = fr.result;
-            statusEl.textContent = 'Parsing JSON…';
-            manifest = JSON.parse(raw);
-          } catch (e) {
-            statusEl.textContent = 'Parse error: ' + e.message;
-            manifest = null;
+        statusEl.textContent = 'Peeking at header of ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)…';
+
+        _readHeaderLine(f).then(function (hdr) {
+          if (!hdr) {
+            statusEl.textContent = 'Header line missing or unparseable. Expected JSONL with a header line first.';
             return;
           }
-          if (!manifest || !Array.isArray(manifest.photos)) {
-            statusEl.textContent = 'Manifest missing a photos[] array.';
-            manifest = null;
-            return;
-          }
-          // Build sets we use to flag photos whose culvert_id has no
-          // matching bundle pin. Walks SECTIONS once.
+          headerMeta = hdr;
+          var totalGuess = hdr.total != null ? hdr.total
+            : (Array.isArray(hdr.photos) ? hdr.photos.length : null);
+          // Pre-flight: compare header.culvert_ids against bundle pins.
           var pinIds = Object.create(null);
           (window.SECTIONS || []).forEach(function (sec) {
             (sec.pins || []).forEach(function (p) {
-              if (p && p.kind === 'culvert' && p.id) pinIds[sec.id + '::' + p.id] = true;
+              if (p && p.kind === 'culvert' && p.id) pinIds[p.id] = true;
             });
           });
-          var willLink = 0;
-          var orphanIds = Object.create(null);
-          var perPin = Object.create(null);
-          manifest.photos.forEach(function (ph) {
-            var k = (ph.section_id || '') + '::' + (ph.culvert_id || '');
-            if (pinIds[k]) {
-              willLink++;
-              perPin[k] = (perPin[k] || 0) + 1;
-            } else {
-              orphanIds[ph.culvert_id || '(blank)'] = (orphanIds[ph.culvert_id || '(blank)'] || 0) + 1;
-            }
-          });
-          var orphanList = Object.keys(orphanIds).sort();
-          var culvertsCovered = Object.keys(perPin).length;
-          statusEl.textContent = 'Manifest loaded: ' + manifest.photos.length + ' photo(s) total.'
-            + ' Built ' + (manifest.exported_at || 'unknown date') + '.';
+          var orphans = (hdr.culvert_ids || []).filter(function (id) { return !pinIds[id]; });
+          var matched = (hdr.culvert_ids || []).length - orphans.length;
+          statusEl.textContent = 'Header parsed (' + (hdr.exported_at || 'no date') + '). '
+            + 'Manifest declares ' + (totalGuess != null ? totalGuess : '?') + ' photo(s).';
           summaryEl.style.display = 'block';
           summaryEl.innerHTML =
-            '<p style="margin:4px 0;"><strong style="color:#047857;">'
-            + willLink + ' photo(s)</strong> will link to <strong>'
-            + culvertsCovered + ' culvert(s)</strong>.</p>'
-            + (orphanList.length
-                ? '<p style="margin:4px 0;color:#b45309;">'
-                  + '<strong>' + orphanList.length + ' culvert_id(s)</strong> in the manifest have no '
-                  + 'matching pin in the bundle — photos for them will be saved as geophotos with the '
-                  + 'linked_pin_id set, but no on-screen culvert card will show them. '
-                  + 'These usually appear after a Phase 1 sync that adds the missing pins.</p>'
+            '<p style="margin:4px 0;"><strong style="color:#047857;">' + matched
+            + ' culvert(s)</strong> in the manifest match a bundle pin and will get photos.</p>'
+            + (orphans.length
+                ? '<p style="margin:4px 0;color:#b45309;"><strong>' + orphans.length
+                  + ' culvert_id(s)</strong> have no matching bundle pin — '
+                  + 'photos for them still save to IDB but no card will show them. '
+                  + 'Usually means Phase 1 sync needs to insert those pins first.</p>'
                   + '<p style="margin:0 0 6px;font-family:\'IBM Plex Mono\',monospace;font-size:11px;'
-                  + 'color:var(--ink-3);">Orphans: ' + orphanList.slice(0, 20).join(', ')
-                  + (orphanList.length > 20 ? ', …' : '') + '</p>'
-                : '<p style="margin:4px 0;color:var(--ink-3);">Every culvert_id matches a bundle pin.</p>');
+                  + 'color:var(--ink-3);">Orphans: ' + orphans.slice(0, 30).join(', ')
+                  + (orphans.length > 30 ? ', …' : '') + '</p>'
+                : '<p style="margin:4px 0;color:var(--ink-3);">Every culvert_id matches.</p>');
           importBtn.disabled = false;
           importBtn.style.opacity = '1';
-          importBtn.textContent = 'Import ' + manifest.photos.length + ' photo(s)';
-        };
-        fr.onerror = function () { statusEl.textContent = 'File read failed.'; };
-        fr.readAsText(f);
+          importBtn.textContent = 'Import ' + (totalGuess != null ? totalGuess : '') + ' photo(s)';
+        }).catch(function (err) {
+          statusEl.textContent = 'Header read failed: ' + (err && err.message ? err.message : err);
+        });
       });
 
-      // ── Sequential save ──────────────────────────────────────
-      importBtn.addEventListener('click', function () {
-        if (!manifest || importing) return;
+      // ── Streaming import ──────────────────────────────────────
+      // file.stream() → TextDecoderStream → line splitter. Each line
+      // is JSON.parse'd individually and saved sequentially. Peak
+      // memory is one photo record (~500 KB) plus the buffer for the
+      // current partial line. Works on 1 GB manifests without breaking
+      // a sweat.
+      importBtn.addEventListener('click', function onImportClick() {
+        if (!pickedFile || importing) return;
         importing = true;
         closeBtn.disabled = true;
         importBtn.disabled = true;
         progEl.style.display = 'block';
         progEl.value = 0;
-        progEl.max = manifest.photos.length;
-        var i = 0, ok = 0, fail = 0;
-        var t0 = (window.performance && performance.now) ? performance.now() : 0;
+        progEl.max = headerMeta && headerMeta.total ? headerMeta.total : 1;
 
-        function step() {
-          if (i >= manifest.photos.length) {
-            statusEl.textContent = 'Import complete: ' + ok + ' saved, ' + fail + ' failed. '
-              + 'Reloading photos…';
-            // Drop the giant manifest reference so the runtime can GC
-            // before reload allocates the new PHOTOS array.
-            manifest = null;
-            setTimeout(function () {
-              api.reloadFromIdb().then(function (count) {
-                statusEl.textContent = 'Done. ' + ok + ' photo(s) imported. PHOTOS in scope: ' + count + '.';
-                try { renderCulvertsReport(); } catch (_) {}
-                closeBtn.disabled = false;
-                importing = false;
-                importBtn.textContent = 'Close';
-                importBtn.disabled = false;
-                importBtn.removeEventListener('click', arguments.callee);
-                importBtn.onclick = close;
-              }).catch(function () {
-                statusEl.textContent = 'Reload failed after import — try refreshing the page.';
-                closeBtn.disabled = false;
-                importing = false;
-              });
-            }, 200);
-            return;
-          }
-          var ph = manifest.photos[i];
-          var link = (ph.section_id || '') + '::' + (ph.culvert_id || '');
+        var ok = 0, fail = 0, seen = 0;
+        var headerConsumed = false;
+        var reader = pickedFile.stream()
+          .pipeThrough(new TextDecoderStream('utf-8'))
+          .getReader();
+        var buf = '';
+
+        function _saveOne(obj) {
+          var link = (obj.section_id || '') + '::' + (obj.culvert_id || '');
           var rec = {
-            id:             ph.id || ('imp_' + i + '_' + Date.now()),
-            dataUrl:        ph.dataUrl,
-            lat:            ph.lat,
-            lng:            ph.lon,
-            bearing:        null,
-            description:    (ph.photo_set || '') + ' · ' + (ph.original_file || '')
-                              + (ph.end ? ' · ' + ph.end.charAt(0).toUpperCase() + ph.end.slice(1) : ''),
-            ts:             ph.captured_at
-                              ? new Date(ph.captured_at).toISOString()
-                              : new Date().toISOString(),
-            linked_pin_id:  link,
+            id:            obj.id || ('imp_' + seen + '_' + Date.now()),
+            dataUrl:       obj.dataUrl,
+            lat:           obj.lat,
+            lng:           obj.lon,
+            bearing:       null,
+            description:   (obj.photo_set || '') + ' · ' + (obj.original_file || '')
+                             + (obj.end ? ' · ' + obj.end.charAt(0).toUpperCase() + obj.end.slice(1) : ''),
+            ts:            obj.captured_at ? new Date(obj.captured_at).toISOString() : new Date().toISOString(),
+            linked_pin_id: link,
             asset_group_id: null,
           };
-          // Null the manifest entry's dataUrl AFTER kicking off the
-          // save so V8 can GC the string once the IDB structured-
-          // clone snapshot is taken. Keeps peak memory bounded to one
-          // photo-sized buffer regardless of manifest length.
-          api.save(rec).then(function () {
-            ok++;
-          }, function () {
-            fail++;
-          }).then(function () {
-            ph.dataUrl = null;
-            i++;
-            progEl.value = i;
-            if (i % 5 === 0) {
-              var pct = Math.round(100 * i / progEl.max);
-              statusEl.textContent = 'Saving ' + i + ' / ' + progEl.max + '  ('
-                + pct + '% · ' + ok + ' ok, ' + fail + ' failed)…';
+          return api.save(rec).then(function () { ok++; }, function () { fail++; });
+        }
+
+        function _processBuffer() {
+          // Pull complete lines out of the buffer one at a time,
+          // saving each photo before requesting the next line. The
+          // returned promise resolves once the buffer has no more
+          // complete lines.
+          var nl = buf.indexOf('\n');
+          if (nl === -1) return Promise.resolve();
+          var line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) return _processBuffer();
+          var obj;
+          try { obj = JSON.parse(line); }
+          catch (e) { return _processBuffer(); }
+          if (!headerConsumed) {
+            headerConsumed = true;
+            // Header line — skip the save path.
+            return _processBuffer();
+          }
+          seen++;
+          return _saveOne(obj).then(function () {
+            progEl.value = seen;
+            if (seen % 5 === 0) {
+              var pct = progEl.max > 0 ? Math.round(100 * seen / progEl.max) : 0;
+              statusEl.textContent = 'Saving ' + seen
+                + (progEl.max > 1 ? ' / ' + progEl.max : '')
+                + '  (' + pct + '% · ' + ok + ' ok, ' + fail + ' failed)…';
             }
-            setTimeout(step, 0);     // yield so progress paints
+            return _processBuffer();
           });
         }
-        step();
+
+        function _pump() {
+          return reader.read().then(function (r) {
+            if (r.value) buf += r.value;
+            return _processBuffer().then(function () {
+              if (r.done) return;
+              return _pump();
+            });
+          });
+        }
+
+        _pump().then(function () {
+          // Drain whatever's left in buf after the final chunk.
+          if (buf.trim()) {
+            var line = buf.trim();
+            buf = '';
+            try {
+              var obj = JSON.parse(line);
+              if (headerConsumed) {
+                seen++;
+                return _saveOne(obj);
+              }
+            } catch (e) {}
+          }
+        }).then(function () {
+          statusEl.textContent = 'Import complete: ' + ok + ' saved, ' + fail + ' failed. '
+            + 'Reloading photos…';
+          // Yield so the runtime can release the streaming reader's
+          // internals before we kick off reloadFromIdb's bulk write.
+          setTimeout(function () {
+            api.reloadFromIdb().then(function (count) {
+              statusEl.textContent = 'Done. ' + ok + ' photo(s) imported. PHOTOS in scope: ' + count + '.';
+              try { renderCulvertsReport(); } catch (_) {}
+              closeBtn.disabled = false;
+              importing = false;
+              importBtn.textContent = 'Close';
+              importBtn.disabled = false;
+              importBtn.removeEventListener('click', onImportClick);
+              importBtn.addEventListener('click', close);
+            }).catch(function () {
+              statusEl.textContent = 'Reload failed after import — refresh the page once it finishes.';
+              closeBtn.disabled = false;
+              importing = false;
+            });
+          }, 200);
+        }).catch(function (err) {
+          statusEl.textContent = 'Streaming import failed: ' + (err && err.message ? err.message : err);
+          closeBtn.disabled = false;
+          importing = false;
+        });
       });
     }
 

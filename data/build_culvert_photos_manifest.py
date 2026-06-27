@@ -70,8 +70,9 @@ PHOTO_DIRS = {
 }
 
 # Manifest output — alongside the source CSV, NOT in the RoadWalk repo.
-# Size: ~300 KB per photo × 387 photos ≈ 100 MB → not commit-friendly.
-OUT_PATH = QC / "culvert_photos_manifest.json"
+# JSONL (one record per line) so the in-app importer can stream-read
+# without allocating the full ~250 MB graph at once.
+OUT_PATH = QC / "culvert_photos_manifest.jsonl"
 
 # Image processing — match the sign report's makeThumb defaults.
 MAX_SIZE = 1200
@@ -189,21 +190,11 @@ def main() -> int:
     rows = list(csv.DictReader(open(CSV_PATH, encoding="utf-8-sig")))
     print(f"  {len(rows)} CSV row(s)")
 
-    manifest = {
-        "exported_at": datetime.now().isoformat(timespec="seconds"),
-        "source_csv":  str(CSV_PATH),
-        "image_settings": {
-            "max_size_px": MAX_SIZE,
-            "jpeg_quality": JPEG_QUALITY,
-            "watermark": "bottom-band black 58% / white mono / lat-lng + datetime + culvert_id·end",
-        },
-        "photos": [],
-    }
-
     skipped_video = 0
     skipped_missing_culvert = 0
     skipped_no_file: list[str] = []
     failed_decode: list[str] = []
+    photos: list[dict] = []
 
     for i, r in enumerate(rows):
         cset = (r.get("photo_set") or "").strip()
@@ -244,7 +235,7 @@ def main() -> int:
             failed_decode.append(f"{cset}/{file}: {e}")
             continue
 
-        manifest["photos"].append({
+        photos.append({
             "id":            f"{cset}_{Path(file).stem}",
             "culvert_id":    cul_id,
             "section_id":    sec_id,
@@ -259,10 +250,10 @@ def main() -> int:
         })
 
         if (i + 1) % 25 == 0:
-            print(f"  processed {i+1}/{len(rows)}  (kept {len(manifest['photos'])})")
+            print(f"  processed {i+1}/{len(rows)}  (kept {len(photos)})")
 
     print()
-    print(f"Final manifest entries: {len(manifest['photos'])}")
+    print(f"Final manifest entries: {len(photos)}")
     print(f"  skipped (video):           {skipped_video}")
     print(f"  skipped (missing cul/sec): {skipped_missing_culvert}")
     print(f"  skipped (file not found):  {len(skipped_no_file)}")
@@ -274,14 +265,34 @@ def main() -> int:
     for f in failed_decode[:10]:
         print(f"     ! {f}")
 
+    # JSONL: header line first, then one photo per line. Lets the
+    # in-app importer stream-read without allocating the full graph.
+    culvert_ids = sorted({p["culvert_id"] for p in photos if p.get("culvert_id")})
+    header = {
+        "format":         "culvert_photos_manifest_jsonl_v1",
+        "exported_at":    datetime.now().isoformat(timespec="seconds"),
+        "source_csv":     str(CSV_PATH),
+        "total":          len(photos),
+        "culvert_ids":    culvert_ids,
+        "image_settings": {
+            "max_size_px":  MAX_SIZE,
+            "jpeg_quality": JPEG_QUALITY,
+            "watermark":    "bottom-band black 58% / white mono / lat-lng + datetime + culvert_id·end",
+        },
+    }
     print(f"\nWriting {OUT_PATH} …")
-    OUT_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
+    with OUT_PATH.open("w", encoding="utf-8") as fh:
+        fh.write(json.dumps(header, separators=(",", ":")))
+        fh.write("\n")
+        for ph in photos:
+            fh.write(json.dumps(ph, separators=(",", ":")))
+            fh.write("\n")
     size_mb = OUT_PATH.stat().st_size / 1048576
     print(f"  wrote {size_mb:.1f} MB")
 
     # Per-culvert coverage report.
     from collections import Counter
-    by_pin = Counter(p["culvert_id"] for p in manifest["photos"])
+    by_pin = Counter(p["culvert_id"] for p in photos)
     print(f"\nPer-culvert coverage:")
     for cid in sorted(by_pin):
         print(f"   {cid:<12}  {by_pin[cid]:>3} photo(s)")
