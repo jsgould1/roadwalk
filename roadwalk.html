@@ -5060,37 +5060,23 @@ body.rw-sld-photo-dragging .strip-pin {
    gap landing between them, while the .cv-pair flex tightens the
    label against its own value. Full-width rows (Inlet Type / Outlet
    Type / Notes) span the row by setting flex:1 1 100% on the pair. */
-/* Culvert Properties layout — 5-column grid:
-     col 1: label (auto)
-     col 2: field (1fr)
-     col 3: literal spacer column (32 px) for breathing room between
-            the two label+field pairs in each row
-     col 4: label (auto)
-     col 5: field (1fr)
-   Notes row's field uses grid-column:2/-1 so the input stretches from
-   col 2 all the way to col 5 (skipping the col-1 NOTES label which
-   stays in its own cell). */
+/* Culvert Properties layout — 6-column grid, three label/field pairs
+   per row. The first column of each pair (cols 1, 3, 5) is the label
+   (auto width); the second (cols 2, 4, 6) is the editable field (1fr).
+   Notes and Flow Check span all three pairs by setting their value
+   cell to grid-column:2/-1 — that stretches the input from just
+   after its label out to col 6. */
 .cv-prop-list { padding: 4px 0; }
 .cv-prop-grid {
   display: grid;
-  grid-template-columns: auto 1fr 32px auto 1fr;
-  column-gap: 8px;
+  grid-template-columns: auto 1fr auto 1fr auto 1fr;
+  column-gap: 10px;
   row-gap: 6px;
   align-items: baseline;
   padding: 4px 0;
 }
-.cv-prop-grid > .cv-prop-spacer { /* empty col-3 cell — keeps the grid honest */ }
-.cv-prop-grid > .cv-prop-notes-val { grid-column: 2 / -1; }
-/* Read-only cells (geometry block — bearing, skew, elevations, slopes,
-   flow check). Same typography as the editable .cv-notes-edit values
-   so the column lines up, no hover/focus chrome since the value isn't
-   editable. Source: GRSM index sync, not the field crew. */
-.cv-prop-grid > .cv-prop-ro {
-  color: var(--ink);
-  font: 400 11px var(--sans, system-ui);
-  padding: 1px 0;
-  min-width: 0;
-}
+.cv-prop-grid > .cv-prop-notes-val,
+.cv-prop-grid > .cv-prop-flow-val { grid-column: 2 / -1; }
 .cv-lbl {
   color: var(--ink-3);
   font: 700 10px 'IBM Plex Mono', monospace;
@@ -12914,27 +12900,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
         // Pass 1b — same-section refresh. Same ULID, same section,
         // but the BUNDLE has updates the working copy doesn't have
-        // (Phase 1 GRSM sync: pin id renames, new geometry attrs).
-        // Without this pass, those updates can never reach a user
-        // whose IDB already cached the pre-sync working copy.
+        // (Phase 1 GRSM sync: pin id renames + the geometry block +
+        // updated material/length/types from the QC index). Without
+        // this pass, those updates can never reach a user whose IDB
+        // already cached the pre-sync working copy.
         //
-        // Rules — minimal touch so condition ratings, hidden-photo
-        // lists, and any other inspection data stay intact:
-        //   * id, sta_ft, sta, geometry: always overwrite with bundle's
-        //     value (Phase 1 may have renamed CV-007 -> A-CV-001 and
-        //     repositioned). These are spatial/identity fields, not
-        //     user input.
-        //   * Geometry attrs (bearing/skew/elevations/slopes/flow_check
-        //     + the perp_offset/perp_side/sta_formatted spatial keys):
-        //     always overwrite — they're computed, not field-typed.
-        //   * User-editable attrs (material, in_type, out_type, notes,
-        //     etc.): fill-if-empty only. Never clobber a value the
-        //     field crew typed in.
-        //   * Conditions (inlet/barrel/outlet + structure + their
-        //     _notes), attrs.photos, report_hidden_photos: NEVER
-        //     touched here.
+        // The XLSX is the authoritative source of truth, so every
+        // attr listed in XLSX_OWNED_ATTRS below is OVERWRITTEN —
+        // not fill-if-empty. The pin attrs explicitly LEFT alone are
+        // the inspection layer the field crew owns: condition ratings,
+        // condition notes, attrs.photos, and report_hidden_photos.
         var renamedSameSection = 0;
-        var GEOM_ATTRS = [
+        var XLSX_OWNED_ATTRS = [
+          // User-editable fields per the XLSX (text)
+          'material', 'coating', 'in_type', 'out_type',
+          'in_side', 'out_side', 'notes',
+          'stationing_label', 'drainage_direction',
+          'inlet_structure_label', 'outlet_structure_label',
+          // User-editable numerics
+          'length_ft', 'size_in', 'drainage_basin_ac',
+          // Geometry block — computed, always overwrite
           'bearing_in_to_out_deg', 'road_cl_bearing_deg', 'crossing_angle_deg',
           'skew_from_perp_deg', 'inlet_elev_ditch_ft', 'outlet_elev_ditch_ft',
           'drop_ditch_ft', 'slope_ditch_pct', 'slope_pipe_pct',
@@ -12942,12 +12927,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           'drop_point_ft', 'slope_point_pct', 'flow_check', 'geom_note',
           'pla94_sta_label', 'perp_offset_ft', 'perp_side', 'sta_formatted',
         ];
-        var USER_FILL_TEXT = [
-          'material', 'coating', 'in_type', 'out_type', 'in_side', 'out_side',
-          'notes', 'stationing_label', 'drainage_direction',
-          'inlet_structure_label', 'outlet_structure_label',
-        ];
-        var USER_FILL_NUM = ['length_ft', 'size_in', 'drainage_basin_ac'];
         _bundleSecs.forEach(function (bundleSec) {
           if (!bundleSec || !Array.isArray(bundleSec.pins)) return;
           bundleSec.pins.forEach(function (bp) {
@@ -12957,26 +12936,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             if (entry.sec.id !== bundleSec.id) return; // cross-section — handled in pass 1
             if (entry.sec._userAdded) return;          // hand-built — leave alone
             var sp = entry.pin;
-            var changed = false;
             // Identity / spatial overrides.
-            if (bp.id && sp.id !== bp.id) { sp.id = bp.id; changed = true; renamedSameSection++; }
-            if (bp.sta_ft !== undefined && sp.sta_ft !== bp.sta_ft) { sp.sta_ft = bp.sta_ft; changed = true; }
-            if (bp.sta !== undefined && sp.sta !== bp.sta) { sp.sta = bp.sta; changed = true; }
-            if (bp.geometry) { sp.geometry = bp.geometry; }
-            // Geometry attrs (overwrite) + user fields (fill-if-empty).
+            if (bp.id && sp.id !== bp.id) { sp.id = bp.id; renamedSameSection++; }
+            if (bp.sta_ft !== undefined) sp.sta_ft = bp.sta_ft;
+            if (bp.sta !== undefined) sp.sta = bp.sta;
+            if (bp.geometry) sp.geometry = bp.geometry;
+            // Overwrite every XLSX-owned attr; remove on the bundle
+            // side if the bundle dropped it (so a cleared XLSX cell
+            // really clears the report).
             if (bp.attrs) {
-              var attrs = sp.attrs || (sp.attrs = {});
-              GEOM_ATTRS.forEach(function (k) {
-                if (k in bp.attrs) attrs[k] = bp.attrs[k];
-                else if (k in attrs && bp.attrs[k] === undefined) delete attrs[k];
-              });
-              USER_FILL_TEXT.forEach(function (k) {
-                var bv = bp.attrs[k];
-                if (bv && !(attrs[k] && String(attrs[k]).trim())) attrs[k] = bv;
-              });
-              USER_FILL_NUM.forEach(function (k) {
-                var bv = bp.attrs[k];
-                if (bv != null && (attrs[k] == null || attrs[k] === '')) attrs[k] = bv;
+              var battrs = bp.attrs;
+              var attrs  = sp.attrs || (sp.attrs = {});
+              XLSX_OWNED_ATTRS.forEach(function (k) {
+                if (k in battrs && battrs[k] !== undefined && battrs[k] !== null && battrs[k] !== '') {
+                  attrs[k] = battrs[k];
+                } else {
+                  delete attrs[k];
+                }
               });
             }
           });
@@ -36650,62 +36626,57 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       function _propLbl(text) {
         return '<span class="cv-lbl">' + text + '</span>';
       }
-      var _sp = '<span class="cv-prop-spacer"></span>';
-      // Read-only static value cell — used for the geometry block
-      // (bearing, skew, elevations, slopes, flow check) since these
-      // come from the GRSM index sync, not field-typed values.
-      // Renders as plain text in the same grid cell an editable input
-      // would occupy, so column alignment stays clean.
-      function _propRO(value) {
-        var v = (value == null || value === '' ? '—' : value);
-        return '<span class="cv-prop-ro">' + _esc(v) + '</span>';
+      // Slope display: nearest whole number (per spec). Bundle stores
+      // either int or float; coerce + round + suffix here.
+      function _fmtSlope(v) {
+        if (v == null || v === '') return '';
+        var n = Math.round(+v);
+        return isFinite(n) ? String(n) : '';
       }
-      function _fmtNum(v, decimals, suffix) {
-        if (v == null || v === '') return null;
+      // Number-fmt helper for non-slope geometry numerics. One decimal
+      // of precision so the displayed value matches what the user'd
+      // expect to edit.
+      function _fmt1(v) {
+        if (v == null || v === '') return '';
         var n = +v;
-        if (!isFinite(n)) return null;
-        return n.toFixed(decimals == null ? 1 : decimals) + (suffix || '');
+        if (!isFinite(n)) return '';
+        return n.toFixed(1);
       }
-      // Geometry block — only render the rows when at least one value
-      // is present. AECOM_FOX-sourced + GRSM_INDEX_2026-inserted pins
-      // carry these from the sync script; NPS-GIS pre-walk pins
-      // don't, so those just get the user-editable rows above.
-      var _hasGeom = (
-        a.bearing_in_to_out_deg != null
-        || a.road_cl_bearing_deg != null
-        || a.crossing_angle_deg  != null
-        || a.skew_from_perp_deg  != null
-        || a.inlet_elev_ditch_ft != null
-        || a.outlet_elev_ditch_ft!= null
-        || a.flow_check
-      );
-      var _geomRows = '';
-      if (_hasGeom) {
-        _geomRows = ''
-          + _propLbl('Bearing (in→out)') + _propRO(_fmtNum(a.bearing_in_to_out_deg, 1, '°'))  + _sp
-          + _propLbl('CL Bearing')       + _propRO(_fmtNum(a.road_cl_bearing_deg,  1, '°'))
-          + _propLbl('Crossing Angle')   + _propRO(_fmtNum(a.crossing_angle_deg,   1, '°'))   + _sp
-          + _propLbl('Skew from ⊥')      + _propRO(_fmtNum(a.skew_from_perp_deg,   1, '°'))
-          + _propLbl('Inlet Elev')       + _propRO(_fmtNum(a.inlet_elev_ditch_ft,  1, ' ft')) + _sp
-          + _propLbl('Outlet Elev')      + _propRO(_fmtNum(a.outlet_elev_ditch_ft, 1, ' ft'))
-          + _propLbl('Drop (ditch)')     + _propRO(_fmtNum(a.drop_ditch_ft,        1, ' ft')) + _sp
-          + _propLbl('Slope (pipe)')     + _propRO(_fmtNum(a.slope_pipe_pct,       2, ' %'));
-        if (a.flow_check) {
-          _geomRows += _propLbl('Flow Check')
-            + '<span class="cv-prop-ro cv-prop-notes-val">' + _esc(a.flow_check) + '</span>';
-        }
-      }
+      // The Properties card lays out as 3 label/value PAIRS per row
+      // (six grid columns total). Notes and Flow Check span all six
+      // so their wide text/value cell stretches. All fields are
+      // editable inputs sharing the .cv-notes-edit class so the
+      // existing change handler picks them up without new wiring.
+      // CL Bearing was removed at the user's request — every other
+      // field stays, with the geometry block placed below the
+      // identity/material rows. Slopes render as whole numbers.
       var propsBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CULVERT PROPERTIES</span></div>'
           + '<div class="cv-prop-grid">'
-            + _propLbl('Material')   + _propInput('material',  a.material,  'text')   + _sp
-            + _propLbl('Coating')    + _propInput('coating',   a.coating,   'text')
-            + _propLbl('Size (in)')  + _propInput('size_in',   a.size_in,   'number') + _sp
-            + _propLbl('Length (ft)')+ _propInput('length_ft', a.length_ft, 'number')
-            + _propLbl('Inlet Type') + _propInput('in_type',   a.in_type,   'text')   + _sp
-            + _propLbl('Outlet Type')+ _propInput('out_type',  a.out_type,  'text')
-            + _geomRows
+            // Row 1 — identity / dimensions
+            + _propLbl('Material')         + _propInput('material',  a.material,  'text')
+            + _propLbl('Coating')          + _propInput('coating',   a.coating,   'text')
+            + _propLbl('Size (in)')        + _propInput('size_in',   a.size_in,   'number')
+            // Row 2
+            + _propLbl('Length (ft)')      + _propInput('length_ft', a.length_ft, 'number')
+            + _propLbl('Inlet Type')       + _propInput('in_type',   a.in_type,   'text')
+            + _propLbl('Outlet Type')      + _propInput('out_type',  a.out_type,  'text')
+            // Row 3 — geometry (bearings + angles)
+            + _propLbl('Bearing (in→out)') + _propInput('bearing_in_to_out_deg', _fmt1(a.bearing_in_to_out_deg), 'number')
+            + _propLbl('Crossing Angle')   + _propInput('crossing_angle_deg',    _fmt1(a.crossing_angle_deg),    'number')
+            + _propLbl('Skew from ⊥')      + _propInput('skew_from_perp_deg',    _fmt1(a.skew_from_perp_deg),    'number')
+            // Row 4 — elevations + drop
+            + _propLbl('Inlet Elev (ft)')  + _propInput('inlet_elev_ditch_ft',   _fmt1(a.inlet_elev_ditch_ft),   'number')
+            + _propLbl('Outlet Elev (ft)') + _propInput('outlet_elev_ditch_ft',  _fmt1(a.outlet_elev_ditch_ft),  'number')
+            + _propLbl('Drop (ft)')        + _propInput('drop_ditch_ft',         _fmt1(a.drop_ditch_ft),         'number')
+            // Row 5 — slope (whole) on the left, flow check wide
+            + _propLbl('Slope (%)')        + _propInput('slope_pipe_pct',        _fmtSlope(a.slope_pipe_pct),    'number')
+            + _propLbl('Flow Check')
+            + '<input class="cv-notes-edit cv-prop-flow-val" type="text" '
+              + 'data-cv-idx="' + idx + '" data-field="flow_check" '
+              + 'value="' + _esc(a.flow_check || '') + '" placeholder="—">'
+            // Row 6 — notes spans all 3 pairs
             + _propLbl('Notes')
             + '<input class="cv-notes-edit cv-prop-notes-val" type="text" '
               + 'data-cv-idx="' + idx + '" data-field="notes" '
@@ -37250,11 +37221,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!field) return;
         var pin = r.pin;
         var attrs = pin.attrs || (pin.attrs = {});
-        attrs[field] = inp.value;
-        _cvSyncFieldToIdb(pin, field, inp.value);
-        // No surgical update — the new text is already in the input
-        // the user just typed into, and stepping outside it would
-        // blur mid-edit.
+        // Coerce numeric inputs back to Number so the geometry block
+        // round-trips through IDB / JSON correctly — type="number"
+        // inputs return strings even when empty. An empty value
+        // deletes the key so Pass 1b's overwrite-on-empty rule
+        // matches the XLSX sync behavior.
+        var raw = inp.value;
+        var val;
+        if (inp.type === 'number') {
+          val = (raw === '' || raw == null) ? '' : Number(raw);
+          if (val !== '' && !isFinite(val)) val = '';
+        } else {
+          val = raw;
+        }
+        if (val === '' || val == null) {
+          delete attrs[field];
+        } else {
+          attrs[field] = val;
+        }
+        _cvSyncFieldToIdb(pin, field, val);
       });
     });
 

@@ -327,21 +327,34 @@ GEOMETRY_TEXT = [
 ]
 
 
+_SLOPE_INT_KEYS = {"slope_ditch_pct", "slope_pipe_pct", "slope_point_pct"}
+
+
 def _apply_index_row(attrs: dict, row: dict) -> None:
     """Write the index row's values onto an existing pin's attrs in
-    place, honouring the fill-if-empty vs overwrite rules above."""
+    place. XLSX is the authoritative source of truth — every column
+    present in the row overwrites the prior bundle value. The only
+    pin attrs left untouched are those the XLSX doesn't carry at all
+    (condition ratings, condition notes, photos, report_hidden_photos).
+    Slope columns round to the nearest whole number per spec."""
     for src_key, attr_key in USER_EDITABLE_TEXT:
         v = row[src_key]
-        if v and not _str(attrs.get(attr_key)):
+        if v:
             attrs[attr_key] = v
+        else:
+            attrs.pop(attr_key, None)
     for src_key, attr_key in USER_EDITABLE_NUM:
         v = row[src_key]
-        if v is not None and attrs.get(attr_key) in (None, "", " "):
+        if v is not None:
             attrs[attr_key] = v
+        else:
+            attrs.pop(attr_key, None)
     for src_key, attr_key in GEOMETRY_NUM:
         v = row[src_key]
         if v is None:
             attrs.pop(attr_key, None)
+        elif attr_key in _SLOPE_INT_KEYS:
+            attrs[attr_key] = int(round(v))
         else:
             attrs[attr_key] = round(v, 2)
     for src_key, attr_key in GEOMETRY_TEXT:
