@@ -12849,6 +12849,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // surface without a destructive "Reset to published data".
         var addedPinCount = 0;
         var movedPinCount = 0;
+        // Pin renames collected across Pass 1 + Pass 1b. The bundle's
+        // canonical pin.id can change for the same ULID (Phase 1 GRSM
+        // sync renames CV-007 -> A-CV-001, or a fresh "5A" XLSX row
+        // bumps downstream sequence numbers). Each entry captures the
+        // section the old key lived under and the new key the photo's
+        // linked_pin_id needs to point at. Walked once at the end so
+        // the geophotos store is refreshed in a single batch save.
+        var pinRenames = [];
 
         // Index every saved pin by ULID so we can spot "this ULID
         // already lives in some saved section" in one pass.
@@ -12878,6 +12886,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
             // Pop from old saved section.
             entry.sec.pins = (entry.sec.pins || []).filter(function (p) { return p !== entry.pin; });
+            // Capture the old <sec_id>::<pin_id> photo-link key BEFORE
+            // mutating either, so the later geophoto rewrite walk can
+            // find photos that were linked under the pre-move address.
+            var _oldKey1 = entry.sec.id + '::' + entry.pin.id;
+            var _newKey1 = bundleSec.id  + '::' + bp.id;
+            if (_oldKey1 !== _newKey1) {
+              pinRenames.push({ oldKey: _oldKey1, newKey: _newKey1 });
+            }
             // Apply spatial overrides; keep every other attr the user typed.
             entry.pin.id        = bp.id;
             entry.pin.sta_ft    = bp.sta_ft;
@@ -12938,8 +12954,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             if (entry.sec.id !== bundleSec.id) return; // cross-section — handled in pass 1
             if (entry.sec._userAdded) return;          // hand-built — leave alone
             var sp = entry.pin;
-            // Identity / spatial overrides.
-            if (bp.id && sp.id !== bp.id) { sp.id = bp.id; renamedSameSection++; }
+            // Identity / spatial overrides. Track the rename so the
+            // post-merge geophoto walk can rewrite any photo linked
+            // under the old key (else photos a user added before the
+            // Phase 1 GRSM sync silently orphan after a Reload-from-
+            // published-data).
+            if (bp.id && sp.id !== bp.id) {
+              pinRenames.push({
+                oldKey: bundleSec.id + '::' + sp.id,
+                newKey: bundleSec.id + '::' + bp.id,
+              });
+              sp.id = bp.id;
+              renamedSameSection++;
+            }
             if (bp.sta_ft !== undefined) sp.sta_ft = bp.sta_ft;
             if (bp.sta !== undefined) sp.sta = bp.sta;
             if (bp.geometry) sp.geometry = bp.geometry;
@@ -13002,6 +13029,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             });
           });
         });
+        // Pass 1c — rewrite geophoto.linked_pin_id for every pin
+        // renamed above. Photo links are stored as "<sec_id>::<pin_id>"
+        // using the MUTABLE pin_id, so any photo whose key matched a
+        // pre-merge address would silently appear orphaned on the
+        // post-merge card. Walked once across all renames so one
+        // saveMany covers the whole batch. ULID-keyed records aren't
+        // affected (pin.attrs.photos lives on the pin itself), only
+        // externally-linked geophotos from the folder picker / nearby
+        // walk / manifest import.
+        var photosRelinked = 0;
+        if (pinRenames.length
+            && window._RW && window._RW.geophotos
+            && typeof window._RW.geophotos.list === 'function') {
+          var renameMap = {};
+          pinRenames.forEach(function (r) { renameMap[r.oldKey] = r.newKey; });
+          var photosNow = window._RW.geophotos.list() || [];
+          var toRelink = [];
+          photosNow.forEach(function (ph) {
+            if (!ph || !ph.linked_pin_id) return;
+            var nk = renameMap[ph.linked_pin_id];
+            if (nk && nk !== ph.linked_pin_id) {
+              ph.linked_pin_id = nk;
+              toRelink.push(ph);
+            }
+          });
+          photosRelinked = toRelink.length;
+          if (toRelink.length && typeof window._RW.geophotos.saveMany === 'function') {
+            window._RW.geophotos.saveMany(toRelink).then(function () {
+              if (window._RW.geophotos.refresh) window._RW.geophotos.refresh();
+            });
+          }
+        }
         Promise.all(hydrations).then(function () {
           if (typeof renderSectionList === 'function') renderSectionList('all');
           if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
@@ -13010,12 +13069,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             ' new section(s) from bundle [' + added.map(function (s) { return s.id; }).join(',') +
             '], +' + addedPinCount + ' new pin(s), ' + movedPinCount +
             ' pin(s) reassigned, ' + renamedSameSection +
-            ' pin(s) refreshed in place (id/geom), hydrated ' + hydrations.length +
+            ' pin(s) refreshed in place (id/geom), ' + photosRelinked +
+            ' geophoto(s) re-linked across rename, hydrated ' + hydrations.length +
             ' photo dataUrl(s), saved', saved.saved_at);
           // Persist the merged copy so the new sections + pins + moves
           // + same-section refreshes survive the next reload (and are
           // included in any export).
-          if ((added.length || addedPinCount || movedPinCount || renamedSameSection)
+          if ((added.length || addedPinCount || movedPinCount || renamedSameSection || photosRelinked)
               && window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
