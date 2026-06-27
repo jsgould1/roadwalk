@@ -5075,8 +5075,7 @@ body.rw-sld-photo-dragging .strip-pin {
   align-items: baseline;
   padding: 4px 0;
 }
-.cv-prop-grid > .cv-prop-notes-val,
-.cv-prop-grid > .cv-prop-flow-val { grid-column: 2 / -1; }
+.cv-prop-grid > .cv-prop-notes-val { grid-column: 2 / -1; }
 .cv-lbl {
   color: var(--ink-3);
   font: 700 10px 'IBM Plex Mono', monospace;
@@ -36670,12 +36669,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + _propLbl('Inlet Elev (ft)')  + _propInput('inlet_elev_ditch_ft',   _fmt1(a.inlet_elev_ditch_ft),   'number')
             + _propLbl('Outlet Elev (ft)') + _propInput('outlet_elev_ditch_ft',  _fmt1(a.outlet_elev_ditch_ft),  'number')
             + _propLbl('Drop (ft)')        + _propInput('drop_ditch_ft',         _fmt1(a.drop_ditch_ft),         'number')
-            // Row 5 — slope (whole) on the left, flow check wide
+            // Row 5 — slope (whole) on the left only
             + _propLbl('Slope (%)')        + _propInput('slope_pipe_pct',        _fmtSlope(a.slope_pipe_pct),    'number')
-            + _propLbl('Flow Check')
-            + '<input class="cv-notes-edit cv-prop-flow-val" type="text" '
-              + 'data-cv-idx="' + idx + '" data-field="flow_check" '
-              + 'value="' + _esc(a.flow_check || '') + '" placeholder="—">'
             // Row 6 — notes spans all 3 pairs
             + _propLbl('Notes')
             + '<input class="cv-notes-edit cv-prop-notes-val" type="text" '
