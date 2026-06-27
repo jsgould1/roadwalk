@@ -34916,6 +34916,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var wing   = 10;                   // wing line length
         var wingDx = isInlet ? -wing : wing;
         var wingDy = wing * 0.7;
+        // Wing lines extend wingDy below the rect bottom, so the
+        // default labelY (rect bottom + 12) collides with the lower
+        // flared line. Drop the wing-wall label by wingDy + a small
+        // pad so it sits cleanly below the flare.
+        var wingLabelY = labelY + wingDy + 2;
         return '<g>'
           + '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" '
             + 'fill="' + color + '" stroke="#111" stroke-width="1.2" />'
@@ -34927,7 +34932,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           + '<line x1="' + wOuterX + '" y1="' + (boxY + boxH) + '" '
             + 'x2="' + (wOuterX + wingDx) + '" y2="' + (boxY + boxH + wingDy) + '" '
             + 'stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" />'
-          + '<text x="' + (boxX + boxW/2) + '" y="' + labelY + '" text-anchor="middle" '
+          + '<text x="' + (boxX + boxW/2) + '" y="' + wingLabelY + '" text-anchor="middle" '
             + 'font-size="10" font-family="sans-serif" fill="' + color + '" font-weight="700">Wing Wall</text>'
           + '</g>';
       }
@@ -34948,13 +34953,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // Pipe spec caption — sits directly above the barrel.
-    // "{length} foot, {size}" {material} pipe"
+    //   "{length} foot, {size}" {material} pipe"
+    // …with one exception: "box culvert" materials read awkwardly as
+    // "Box Culvert pipe" (they aren't pipes), so the literal " pipe"
+    // suffix is suppressed whenever the material name includes "box".
     var midX = (barrelStartX + barrelEndX) / 2;
     var leadBit = a.length_ft ? (a.length_ft + ' foot') : '';
     var tailBits = [];
     if (a.size_in)  tailBits.push(a.size_in + '"');
     if (a.material) tailBits.push(a.material);
-    tailBits.push('pipe');
+    var _isBoxMat = a.material && /box/i.test(a.material);
+    if (!_isBoxMat) tailBits.push('pipe');
     var pipeLabel = leadBit ? (leadBit + ', ' + tailBits.join(' ')) : tailBits.join(' ');
 
     // FLOW arrow — sits just under the barrel, short (~32% of barrel
@@ -35647,7 +35656,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var head = [];
     if (a.length_ft) head.push(a.length_ft + "'");
     if (a.size_in)   head.push(a.size_in   + '"');
-    var pipeBit = a.material ? (a.material + ' pipe') : 'pipe';
+    // "Box Culvert pipe" reads as a contradiction — box culverts
+    // aren't pipes — so drop the trailing " pipe" whenever the
+    // material name includes "box". Mirrors the barrel-schematic
+    // caption rule above.
+    var _isBoxMat = a.material && /box/i.test(a.material);
+    var pipeBit = a.material
+      ? (_isBoxMat ? a.material : (a.material + ' pipe'))
+      : 'pipe';
     var headStr = head.length ? (head.join(' || ') + ' ' + pipeBit) : pipeBit;
 
     var tail = [];
