@@ -5081,6 +5081,16 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .cv-prop-grid > .cv-prop-spacer { /* empty col-3 cell — keeps the grid honest */ }
 .cv-prop-grid > .cv-prop-notes-val { grid-column: 2 / -1; }
+/* Read-only cells (geometry block — bearing, skew, elevations, slopes,
+   flow check). Same typography as the editable .cv-notes-edit values
+   so the column lines up, no hover/focus chrome since the value isn't
+   editable. Source: GRSM index sync, not the field crew. */
+.cv-prop-grid > .cv-prop-ro {
+  color: var(--ink);
+  font: 400 11px var(--sans, system-ui);
+  padding: 1px 0;
+  min-width: 0;
+}
 .cv-lbl {
   color: var(--ink-3);
   font: 700 10px 'IBM Plex Mono', monospace;
@@ -36264,6 +36274,50 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         return '<span class="cv-lbl">' + text + '</span>';
       }
       var _sp = '<span class="cv-prop-spacer"></span>';
+      // Read-only static value cell — used for the geometry block
+      // (bearing, skew, elevations, slopes, flow check) since these
+      // come from the GRSM index sync, not field-typed values.
+      // Renders as plain text in the same grid cell an editable input
+      // would occupy, so column alignment stays clean.
+      function _propRO(value) {
+        var v = (value == null || value === '' ? '—' : value);
+        return '<span class="cv-prop-ro">' + _esc(v) + '</span>';
+      }
+      function _fmtNum(v, decimals, suffix) {
+        if (v == null || v === '') return null;
+        var n = +v;
+        if (!isFinite(n)) return null;
+        return n.toFixed(decimals == null ? 1 : decimals) + (suffix || '');
+      }
+      // Geometry block — only render the rows when at least one value
+      // is present. AECOM_FOX-sourced + GRSM_INDEX_2026-inserted pins
+      // carry these from the sync script; NPS-GIS pre-walk pins
+      // don't, so those just get the user-editable rows above.
+      var _hasGeom = (
+        a.bearing_in_to_out_deg != null
+        || a.road_cl_bearing_deg != null
+        || a.crossing_angle_deg  != null
+        || a.skew_from_perp_deg  != null
+        || a.inlet_elev_ditch_ft != null
+        || a.outlet_elev_ditch_ft!= null
+        || a.flow_check
+      );
+      var _geomRows = '';
+      if (_hasGeom) {
+        _geomRows = ''
+          + _propLbl('Bearing (in→out)') + _propRO(_fmtNum(a.bearing_in_to_out_deg, 1, '°'))  + _sp
+          + _propLbl('CL Bearing')       + _propRO(_fmtNum(a.road_cl_bearing_deg,  1, '°'))
+          + _propLbl('Crossing Angle')   + _propRO(_fmtNum(a.crossing_angle_deg,   1, '°'))   + _sp
+          + _propLbl('Skew from ⊥')      + _propRO(_fmtNum(a.skew_from_perp_deg,   1, '°'))
+          + _propLbl('Inlet Elev')       + _propRO(_fmtNum(a.inlet_elev_ditch_ft,  1, ' ft')) + _sp
+          + _propLbl('Outlet Elev')      + _propRO(_fmtNum(a.outlet_elev_ditch_ft, 1, ' ft'))
+          + _propLbl('Drop (ditch)')     + _propRO(_fmtNum(a.drop_ditch_ft,        1, ' ft')) + _sp
+          + _propLbl('Slope (pipe)')     + _propRO(_fmtNum(a.slope_pipe_pct,       2, ' %'));
+        if (a.flow_check) {
+          _geomRows += _propLbl('Flow Check')
+            + '<span class="cv-prop-ro cv-prop-notes-val">' + _esc(a.flow_check) + '</span>';
+        }
+      }
       var propsBlock = ''
         + '<div class="sr-post-card">'
           + '<div class="sr-sub-hdr-row"><span>CULVERT PROPERTIES</span></div>'
@@ -36274,6 +36328,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + _propLbl('Length (ft)')+ _propInput('length_ft', a.length_ft, 'number')
             + _propLbl('Inlet Type') + _propInput('in_type',   a.in_type,   'text')   + _sp
             + _propLbl('Outlet Type')+ _propInput('out_type',  a.out_type,  'text')
+            + _geomRows
             + _propLbl('Notes')
             + '<input class="cv-notes-edit cv-prop-notes-val" type="text" '
               + 'data-cv-idx="' + idx + '" data-field="notes" '
