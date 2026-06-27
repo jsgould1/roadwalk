@@ -100,12 +100,39 @@ def _fnum(v) -> Optional[float]:
 
 
 def _str(v) -> str:
+    """Coerce an openpyxl cell value into a stripped string. Strip
+    happens both around the whole value AND around any inner
+    space-separated tokens so " Type 4B" and "Type 6B " come out as
+    "Type 4B" and "Type 6B". Known typos in user-typed XLSX strings
+    are corrected here so the bundle ends up with the corrected
+    spelling without anyone having to edit the workbook by hand."""
     if v is None:
         return ""
     s = str(v).strip()
     if s.startswith("#") or s in ("None", "nan"):
         return ""
+    for bad, good in _TYPO_FIXES.items():
+        if bad in s:
+            s = s.replace(bad, good)
     return s
+
+
+# Known QC-index typos. Keyed on the bad spelling exactly as it
+# appears in the XLSX; replacement is the corrected text. Substring
+# match (not whole-cell) so "Junction Box; Unconfimed Outfall on
+# Skiway Rd" picks up the fix without us having to also list the
+# leading "Junction Box; " context. Add more entries here as future
+# XLSX revisions surface them.
+_TYPO_FIXES = {
+    "Unconfimed": "Unconfirmed",
+}
+
+
+# End-fitting type fields where a blank XLSX cell should write "NA"
+# instead of nothing — explicit "no structure" reads more clearly on
+# the report than an empty cell. Side fields stay blank when unknown
+# because the field crew can fill them in later from observation.
+_NA_FILL_FIELDS = {"in_type", "out_type"}
 
 
 _PLA_PAT = re.compile(r"^\s*(\d+)\s*\+?\s*(\d{0,2})\s*$")
@@ -242,13 +269,19 @@ def _read_index(xlsx_path: Path) -> list[dict]:
             sec = prefix
         if sec not in SECTIONS_OF_INTEREST:
             continue
+        # End-fitting type blanks normalise to "NA" so the report cell
+        # reads as an explicit "no structure" rather than an unset
+        # field — see _NA_FILL_FIELDS. Sides stay blank because the
+        # field crew will fill them in from observation.
+        in_t  = _str(r[COL["in_type"]])  or "NA"
+        out_t = _str(r[COL["out_type"]]) or "NA"
         rows.append({
             "section_id":   sec,
             "culvert_id":   cid,
             "order":        _str(r[COL["order"]]),
-            "in_type":      _str(r[COL["in_type"]]),
+            "in_type":      in_t,
             "in_side":      _str(r[COL["in_side"]]),
-            "out_type":     _str(r[COL["out_type"]]),
+            "out_type":     out_t,
             "out_side":     _str(r[COL["out_side"]]),
             "material":     _str(r[COL["material"]]),
             "length_ft":    _fnum(r[COL["length_ft"]]),
@@ -545,6 +578,25 @@ def main() -> int:
     for sec in sections.values():
         sec.get("pins", []).sort(key=lambda p: (p.get("sta_ft") or 0, p.get("id") or ""))
 
+    # ── NA fill ──────────────────────────────────────────────────
+    # Walk every culvert pin in the sections-of-interest and write
+    # "NA" into any blank in_type / out_type so the report's Inlet
+    # Type / Outlet Type cells read as an explicit "no structure"
+    # rather than an empty dash. Covers both pins the XLSX has rows
+    # for (already filled by the row read above) and the legacy
+    # AECOM_FOX / NPS-GIS pins the QC index hasn't reached yet.
+    na_filled = {"in_type": 0, "out_type": 0}
+    for sec in sections.values():
+        for pin in sec.get("pins", []):
+            if (pin.get("kind") or "") != "culvert":
+                continue
+            attrs = pin.setdefault("attrs", {})
+            for k in _NA_FILL_FIELDS:
+                v = attrs.get(k)
+                if v is None or (isinstance(v, str) and not v.strip()):
+                    attrs[k] = "NA"
+                    na_filled[k] += 1
+
     BUNDLE_PATH.write_text(json.dumps(bundle, separators=(",", ":")) + "\n", encoding="utf-8")
 
     # ── Summary ──────────────────────────────────────────────────
@@ -561,6 +613,9 @@ def main() -> int:
     print(f"  New pins inserted:      {len(inserted)}")
     for cid, sec_id, sta, ll in inserted:
         print(f"     + {cid}  ({sec_id})  sta_ft={sta:.1f}  ({ll[0]:.6f}, {ll[1]:.6f})")
+    if any(na_filled.values()):
+        print(f"  NA filled (blank -> 'NA'):"
+              f"  in_type={na_filled['in_type']}  out_type={na_filled['out_type']}")
     if skipped_no_pla94:
         print(f"  Skipped (no numeric Pla94Sta):  {len(skipped_no_pla94)}")
         for cid, raw in skipped_no_pla94:
