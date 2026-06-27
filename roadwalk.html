@@ -12940,13 +12940,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             if (bp.sta_ft !== undefined) sp.sta_ft = bp.sta_ft;
             if (bp.sta !== undefined) sp.sta = bp.sta;
             if (bp.geometry) sp.geometry = bp.geometry;
-            // Overwrite every XLSX-owned attr; remove on the bundle
-            // side if the bundle dropped it (so a cleared XLSX cell
-            // really clears the report).
+            // Overwrite every XLSX-owned attr the user hasn't touched.
+            // attrs._user_edited is an array of field keys the field
+            // crew typed into in the Properties card — Pass 1b skips
+            // those so a Reload-from-published-data never clobbers a
+            // hand-edit. Everything else mirrors the bundle (so a
+            // cleared XLSX cell really clears the report).
             if (bp.attrs) {
               var battrs = bp.attrs;
               var attrs  = sp.attrs || (sp.attrs = {});
+              var dirty  = Array.isArray(attrs._user_edited) ? attrs._user_edited : [];
               XLSX_OWNED_ATTRS.forEach(function (k) {
+                if (dirty.indexOf(k) >= 0) return;
                 if (k in battrs && battrs[k] !== undefined && battrs[k] !== null && battrs[k] !== '') {
                   attrs[k] = battrs[k];
                 } else {
@@ -34385,6 +34390,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // ref, stream the raw bytes to their own per-photo IDB records,
   // then put just the lean record. Photos already carrying
   // _photo_key are pass-through — no redundant write.
+  // Per-field dirty flag. Once the user types into a Properties cell,
+  // the key lands in pin.attrs._user_edited. Pass 1b in applyBundle
+  // skips XLSX_OWNED_ATTRS keys that appear here, so a Reload-from-
+  // published-data never clobbers a hand-edit. The dirty mark is
+  // sticky — there's no auto-clear (the user can revert by clearing
+  // the cell and the value stays empty even on the next bundle sync).
+  // Internal book-keeping keys (anything starting with _) are filtered
+  // out so we never accidentally mark _user_edited itself.
+  function _cvMarkUserEdited(pin, field) {
+    if (!pin || !field) return;
+    if (typeof field !== 'string' || field.charAt(0) === '_') return;
+    var attrs = pin.attrs || (pin.attrs = {});
+    var list  = Array.isArray(attrs._user_edited) ? attrs._user_edited : [];
+    if (list.indexOf(field) < 0) list.push(field);
+    attrs._user_edited = list;
+  }
   function _cvSyncFieldToIdb(pin, field, value) {
     if (!pin || !pin.ulid) return;
     var rec = _dataState && _dataState.idbCacheByUlid
@@ -34440,6 +34461,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         }
         leanAttrs[field] = value;
+        // Mirror the in-memory dirty list so Pass 1b's user-edit
+        // skip survives a Reload-from-published-data. Empty / missing
+        // -> nothing to write (don't add a stray empty key to the
+        // record).
+        if (pin.attrs && Array.isArray(pin.attrs._user_edited) && pin.attrs._user_edited.length) {
+          leanAttrs._user_edited = pin.attrs._user_edited.slice();
+        } else {
+          delete leanAttrs._user_edited;
+        }
         dbRec.attrs    = leanAttrs;
         dbRec.saved_at = new Date().toISOString();
         try { store.put(dbRec); } catch (_) {}
@@ -35420,6 +35450,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // types each tagged with the side of centerline they sit on (the
   // first endpoint maps to the inlet, the last to the outlet). Skips
   // gracefully when any of the fields is missing.
+  // Fields whose value flows into _cvBuildDescription() and the
+  // barrel-schematic caption ("<length> foot, <size>" <material>
+  // pipe with …"). When any of these change inline, the Properties-
+  // card change handler calls _surgicallyUpdateCard so the
+  // Description span and SVG caption track the edit immediately.
+  var _DESC_FIELDS = ['material', 'length_ft', 'size_in',
+    'in_type', 'out_type', 'in_side', 'out_side'];
   function _cvBuildDescription(pin, alignment) {
     var a = pin.attrs || {};
     var coords = (pin.geometry && pin.geometry.coordinates) || [];
@@ -37170,13 +37207,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // surgical update below only refreshes the one card the user is
     // editing: its overall-condition pill, its select's color, and
     // its schematic SVG.
-    function _surgicallyUpdateCard(card, pin) {
+    function _surgicallyUpdateCard(card, pin, sec) {
       if (!card || !pin) return;
       // Overall condition pill
       var overallVal = card.querySelector('.sr-info-row-overall .sr-info-name-val');
       if (overallVal) {
         var ovCond = _deriveOverallCondition(pin) || '—';
         overallVal.innerHTML = _cvColoredCond(ovCond);
+      }
+      // Description span (next to Pin ID) — depends on material,
+      // length_ft, size_in, in_type, out_type, in_side, out_side. The
+      // span is the 2nd <div> inside the first .sr-info-row-name
+      // (Pin ID is the 1st). Update its .sr-info-name-val text in
+      // place so the on-screen description follows a Material change
+      // immediately — no full re-render, no focus disturbance.
+      if (sec) {
+        var nameRow = card.querySelector('.sr-info-row-name');
+        if (nameRow) {
+          var descDiv = nameRow.querySelectorAll(':scope > div')[1];
+          if (descDiv) {
+            var descVal = descDiv.querySelector('.sr-info-name-val');
+            if (descVal) {
+              var fresh = _cvBuildDescription(pin, sec.alignment)
+                       || (pin.attrs && pin.attrs.name) || '(culvert)';
+              descVal.textContent = fresh;
+            }
+          }
+        }
       }
       // Recolor every rating select in this card so the new value
       // reads in the right condition color.
@@ -37185,14 +37242,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         s.style.color = n ? _CV_COND_COLOR[n] : '#6b7280';
         s.style.fontWeight = n ? '700' : '400';
       });
-      // Redraw the barrel + end-fitting SVG (its strokes are colored
-      // by the same _CV_COND_COLOR map).
+      // Redraw the barrel + end-fitting SVG. Its label "<length> foot,
+      // <size>" <material> pipe" depends on the same Properties
+      // fields, and its end-fitting strokes are colored by the
+      // _CV_COND_COLOR map, so this covers both condition and
+      // material-type edits.
       var schem = card.querySelector('.cv-schematic');
       if (schem) {
-        var fresh = _cvBarrelSchematicSvg(pin);
+        var freshSvg = _cvBarrelSchematicSvg(pin);
         // _cvBarrelSchematicSvg returns the wrapping <div> too; swap
         // the whole node so its inline width stays consistent.
-        schem.outerHTML = fresh;
+        schem.outerHTML = freshSvg;
       }
     }
     list.querySelectorAll('.cv-cond-edit').forEach(function (sel) {
@@ -37204,8 +37264,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         var pin = r.pin;
         var attrs = pin.attrs || (pin.attrs = {});
         attrs[field] = sel.value;
+        _cvMarkUserEdited(pin, field);
         _cvSyncFieldToIdb(pin, field, sel.value);
-        _surgicallyUpdateCard(sel.closest('.sr-card'), pin);
+        _surgicallyUpdateCard(sel.closest('.sr-card'), pin, r.sec);
       });
     });
     list.querySelectorAll('.cv-notes-edit').forEach(function (inp) {
@@ -37229,12 +37290,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         } else {
           val = raw;
         }
-        if (val === '' || val == null) {
+        if (val === '' || val === null || val === undefined) {
           delete attrs[field];
         } else {
           attrs[field] = val;
         }
+        _cvMarkUserEdited(pin, field);
         _cvSyncFieldToIdb(pin, field, val);
+        // Refresh the description span (next to Pin ID) and the
+        // barrel schematic caption — both depend on material /
+        // length_ft / size_in / in_type / out_type / in_side /
+        // out_side. _surgicallyUpdateCard skips the focused input,
+        // so the user's cursor stays where it is.
+        if (_DESC_FIELDS.indexOf(field) >= 0) {
+          _surgicallyUpdateCard(inp.closest('.sr-card'), pin, r.sec);
+        }
       });
     });
 
