@@ -14853,8 +14853,143 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     _renderWidthLabels();
     _renderSectionInfoCards();
 
+    // SF QC culvert linework overlay — lazy-loaded on first toggle-on,
+    // then added/removed from the map on every render based on the
+    // user's layer-panel choice.
+    _syncSfQcCulvertsLayer();
+
     // Force a tile recalc — common gotcha when the container starts hidden
     setTimeout(() => state.map.invalidateSize(), 50);
+  }
+
+  // ── SF QC culvert overlay ──────────────────────────────────────
+  // Loads data/culverts-sf-qc.geojson (built by
+  // data/build_culvert_sf_qc_geojson.py from the EFL team's reviewed
+  // KMZ) into a Leaflet GeoJSON layer keyed off the "__sf_qc_culverts"
+  // entry in MAP_LAYERS. The fetch + decode happen ONCE on the first
+  // toggle-on; subsequent toggles just add/remove the cached layer.
+  // Drawn yellow-dashed so it stands apart from the bundle's blue
+  // culvert lines; hover tooltip shows drawn-length (haversine across
+  // the polyline) vs the XLSX surveyed length plus the delta so the
+  // user can immediately spot which traces don't match.
+  function _sfQcCulvertsShouldShow() {
+    var _lsFn = typeof lsLoad === 'function' ? lsLoad : window.RWLsLoad;
+    var ls = (_lsFn && _lsFn()) || {};
+    var vis = ls.layersVis || {};
+    if (Object.prototype.hasOwnProperty.call(vis, '__sf_qc_culverts')) {
+      return vis.__sf_qc_culverts !== false;
+    }
+    return false;                              // default OFF (QC overlay)
+  }
+  // Local HTML-escape helper. Other modules already define their own
+  // _esc; we use a different name to dodge any function-hoisting
+  // collisions at module scope.
+  function _sfQcEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function _buildSfQcCulvertsLayer(geojson) {
+    return L.geoJSON(geojson, {
+      pane: 'overlayPane',
+      style: function () {
+        return {
+          color:     '#F59E0B',
+          weight:    3,
+          opacity:   0.9,
+          dashArray: '6 4',
+          lineCap:   'round',
+          lineJoin:  'round',
+        };
+      },
+      onEachFeature: function (feat, layer) {
+        var p = feat.properties || {};
+        var num = p.Num != null ? p.Num : (p.Id != null ? p.Id : (p.FID != null ? p.FID : '?'));
+        var drawn = (typeof p.drawn_length_ft === 'number') ? p.drawn_length_ft : null;
+        var xlsx  = (typeof p.xlsx_length_ft  === 'number') ? p.xlsx_length_ft  : null;
+        var delta = (typeof p.length_delta_ft === 'number') ? p.length_delta_ft : null;
+        var ratio = (typeof p.length_ratio    === 'number') ? p.length_ratio    : null;
+        // Tooltip (hover) — compact identity + length comparison.
+        var bits = ['#' + _sfQcEsc(num)];
+        if (drawn != null) bits.push('drawn ' + drawn.toFixed(1) + "'");
+        if (xlsx  != null) bits.push('xlsx ' + xlsx.toFixed(0) + "'");
+        if (delta != null) bits.push('&Delta;' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + "'");
+        if (ratio != null) bits.push(ratio.toFixed(2) + 'x');
+        layer.bindTooltip(bits.join(' · '), {
+          sticky: true, direction: 'top', opacity: 0.95,
+          className: 'rw-feature-tooltip',
+        });
+        // Click popup — full attribute table.
+        var IGNORE = { _kml_name: 1, drawn_length_ft: 1, xlsx_length_ft: 1,
+                       length_delta_ft: 1, length_ratio: 1 };
+        var rows = '';
+        if (drawn != null || xlsx != null) {
+          rows += '<tr><td><b>drawn</b></td><td>' + (drawn != null ? drawn.toFixed(1) + ' ft' : '—') + '</td></tr>'
+                + '<tr><td><b>xlsx</b></td><td>'  + (xlsx  != null ? xlsx.toFixed(0)  + ' ft' : '—') + '</td></tr>';
+          if (delta != null) rows += '<tr><td><b>&Delta;</b></td><td>' + delta.toFixed(1) + ' ft</td></tr>';
+          if (ratio != null) rows += '<tr><td><b>ratio</b></td><td>' + ratio.toFixed(2) + 'x</td></tr>';
+        }
+        Object.keys(p).forEach(function (k) {
+          if (IGNORE[k]) return;
+          var v = p[k];
+          if (v === '' || v == null) return;
+          rows += '<tr><td>' + _sfQcEsc(k) + '</td><td>' + _sfQcEsc(v) + '</td></tr>';
+        });
+        var html = '<div style="font:12px system-ui,sans-serif;color:#1f2937;">'
+                 + '<div style="font-weight:700;margin-bottom:4px;">Culvert #' + _sfQcEsc(num) + ' (SF QC)</div>'
+                 + '<table style="border-collapse:collapse;font-size:11px;">'
+                 + rows + '</table></div>';
+        layer.bindPopup(html, { maxWidth: 280 });
+      },
+    });
+  }
+  function _syncSfQcCulvertsLayer() {
+    if (!state || !state.map) return;
+    if (!state._sfQc) state._sfQc = { layer: null, loading: false, failed: false };
+    var want = _sfQcCulvertsShouldShow();
+    // Off + not loaded: nothing to do.
+    if (!want && !state._sfQc.layer) return;
+    // Off + loaded: remove from map.
+    if (!want && state._sfQc.layer) {
+      try { state.map.removeLayer(state._sfQc.layer); } catch (_) {}
+      return;
+    }
+    // On + loaded: add (idempotent — Leaflet skips if already added).
+    if (want && state._sfQc.layer) {
+      try { state.map.addLayer(state._sfQc.layer); } catch (_) {}
+      return;
+    }
+    // On + not loaded + already fetching: leave the in-flight fetch alone.
+    if (want && state._sfQc.loading) return;
+    if (want && state._sfQc.failed) return;
+    // First time turning it on — fetch the GeoJSON. cache:default lets
+    // the service worker stale-while-revalidate; the file is ~150 KB.
+    state._sfQc.loading = true;
+    fetch('./data/culverts-sf-qc.geojson')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (gj) {
+        state._sfQc.loading = false;
+        if (!gj || !Array.isArray(gj.features) || !gj.features.length) {
+          state._sfQc.failed = true;
+          console.warn('[RoadWalk] SF QC layer: empty / invalid GeoJSON');
+          return;
+        }
+        state._sfQc.layer = _buildSfQcCulvertsLayer(gj);
+        // Re-check the toggle in case the user flipped it off mid-fetch.
+        if (_sfQcCulvertsShouldShow()) {
+          try { state._sfQc.layer.addTo(state.map); } catch (e) {
+            console.warn('[RoadWalk] SF QC addTo failed', e);
+          }
+        }
+        console.log('[RoadWalk] SF QC layer loaded —', gj.features.length, 'culvert line(s)');
+      })
+      .catch(function (e) {
+        state._sfQc.loading = false;
+        state._sfQc.failed = true;
+        console.warn('[RoadWalk] SF QC fetch failed', e);
+      });
   }
 
   // Render faint, tappable boundary outlines for every parking-area
@@ -30437,6 +30572,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     { label: 'Edge Drops',    kind: 'ln_edge_drop',     color: '#C85A2B', active: true },
     { label: 'Paved Edge Drops', kind: 'ln_paved_edge_drop', color: '#7A2B12', active: true },
     { label: 'Sidewalks',     kind: 'pg_sidewalk',      color: '#9CA3AF', active: true },
+    // QC overlay — Steven's reviewed Culverts SF KMZ linework. Loaded
+    // lazily from data/culverts-sf-qc.geojson the first time the user
+    // turns it on; lives outside SECTIONS so it isn't filtered by
+    // section navigation. Drawn yellow/dashed so it stands apart from
+    // the bundle's blue culverts; hover shows drawn vs XLSX length.
+    { label: 'Culverts SF QC', kind: '__sf_qc_culverts', color: '#F59E0B', active: false },
   ];
 
   /**
