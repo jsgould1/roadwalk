@@ -5146,6 +5146,50 @@ body.rw-sld-photo-dragging .strip-pin {
 .rw-sf-qc-panel .edit-count {
   font-size: 11px; color: #6b7280; margin-top: 6px;
 }
+/* Add-culvert mode — status banner pinned bottom-center of the map. */
+.rw-sf-qc-add-banner {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font: 600 12px system-ui, sans-serif;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+/* Inline add-culvert attribute form rendered inside a Leaflet popup. */
+.rw-sf-qc-add-form { font: 12px system-ui, sans-serif; color: #1f2937; min-width: 220px; }
+.rw-sf-qc-add-form h5 {
+  margin: 0 0 6px; font: 700 12px 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: .4px; color: #047857;
+}
+.rw-sf-qc-add-form label {
+  display: block; font-size: 11px; color: #6b7280;
+  margin-top: 6px; margin-bottom: 2px; text-transform: uppercase;
+  letter-spacing: .3px; font-weight: 700;
+}
+.rw-sf-qc-add-form input, .rw-sf-qc-add-form textarea {
+  width: 100%; padding: 4px 6px; border: 1px solid #cbd5e1;
+  border-radius: 3px; font: 12px system-ui, sans-serif; color: #1f2937;
+  box-sizing: border-box;
+}
+.rw-sf-qc-add-form textarea { min-height: 38px; resize: vertical; }
+.rw-sf-qc-add-form .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+.rw-sf-qc-add-form button {
+  flex: 1; padding: 5px 10px; border: 1px solid #cbd5e1; border-radius: 4px;
+  cursor: pointer; font: 600 12px system-ui, sans-serif;
+}
+.rw-sf-qc-add-form .btn-save   { background: #047857; color: #fff; border-color: #047857; }
+.rw-sf-qc-add-form .btn-cancel { background: #f8fafc; color: #1f2937; }
+.rw-sf-qc-add-form .btn-save:hover   { filter: brightness(1.05); }
+.rw-sf-qc-add-form .btn-cancel:hover { background: #e2e8f0; }
+.rw-sf-qc-add-form .drawn-len {
+  font-size: 10px; color: #6b7280; margin-top: 2px;
+}
 /* Angle inputs (Bearing / Crossing Angle / Skew) wrap their <input>
    in a flex span so a "°" suffix sits immediately after the typed
    value. The wrapper is a grid item but justify-self:start makes
@@ -14943,6 +14987,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // / Id as fallbacks; loadSfQcEdits returns {} when nothing is
     // saved or the localStorage value parses to junk.
     state._sfQc.edits = _loadSfQcEdits();
+    state._sfQc.adds  = _loadSfQcAdds();
     var editKeys = Object.keys(state._sfQc.edits || {});
     if (editKeys.length && geojson && Array.isArray(geojson.features)) {
       geojson.features.forEach(function (f) {
@@ -14958,18 +15003,30 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       });
       console.log('[RoadWalk] SF QC: applied', editKeys.length, 'saved edit(s)');
     }
+    // Append user-added culverts. Each entry from localStorage carries
+    // a full GeoJSON Feature so we can splice it straight onto the
+    // feature collection before Leaflet processes it; the _added flag
+    // is what the style function keys off to color them green.
+    var addKeys = Object.keys(state._sfQc.adds || {});
+    if (addKeys.length && geojson && Array.isArray(geojson.features)) {
+      addKeys.forEach(function (k) {
+        var rec = state._sfQc.adds[k];
+        if (!rec || !rec.feature) return;
+        var feat = rec.feature;
+        if (!feat.properties) feat.properties = {};
+        feat.properties._added = true;
+        feat.properties._add_key = k;
+        geojson.features.push(feat);
+      });
+      console.log('[RoadWalk] SF QC: appended', addKeys.length, 'added culvert(s)');
+    }
     return L.geoJSON(geojson, {
       pane: 'overlayPane',
       style: function (feat) {
-        var edited = feat && feat.properties && feat.properties._edited;
-        return {
-          color:     edited ? '#dc2626' : '#F59E0B',
-          weight:    edited ? 4 : 3,
-          opacity:   0.9,
-          dashArray: '6 4',
-          lineCap:   'round',
-          lineJoin:  'round',
-        };
+        var p = (feat && feat.properties) || {};
+        if (p._added)  return _sfQcStyleAdded;
+        if (p._edited) return _sfQcStyleEdited;
+        return _sfQcStyleDefault;
       },
       onEachFeature: function (feat, layer) {
         var p = feat.properties || {};
@@ -15019,6 +15076,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // numbers so the tooltip + edit-count badge can hydrate from the
   // saved blob without re-running haversine over every line on load.
   var _SF_QC_EDITS_LS_KEY = 'rw_sf_qc_edits';
+  var _SF_QC_ADDS_LS_KEY  = 'rw_sf_qc_adds';
+  // Style presets — pre-build the three style objects so the layer's
+  // style callback returns one of them by reference (cheaper than
+  // allocating a fresh object per feature on every redraw).
+  var _sfQcStyleDefault = {
+    color: '#F59E0B', weight: 3, opacity: 0.9,
+    dashArray: '6 4', lineCap: 'round', lineJoin: 'round',
+  };
+  var _sfQcStyleEdited = {
+    color: '#dc2626', weight: 4, opacity: 0.9,
+    dashArray: '6 4', lineCap: 'round', lineJoin: 'round',
+  };
+  var _sfQcStyleAdded = {
+    color: '#047857', weight: 4, opacity: 0.95,
+    dashArray: '4 3', lineCap: 'round', lineJoin: 'round',
+  };
   function _sfQcFeatureKey(f) {
     if (!f || !f.properties) return null;
     var p = f.properties;
@@ -15038,6 +15111,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       localStorage.setItem(_SF_QC_EDITS_LS_KEY,
         JSON.stringify(state._sfQc.edits || {}));
     } catch (e) { console.warn('[RoadWalk] SF QC save failed', e); }
+  }
+  function _loadSfQcAdds() {
+    try {
+      var s = localStorage.getItem(_SF_QC_ADDS_LS_KEY);
+      return s ? (JSON.parse(s) || {}) : {};
+    } catch (_) { return {}; }
+  }
+  function _saveSfQcAddsToLS() {
+    try {
+      localStorage.setItem(_SF_QC_ADDS_LS_KEY,
+        JSON.stringify(state._sfQc.adds || {}));
+    } catch (e) { console.warn('[RoadWalk] SF QC adds save failed', e); }
+  }
+  // Find the next sensible Num for a freshly-added culvert. Walks the
+  // currently-loaded layer (which already includes prior adds) and
+  // returns max(Num) + 1. Falls back to a Date-stamped string when no
+  // numeric Num exists yet.
+  function _sfQcNextNum() {
+    var maxN = 0;
+    if (state._sfQc && state._sfQc.layer) {
+      state._sfQc.layer.eachLayer(function (poly) {
+        var p = poly.feature && poly.feature.properties;
+        if (!p) return;
+        var n = parseInt(p.Num, 10);
+        if (isFinite(n) && n > maxN) maxN = n;
+      });
+    }
+    return maxN > 0 ? String(maxN + 1) : ('USR-' + Date.now().toString(36));
   }
   // Haversine over a [lng,lat][] polyline; result in feet.
   function _sfQcHavFt(coords) {
@@ -15166,8 +15267,212 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   }
   function _sfQcToggleEditMode() {
     if (!state._sfQc || !state._sfQc.layer) return;
+    if (state._sfQc.addMode) _sfQcCancelAddMode();   // mutually exclusive
     if (state._sfQc.editMode) _sfQcExitEditMode();
     else _sfQcEnterEditMode();
+    _sfQcUpdateControl();
+  }
+
+  // ── Add-culvert mode ───────────────────────────────────────────
+  // Two-click flow: user clicks "Add culvert", first map click drops
+  // the inlet, second click drops the outlet, an inline form opens at
+  // the line's midpoint to capture Num / Material / Length / Size /
+  // Notes. Save persists to localStorage under rw_sf_qc_adds and
+  // appends a fresh Feature to the layer; Cancel cleans up.
+  function _sfQcToggleAddMode() {
+    if (!state._sfQc || !state._sfQc.layer) return;
+    if (state._sfQc.addMode) _sfQcCancelAddMode();
+    else _sfQcStartAddMode();
+  }
+  function _sfQcStartAddMode() {
+    if (!state._sfQc || !state._sfQc.layer || !state.map) return;
+    if (state._sfQc.editMode) _sfQcExitEditMode();    // mutually exclusive
+    if (state._sfQc.addMode)  _sfQcCancelAddMode();   // restart cleanly
+    state._sfQc.addMode = {
+      step: 'inlet',
+      inletLL: null,
+      outletLL: null,
+      tempMarkers: [],
+      tempLine: null,
+    };
+    state.map.getContainer().style.cursor = 'crosshair';
+    _sfQcShowAddBanner('Click INLET point  (Esc to cancel)');
+    state.map.on('click', _sfQcOnAddClick);
+    document.addEventListener('keydown', _sfQcOnAddKeydown);
+    _sfQcUpdateControl();
+  }
+  function _sfQcCancelAddMode() {
+    if (!state._sfQc || !state._sfQc.addMode) return;
+    var am = state._sfQc.addMode;
+    am.tempMarkers.forEach(function (m) {
+      try { state.map.removeLayer(m); } catch (_) {}
+    });
+    if (am.tempLine) {
+      try { state.map.removeLayer(am.tempLine); } catch (_) {}
+    }
+    state.map.off('click', _sfQcOnAddClick);
+    document.removeEventListener('keydown', _sfQcOnAddKeydown);
+    state.map.getContainer().style.cursor = '';
+    _sfQcHideAddBanner();
+    state._sfQc.addMode = null;
+    _sfQcUpdateControl();
+  }
+  function _sfQcOnAddClick(e) {
+    var am = state._sfQc && state._sfQc.addMode;
+    if (!am || !e || !e.latlng) return;
+    if (am.step === 'inlet') {
+      am.inletLL = e.latlng;
+      var im = L.marker(e.latlng, {
+        icon: L.divIcon({
+          className: 'rw-sf-qc-handle is-inlet',
+          iconSize: [14, 14], iconAnchor: [7, 7],
+        }),
+        interactive: false, pane: 'markerPane',
+      }).addTo(state.map);
+      am.tempMarkers.push(im);
+      am.step = 'outlet';
+      _sfQcShowAddBanner('Click OUTLET point  (Esc to cancel)');
+      return;
+    }
+    if (am.step === 'outlet') {
+      am.outletLL = e.latlng;
+      var om = L.marker(e.latlng, {
+        icon: L.divIcon({
+          className: 'rw-sf-qc-handle is-outlet',
+          iconSize: [14, 14], iconAnchor: [7, 7],
+        }),
+        interactive: false, pane: 'markerPane',
+      }).addTo(state.map);
+      am.tempMarkers.push(om);
+      am.tempLine = L.polyline([am.inletLL, am.outletLL], {
+        color: '#047857', weight: 4, opacity: 0.95,
+        dashArray: '4 3', interactive: false,
+      }).addTo(state.map);
+      // Stop receiving clicks; the form's Save / Cancel takes over.
+      state.map.off('click', _sfQcOnAddClick);
+      state.map.getContainer().style.cursor = '';
+      _sfQcHideAddBanner();
+      _sfQcOpenAddForm(am.inletLL, am.outletLL);
+    }
+  }
+  function _sfQcOnAddKeydown(e) {
+    if (e && e.key === 'Escape') _sfQcCancelAddMode();
+  }
+  // Small floating status banner pinned bottom-center of the map.
+  function _sfQcShowAddBanner(msg) {
+    if (!state.map) return;
+    var c = state.map.getContainer();
+    var b = c.querySelector('.rw-sf-qc-add-banner');
+    if (!b) {
+      b = document.createElement('div');
+      b.className = 'rw-sf-qc-add-banner';
+      c.appendChild(b);
+    }
+    b.textContent = msg;
+  }
+  function _sfQcHideAddBanner() {
+    if (!state.map) return;
+    var b = state.map.getContainer().querySelector('.rw-sf-qc-add-banner');
+    if (b && b.parentNode) b.parentNode.removeChild(b);
+  }
+  // Pop the attribute form as a Leaflet popup at the line's midpoint.
+  function _sfQcOpenAddForm(inletLL, outletLL) {
+    if (!state.map) return;
+    var coords = [
+      [inletLL.lng, inletLL.lat],
+      [outletLL.lng, outletLL.lat],
+    ];
+    var drawn = _sfQcHavFt(coords);
+    var drawnFt = Math.round(drawn * 10) / 10;
+    var midLat = (inletLL.lat + outletLL.lat) / 2;
+    var midLng = (inletLL.lng + outletLL.lng) / 2;
+    var nextNum = _sfQcNextNum();
+    var formHtml =
+      '<div class="rw-sf-qc-add-form">'
+      + '<h5>New culvert</h5>'
+      + '<label>Num</label><input data-f="Num" value="' + _sfQcEsc(nextNum) + '">'
+      + '<label>Material</label><input data-f="Material" placeholder="CMP / RCP / Box…">'
+      + '<label>Length (ft)</label><input data-f="Length" type="number" step="1" value="' + Math.round(drawn) + '">'
+      + '<div class="drawn-len">drawn: ' + drawnFt + ' ft</div>'
+      + '<label>Size (in)</label><input data-f="Size" type="number" step="1" placeholder="">'
+      + '<label>In_Type</label><input data-f="In_Type" placeholder="Headwall / Inlet / Type 4B…">'
+      + '<label>Out_Type</label><input data-f="Out_Type" placeholder="Headwall / Projecting…">'
+      + '<label>Notes</label><textarea data-f="Notes" placeholder=""></textarea>'
+      + '<div class="btn-row">'
+        + '<button class="btn-save">Save</button>'
+        + '<button class="btn-cancel">Cancel</button>'
+      + '</div>'
+    + '</div>';
+    var popup = L.popup({
+      maxWidth: 260, autoClose: false, closeOnClick: false,
+      keepInView: true,
+    })
+      .setLatLng([midLat, midLng])
+      .setContent(formHtml)
+      .openOn(state.map);
+    // Wire form buttons once the popup DOM mounts.
+    setTimeout(function () {
+      var root = popup.getElement && popup.getElement();
+      if (!root) return;
+      root.querySelector('.btn-save').addEventListener('click', function () {
+        var feat = _sfQcBuildFeatureFromForm(root, coords, drawnFt);
+        _sfQcCommitAddedFeature(feat);
+        state.map.closePopup(popup);
+        _sfQcCancelAddMode();   // clears temp markers/line
+      });
+      root.querySelector('.btn-cancel').addEventListener('click', function () {
+        state.map.closePopup(popup);
+        _sfQcCancelAddMode();
+      });
+    }, 0);
+  }
+  function _sfQcBuildFeatureFromForm(root, coords, drawnFt) {
+    var props = {};
+    root.querySelectorAll('[data-f]').forEach(function (el) {
+      var k = el.getAttribute('data-f');
+      var v = (el.value || '').trim();
+      if (v) props[k] = v;
+    });
+    // Backstop the derived numbers so the tooltip + KMZ-vs-XLSX
+    // comparison work the same as on imported features.
+    props.drawn_length_ft = drawnFt;
+    var xnum = parseFloat(props.Length);
+    if (isFinite(xnum) && xnum > 0) {
+      props.xlsx_length_ft = xnum;
+      props.length_delta_ft = Math.round((drawnFt - xnum) * 10) / 10;
+      props.length_ratio    = Math.round((drawnFt / xnum) * 100) / 100;
+    }
+    return {
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: coords },
+      properties: props,
+    };
+  }
+  function _sfQcCommitAddedFeature(feat) {
+    if (!state._sfQc) return;
+    if (!state._sfQc.adds) state._sfQc.adds = {};
+    var key = 'add_' + Date.now().toString(36)
+            + '_' + Math.random().toString(36).slice(2, 7);
+    feat.properties._added   = true;
+    feat.properties._add_key = key;
+    state._sfQc.adds[key] = { feature: feat, saved_at: new Date().toISOString() };
+    _saveSfQcAddsToLS();
+    // Splice into the live layer so the user sees it without a reload.
+    if (state._sfQc.layer) {
+      try { state._sfQc.layer.addData(feat); } catch (e) {
+        console.warn('[RoadWalk] SF QC addData failed', e);
+      }
+    }
+    // If edit mode is active, give the new culvert its own pair of
+    // drag handles so the user can fine-tune the endpoints they just
+    // dropped without a separate toggle.
+    if (state._sfQc.editMode && state._sfQc.layer) {
+      state._sfQc.layer.eachLayer(function (poly) {
+        var k = poly.feature && poly.feature.properties
+              && poly.feature.properties._add_key;
+        if (k === key) _sfQcBuildHandlesFor(poly);
+      });
+    }
     _sfQcUpdateControl();
   }
   // Build a downloadable KML reflecting the current geometry state.
@@ -15226,15 +15531,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
-  // Drop all locally-saved edits + rebuild the layer from the source
-  // GeoJSON so the user can start over without reloading the page.
+  // Drop all locally-saved edits AND user-added culverts + rebuild
+  // the layer from the source GeoJSON so the user can start over
+  // without reloading the page. One confirm prompt for both since
+  // the two flows are tightly coupled in the user's mental model.
   function _sfQcRevertAll() {
-    var n = Object.keys(state._sfQc.edits || {}).length;
-    if (!n) { alert('No SF QC edits to revert.'); return; }
-    if (!confirm('Discard all ' + n + ' SF QC endpoint edit(s)? This cannot be undone.')) return;
+    var nE = Object.keys(state._sfQc.edits || {}).length;
+    var nA = Object.keys(state._sfQc.adds  || {}).length;
+    if (!nE && !nA) { alert('No SF QC edits or additions to revert.'); return; }
+    var msg = 'Discard all ';
+    if (nE && nA) msg += nE + ' edit(s) AND ' + nA + ' added culvert(s)?';
+    else if (nE)  msg += nE + ' SF QC endpoint edit(s)?';
+    else          msg += nA + ' added culvert(s)?';
+    msg += '\n\nThis cannot be undone.';
+    if (!confirm(msg)) return;
     try { localStorage.removeItem(_SF_QC_EDITS_LS_KEY); } catch (_) {}
+    try { localStorage.removeItem(_SF_QC_ADDS_LS_KEY);  } catch (_) {}
     state._sfQc.edits = {};
+    state._sfQc.adds  = {};
     if (state._sfQc.editMode) _sfQcExitEditMode();
+    if (state._sfQc.addMode)  _sfQcCancelAddMode();
     if (state._sfQc.layer && state.map) {
       try { state.map.removeLayer(state._sfQc.layer); } catch (_) {}
     }
@@ -15258,6 +15574,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + '<button data-act="toggle">&#128274; Edit endpoints</button>'
           + '</div>'
           + '<div class="btn-row">'
+            + '<button data-act="add">&#10133; Add culvert</button>'
+          + '</div>'
+          + '<div class="btn-row">'
             + '<button data-act="export">&#128190; Export KML</button>'
             + '<button data-act="revert">&#8635; Revert all</button>'
           + '</div>'
@@ -15265,6 +15584,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         L.DomEvent.disableClickPropagation(d);
         L.DomEvent.disableScrollPropagation(d);
         d.querySelector('[data-act="toggle"]').addEventListener('click', _sfQcToggleEditMode);
+        d.querySelector('[data-act="add"]').addEventListener('click', _sfQcToggleAddMode);
         d.querySelector('[data-act="export"]').addEventListener('click', _sfQcExportKml);
         d.querySelector('[data-act="revert"]').addEventListener('click', _sfQcRevertAll);
         return d;
@@ -15279,17 +15599,31 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var visible = _sfQcCulvertsShouldShow() && state._sfQc && state._sfQc.layer;
     d.style.display = visible ? 'block' : 'none';
     if (!visible) return;
-    var btn = d.querySelector('[data-act="toggle"]');
+    var btnT = d.querySelector('[data-act="toggle"]');
     if (state._sfQc.editMode) {
-      btn.classList.add('active');
-      btn.innerHTML = '&#128275; Exit edit mode';
+      btnT.classList.add('active');
+      btnT.innerHTML = '&#128275; Exit edit mode';
     } else {
-      btn.classList.remove('active');
-      btn.innerHTML = '&#128274; Edit endpoints';
+      btnT.classList.remove('active');
+      btnT.innerHTML = '&#128274; Edit endpoints';
     }
-    var n = Object.keys(state._sfQc.edits || {}).length;
+    var btnA = d.querySelector('[data-act="add"]');
+    if (state._sfQc.addMode) {
+      btnA.classList.add('active');
+      btnA.innerHTML = '&#10007; Cancel add';
+    } else {
+      btnA.classList.remove('active');
+      btnA.innerHTML = '&#10133; Add culvert';
+    }
+    var nE = Object.keys(state._sfQc.edits || {}).length;
+    var nA = Object.keys(state._sfQc.adds  || {}).length;
     var ec = d.querySelector('.edit-count');
-    if (ec) ec.textContent = n ? (n + ' line(s) edited') : 'No edits yet';
+    if (ec) {
+      var parts = [];
+      if (nE) parts.push(nE + ' edited');
+      if (nA) parts.push(nA + ' added');
+      ec.textContent = parts.length ? parts.join(' · ') : 'No edits yet';
+    }
   }
 
   function _syncSfQcCulvertsLayer() {
@@ -15299,10 +15633,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var want = _sfQcCulvertsShouldShow();
     // Off + not loaded: nothing to do.
     if (!want && !state._sfQc.layer) { _sfQcUpdateControl(); return; }
-    // Off + loaded: remove from map (and exit edit mode + drop the
-    // handles overlay so they don't hover above a missing layer).
+    // Off + loaded: remove from map (and exit edit/add modes + drop
+    // the handles overlay so they don't hover above a missing layer).
     if (!want && state._sfQc.layer) {
       if (state._sfQc.editMode) _sfQcExitEditMode();
+      if (state._sfQc.addMode)  _sfQcCancelAddMode();
       try { state.map.removeLayer(state._sfQc.layer); } catch (_) {}
       _sfQcUpdateControl();
       return;
