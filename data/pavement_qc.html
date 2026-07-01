@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pavement Photo QC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    body { font: 14px system-ui, sans-serif; color: #1f2937; }
+    #app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    #toolbar {
+      background: #1f2937; color: #f8fafc;
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      z-index: 1000;
+    }
+    #toolbar h1 {
+      margin: 0; font: 700 15px system-ui, sans-serif;
+      letter-spacing: 0.3px;
+    }
+    #toolbar button {
+      background: #047857; color: #fff; border: none;
+      padding: 6px 12px; border-radius: 4px; cursor: pointer;
+      font: 600 13px system-ui, sans-serif;
+    }
+    #toolbar button:hover { background: #059669; }
+    #toolbar button.secondary { background: #4b5563; }
+    #toolbar button.secondary:hover { background: #6b7280; }
+    #toolbar button.danger { background: #b91c1c; }
+    #toolbar button.danger:hover { background: #dc2626; }
+    #status {
+      color: #cbd5e1; font: 12px 'IBM Plex Mono', monospace;
+      min-width: 220px;
+    }
+    #status.err { color: #fca5a5; }
+    #status.ok  { color: #86efac; }
+    #map { width: 100%; height: 100%; background: #0f172a; }
+    .basemap-toggle {
+      display: flex; gap: 3px; margin-left: auto;
+      padding: 3px; background: #111827; border-radius: 5px;
+    }
+    .basemap-toggle button {
+      background: transparent; color: #cbd5e1;
+      padding: 4px 10px; font: 600 12px system-ui, sans-serif;
+    }
+    .basemap-toggle button:hover { background: #374151; }
+    .basemap-toggle button.active {
+      background: #f59e0b; color: #1f2937;
+    }
+    /* Photo popup */
+    .photo-popup { min-width: 300px; }
+    .photo-popup img {
+      display: block; max-width: 340px; max-height: 260px;
+      border-radius: 4px; margin-bottom: 6px;
+      background: #f3f4f6;
+    }
+    .photo-popup h4 {
+      margin: 0 0 4px; font: 700 12px 'IBM Plex Mono', monospace;
+      color: #1e40af; word-break: break-all;
+    }
+    .photo-popup .meta {
+      font: 11px system-ui, sans-serif; color: #6b7280;
+      line-height: 1.4;
+    }
+    .photo-popup .missing {
+      color: #6b7280; padding: 20px; text-align: center;
+      background: #f3f4f6; border-radius: 4px;
+    }
+    /* Feature popup */
+    .feat-popup { font: 12px system-ui, sans-serif; }
+    .feat-popup h4 {
+      margin: 0 0 4px; font: 700 12px 'IBM Plex Mono', monospace;
+      color: #7f1d1d;
+    }
+    .feat-popup table { border-collapse: collapse; font-size: 11px; }
+    .feat-popup td { padding: 2px 6px; vertical-align: top; }
+    .feat-popup td:first-child {
+      color: #6b7280; font-family: 'IBM Plex Mono', monospace;
+      text-transform: uppercase; font-size: 10px;
+    }
+    /* Legend */
+    .legend {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px; border-radius: 6px;
+      font: 12px system-ui, sans-serif; color: #1f2937;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      line-height: 1.5;
+    }
+    .legend h5 {
+      margin: 0 0 4px;
+      font: 700 11px 'IBM Plex Mono', monospace;
+      letter-spacing: 0.4px;
+      color: #374151;
+      text-transform: uppercase;
+    }
+    .legend .swatch {
+      display: inline-block; width: 12px; height: 12px;
+      border-radius: 50%; margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <h1>📸 Pavement Photo QC</h1>
+    <button id="load-photos">📁 Load photo folder…</button>
+    <button id="load-features" class="secondary">📍 Import features…</button>
+    <button id="clear-features" class="danger" style="display:none;">✕ Clear features</button>
+    <input type="file" id="photo-picker" webkitdirectory multiple accept="image/jpeg" hidden>
+    <input type="file" id="feat-picker" accept=".json,.geojson,application/geo+json,application/json" hidden>
+    <span id="status">Ready. Load a photo folder to start.</span>
+    <div class="basemap-toggle">
+      <button data-map="nearmap" class="active">Nearmap</button>
+      <button data-map="esri">ESRI Aerial</button>
+      <button data-map="osm">OSM</button>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+'use strict';
+
+// ── Nearmap key ─────────────────────────────────────────────────
+// Inherited from RoadWalk main app (base64-wrapped so the raw key
+// isn't grep-able in this repo). Override via ?key=... to use a
+// different Nearmap account.
+var NEARMAP_KEY_B64 = 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5';
+var _qs = new URLSearchParams(location.search);
+var NEARMAP_KEY = _qs.get('key') || atob(NEARMAP_KEY_B64);
+
+// ── Map + basemaps ─────────────────────────────────────────────
+var map = L.map('map', {
+  zoomControl: true,
+  attributionControl: true,
+}).setView([35.7, -83.5], 13);
+
+var basemaps = {
+  nearmap: L.tileLayer(
+    'https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.jpg?apikey=' + encodeURIComponent(NEARMAP_KEY),
+    { maxZoom: 24, attribution: '© Nearmap' }
+  ),
+  esri: L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 19, attribution: '© Esri' }
+  ),
+  osm: L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 19, attribution: '© OpenStreetMap contributors' }
+  ),
+};
+var currentBasemap = 'nearmap';
+basemaps.nearmap.addTo(map);
+document.querySelectorAll('.basemap-toggle button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var to = btn.dataset.map;
+    if (to === currentBasemap) return;
+    map.removeLayer(basemaps[currentBasemap]);
+    basemaps[to].addTo(map);
+    currentBasemap = to;
+    document.querySelectorAll('.basemap-toggle button').forEach(function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+  });
+});
+
+// ── Layers ──────────────────────────────────────────────────────
+var photoLayer = L.layerGroup().addTo(map);
+var featureLayer = null;
+var legendControl = null;
+
+// ── Status ──────────────────────────────────────────────────────
+var statusEl = document.getElementById('status');
+function setStatus(msg, kind) {
+  statusEl.textContent = msg;
+  statusEl.className = kind || '';
+}
+
+// ── EXIF parsing (lifted from RoadWalk main app) ────────────────
+// JPEG GPS + capture time. Handles both endianness. GPS ref chars
+// flip lat/lng sign as needed; DateTimeOriginal in Exif SubIFD.
+function _rat(dv, o, le) {
+  var n = dv.getUint32(o, le), d = dv.getUint32(o + 4, le);
+  return d ? n / d : 0;
+}
+function _eachEntry(dv, ifd, le, fn) {
+  if (ifd + 2 > dv.byteLength) return;
+  var n = dv.getUint16(ifd, le);
+  for (var i = 0; i < n; i++) {
+    var e = ifd + 2 + i * 12;
+    if (e + 12 > dv.byteLength) break;
+    fn(dv.getUint16(e, le), dv.getUint32(e + 4, le), e + 8);
+  }
+}
+function _parseGps(dv, gpsIfd, tiff, le) {
+  var ent = {};
+  _eachEntry(dv, gpsIfd, le, function (tag, cnt, valOff) { ent[tag] = valOff; });
+  function coord(tag) {
+    if (ent[tag] == null) return null;
+    var o = tiff + dv.getUint32(ent[tag], le);
+    if (o + 24 > dv.byteLength) return null;
+    return _rat(dv, o, le) + _rat(dv, o + 8, le) / 60 + _rat(dv, o + 16, le) / 3600;
+  }
+  function ch(tag) {
+    return ent[tag] != null ? String.fromCharCode(dv.getUint8(ent[tag])) : '';
+  }
+  var lat = coord(2), lng = coord(4);
+  if (lat == null || lng == null) return null;
+  if (ch(1) === 'S') lat = -lat;
+  if (ch(3) === 'W') lng = -lng;
+  var bearing = null;
+  if (ent[17] != null) {
+    var bo = tiff + dv.getUint32(ent[17], le);
+    if (bo + 8 <= dv.byteLength) bearing = _rat(dv, bo, le);
+  }
+  return { lat: lat, lng: lng, bearing: bearing };
+}
+function _parseDateTime(dv, exifIfd, tiff, le) {
+  try {
+    var off = null;
+    _eachEntry(dv, exifIfd, le, function (tag, cnt, valOff) {
+      if (tag === 0x9003 && off == null) off = dv.getUint32(valOff, le);
+    });
+    if (off == null) return null;
+    var p = tiff + off;
+    if (p + 19 > dv.byteLength) return null;
+    var s = '';
+    for (var i = 0; i < 19; i++) s += String.fromCharCode(dv.getUint8(p + i));
+    var m = s.match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return null;
+    var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) { return null; }
+}
+function parseExif(buf) {
+  try {
+    var dv = new DataView(buf);
+    if (dv.byteLength < 12 || dv.getUint16(0) !== 0xFFD8) return null;
+    var off = 2;
+    while (off + 4 <= dv.byteLength) {
+      var marker = dv.getUint16(off);
+      if ((marker & 0xFF00) !== 0xFF00) break;
+      if (marker === 0xFFDA || marker === 0xFFD9) break;
+      var segLen = dv.getUint16(off + 2);
+      if (marker === 0xFFE1 && off + 12 <= dv.byteLength &&
+          dv.getUint32(off + 4) === 0x45786966) {
+        var tiff = off + 4 + 6;
+        var bom = dv.getUint16(tiff);
+        var le = bom === 0x4949;
+        if ((le || bom === 0x4D4D) && dv.getUint16(tiff + 2, le) === 0x002A) {
+          var ifd0 = tiff + dv.getUint32(tiff + 4, le);
+          var gpsPtr = null, exifPtr = null;
+          _eachEntry(dv, ifd0, le, function (tag, cnt, valOff) {
+            if (tag === 0x8825) gpsPtr = dv.getUint32(valOff, le);
+            else if (tag === 0x8769) exifPtr = dv.getUint32(valOff, le);
+          });
+          var res = gpsPtr != null ? _parseGps(dv, tiff + gpsPtr, tiff, le) : null;
+          var dt  = exifPtr != null ? _parseDateTime(dv, tiff + exifPtr, tiff, le) : null;
+          if (!res && !dt) return null;
+          res = res || {};
+          res.dateTime = dt;
+          return res;
+        }
+        return null;
+      }
+      off += 2 + segLen;
+    }
+  } catch (e) {}
+  return null;
+}
+
+// ── Thumbnail generation ────────────────────────────────────────
+// Downscale + JPEG-recompress so popup images don't hold the
+// full-res decoded bitmap in memory. imageOrientation:'from-image'
+// respects EXIF rotation so portrait shots aren't sideways.
+function makeThumb(file, maxSize) {
+  maxSize = maxSize || 640;
+  if (!window.createImageBitmap) return Promise.resolve(null);
+  return createImageBitmap(file, { imageOrientation: 'from-image' })
+    .then(function (bmp) {
+      var s = Math.min(1, maxSize / Math.max(bmp.width, bmp.height));
+      var cw = Math.max(1, Math.round(bmp.width * s));
+      var ch = Math.max(1, Math.round(bmp.height * s));
+      var cv = document.createElement('canvas');
+      cv.width = cw; cv.height = ch;
+      cv.getContext('2d').drawImage(bmp, 0, 0, cw, ch);
+      if (bmp.close) bmp.close();
+      return cv.toDataURL('image/jpeg', 0.78);
+    })
+    .catch(function () { return null; });
+}
+
+// ── Photo loading ───────────────────────────────────────────────
+document.getElementById('load-photos').addEventListener('click', function () {
+  document.getElementById('photo-picker').click();
+});
+document.getElementById('photo-picker').addEventListener('change', function (e) {
+  var files = Array.from(e.target.files || []).filter(function (f) {
+    return /\.(jpe?g)$/i.test(f.name);
+  });
+  e.target.value = '';
+  if (!files.length) {
+    setStatus('No JPEG files found in that folder.', 'err');
+    return;
+  }
+  setStatus('Processing 0 / ' + files.length + '…');
+  photoLayer.clearLayers();
+  var ok = 0, noGps = 0, failed = 0;
+  var bounds = L.latLngBounds();
+  // Sequential loop — each file's ArrayBuffer + bitmap gets released
+  // before the next one is decoded. Keeps peak memory bounded even
+  // for folders of hundreds of photos.
+  var i = 0;
+  function next() {
+    if (i >= files.length) {
+      if (ok && bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] });
+      setStatus(
+        ok + ' photo(s) plotted · ' + noGps + ' without GPS · ' + failed + ' failed.',
+        ok ? 'ok' : 'err'
+      );
+      return;
+    }
+    var f = files[i++];
+    f.arrayBuffer().then(function (buf) {
+      var gps = parseExif(buf);
+      if (!gps || !isFinite(gps.lat) || !isFinite(gps.lng)) {
+        noGps++;
+      } else {
+        var marker = L.circleMarker([gps.lat, gps.lng], {
+          radius: 6, color: '#1e40af', fillColor: '#3b82f6',
+          fillOpacity: 0.85, weight: 2,
+        });
+        marker._file = f;
+        marker._gps = gps;
+        marker.on('click', function () { showPhotoPopup(marker); });
+        photoLayer.addLayer(marker);
+        bounds.extend([gps.lat, gps.lng]);
+        ok++;
+      }
+    }).catch(function () {
+      failed++;
+    }).then(function () {
+      if (i % 5 === 0 || i === files.length) {
+        setStatus(
+          'Processing ' + i + ' / ' + files.length +
+          '  (' + ok + ' plotted, ' + noGps + ' no-GPS, ' +
+          failed + ' failed)…'
+        );
+      }
+      // Defer next iteration so the browser can paint status updates
+      // and reclaim the previous ArrayBuffer before the next allocation.
+      setTimeout(next, 0);
+    });
+  }
+  next();
+});
+
+// Popup content is generated on demand — thumbnails are cached on
+// the marker so re-opening the same photo doesn't re-decode.
+function showPhotoPopup(marker) {
+  if (marker._thumbPromise) {
+    marker._thumbPromise.then(function () { _bindAndOpen(marker); });
+    return;
+  }
+  marker._thumbPromise = makeThumb(marker._file, 640).then(function (t) {
+    marker._thumb = t || '';
+  });
+  marker._thumbPromise.then(function () { _bindAndOpen(marker); });
+}
+function _bindAndOpen(marker) {
+  var g = marker._gps;
+  var dt = g.dateTime instanceof Date ? g.dateTime.toLocaleString() : '(no timestamp)';
+  var img = marker._thumb
+    ? '<img src="' + marker._thumb + '" alt="">'
+    : '<div class="missing">(thumbnail unavailable — try re-opening)</div>';
+  var brg = g.bearing != null && isFinite(g.bearing)
+    ? ' · brg ' + Math.round(g.bearing) + '°'
+    : '';
+  var html =
+    '<div class="photo-popup">' +
+      img +
+      '<h4>' + _esc(marker._file.name) + '</h4>' +
+      '<div class="meta">' +
+        g.lat.toFixed(6) + ', ' + g.lng.toFixed(6) + brg + '<br>' +
+        _esc(dt) +
+      '</div>' +
+    '</div>';
+  marker.bindPopup(html, { maxWidth: 380 }).openPopup();
+}
+
+// ── Feature loading (GeoJSON) ───────────────────────────────────
+document.getElementById('load-features').addEventListener('click', function () {
+  document.getElementById('feat-picker').click();
+});
+document.getElementById('feat-picker').addEventListener('change', function (e) {
+  var f = (e.target.files || [])[0];
+  e.target.value = '';
+  if (!f) return;
+  f.text().then(function (txt) {
+    var gj;
+    try { gj = JSON.parse(txt); }
+    catch (err) { throw new Error('Not valid JSON: ' + err.message); }
+    if (!gj || !Array.isArray(gj.features)) {
+      throw new Error('Not a GeoJSON FeatureCollection.');
+    }
+    if (featureLayer) map.removeLayer(featureLayer);
+    featureLayer = L.geoJSON(gj, {
+      pointToLayer: function (feat, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 7, color: '#7f1d1d', fillColor: '#ef4444',
+          fillOpacity: 0.9, weight: 2,
+        });
+      },
+      style: function () {
+        return {
+          color: '#7f1d1d', weight: 2,
+          fillColor: '#ef4444', fillOpacity: 0.3,
+        };
+      },
+      onEachFeature: function (feat, layer) {
+        var p = feat.properties || {};
+        var keys = Object.keys(p).filter(function (k) {
+          return p[k] != null && p[k] !== '';
+        });
+        var title = p.name || p.NAME || p.description || p.desc || '';
+        var rows = keys.map(function (k) {
+          return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
+        }).join('');
+        var body = title
+          ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
+          : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
+        layer.bindPopup('<div class="feat-popup">' + body + '</div>', { maxWidth: 340 });
+        // Sticky hover tooltip when there's a clear title.
+        if (title) {
+          layer.bindTooltip(_esc(title), {
+            sticky: true, direction: 'top', opacity: 0.95,
+          });
+        }
+      },
+    }).addTo(map);
+    var b = featureLayer.getBounds && featureLayer.getBounds();
+    if (b && b.isValid()) map.fitBounds(b, { padding: [40, 40] });
+    setStatus('Features loaded: ' + gj.features.length + ' (' + _esc(f.name) + ').', 'ok');
+    document.getElementById('clear-features').style.display = '';
+    _rebuildLegend();
+  }).catch(function (err) {
+    setStatus('Feature import failed: ' + err.message, 'err');
+  });
+});
+
+document.getElementById('clear-features').addEventListener('click', function () {
+  if (featureLayer) {
+    map.removeLayer(featureLayer);
+    featureLayer = null;
+  }
+  document.getElementById('clear-features').style.display = 'none';
+  _rebuildLegend();
+});
+
+// ── Legend ──────────────────────────────────────────────────────
+function _rebuildLegend() {
+  if (legendControl) {
+    try { map.removeControl(legendControl); } catch (_) {}
+    legendControl = null;
+  }
+  var hasPhotos = photoLayer.getLayers().length > 0;
+  var hasFeats  = !!featureLayer && featureLayer.getLayers().length > 0;
+  if (!hasPhotos && !hasFeats) return;
+  var Ctrl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function () {
+      var d = L.DomUtil.create('div', 'legend');
+      var parts = ['<h5>Legend</h5>'];
+      if (hasPhotos) {
+        parts.push(
+          '<div><span class="swatch" style="background:#3b82f6;border:2px solid #1e40af;"></span>' +
+          'Photos (' + photoLayer.getLayers().length + ')</div>'
+        );
+      }
+      if (hasFeats) {
+        parts.push(
+          '<div><span class="swatch" style="background:#ef4444;border:2px solid #7f1d1d;"></span>' +
+          'Features (' + featureLayer.getLayers().length + ')</div>'
+        );
+      }
+      d.innerHTML = parts.join('');
+      return d;
+    },
+  });
+  legendControl = new Ctrl().addTo(map);
+}
+// Rebuild legend when the photo layer finishes (called from status loop).
+var _origSetStatus = setStatus;
+setStatus = function (msg, kind) {
+  _origSetStatus(msg, kind);
+  if (kind === 'ok' || kind === 'err') _rebuildLegend();
+};
+
+// ── HTML escape helper (shared) ─────────────────────────────────
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
+</body>
+</html>
