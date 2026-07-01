@@ -5113,6 +5113,11 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .rw-sf-qc-handle.is-inlet  { background: #3b82f6; }
 .rw-sf-qc-handle.is-outlet { background: #ef4444; }
+/* Middle-vertex handles are yellow so they read as "extra" and stand
+   apart from the inlet/outlet endpoints. Right-click prompts to drop
+   the vertex — the KML sometimes has a stray middle vertex that
+   needs pruning. */
+.rw-sf-qc-handle.is-mid    { background: #fbbf24; width: 10px; height: 10px; }
 .rw-sf-qc-panel {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid #cbd5e1;
@@ -14986,8 +14991,21 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // user's corrections. Edits are keyed by Num (preferred) with FID
     // / Id as fallbacks; loadSfQcEdits returns {} when nothing is
     // saved or the localStorage value parses to junk.
-    state._sfQc.edits = _loadSfQcEdits();
-    state._sfQc.adds  = _loadSfQcAdds();
+    state._sfQc.edits   = _loadSfQcEdits();
+    state._sfQc.adds    = _loadSfQcAdds();
+    state._sfQc.deletes = _loadSfQcDeletes();
+    // Filter out features the user has deleted (right-clicked an
+    // inlet/outlet handle → confirm). Runs first so edit + fmt
+    // steps below don't waste work on features that won't render.
+    var delKeys = Object.keys(state._sfQc.deletes || {});
+    if (delKeys.length && geojson && Array.isArray(geojson.features)) {
+      var before = geojson.features.length;
+      geojson.features = geojson.features.filter(function (f) {
+        var k = _sfQcFeatureKey(f);
+        return !k || !state._sfQc.deletes[k];
+      });
+      console.log('[RoadWalk] SF QC: dropped', before - geojson.features.length, 'deleted culvert(s)');
+    }
     var editKeys = Object.keys(state._sfQc.edits || {});
     if (editKeys.length && geojson && Array.isArray(geojson.features)) {
       geojson.features.forEach(function (f) {
@@ -15075,8 +15093,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // [lng, lat] vertex list plus the recomputed drawn / delta / ratio
   // numbers so the tooltip + edit-count badge can hydrate from the
   // saved blob without re-running haversine over every line on load.
-  var _SF_QC_EDITS_LS_KEY = 'rw_sf_qc_edits';
-  var _SF_QC_ADDS_LS_KEY  = 'rw_sf_qc_adds';
+  var _SF_QC_EDITS_LS_KEY   = 'rw_sf_qc_edits';
+  var _SF_QC_ADDS_LS_KEY    = 'rw_sf_qc_adds';
+  var _SF_QC_DELETES_LS_KEY = 'rw_sf_qc_deletes';
   // Style presets — pre-build the three style objects so the layer's
   // style callback returns one of them by reference (cheaper than
   // allocating a fresh object per feature on every redraw).
@@ -15123,6 +15142,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       localStorage.setItem(_SF_QC_ADDS_LS_KEY,
         JSON.stringify(state._sfQc.adds || {}));
     } catch (e) { console.warn('[RoadWalk] SF QC adds save failed', e); }
+  }
+  function _loadSfQcDeletes() {
+    try {
+      var s = localStorage.getItem(_SF_QC_DELETES_LS_KEY);
+      return s ? (JSON.parse(s) || {}) : {};
+    } catch (_) { return {}; }
+  }
+  function _saveSfQcDeletesToLS() {
+    try {
+      localStorage.setItem(_SF_QC_DELETES_LS_KEY,
+        JSON.stringify(state._sfQc.deletes || {}));
+    } catch (e) { console.warn('[RoadWalk] SF QC deletes save failed', e); }
   }
   // Find the next sensible Num for a freshly-added culvert. Walks the
   // currently-loaded layer (which already includes prior adds) and
@@ -15189,28 +15220,126 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     };
     _saveSfQcEditsToLS();
   }
-  // Build a draggable inlet+outlet handle pair for one polyline.
+  // Build draggable handles for one polyline: inlet + outlet at the
+  // endpoints, plus a yellow "mid" handle per interior vertex. Mid
+  // handles are draggable (fine-tune the shape) AND right-clickable
+  // (delete the vertex — the KML sometimes carries stray vertices
+  // that need to be pruned before export). Endpoints are drag-only;
+  // deleting an endpoint would collapse the culvert to a single
+  // point, so we don't offer that action here.
   function _sfQcBuildHandlesFor(poly) {
     if (!poly || !poly.feature || !state._sfQc.handlesGroup) return;
     var lls = poly.getLatLngs();
     var path = Array.isArray(lls[0]) ? lls[0] : lls;       // L.GeoJSON wraps in array
     if (!Array.isArray(path) || path.length < 2) return;
-    function _mkHandle(latlng, side) {
+    function _mkHandle(latlng, side, vertexIndex) {
+      var sizePx = side === 'mid' ? 10 : 14;
       var icon = L.divIcon({
         className: 'rw-sf-qc-handle is-' + side,
-        iconSize: [14, 14], iconAnchor: [7, 7],
+        iconSize: [sizePx, sizePx], iconAnchor: [sizePx / 2, sizePx / 2],
       });
       var m = L.marker(latlng, { icon: icon, draggable: true, pane: 'markerPane' });
       m._sfqcSide = side;
       m._sfqcPoly = poly;
+      m._sfqcVertexIndex = vertexIndex;                    // for mid handles
       m.on('drag', _sfQcOnHandleDrag);
       m.on('dragend', _sfQcOnHandleDragEnd);
+      if (side === 'mid') m.on('contextmenu', _sfQcOnMidHandleContextmenu);
+      else                m.on('contextmenu', _sfQcOnEndpointHandleContextmenu);
       return m;
     }
-    var inlet  = _mkHandle(path[0], 'inlet');
-    var outlet = _mkHandle(path[path.length - 1], 'outlet');
-    state._sfQc.handlesGroup.addLayer(inlet);
-    state._sfQc.handlesGroup.addLayer(outlet);
+    state._sfQc.handlesGroup.addLayer(_mkHandle(path[0], 'inlet', 0));
+    // Mid vertices — indices 1 through length-2.
+    for (var i = 1; i < path.length - 1; i++) {
+      state._sfQc.handlesGroup.addLayer(_mkHandle(path[i], 'mid', i));
+    }
+    state._sfQc.handlesGroup.addLayer(_mkHandle(path[path.length - 1], 'outlet', path.length - 1));
+  }
+  // Right-click a mid-vertex handle to drop that vertex.
+  function _sfQcOnMidHandleContextmenu(e) {
+    if (L.DomEvent && L.DomEvent.preventDefault) L.DomEvent.preventDefault(e);
+    var m = e.target, poly = m._sfqcPoly, vi = m._sfqcVertexIndex;
+    if (!poly || !poly.feature || vi == null) return;
+    var lls = poly.getLatLngs();
+    var path = Array.isArray(lls[0]) ? lls[0] : lls;
+    if (!Array.isArray(path) || vi < 1 || vi >= path.length - 1) return;
+    if (!confirm('Delete this middle vertex? (' + (path.length - 1) + ' vertices will remain.)')) return;
+    path.splice(vi, 1);
+    poly.setLatLngs(Array.isArray(lls[0]) ? [path] : path);
+    // Mirror into feature.geometry.coordinates and recompute drawn.
+    var f = poly.feature;
+    var newCoords = path.map(function (ll) { return [ll.lng, ll.lat]; });
+    f.geometry.coordinates = newCoords;
+    var drawn = _sfQcHavFt(newCoords);
+    f.properties.drawn_length_ft = Math.round(drawn * 10) / 10;
+    if (typeof f.properties.xlsx_length_ft === 'number') {
+      f.properties.length_delta_ft = Math.round((drawn - f.properties.xlsx_length_ft) * 10) / 10;
+      if (f.properties.xlsx_length_ft > 0) {
+        f.properties.length_ratio = Math.round((drawn / f.properties.xlsx_length_ft) * 100) / 100;
+      }
+    }
+    f.properties._edited = true;
+    _sfQcPersistEdit(f);
+    _sfQcUpdateTooltip(poly);
+    if (state._sfQc.layer) {
+      try { state._sfQc.layer.resetStyle(poly); } catch (_) {}
+    }
+    // Rebuild handles for this poly so the vertex indices stay honest.
+    state._sfQc.handlesGroup.eachLayer(function (h) {
+      if (h._sfqcPoly === poly) state._sfQc.handlesGroup.removeLayer(h);
+    });
+    _sfQcBuildHandlesFor(poly);
+    _sfQcUpdateControl();
+  }
+  // Right-click an inlet/outlet handle → prompt to delete the whole
+  // culvert. Persists to rw_sf_qc_deletes so a Reload / re-mount of
+  // the layer keeps it dropped.
+  function _sfQcOnEndpointHandleContextmenu(e) {
+    if (L.DomEvent && L.DomEvent.preventDefault) L.DomEvent.preventDefault(e);
+    var m = e.target, poly = m._sfqcPoly;
+    if (!poly || !poly.feature) return;
+    var f = poly.feature;
+    var key = _sfQcFeatureKey(f);
+    var addKey = f.properties && f.properties._add_key;
+    var label = (f.properties && (f.properties.Num || f.properties.Id
+      || f.properties.FID)) || key || '(unlabeled)';
+    if (!confirm('Delete this whole culvert (#' + label + ')?  '
+      + 'This can be reverted via "Revert all".')) return;
+    _sfQcDeletePolyline(poly, key, addKey);
+  }
+  function _sfQcDeletePolyline(poly, key, addKey) {
+    if (!state._sfQc) return;
+    // Drop handles for this poly first so nothing dangles on the map.
+    if (state._sfQc.handlesGroup) {
+      state._sfQc.handlesGroup.eachLayer(function (h) {
+        if (h._sfqcPoly === poly) state._sfQc.handlesGroup.removeLayer(h);
+      });
+    }
+    // User-added culverts get wiped from the adds store entirely so
+    // a re-import doesn't resurrect them.
+    if (addKey) {
+      if (state._sfQc.adds && state._sfQc.adds[addKey]) {
+        delete state._sfQc.adds[addKey];
+        _saveSfQcAddsToLS();
+      }
+    } else if (key) {
+      // KMZ-sourced culverts get flagged as deleted so the source
+      // GeoJSON's copy stays available for undo via Revert all.
+      state._sfQc.deletes = state._sfQc.deletes || {};
+      state._sfQc.deletes[key] = { deleted_at: new Date().toISOString() };
+      _saveSfQcDeletesToLS();
+      // Drop any pending edit for this key — no point tracking
+      // vertex changes on a deleted culvert.
+      if (state._sfQc.edits && state._sfQc.edits[key]) {
+        delete state._sfQc.edits[key];
+        _saveSfQcEditsToLS();
+      }
+    }
+    // Remove the polyline from the visible layer.
+    if (state._sfQc.layer) {
+      try { state._sfQc.layer.removeLayer(poly); } catch (_) {}
+    }
+    _sfQcUpdateControl();
   }
   function _sfQcOnHandleDrag(e) {
     var m = e.target, poly = m._sfqcPoly, side = m._sfqcSide;
@@ -15218,8 +15347,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var newLL = m.getLatLng();
     var lls = poly.getLatLngs();
     var path = Array.isArray(lls[0]) ? lls[0] : lls;
-    if (side === 'inlet') path[0] = newLL;
-    else                  path[path.length - 1] = newLL;
+    if (side === 'mid') {
+      var vi = m._sfqcVertexIndex;
+      if (vi != null && vi >= 0 && vi < path.length) path[vi] = newLL;
+    } else if (side === 'inlet') {
+      path[0] = newLL;
+    } else {
+      path[path.length - 1] = newLL;
+    }
     // Push back to the polyline using the original shape (wrapped vs flat).
     poly.setLatLngs(Array.isArray(lls[0]) ? [path] : path);
     // Mirror into feature.geometry.coordinates ([lng,lat]) so export +
@@ -15536,19 +15671,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // without reloading the page. One confirm prompt for both since
   // the two flows are tightly coupled in the user's mental model.
   function _sfQcRevertAll() {
-    var nE = Object.keys(state._sfQc.edits || {}).length;
-    var nA = Object.keys(state._sfQc.adds  || {}).length;
-    if (!nE && !nA) { alert('No SF QC edits or additions to revert.'); return; }
-    var msg = 'Discard all ';
-    if (nE && nA) msg += nE + ' edit(s) AND ' + nA + ' added culvert(s)?';
-    else if (nE)  msg += nE + ' SF QC endpoint edit(s)?';
-    else          msg += nA + ' added culvert(s)?';
-    msg += '\n\nThis cannot be undone.';
+    var nE = Object.keys(state._sfQc.edits   || {}).length;
+    var nA = Object.keys(state._sfQc.adds    || {}).length;
+    var nD = Object.keys(state._sfQc.deletes || {}).length;
+    if (!nE && !nA && !nD) { alert('No SF QC edits, additions, or deletions to revert.'); return; }
+    var parts = [];
+    if (nE) parts.push(nE + ' edit(s)');
+    if (nA) parts.push(nA + ' added');
+    if (nD) parts.push(nD + ' deleted');
+    var msg = 'Discard all ' + parts.join(' AND ') + '?\n\nThis cannot be undone.';
     if (!confirm(msg)) return;
-    try { localStorage.removeItem(_SF_QC_EDITS_LS_KEY); } catch (_) {}
-    try { localStorage.removeItem(_SF_QC_ADDS_LS_KEY);  } catch (_) {}
-    state._sfQc.edits = {};
-    state._sfQc.adds  = {};
+    try { localStorage.removeItem(_SF_QC_EDITS_LS_KEY);   } catch (_) {}
+    try { localStorage.removeItem(_SF_QC_ADDS_LS_KEY);    } catch (_) {}
+    try { localStorage.removeItem(_SF_QC_DELETES_LS_KEY); } catch (_) {}
+    state._sfQc.edits   = {};
+    state._sfQc.adds    = {};
+    state._sfQc.deletes = {};
     if (state._sfQc.editMode) _sfQcExitEditMode();
     if (state._sfQc.addMode)  _sfQcCancelAddMode();
     if (state._sfQc.layer && state.map) {
@@ -15615,20 +15753,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       btnA.classList.remove('active');
       btnA.innerHTML = '&#10133; Add culvert';
     }
-    var nE = Object.keys(state._sfQc.edits || {}).length;
-    var nA = Object.keys(state._sfQc.adds  || {}).length;
+    var nE = Object.keys(state._sfQc.edits   || {}).length;
+    var nA = Object.keys(state._sfQc.adds    || {}).length;
+    var nD = Object.keys(state._sfQc.deletes || {}).length;
     var ec = d.querySelector('.edit-count');
     if (ec) {
       var parts = [];
       if (nE) parts.push(nE + ' edited');
       if (nA) parts.push(nA + ' added');
+      if (nD) parts.push(nD + ' deleted');
       ec.textContent = parts.length ? parts.join(' · ') : 'No edits yet';
     }
   }
 
   function _syncSfQcCulvertsLayer() {
     if (!state || !state.map) return;
-    if (!state._sfQc) state._sfQc = { layer: null, loading: false, failed: false, editMode: false, edits: {} };
+    if (!state._sfQc) state._sfQc = { layer: null, loading: false, failed: false, editMode: false, edits: {}, adds: {}, deletes: {} };
     _sfQcInitControl();
     var want = _sfQcCulvertsShouldShow();
     // Off + not loaded: nothing to do.
