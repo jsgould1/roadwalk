@@ -444,7 +444,111 @@ function _openPhotoPopup(marker) {
   marker.bindPopup(html, { maxWidth: 380 }).openPopup();
 }
 
-// ── Feature loading (GeoJSON) ───────────────────────────────────
+// ── Feature loading ─────────────────────────────────────────────
+// Accepts three formats:
+//   1. Plain GeoJSON FeatureCollection
+//   2. RoadWalk "aecom-features" export ({_format:'roadwalk-aecom-features-v1',
+//      field_sections:[…], bundle_section_pins:[…]})
+//   3. RoadWalk "centerlines" export ({_format:'roadwalk-centerlines-v1',
+//      centerlines:[{alignment:[[lat,lng],…]}]})
+// Normalises into a Feature[] before handing to L.geoJSON. Photo
+// dataUrls are stripped from every pin's attrs so a 172 MB export
+// (which is 172 MB of base64 photo bytes) doesn't OOM the tab.
+function _stripPhotoDataUrls(attrs) {
+  if (!attrs || typeof attrs !== 'object') return {};
+  var out = {};
+  Object.keys(attrs).forEach(function (k) {
+    var v = attrs[k];
+    if (k === 'photos' && Array.isArray(v)) {
+      out.photos_count = v.length;                     // keep the count for QC
+      return;
+    }
+    if (typeof v === 'string' && v.indexOf('data:') === 0) return;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      out[k] = _stripPhotoDataUrls(v);                 // shallow-recurse nested attrs
+      return;
+    }
+    out[k] = v;
+  });
+  return out;
+}
+function _normalizeImport(gj, filename) {
+  if (!gj || typeof gj !== 'object') return null;
+  // Plain GeoJSON FeatureCollection
+  if (Array.isArray(gj.features)) return { name: filename, features: gj.features };
+  // RoadWalk AECOM features export
+  if (gj._format === 'roadwalk-aecom-features-v1') {
+    var feats = [];
+    (gj.bundle_section_pins || []).forEach(function (p) {
+      if (!p || !p.geometry) return;
+      var attrs = _stripPhotoDataUrls(p.attrs || {});
+      feats.push({
+        type: 'Feature',
+        geometry: p.geometry,
+        properties: Object.assign(
+          { kind: p.kind || '', ulid: p.ulid || '',
+            section_id: p._hint_section_id || '' },
+          attrs
+        ),
+      });
+    });
+    (gj.field_sections || []).forEach(function (sec) {
+      if (Array.isArray(sec.alignment) && sec.alignment.length >= 2) {
+        feats.push({
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            // In RoadWalk the alignment is stored as [[lat, lng], …].
+            // GeoJSON wants [lng, lat], so flip on the way out.
+            coordinates: sec.alignment.map(function (c) { return [c[1], c[0]]; }),
+          },
+          properties: { kind: 'section', section_id: sec.id || '',
+                        name: sec.name || '' },
+        });
+      }
+      (sec.pins || []).forEach(function (p) {
+        if (!p || !p.geometry) return;
+        var attrs = _stripPhotoDataUrls(p.attrs || {});
+        feats.push({
+          type: 'Feature',
+          geometry: p.geometry,
+          properties: Object.assign(
+            { kind: p.kind || '', ulid: p.ulid || '',
+              section_id: sec.id || '' },
+            attrs
+          ),
+        });
+      });
+    });
+    return {
+      name: (gj.project_name || filename) + ' (aecom-features)',
+      features: feats,
+    };
+  }
+  // RoadWalk centerlines export
+  if (gj._format === 'roadwalk-centerlines-v1') {
+    var lines = (gj.centerlines || []).map(function (cl) {
+      if (!Array.isArray(cl.alignment) || cl.alignment.length < 2) return null;
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: cl.alignment.map(function (c) { return [c[1], c[0]]; }),
+        },
+        properties: {
+          section_id: cl.section_id || '', name: cl.section_name || '',
+          type: cl.type || '',
+          mp_start: cl.mp_start, mp_end: cl.mp_end,
+        },
+      };
+    }).filter(Boolean);
+    return {
+      name: (gj.project_name || filename) + ' (centerlines)',
+      features: lines,
+    };
+  }
+  return null;
+}
 document.getElementById('load-features').addEventListener('click', function () {
   document.getElementById('feat-picker').click();
 });
@@ -452,15 +556,35 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
   var f = (e.target.files || [])[0];
   e.target.value = '';
   if (!f) return;
+  // Large-file warning — a 172 MB export takes ~350 MB of RAM to
+  // parse (UTF-16 string + JS object graph) which can OOM the tab.
+  // We still let the user proceed, we just tell them what to expect.
+  var sizeMb = Math.round(f.size / 1048576);
+  if (sizeMb >= 50) {
+    var proceed = confirm(
+      'This file is ' + sizeMb + ' MB. Parsing may take a while and use '
+      + 'roughly ' + (sizeMb * 2) + ' MB of memory. Photo dataUrls will be '
+      + 'stripped automatically to keep the tab responsive.\n\nContinue?'
+    );
+    if (!proceed) return;
+  }
+  setStatus('Reading ' + f.name + ' (' + sizeMb + ' MB)…');
   f.text().then(function (txt) {
+    setStatus('Parsing JSON…');
     var gj;
     try { gj = JSON.parse(txt); }
     catch (err) { throw new Error('Not valid JSON: ' + err.message); }
-    if (!gj || !Array.isArray(gj.features)) {
-      throw new Error('Not a GeoJSON FeatureCollection.');
+    txt = null;                                        // release the ~350 MB string
+    var norm = _normalizeImport(gj, f.name);
+    gj = null;                                         // release the parsed graph
+    if (!norm) {
+      throw new Error(
+        'Unrecognised format. Expected a GeoJSON FeatureCollection or a '
+        + 'RoadWalk export (aecom-features / centerlines).'
+      );
     }
     if (featureLayer) map.removeLayer(featureLayer);
-    featureLayer = L.geoJSON(gj, {
+    featureLayer = L.geoJSON({ type: 'FeatureCollection', features: norm.features }, {
       pointToLayer: function (feat, latlng) {
         return L.circleMarker(latlng, {
           radius: 7, color: '#7f1d1d', fillColor: '#ef4444',
@@ -496,7 +620,10 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     }).addTo(map);
     var b = featureLayer.getBounds && featureLayer.getBounds();
     if (b && b.isValid()) map.fitBounds(b, { padding: [40, 40] });
-    setStatus('Features loaded: ' + gj.features.length + ' (' + _esc(f.name) + ').', 'ok');
+    setStatus(
+      'Features loaded: ' + norm.features.length + ' from "' + _esc(norm.name) + '".',
+      'ok'
+    );
     document.getElementById('clear-features').style.display = '';
     _rebuildLegend();
   }).catch(function (err) {
