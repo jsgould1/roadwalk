@@ -296,6 +296,17 @@ function makeThumb(file, maxSize) {
 }
 
 // ── Photo loading ───────────────────────────────────────────────
+// Slice only the first 64 KB of each JPEG for the EXIF parse — the
+// TIFF+GPS+Exif SubIFD structure lives inside the leading APP1 chunk,
+// so we never need to read the full file just to get lat/lng/time.
+// The Blob is then handed to createImageBitmap for the thumbnail;
+// the browser handles the second read internally and we release the
+// full-res bitmap as soon as the ~640 px thumbnail data URL is baked.
+function _readExifHead(file) {
+  var HEAD = 65536;                                  // 64 KB covers virtually every APP1
+  return file.slice(0, Math.min(HEAD, file.size)).arrayBuffer();
+}
+
 document.getElementById('load-photos').addEventListener('click', function () {
   document.getElementById('photo-picker').click();
 });
@@ -308,40 +319,55 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
     setStatus('No JPEG files found in that folder.', 'err');
     return;
   }
+  // Pull the folder name off the first file's webkitRelativePath so
+  // the final status line reads like "N plotted from <folder>".
+  var folderName = '';
+  if (files[0] && files[0].webkitRelativePath) {
+    folderName = files[0].webkitRelativePath.split('/')[0] || '';
+  }
   setStatus('Processing 0 / ' + files.length + '…');
   photoLayer.clearLayers();
   var ok = 0, noGps = 0, failed = 0;
   var bounds = L.latLngBounds();
-  // Sequential loop — each file's ArrayBuffer + bitmap gets released
-  // before the next one is decoded. Keeps peak memory bounded even
-  // for folders of hundreds of photos.
+  // Sequential loop — one file at a time. The EXIF slice (~64 KB)
+  // plus the transient full-res bitmap during downscale are the only
+  // live allocations per iteration; both get released before the
+  // next file is opened.
   var i = 0;
   function next() {
     if (i >= files.length) {
       if (ok && bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] });
+      var from = folderName ? ' from "' + folderName + '"' : '';
       setStatus(
-        ok + ' photo(s) plotted · ' + noGps + ' without GPS · ' + failed + ' failed.',
+        ok + ' photo(s) plotted' + from + ' · ' +
+        noGps + ' without GPS · ' + failed + ' failed.',
         ok ? 'ok' : 'err'
       );
       return;
     }
     var f = files[i++];
-    f.arrayBuffer().then(function (buf) {
+    _readExifHead(f).then(function (buf) {
       var gps = parseExif(buf);
       if (!gps || !isFinite(gps.lat) || !isFinite(gps.lng)) {
         noGps++;
-      } else {
+        return null;
+      }
+      // GPS is good — pre-generate the ~640 px thumbnail NOW so the
+      // popup opens instantly on click and the full-res bitmap is
+      // released before we move on to the next file.
+      return makeThumb(f, 640).then(function (thumb) {
         var marker = L.circleMarker([gps.lat, gps.lng], {
           radius: 6, color: '#1e40af', fillColor: '#3b82f6',
           fillOpacity: 0.85, weight: 2,
         });
-        marker._file = f;
-        marker._gps = gps;
-        marker.on('click', function () { showPhotoPopup(marker); });
+        marker._name  = f.name;
+        marker._gps   = gps;
+        marker._thumb = thumb || '';
+        marker.on('click', function () { _openPhotoPopup(marker); });
         photoLayer.addLayer(marker);
         bounds.extend([gps.lat, gps.lng]);
         ok++;
-      }
+      });
     }).catch(function () {
       failed++;
     }).then(function () {
@@ -352,39 +378,29 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
           failed + ' failed)…'
         );
       }
-      // Defer next iteration so the browser can paint status updates
-      // and reclaim the previous ArrayBuffer before the next allocation.
+      // Defer next iteration so the browser can paint the status
+      // update and GC the previous file's transients.
       setTimeout(next, 0);
     });
   }
   next();
 });
 
-// Popup content is generated on demand — thumbnails are cached on
-// the marker so re-opening the same photo doesn't re-decode.
-function showPhotoPopup(marker) {
-  if (marker._thumbPromise) {
-    marker._thumbPromise.then(function () { _bindAndOpen(marker); });
-    return;
-  }
-  marker._thumbPromise = makeThumb(marker._file, 640).then(function (t) {
-    marker._thumb = t || '';
-  });
-  marker._thumbPromise.then(function () { _bindAndOpen(marker); });
-}
-function _bindAndOpen(marker) {
+// Popup uses the pre-baked thumbnail on the marker — no decode work
+// at click time.
+function _openPhotoPopup(marker) {
   var g = marker._gps;
   var dt = g.dateTime instanceof Date ? g.dateTime.toLocaleString() : '(no timestamp)';
   var img = marker._thumb
     ? '<img src="' + marker._thumb + '" alt="">'
-    : '<div class="missing">(thumbnail unavailable — try re-opening)</div>';
+    : '<div class="missing">(thumbnail unavailable)</div>';
   var brg = g.bearing != null && isFinite(g.bearing)
     ? ' · brg ' + Math.round(g.bearing) + '°'
     : '';
   var html =
     '<div class="photo-popup">' +
       img +
-      '<h4>' + _esc(marker._file.name) + '</h4>' +
+      '<h4>' + _esc(marker._name) + '</h4>' +
       '<div class="meta">' +
         g.lat.toFixed(6) + ', ' + g.lng.toFixed(6) + brg + '<br>' +
         _esc(dt) +
