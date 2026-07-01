@@ -277,6 +277,7 @@
     <button id="load-photos">📁 Load photo folder…</button>
     <button id="load-features" class="secondary">📍 Import features…</button>
     <button id="load-pkg" class="secondary" title="Load a JSON package previously produced by the Export package button — restores features + photo thumbnails + the exporter's map view in one step.">📦 Import package…</button>
+    <button id="set-folder" class="secondary" title="Point the tool at the folder that holds the original full-res photos. Once set, left-clicking a thumbnail in a feature popup opens the full-res original in a new tab.">🗂 Set folder…</button>
     <button id="trim-view" class="secondary" style="display:none;" title="Remove features whose geometry is outside the current map viewport. Handy for stripping other-state data out of a national AECOM export.">✂ Trim to view</button>
     <button id="link-photos" class="secondary" style="display:none;" title="Associate each photo with the nearest OT/GW/FP feature within a distance threshold. Linked photos gain a colored border matching their feature category and show the feature ID in the popup.">🔗 Link photos…</button>
     <button id="export-pkg" class="secondary" style="display:none;" title="Save features + photos (with thumbnails) as a single JSON package another user can open from the Pavement QC tool.">💾 Export package…</button>
@@ -1398,6 +1399,99 @@ function _findPhotoMarkerByName(name) {
   photoLayer.eachLayer(function (m) { if (m._name === name) found = m; });
   return found;
 }
+// ── Project folder (File System Access API) ────────────────────
+// User picks a directory once via showDirectoryPicker; the handle
+// lives for the session so we can pull the FULL-RES original when
+// the user left-clicks a package-imported thumbnail. Handles aren't
+// persisted to IDB across reloads on purpose - Chromium re-prompts
+// for permission anyway, so re-picking is the honest UX.
+var _projectDirHandle = null;
+function _setProjectFolder() {
+  if (typeof window.showDirectoryPicker !== 'function') {
+    alert('This browser does not support the File System Access API. '
+        + 'Use Edge or Chrome to set a photo folder.');
+    return;
+  }
+  window.showDirectoryPicker({ mode: 'read' }).then(function (handle) {
+    _projectDirHandle = handle;
+    var label = handle.name || 'folder';
+    var short = label.length > 24 ? (label.slice(0, 22) + '…') : label;
+    var btn = document.getElementById('set-folder');
+    if (btn) btn.innerHTML = '&#128451; ' + _esc(short);
+    if (btn) btn.title = 'Photo folder: ' + label
+      + ' (click to pick a different folder)';
+    setStatus('Photo folder set: "' + label + '". Left-click any thumbnail '
+      + 'to open the full-res original in a new tab.', 'ok');
+  }).catch(function (e) {
+    if (e && e.name !== 'AbortError') {
+      setStatus('Folder pick failed: ' + (e.message || e), 'err');
+    }
+  });
+}
+document.getElementById('set-folder').addEventListener('click', _setProjectFolder);
+
+// Open the full-res original in a new browser tab. Priority order:
+//   1. marker._file - live File reference (fresh photo-folder load)
+//   2. _projectDirHandle - user-picked directory (package imports)
+//   3. marker._thumb - baked ~640 px fallback so left-click always
+//      shows SOMETHING, even without a project folder set.
+function _openOriginalPhoto(marker) {
+  if (!marker) return;
+  var name = marker._name || 'photo.jpg';
+  function _openBlob(blob) {
+    var url = URL.createObjectURL(blob);
+    var w = window.open(url, '_blank');
+    if (!w) setStatus('Popup blocked — allow pop-ups to open photos.', 'err');
+    // Give the tab time to load before revoking. If the user leaves
+    // the tab open longer than 60 s the URL will 404, which is fine
+    // - they can right-click the tab and reload from the original.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+  if (marker._file instanceof Blob) {
+    _openBlob(marker._file);
+    setStatus('Opened ' + name + ' (original).', 'ok');
+    return;
+  }
+  if (_projectDirHandle && name && typeof _projectDirHandle.getFileHandle === 'function') {
+    _projectDirHandle.getFileHandle(name).then(function (fh) {
+      return fh.getFile();
+    }).then(function (file) {
+      _openBlob(file);
+      setStatus('Opened ' + name + ' from project folder.', 'ok');
+    }).catch(function (e) {
+      // Not in folder — fall back to the thumbnail so the click
+      // still surfaces SOMETHING.
+      if (marker._thumb) {
+        _openThumbInTab(marker._thumb, name);
+        setStatus('Original ' + name + ' not in folder — opened thumbnail.', 'err');
+      } else {
+        setStatus('Could not open ' + name + ': ' + (e.message || e), 'err');
+      }
+    });
+    return;
+  }
+  if (marker._thumb) {
+    _openThumbInTab(marker._thumb, name);
+    setStatus('Opened ' + name + ' (thumbnail — set a photo folder for full-res).', 'ok');
+  } else {
+    setStatus('No image data available for ' + name + '.', 'err');
+  }
+}
+function _openThumbInTab(dataUrl, name) {
+  // data: URLs can be opened directly, but many browsers now block
+  // top-level navigation to them. Convert to a blob URL first.
+  try {
+    var m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+    if (!m) { window.open(dataUrl, '_blank'); return; }
+    var bin = atob(m[2]);
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    var blob = new Blob([arr], { type: m[1] });
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  } catch (_) { window.open(dataUrl, '_blank'); }
+}
 // Attach popupopen / popupclose to the feature layer so photo
 // thumbnails inside any opened popup gain mouseover -> 4x
 // preview. popupclose hides any stray preview to guard against
@@ -1412,6 +1506,16 @@ function _wireFeatureLayerHover(fl) {
       item.addEventListener('mouseenter', function () { _showHoverPreview(item); });
       item.addEventListener('mousemove',  function () { _showHoverPreview(item); });
       item.addEventListener('mouseleave', function () { _hideHoverPreview(); });
+      // Left-click → open full-res original in a new tab (from the
+      // live File reference or the configured project folder; falls
+      // back to the thumbnail if neither source is available).
+      item.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        _hideHoverPreview();
+        var name = item.getAttribute('data-name') || '';
+        var marker = _findPhotoMarkerByName(name);
+        if (marker) _openOriginalPhoto(marker);
+      });
       // Right-click → save. Full-res original if we still have the
       // File reference; otherwise the ~640 px thumbnail.
       item.addEventListener('contextmenu', function (evt) {
