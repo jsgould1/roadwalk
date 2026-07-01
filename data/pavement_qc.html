@@ -1278,30 +1278,23 @@ function _buildFeatureLayerFromGeoJson(fc) {
 }
 
 // Popup content builder — called every time a feature's popup opens
-// so linked-photo state is always current. Attribute table on top,
-// linked-photo grid (2x hover-tooltip size) below when there is any
-// linkage for this feature.
+// so linked-photo state is always current. This project's popup is
+// intentionally minimal: the feature-id header + the linked-photo
+// grid. Attribute tables were removed because they read as noise
+// during a photo-QC pass. Features with no linked photos still get
+// a small "No linked photos" row so the user knows the click landed.
 function _buildFeatureFullPopupHtml(feat) {
   var p = feat.properties || {};
-  var keys = Object.keys(p).filter(function (k) {
-    return p[k] != null && p[k] !== '';
-  });
-  var title = p.name || p.NAME || p.description || p.desc || '';
-  var rows = keys.map(function (k) {
-    return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
-  }).join('');
-  var body = title
-    ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
-    : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
-  // Walk photoLayer for anything currently linked to this feature.
-  var featId = _featureIdent(p);
+  var title = _featureIdent(p)
+           || p.name || p.NAME || p.description || p.desc || '(feature)';
   var linked = [];
+  var featId = _featureIdent(p);
   if (featId) {
     photoLayer.eachLayer(function (m) {
       if (m._linked_feature_id === featId && m._thumb) linked.push(m);
     });
   }
-  var photosSection = '';
+  var body = '<h4>' + _esc(title) + '</h4>';
   if (linked.length) {
     var items = linked.map(function (ph) {
       return '<div class="feat-popup-photo" data-name="' + _esc(ph._name || '') + '">'
@@ -1309,12 +1302,16 @@ function _buildFeatureFullPopupHtml(feat) {
         + '<div class="cap">' + _esc(ph._name || '') + '</div>'
       + '</div>';
     }).join('');
-    photosSection = '<div class="feat-popup-photos-hdr">'
+    body += '<div class="feat-popup-photos-hdr">'
       + '&#128279; ' + linked.length + ' linked photo(s)'
     + '</div>'
     + '<div class="feat-popup-photos">' + items + '</div>';
+  } else {
+    body += '<div class="feat-popup-photos-hdr" style="color:#9ca3af;">'
+      + 'No linked photos.'
+    + '</div>';
   }
-  return '<div class="feat-popup">' + body + photosSection + '</div>';
+  return '<div class="feat-popup">' + body + '</div>';
 }
 
 // ── 4x hover preview ──────────────────────────────────────────
