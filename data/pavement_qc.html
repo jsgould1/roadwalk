@@ -175,6 +175,67 @@
       white-space: nowrap;
       color: #cbd5e1;
     }
+    /* Linked-photo viewer inside the feature-click popup - 2x the
+       hover-tooltip thumbnail so the reviewer can actually look at
+       the photo without opening it. Each cell hovers to a 4x floating
+       preview built at page level (below). */
+    .feat-popup-photos-hdr {
+      margin-top: 8px;
+      font: 700 11px 'IBM Plex Mono', monospace;
+      letter-spacing: 0.3px;
+      color: #047857;
+    }
+    .feat-popup-photos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 260px);
+      gap: 6px;
+      margin-top: 4px;
+      max-width: 540px;
+    }
+    .feat-popup-photo {
+      text-align: center;
+      font: 10px 'IBM Plex Mono', monospace;
+      color: #6b7280;
+      cursor: zoom-in;
+    }
+    .feat-popup-photo img {
+      display: block;
+      width: 260px; height: 196px;
+      object-fit: cover;
+      border-radius: 3px;
+      background: #1e293b;
+    }
+    .feat-popup-photo .cap {
+      margin-top: 2px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    /* Floating 4x preview - one shared div at document level,
+       positioned in code near the source thumbnail, kept out of
+       the popup's overflow clip so it can spill onto the map. */
+    .qc-hover-preview {
+      position: fixed;
+      z-index: 10000;
+      background: rgba(15, 23, 42, 0.96);
+      border: 2px solid #334155;
+      padding: 4px;
+      border-radius: 4px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+      display: none;
+    }
+    .qc-hover-preview img {
+      display: block;
+      width: 520px; height: 392px;
+      object-fit: contain;
+      border-radius: 2px;
+      background: #0f172a;
+    }
+    .qc-hover-preview .cap {
+      color: #cbd5e1;
+      font: 10px 'IBM Plex Mono', monospace;
+      text-align: center;
+      margin-top: 4px;
+    }
     /* Feature popup */
     .feat-popup { font: 12px system-ui, sans-serif; }
     .feat-popup h4 {
@@ -742,26 +803,15 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
         };
       },
       onEachFeature: function (feat, layer) {
-        var p = feat.properties || {};
-        var keys = Object.keys(p).filter(function (k) {
-          return p[k] != null && p[k] !== '';
-        });
-        var title = p.name || p.NAME || p.description || p.desc || '';
-        var rows = keys.map(function (k) {
-          return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
-        }).join('');
-        var body = title
-          ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
-          : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
-        layer.bindPopup('<div class="feat-popup">' + body + '</div>', { maxWidth: 340 });
-        // Sticky hover tooltip when there's a clear title.
-        if (title) {
-          layer.bindTooltip(_esc(title), {
-            sticky: true, direction: 'top', opacity: 0.95,
-          });
-        }
+        // Popup content is a function so it always reflects current
+        // linked-photo state — a drag-link change re-renders on the
+        // next click without our having to rebind static HTML.
+        layer.bindPopup(function () {
+          return _buildFeatureFullPopupHtml(feat);
+        }, { maxWidth: 560 });
       },
     }).addTo(map);
+    _wireFeatureLayerHover(featureLayer);
     var b = featureLayer.getBounds && featureLayer.getBounds();
     if (b && b.isValid()) map.fitBounds(b, { padding: [40, 40] });
     setStatus(
@@ -1138,6 +1188,7 @@ function _importPackage(pkg) {
   if (pkg.features && Array.isArray(pkg.features.features) && pkg.features.features.length) {
     featureLayer = _buildFeatureLayerFromGeoJson(pkg.features);
     featureLayer.addTo(map);
+    _wireFeatureLayerHover(featureLayer);
     var fb = featureLayer.getBounds && featureLayer.getBounds();
     if (fb && fb.isValid()) bounds.extend(fb);
     document.getElementById('trim-view').style.display = '';
@@ -1219,25 +1270,111 @@ function _buildFeatureLayerFromGeoJson(fc) {
       };
     },
     onEachFeature: function (feat, layer) {
-      var p = feat.properties || {};
-      var keys = Object.keys(p).filter(function (k) {
-        return p[k] != null && p[k] !== '';
-      });
-      var title = p.name || p.NAME || p.description || p.desc || '';
-      var rows = keys.map(function (k) {
-        return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
-      }).join('');
-      var body = title
-        ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
-        : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
-      layer.bindPopup('<div class="feat-popup">' + body + '</div>', { maxWidth: 340 });
-      if (title) {
-        layer.bindTooltip(_esc(title), {
-          sticky: true, direction: 'top', opacity: 0.95,
-        });
-      }
+      layer.bindPopup(function () {
+        return _buildFeatureFullPopupHtml(feat);
+      }, { maxWidth: 560 });
     },
   });
+}
+
+// Popup content builder — called every time a feature's popup opens
+// so linked-photo state is always current. Attribute table on top,
+// linked-photo grid (2x hover-tooltip size) below when there is any
+// linkage for this feature.
+function _buildFeatureFullPopupHtml(feat) {
+  var p = feat.properties || {};
+  var keys = Object.keys(p).filter(function (k) {
+    return p[k] != null && p[k] !== '';
+  });
+  var title = p.name || p.NAME || p.description || p.desc || '';
+  var rows = keys.map(function (k) {
+    return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
+  }).join('');
+  var body = title
+    ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
+    : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
+  // Walk photoLayer for anything currently linked to this feature.
+  var featId = _featureIdent(p);
+  var linked = [];
+  if (featId) {
+    photoLayer.eachLayer(function (m) {
+      if (m._linked_feature_id === featId && m._thumb) linked.push(m);
+    });
+  }
+  var photosSection = '';
+  if (linked.length) {
+    var items = linked.map(function (ph) {
+      return '<div class="feat-popup-photo" data-name="' + _esc(ph._name || '') + '">'
+        + '<img src="' + ph._thumb + '" alt="">'
+        + '<div class="cap">' + _esc(ph._name || '') + '</div>'
+      + '</div>';
+    }).join('');
+    photosSection = '<div class="feat-popup-photos-hdr">'
+      + '&#128279; ' + linked.length + ' linked photo(s)'
+    + '</div>'
+    + '<div class="feat-popup-photos">' + items + '</div>';
+  }
+  return '<div class="feat-popup">' + body + photosSection + '</div>';
+}
+
+// ── 4x hover preview ──────────────────────────────────────────
+// One shared preview div at document level. Positioned to the
+// right of the source thumbnail by default; mirrors to the left
+// if it would overflow the viewport. Clamps vertical position so
+// it stays on-screen even near map edges.
+function _ensureHoverPreview() {
+  var prev = document.querySelector('.qc-hover-preview');
+  if (!prev) {
+    prev = document.createElement('div');
+    prev.className = 'qc-hover-preview';
+    prev.innerHTML = '<img alt=""><div class="cap"></div>';
+    document.body.appendChild(prev);
+  }
+  return prev;
+}
+function _showHoverPreview(fromEl) {
+  var img = fromEl.querySelector('img');
+  if (!img || !img.src) return;
+  var name = fromEl.getAttribute('data-name') || '';
+  var prev = _ensureHoverPreview();
+  prev.querySelector('img').src = img.src;
+  prev.querySelector('.cap').textContent = name;
+  prev.style.display = 'block';
+  // Measure after display:block so offsetWidth/Height are real.
+  var rect = fromEl.getBoundingClientRect();
+  var pw = prev.offsetWidth  || 540;
+  var ph = prev.offsetHeight || 420;
+  var GAP = 12;
+  var left = rect.right + GAP;
+  if (left + pw > window.innerWidth) left = rect.left - pw - GAP;
+  if (left < 8) left = 8;
+  var top = rect.top;
+  if (top + ph > window.innerHeight - 8) top = window.innerHeight - ph - 8;
+  if (top < 8) top = 8;
+  prev.style.left = left + 'px';
+  prev.style.top  = top + 'px';
+}
+function _hideHoverPreview() {
+  var prev = document.querySelector('.qc-hover-preview');
+  if (prev) prev.style.display = 'none';
+}
+// Attach popupopen / popupclose to the feature layer so photo
+// thumbnails inside any opened popup gain mouseover -> 4x
+// preview. popupclose hides any stray preview to guard against
+// mouseout-after-close race conditions.
+function _wireFeatureLayerHover(fl) {
+  if (!fl || fl._rwPopupHoverWired) return;
+  fl._rwPopupHoverWired = true;
+  fl.on('popupopen', function (e) {
+    var root = e.popup && e.popup.getElement && e.popup.getElement();
+    if (!root) return;
+    root.querySelectorAll('.feat-popup-photo').forEach(function (item) {
+      item.addEventListener('mouseenter', function () { _showHoverPreview(item); });
+      item.addEventListener('mousemove',  function () { _showHoverPreview(item); });
+      item.addEventListener('mouseleave', function () { _hideHoverPreview(); });
+    });
+  });
+  fl.on('popupclose', function () { _hideHoverPreview(); });
 }
 
 // ── Legend ──────────────────────────────────────────────────────
