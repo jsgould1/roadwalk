@@ -540,10 +540,15 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
         marker._name  = f.name;
         marker._gps   = gps;
         marker._thumb = thumb || '';
+        marker._file  = f;                              // full-res reference for right-click download
         marker._linked_feature_id = null;
         marker._homeLatLng = homeLL;
         marker.on('click', function () { _openPhotoPopup(marker); });
         marker.on('dragend', function () { _onPhotoDragEnd(marker); });
+        marker.on('contextmenu', function (e) {
+          if (L.DomEvent && L.DomEvent.preventDefault) L.DomEvent.preventDefault(e);
+          _downloadPhoto(marker);
+        });
         // Hover preview — reuses the pre-baked thumbnail so hovering
         // is instant. CSS caps the on-screen size at 440 px.
         if (thumb) {
@@ -1215,6 +1220,10 @@ function _importPackage(pkg) {
     marker._homeLatLng = homeLL;
     marker.on('click', function () { _openPhotoPopup(marker); });
     marker.on('dragend', function () { _onPhotoDragEnd(marker); });
+    marker.on('contextmenu', function (e) {
+      if (L.DomEvent && L.DomEvent.preventDefault) L.DomEvent.preventDefault(e);
+      _downloadPhoto(marker);
+    });
     if (marker._thumb) {
       marker.bindTooltip(
         '<img src="' + marker._thumb + '" alt="">'
@@ -1355,6 +1364,40 @@ function _hideHoverPreview() {
   var prev = document.querySelector('.qc-hover-preview');
   if (prev) prev.style.display = 'none';
 }
+// Right-click → save. Fresh-loaded photos keep marker._file (the
+// File object stays alive because the browser just holds a disk
+// reference), so we can save the ORIGINAL full-res image. Package-
+// imported photos only carry the baked ~640 px thumbnail, so we
+// save that instead. Either way the browser writes a real .jpg the
+// user can drop into a report.
+function _downloadPhoto(marker) {
+  if (!marker) return;
+  var name = marker._name || 'photo.jpg';
+  var href, cleanup;
+  if (marker._file instanceof Blob) {
+    href = URL.createObjectURL(marker._file);
+    cleanup = function () { URL.revokeObjectURL(href); };
+  } else if (marker._thumb) {
+    href = marker._thumb;
+    cleanup = function () {};
+  } else {
+    setStatus('No image data available for ' + name + '.', 'err');
+    return;
+  }
+  var a = document.createElement('a');
+  a.href = href;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(cleanup, 1000);
+  setStatus('Downloaded ' + name + '.', 'ok');
+}
+function _findPhotoMarkerByName(name) {
+  var found = null;
+  photoLayer.eachLayer(function (m) { if (m._name === name) found = m; });
+  return found;
+}
 // Attach popupopen / popupclose to the feature layer so photo
 // thumbnails inside any opened popup gain mouseover -> 4x
 // preview. popupclose hides any stray preview to guard against
@@ -1369,6 +1412,14 @@ function _wireFeatureLayerHover(fl) {
       item.addEventListener('mouseenter', function () { _showHoverPreview(item); });
       item.addEventListener('mousemove',  function () { _showHoverPreview(item); });
       item.addEventListener('mouseleave', function () { _hideHoverPreview(); });
+      // Right-click → save. Full-res original if we still have the
+      // File reference; otherwise the ~640 px thumbnail.
+      item.addEventListener('contextmenu', function (evt) {
+        evt.preventDefault();
+        var name = item.getAttribute('data-name') || '';
+        var marker = _findPhotoMarkerByName(name);
+        if (marker) _downloadPhoto(marker);
+      });
     });
   });
   fl.on('popupclose', function () { _hideHoverPreview(); });
