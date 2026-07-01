@@ -146,6 +146,7 @@
     <button id="load-features" class="secondary">📍 Import features…</button>
     <button id="load-pkg" class="secondary" title="Load a JSON package previously produced by the Export package button — restores features + photo thumbnails + the exporter's map view in one step.">📦 Import package…</button>
     <button id="trim-view" class="secondary" style="display:none;" title="Remove features whose geometry is outside the current map viewport. Handy for stripping other-state data out of a national AECOM export.">✂ Trim to view</button>
+    <button id="link-photos" class="secondary" style="display:none;" title="Associate each photo with the nearest OT/GW/FP feature within a distance threshold. Linked photos gain a colored border matching their feature category and show the feature ID in the popup.">🔗 Link photos…</button>
     <button id="export-pkg" class="secondary" style="display:none;" title="Save features + photos (with thumbnails) as a single JSON package another user can open from the Pavement QC tool.">💾 Export package…</button>
     <button id="clear-features" class="danger" style="display:none;">✕ Clear features</button>
     <input type="file" id="photo-picker" webkitdirectory multiple accept="image/jpeg" hidden>
@@ -384,6 +385,7 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
         ok ? 'ok' : 'err'
       );
       _updateExportBtnVis();
+      _updateLinkBtnVis();
       return;
     }
     var f = files[i++];
@@ -450,6 +452,11 @@ function _openPhotoPopup(marker) {
   var brg = g.bearing != null && isFinite(g.bearing)
     ? ' · brg ' + Math.round(g.bearing) + '°'
     : '';
+  var linked = marker._linked_feature_id
+    ? '<div class="meta" style="color:#047857;font-weight:700;margin-top:4px;">'
+        + '&#128279; ' + _esc(marker._linked_feature_id)
+      + '</div>'
+    : '';
   var html =
     '<div class="photo-popup">' +
       img +
@@ -458,6 +465,7 @@ function _openPhotoPopup(marker) {
         g.lat.toFixed(6) + ', ' + g.lng.toFixed(6) + brg + '<br>' +
         _esc(dt) +
       '</div>' +
+      linked +
     '</div>';
   marker.bindPopup(html, { maxWidth: 380 }).openPopup();
 }
@@ -688,6 +696,7 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     document.getElementById('trim-view').style.display = '';
     _rebuildLegend();
     _updateExportBtnVis();
+    _updateLinkBtnVis();
   }).catch(function (err) {
     setStatus('Feature import failed: ' + err.message, 'err');
   });
@@ -734,6 +743,7 @@ document.getElementById('clear-features').addEventListener('click', function () 
   document.getElementById('clear-features').style.display = 'none';
   document.getElementById('trim-view').style.display = 'none';
   _updateExportBtnVis();
+  _updateLinkBtnVis();
   _rebuildLegend();
 });
 
@@ -741,6 +751,115 @@ document.getElementById('clear-features').addEventListener('click', function () 
 // Walks featureLayer once, drops any layer whose geometry sits
 // entirely outside the current map bounds. Used to strip data from
 // a nationwide AECOM export down to just the project area.
+// ── Photo → feature linkage ──────────────────────────────────
+// Each photo's GPS gets matched to the nearest OT/GW/FP feature
+// within a distance threshold. The linkage rides on the marker as
+// _linked_feature_id and is exported in the package so a downstream
+// reviewer sees the same associations.
+var _CATEGORY_COLORS = { OT: '#16a34a', GW: '#ea580c', FP: '#dc2626' };
+// Feet-per-meter reciprocal for L.LatLng.distanceTo (returns metres).
+var _M_PER_FT = 0.3048;
+function _featureIdent(props) {
+  if (!props) return null;
+  var re = /^(OT|GW|FP)-\S+/i;                       // prefix + at least one non-space char
+  var pri = ['id', 'pin_id', 'ID', 'Id', 'name', 'Name', 'NAME', 'title', 'label'];
+  for (var i = 0; i < pri.length; i++) {
+    var v = props[pri[i]];
+    if (typeof v === 'string' && re.test(v)) return v.trim();
+  }
+  for (var k in props) {
+    var v2 = props[k];
+    if (typeof v2 === 'string' && re.test(v2)) return v2.trim();
+  }
+  return null;
+}
+function _photoLinkColor(featureId) {
+  if (!featureId) return null;
+  var m = featureId.match(/^(OT|GW|FP)/i);
+  return m ? _CATEGORY_COLORS[m[1].toUpperCase()] : null;
+}
+function _refreshPhotoStyle(marker) {
+  if (!marker.setStyle) return;
+  var linkColor = _photoLinkColor(marker._linked_feature_id);
+  marker.setStyle(linkColor
+    ? { color: linkColor, weight: 3, fillColor: '#3b82f6', fillOpacity: 0.85 }
+    : { color: '#1e40af', weight: 2, fillColor: '#3b82f6', fillOpacity: 0.85 });
+}
+// Run the proximity match. Photos with no feature within maxFt get
+// _linked_feature_id = null (explicit un-link) so a later re-run
+// clears stale associations.
+function _linkPhotosToFeatures(maxFt) {
+  if (!featureLayer) return { linked: 0, unlinked: 0, considered: 0 };
+  var maxM = Math.max(1, maxFt) * _M_PER_FT;
+  // Snapshot point features with resolvable IDs. Non-point features
+  // (lines / polygons) are skipped — proximity to a polygon centroid
+  // isn't a defensible linkage.
+  var featPoints = [];
+  featureLayer.eachLayer(function (l) {
+    if (!l.getLatLng || !l.feature) return;
+    var id = _featureIdent(l.feature.properties || {});
+    if (!id) return;
+    featPoints.push({ id: id, latlng: l.getLatLng() });
+  });
+  if (!featPoints.length) return { linked: 0, unlinked: 0, considered: 0 };
+  var linked = 0, unlinked = 0, considered = 0;
+  photoLayer.eachLayer(function (m) {
+    if (!m.getLatLng) return;
+    considered++;
+    var pll = m.getLatLng();
+    var best = null, bestD = Infinity;
+    for (var i = 0; i < featPoints.length; i++) {
+      var d = pll.distanceTo(featPoints[i].latlng);
+      if (d < bestD) { bestD = d; best = featPoints[i]; }
+    }
+    if (best && bestD <= maxM) {
+      m._linked_feature_id = best.id;
+      linked++;
+    } else {
+      m._linked_feature_id = null;
+      unlinked++;
+    }
+    _refreshPhotoStyle(m);
+  });
+  return { linked: linked, unlinked: unlinked, considered: considered };
+}
+
+// Small helper so every photo marker gets the same visible-state
+// setup — used by the fresh photo loader, the package import path,
+// and the linkage recomputation.
+function _updateLinkBtnVis() {
+  var hasPhotos = photoLayer.getLayers().length > 0;
+  var hasFeats  = !!featureLayer && featureLayer.getLayers().length > 0;
+  document.getElementById('link-photos').style.display =
+    (hasPhotos && hasFeats) ? '' : 'none';
+}
+
+document.getElementById('link-photos').addEventListener('click', function () {
+  var raw = prompt(
+    'Link each photo to the nearest OT / GW / FP feature within '
+    + 'how many feet?\n\n(A typical pavement-distress photo is '
+    + 'taken 15–30 ft from the feature.)',
+    '30'
+  );
+  if (raw === null) return;
+  var maxFt = parseFloat(raw);
+  if (!isFinite(maxFt) || maxFt <= 0) {
+    setStatus('Link cancelled — need a positive distance in feet.', 'err');
+    return;
+  }
+  var r = _linkPhotosToFeatures(maxFt);
+  if (!r.considered) {
+    setStatus('No photos to link.', 'err');
+    return;
+  }
+  setStatus(
+    'Linked ' + r.linked + ' / ' + r.considered + ' photo(s) '
+    + 'to OT / GW / FP features within ' + maxFt + ' ft '
+    + '(' + r.unlinked + ' out of range).',
+    r.linked ? 'ok' : 'err'
+  );
+});
+
 document.getElementById('trim-view').addEventListener('click', function () {
   if (!featureLayer) return;
   var bounds = map.getBounds();
@@ -790,12 +909,13 @@ document.getElementById('export-pkg').addEventListener('click', function () {
   photoLayer.eachLayer(function (m) {
     if (!m._gps) return;
     photos.push({
-      name:    m._name,
-      lat:     m._gps.lat,
-      lng:     m._gps.lng,
-      bearing: (m._gps.bearing != null && isFinite(m._gps.bearing)) ? m._gps.bearing : null,
-      ts:      (m._gps.dateTime instanceof Date) ? m._gps.dateTime.toISOString() : null,
-      thumb:   m._thumb || '',
+      name:              m._name,
+      lat:               m._gps.lat,
+      lng:               m._gps.lng,
+      bearing:           (m._gps.bearing != null && isFinite(m._gps.bearing)) ? m._gps.bearing : null,
+      ts:                (m._gps.dateTime instanceof Date) ? m._gps.dateTime.toISOString() : null,
+      thumb:             m._thumb || '',
+      linked_feature_id: m._linked_feature_id || null,
     });
   });
   if (!featColl.features.length && !photos.length) {
@@ -870,6 +990,7 @@ function _importPackage(pkg) {
       bearing: ph.bearing,
       dateTime: ph.ts ? new Date(ph.ts) : null,
     };
+    marker._linked_feature_id = ph.linked_feature_id || null;
     marker.on('click', function () { _openPhotoPopup(marker); });
     if (marker._thumb) {
       marker.bindTooltip(
@@ -879,6 +1000,7 @@ function _importPackage(pkg) {
       );
     }
     photoLayer.addLayer(marker);
+    _refreshPhotoStyle(marker);                         // paint the link colour if any
     bounds.extend([ph.lat, ph.lng]);
     okPhotos++;
   });
@@ -895,6 +1017,7 @@ function _importPackage(pkg) {
   );
   _rebuildLegend();
   _updateExportBtnVis();
+  _updateLinkBtnVis();
 }
 
 // Small factory used by _importPackage so the feature layer built
