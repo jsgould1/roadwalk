@@ -69,6 +69,28 @@
       color: #6b7280; padding: 20px; text-align: center;
       background: #f3f4f6; border-radius: 4px;
     }
+    /* Hover thumbnail — shows the pre-baked ~640 px thumbnail
+       above the marker, constrained to ~220 px on screen so it
+       stays out of the way of adjacent points. */
+    .leaflet-tooltip.photo-hover {
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid #334155;
+      padding: 4px;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    .leaflet-tooltip.photo-hover::before { display: none; }
+    .photo-hover img {
+      display: block;
+      max-width: 220px; max-height: 165px;
+      border-radius: 3px;
+      background: #1e293b;
+    }
+    .photo-hover .cap {
+      font: 10px 'IBM Plex Mono', monospace;
+      color: #cbd5e1; margin-top: 4px;
+      text-align: center; word-break: break-all;
+    }
     /* Feature popup */
     .feat-popup { font: 12px system-ui, sans-serif; }
     .feat-popup h4 {
@@ -365,6 +387,18 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
         marker._gps   = gps;
         marker._thumb = thumb || '';
         marker.on('click', function () { _openPhotoPopup(marker); });
+        // Hover preview — reuses the pre-baked thumbnail so hovering
+        // is instant. CSS caps the on-screen size at 220 px.
+        if (thumb) {
+          marker.bindTooltip(
+            '<img src="' + thumb + '" alt="">'
+              + '<div class="cap">' + _esc(f.name) + '</div>',
+            {
+              direction: 'top', offset: [0, -6], opacity: 1,
+              className: 'photo-hover',
+            }
+          );
+        }
         photoLayer.addLayer(marker);
         bounds.extend([gps.lat, gps.lng]);
         ok++;
