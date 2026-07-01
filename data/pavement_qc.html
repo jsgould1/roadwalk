@@ -173,14 +173,15 @@
       letter-spacing: 0.3px;
       color: #f8fafc;
     }
-    /* Feature hover tooltip and click popup both render at the
-       max baked thumbnail size (~640 px on the longest edge). Fixed
-       640 x 480 boxes with object-fit:contain so landscape photos
-       fill exactly and portrait ones letterbox neatly; grid still
-       wraps to two-per-row on wide monitors. */
+    /* Feature hover tooltip and click popup both target the max
+       baked thumbnail size (640 x 480) but shrink adaptively so
+       stacking multiple photos never runs the card off-screen. On
+       small viewports the width caps at 90 vw and the height caps
+       at 38 vh; on large monitors you get the full 640 x 480. Grid
+       wraps to two-per-row when the container is wide enough. */
     .linked-photos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, 640px);
+      grid-template-columns: repeat(auto-fill, minmax(280px, min(640px, 90vw)));
       gap: 8px;
       max-width: 1300px;
       margin-top: 6px;
@@ -193,7 +194,8 @@
     }
     .linked-photo-item img {
       display: block;
-      width: 640px; height: 480px;
+      width:  min(640px, 90vw);
+      height: min(480px, 38vh);
       object-fit: contain;
       border-radius: 3px;
       background: #1e293b;
@@ -217,7 +219,7 @@
     }
     .feat-popup-photos {
       display: grid;
-      grid-template-columns: repeat(auto-fill, 640px);
+      grid-template-columns: repeat(auto-fill, minmax(280px, min(640px, 90vw)));
       gap: 8px;
       margin-top: 4px;
       max-width: 1300px;
@@ -230,7 +232,8 @@
     }
     .feat-popup-photo img {
       display: block;
-      width: 640px; height: 480px;
+      width:  min(640px, 90vw);
+      height: min(480px, 38vh);
       object-fit: contain;
       border-radius: 3px;
       background: #1e293b;
@@ -239,6 +242,21 @@
       margin-top: 3px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    /* Popup content scrolls when multiple photos still overflow the
+       viewport height even after adaptive sizing. Cap the inner
+       container itself; the outer .leaflet-popup-content sits on
+       top so this scroller sits above it neatly. */
+    .feat-popup {
+      max-height: 85vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    /* Slim scrollbar so the popup doesn't look chunky. */
+    .feat-popup::-webkit-scrollbar { width: 8px; }
+    .feat-popup::-webkit-scrollbar-thumb {
+      background: #cbd5e1; border-radius: 4px;
+    }
+    .feat-popup::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     /* Floating 4x preview - one shared div at document level,
        positioned in code near the source thumbnail, kept out of
        the popup's overflow clip so it can spill onto the map. */
