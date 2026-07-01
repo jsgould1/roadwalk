@@ -127,12 +127,13 @@
 'use strict';
 
 // ── Nearmap key ─────────────────────────────────────────────────
-// Inherited from RoadWalk main app (base64-wrapped so the raw key
-// isn't grep-able in this repo). Override via ?key=... to use a
-// different Nearmap account.
-var NEARMAP_KEY_B64 = 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5';
+// Hardcoded literal, same value the RoadWalk main app uses. The
+// earlier version wrapped this in atob() by mistake; the string is
+// NOT base64 and Nearmap rejects the decoded form. Override via
+// ?key=... query param to swap in a different Nearmap account.
+var NEARMAP_KEY = 'ODdmZDAwYTctODJjOS00MmU3LTk3YzEtOTQzMjk4MjllY2E5';
 var _qs = new URLSearchParams(location.search);
-var NEARMAP_KEY = _qs.get('key') || atob(NEARMAP_KEY_B64);
+if (_qs.get('key')) NEARMAP_KEY = _qs.get('key');
 
 // ── Map + basemaps ─────────────────────────────────────────────
 var map = L.map('map', {
