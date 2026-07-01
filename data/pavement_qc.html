@@ -69,9 +69,32 @@
       color: #6b7280; padding: 20px; text-align: center;
       background: #f3f4f6; border-radius: 4px;
     }
+    /* Photo dot — L.marker with a divIcon so we can drag it (the
+       old circleMarker isn't draggable). Blue fill by default with a
+       dark blue border; grabbing an unlinked photo and dropping it
+       on a feature snaps it back to its true GPS position but stamps
+       on the .linked class, which repaints the border yellow so the
+       user can see at a glance which photos are already tied to a
+       feature. */
+    .leaflet-div-icon.qc-photo-icon {
+      background: transparent !important;
+      border: none !important;
+    }
+    .qc-photo-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #3b82f6;
+      border: 2px solid #1e40af;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+      cursor: grab;
+    }
+    .qc-photo-dot.linked {
+      border: 3px solid #facc15;
+    }
+    .qc-photo-dot:active { cursor: grabbing; }
     /* Hover thumbnail — shows the pre-baked ~640 px thumbnail
-       above the marker, constrained to ~220 px on screen so it
-       stays out of the way of adjacent points. */
+       above the marker, constrained to 440 px on screen so it
+       stays readable without covering too much of the map. */
     .leaflet-tooltip.photo-hover {
       background: rgba(15, 23, 42, 0.94);
       border: 1px solid #334155;
@@ -399,22 +422,27 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
       // popup opens instantly on click and the full-res bitmap is
       // released before we move on to the next file.
       return makeThumb(f, 640).then(function (thumb) {
-        var marker = L.circleMarker([gps.lat, gps.lng], {
-          radius: 6, color: '#1e40af', fillColor: '#3b82f6',
-          fillOpacity: 0.85, weight: 2,
+        var homeLL = L.latLng(gps.lat, gps.lng);
+        var marker = L.marker(homeLL, {
+          icon: _photoIcon(null),
+          draggable: true,
+          autoPan: true,
         });
         marker._name  = f.name;
         marker._gps   = gps;
         marker._thumb = thumb || '';
+        marker._linked_feature_id = null;
+        marker._homeLatLng = homeLL;
         marker.on('click', function () { _openPhotoPopup(marker); });
+        marker.on('dragend', function () { _onPhotoDragEnd(marker); });
         // Hover preview — reuses the pre-baked thumbnail so hovering
-        // is instant. CSS caps the on-screen size at 220 px.
+        // is instant. CSS caps the on-screen size at 440 px.
         if (thumb) {
           marker.bindTooltip(
             '<img src="' + thumb + '" alt="">'
               + '<div class="cap">' + _esc(f.name) + '</div>',
             {
-              direction: 'top', offset: [0, -6], opacity: 1,
+              direction: 'top', offset: [0, -9], opacity: 1,
               className: 'photo-hover',
             }
           );
@@ -778,12 +806,57 @@ function _photoLinkColor(featureId) {
   var m = featureId.match(/^(OT|GW|FP)/i);
   return m ? _CATEGORY_COLORS[m[1].toUpperCase()] : null;
 }
+// L.divIcon so photos are draggable AND we can flip a "linked"
+// class on/off to repaint the border yellow.
+function _photoIcon(linkedFeatureId) {
+  var cls = linkedFeatureId ? 'qc-photo-dot linked' : 'qc-photo-dot';
+  return L.divIcon({
+    className: 'qc-photo-icon',
+    html: '<div class="' + cls + '"></div>',
+    iconSize: [18, 18], iconAnchor: [9, 9],
+  });
+}
 function _refreshPhotoStyle(marker) {
-  if (!marker.setStyle) return;
-  var linkColor = _photoLinkColor(marker._linked_feature_id);
-  marker.setStyle(linkColor
-    ? { color: linkColor, weight: 3, fillColor: '#3b82f6', fillOpacity: 0.85 }
-    : { color: '#1e40af', weight: 2, fillColor: '#3b82f6', fillOpacity: 0.85 });
+  if (!marker.setIcon) return;
+  marker.setIcon(_photoIcon(marker._linked_feature_id));
+}
+// On dragend: if the drop landed within pxTolerance of a feature
+// point, stamp the photo's link + repaint yellow. Regardless, snap
+// the marker back to its true GPS position — dragging is a picker,
+// not a relocation.
+function _onPhotoDragEnd(marker) {
+  var dropLL = marker.getLatLng();
+  var hit = _findFeatureNearScreenPoint(dropLL, 25);
+  marker.setLatLng(marker._homeLatLng);
+  if (hit) {
+    if (marker._linked_feature_id !== hit.id) {
+      marker._linked_feature_id = hit.id;
+      _refreshPhotoStyle(marker);
+      setStatus('Linked "' + marker._name + '" → ' + hit.id + '.', 'ok');
+    } else {
+      setStatus('Already linked to ' + hit.id + '.', 'ok');
+    }
+    if (marker.isPopupOpen && marker.isPopupOpen()) _openPhotoPopup(marker);
+  } else {
+    setStatus(
+      'Nothing within reach — drop closer to an OT / GW / FP feature (~25 px).',
+      'err'
+    );
+  }
+}
+function _findFeatureNearScreenPoint(latlng, pxTolerance) {
+  if (!featureLayer || !map) return null;
+  var dropPx = map.latLngToContainerPoint(latlng);
+  var best = null, bestD = Infinity;
+  featureLayer.eachLayer(function (l) {
+    if (!l.getLatLng || !l.feature) return;
+    var id = _featureIdent(l.feature.properties || {});
+    if (!id) return;
+    var fpx = map.latLngToContainerPoint(l.getLatLng());
+    var d = Math.hypot(dropPx.x - fpx.x, dropPx.y - fpx.y);
+    if (d < bestD) { bestD = d; best = { id: id, d: d }; }
+  });
+  return (best && best.d <= pxTolerance) ? best : null;
 }
 // Run the proximity match. Photos with no feature within maxFt get
 // _linked_feature_id = null (explicit un-link) so a later re-run
@@ -979,9 +1052,11 @@ function _importPackage(pkg) {
   var okPhotos = 0;
   (pkg.photos || []).forEach(function (ph) {
     if (!ph || !isFinite(ph.lat) || !isFinite(ph.lng)) return;
-    var marker = L.circleMarker([ph.lat, ph.lng], {
-      radius: 6, color: '#1e40af', fillColor: '#3b82f6',
-      fillOpacity: 0.85, weight: 2,
+    var homeLL = L.latLng(ph.lat, ph.lng);
+    var marker = L.marker(homeLL, {
+      icon: _photoIcon(ph.linked_feature_id || null),
+      draggable: true,
+      autoPan: true,
     });
     marker._name  = ph.name || '';
     marker._thumb = ph.thumb || '';
@@ -991,16 +1066,17 @@ function _importPackage(pkg) {
       dateTime: ph.ts ? new Date(ph.ts) : null,
     };
     marker._linked_feature_id = ph.linked_feature_id || null;
+    marker._homeLatLng = homeLL;
     marker.on('click', function () { _openPhotoPopup(marker); });
+    marker.on('dragend', function () { _onPhotoDragEnd(marker); });
     if (marker._thumb) {
       marker.bindTooltip(
         '<img src="' + marker._thumb + '" alt="">'
           + '<div class="cap">' + _esc(marker._name) + '</div>',
-        { direction: 'top', offset: [0, -6], opacity: 1, className: 'photo-hover' }
+        { direction: 'top', offset: [0, -9], opacity: 1, className: 'photo-hover' }
       );
     }
     photoLayer.addLayer(marker);
-    _refreshPhotoStyle(marker);                         // paint the link colour if any
     bounds.extend([ph.lat, ph.lng]);
     okPhotos++;
   });
