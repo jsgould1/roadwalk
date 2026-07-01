@@ -148,23 +148,28 @@
       letter-spacing: 0.3px;
       color: #f8fafc;
     }
+    /* Feature hover tooltip and click popup both render at the
+       max baked thumbnail size (~640 px on the longest edge). Fixed
+       640 x 480 boxes with object-fit:contain so landscape photos
+       fill exactly and portrait ones letterbox neatly; grid still
+       wraps to two-per-row on wide monitors. */
     .linked-photos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, 260px);
-      gap: 6px;
-      max-width: 540px;
+      grid-template-columns: repeat(auto-fill, 640px);
+      gap: 8px;
+      max-width: 1300px;
       margin-top: 6px;
     }
     .linked-photo-item {
       text-align: center;
-      font: 10px 'IBM Plex Mono', monospace;
+      font: 11px 'IBM Plex Mono', monospace;
       color: #cbd5e1;
       overflow: hidden;
     }
     .linked-photo-item img {
       display: block;
-      width: 260px; height: 196px;
-      object-fit: cover;
+      width: 640px; height: 480px;
+      object-fit: contain;
       border-radius: 3px;
       background: #1e293b;
     }
@@ -187,26 +192,26 @@
     }
     .feat-popup-photos {
       display: grid;
-      grid-template-columns: repeat(auto-fill, 260px);
-      gap: 6px;
+      grid-template-columns: repeat(auto-fill, 640px);
+      gap: 8px;
       margin-top: 4px;
-      max-width: 540px;
+      max-width: 1300px;
     }
     .feat-popup-photo {
       text-align: center;
-      font: 10px 'IBM Plex Mono', monospace;
-      color: #6b7280;
+      font: 11px 'IBM Plex Mono', monospace;
+      color: #4b5563;
       cursor: zoom-in;
     }
     .feat-popup-photo img {
       display: block;
-      width: 260px; height: 196px;
-      object-fit: cover;
+      width: 640px; height: 480px;
+      object-fit: contain;
       border-radius: 3px;
       background: #1e293b;
     }
     .feat-popup-photo .cap {
-      margin-top: 2px;
+      margin-top: 3px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     /* Floating 4x preview - one shared div at document level,
@@ -814,7 +819,7 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
         // next click without our having to rebind static HTML.
         layer.bindPopup(function () {
           return _buildFeatureFullPopupHtml(feat);
-        }, { maxWidth: 560 });
+        }, { maxWidth: 720 });
       },
     }).addTo(map);
     _wireFeatureLayerHover(featureLayer);
@@ -1282,7 +1287,7 @@ function _buildFeatureLayerFromGeoJson(fc) {
     onEachFeature: function (feat, layer) {
       layer.bindPopup(function () {
         return _buildFeatureFullPopupHtml(feat);
-      }, { maxWidth: 560 });
+      }, { maxWidth: 720 });
     },
   });
 }
@@ -1503,9 +1508,6 @@ function _wireFeatureLayerHover(fl) {
     var root = e.popup && e.popup.getElement && e.popup.getElement();
     if (!root) return;
     root.querySelectorAll('.feat-popup-photo').forEach(function (item) {
-      item.addEventListener('mouseenter', function () { _showHoverPreview(item); });
-      item.addEventListener('mousemove',  function () { _showHoverPreview(item); });
-      item.addEventListener('mouseleave', function () { _hideHoverPreview(); });
       // Left-click → open full-res original in a new tab (from the
       // live File reference or the configured project folder; falls
       // back to the thumbnail if neither source is available).
