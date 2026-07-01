@@ -127,6 +127,54 @@
     .qc-feat-symbol.is-OT { background: #16a34a; }   /* green */
     .qc-feat-symbol.is-GW { background: #ea580c; }   /* orange */
     .qc-feat-symbol.is-FP { background: #dc2626; }   /* red */
+    /* Feature hover tooltip — dark card with the title on top and,
+       when the feature has drag-linked photos, a small thumbnail
+       grid below so hovering a feature shows every photo tied to
+       it at a glance. Rebuilt via _updateFeatureTooltips whenever
+       linkage changes so the hover stays honest. */
+    .leaflet-tooltip.feat-hover {
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid #334155;
+      padding: 6px 8px;
+      border-radius: 4px;
+      color: #f8fafc;
+      font: 12px system-ui, sans-serif;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      max-width: none;
+    }
+    .leaflet-tooltip.feat-hover::before { display: none; }
+    .feat-title {
+      font: 700 12px 'IBM Plex Mono', monospace;
+      letter-spacing: 0.3px;
+      color: #f8fafc;
+    }
+    .linked-photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 130px);
+      gap: 4px;
+      max-width: 540px;
+      margin-top: 6px;
+    }
+    .linked-photo-item {
+      text-align: center;
+      font: 9px 'IBM Plex Mono', monospace;
+      color: #cbd5e1;
+      overflow: hidden;
+    }
+    .linked-photo-item img {
+      display: block;
+      width: 130px; height: 98px;
+      object-fit: cover;
+      border-radius: 3px;
+      background: #1e293b;
+    }
+    .linked-photo-item .cap {
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #cbd5e1;
+    }
     /* Feature popup */
     .feat-popup { font: 12px system-ui, sans-serif; }
     .feat-popup h4 {
@@ -725,6 +773,7 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     _rebuildLegend();
     _updateExportBtnVis();
     _updateLinkBtnVis();
+    _updateFeatureTooltips();
   }).catch(function (err) {
     setStatus('Feature import failed: ' + err.message, 'err');
   });
@@ -832,6 +881,7 @@ function _onPhotoDragEnd(marker) {
     if (marker._linked_feature_id !== hit.id) {
       marker._linked_feature_id = hit.id;
       _refreshPhotoStyle(marker);
+      _updateFeatureTooltips();
       setStatus('Linked "' + marker._name + '" → ' + hit.id + '.', 'ok');
     } else {
       setStatus('Already linked to ' + hit.id + '.', 'ok');
@@ -844,6 +894,50 @@ function _onPhotoDragEnd(marker) {
     );
   }
 }
+// Walk every feature currently on the map and rebind its hover
+// tooltip so it lists every linked photo (thumb + filename). Called
+// after any state change that can affect the mapping — feature
+// import, package import, auto-link button, drag-to-link, or a
+// photo load that carried package-side linkage. Runs O(features)
+// but tooltip content is cheap to build so this stays fast even
+// with dozens of features.
+function _updateFeatureTooltips() {
+  if (!featureLayer) return;
+  var byFeat = {};
+  photoLayer.eachLayer(function (m) {
+    var id = m._linked_feature_id;
+    if (id && m._thumb) {
+      (byFeat[id] = byFeat[id] || []).push(m);
+    }
+  });
+  featureLayer.eachLayer(function (layer) {
+    if (!layer.feature || !layer.bindTooltip) return;
+    var props = layer.feature.properties || {};
+    var featId = _featureIdent(props);
+    var title  = props.name || props.NAME || props.description || props.desc || featId || '';
+    var linked = featId ? (byFeat[featId] || []) : [];
+    if (layer.getTooltip && layer.getTooltip()) {
+      try { layer.unbindTooltip(); } catch (_) {}
+    }
+    if (!title && !linked.length) return;
+    var content = '';
+    if (title) content += '<div class="feat-title">' + _esc(title) + '</div>';
+    if (linked.length) {
+      var items = linked.map(function (p) {
+        return '<div class="linked-photo-item">'
+          + '<img src="' + p._thumb + '" alt="">'
+          + '<div class="cap">' + _esc(p._name || '') + '</div>'
+        + '</div>';
+      }).join('');
+      content += '<div class="linked-photos-grid">' + items + '</div>';
+    }
+    layer.bindTooltip(content, {
+      sticky: true, direction: 'top', opacity: 1,
+      className: linked.length ? 'feat-hover has-linked' : 'feat-hover',
+    });
+  });
+}
+
 function _findFeatureNearScreenPoint(latlng, pxTolerance) {
   if (!featureLayer || !map) return null;
   var dropPx = map.latLngToContainerPoint(latlng);
@@ -931,6 +1025,7 @@ document.getElementById('link-photos').addEventListener('click', function () {
     + '(' + r.unlinked + ' out of range).',
     r.linked ? 'ok' : 'err'
   );
+  _updateFeatureTooltips();
 });
 
 document.getElementById('trim-view').addEventListener('click', function () {
@@ -1094,6 +1189,7 @@ function _importPackage(pkg) {
   _rebuildLegend();
   _updateExportBtnVis();
   _updateLinkBtnVis();
+  _updateFeatureTooltips();
 }
 
 // Small factory used by _importPackage so the feature layer built
