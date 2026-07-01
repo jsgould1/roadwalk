@@ -144,6 +144,8 @@
     <h1>📸 Pavement Photo QC</h1>
     <button id="load-photos">📁 Load photo folder…</button>
     <button id="load-features" class="secondary">📍 Import features…</button>
+    <button id="trim-view" class="secondary" style="display:none;" title="Remove features whose geometry is outside the current map viewport. Handy for stripping other-state data out of a national AECOM export.">✂ Trim to view</button>
+    <button id="export-pkg" class="secondary" style="display:none;" title="Save features + photos (with thumbnails) as a single JSON package another user can open from the Pavement QC tool.">💾 Export package…</button>
     <button id="clear-features" class="danger" style="display:none;">✕ Clear features</button>
     <input type="file" id="photo-picker" webkitdirectory multiple accept="image/jpeg" hidden>
     <input type="file" id="feat-picker" accept=".json,.geojson,application/geo+json,application/json" hidden>
@@ -379,6 +381,7 @@ document.getElementById('photo-picker').addEventListener('change', function (e) 
         noGps + ' without GPS · ' + failed + ' failed.',
         ok ? 'ok' : 'err'
       );
+      _updateExportBtnVis();
       return;
     }
     var f = files[i++];
@@ -611,12 +614,19 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     try { gj = JSON.parse(txt); }
     catch (err) { throw new Error('Not valid JSON: ' + err.message); }
     txt = null;                                        // release the ~350 MB string
+    // Pavement QC self-package — different handler that also
+    // rehydrates photo markers alongside the features.
+    if (gj && gj._format === 'pavement-qc-package-v1') {
+      _importPackage(gj);
+      return;
+    }
     var norm = _normalizeImport(gj, f.name);
     gj = null;                                         // release the parsed graph
     if (!norm) {
       throw new Error(
-        'Unrecognised format. Expected a GeoJSON FeatureCollection or a '
-        + 'RoadWalk export (aecom-features / centerlines).'
+        'Unrecognised format. Expected a GeoJSON FeatureCollection, a '
+        + 'RoadWalk export (aecom-features / centerlines), or a Pavement '
+        + 'QC package (pavement-qc-package-v1).'
       );
     }
     if (featureLayer) map.removeLayer(featureLayer);
@@ -673,7 +683,9 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
       'ok'
     );
     document.getElementById('clear-features').style.display = '';
+    document.getElementById('trim-view').style.display = '';
     _rebuildLegend();
+    _updateExportBtnVis();
   }).catch(function (err) {
     setStatus('Feature import failed: ' + err.message, 'err');
   });
@@ -685,8 +697,218 @@ document.getElementById('clear-features').addEventListener('click', function () 
     featureLayer = null;
   }
   document.getElementById('clear-features').style.display = 'none';
+  document.getElementById('trim-view').style.display = 'none';
+  _updateExportBtnVis();
   _rebuildLegend();
 });
+
+// ── Trim features to viewport ───────────────────────────────────
+// Walks featureLayer once, drops any layer whose geometry sits
+// entirely outside the current map bounds. Used to strip data from
+// a nationwide AECOM export down to just the project area.
+document.getElementById('trim-view').addEventListener('click', function () {
+  if (!featureLayer) return;
+  var bounds = map.getBounds();
+  var toRemove = [];
+  var kept = 0;
+  featureLayer.eachLayer(function (l) {
+    var inView = false;
+    if (l.getLatLng) {
+      inView = bounds.contains(l.getLatLng());
+    } else if (l.getBounds) {
+      var lb = l.getBounds();
+      inView = lb && lb.isValid() && bounds.intersects(lb);
+    }
+    if (inView) kept++;
+    else toRemove.push(l);
+  });
+  if (!toRemove.length) {
+    setStatus('Nothing to trim — all ' + kept + ' feature(s) already in view.', 'ok');
+    return;
+  }
+  var ok = confirm(
+    'Remove ' + toRemove.length + ' feature(s) outside the current view?  '
+    + 'Kept: ' + kept + '.'
+  );
+  if (!ok) return;
+  toRemove.forEach(function (l) { featureLayer.removeLayer(l); });
+  setStatus('Trimmed ' + toRemove.length + ' · kept ' + kept + '.', 'ok');
+  _rebuildLegend();
+  _updateExportBtnVis();
+});
+
+// ── Export package ──────────────────────────────────────────────
+// Bundles current features (as GeoJSON) + photo markers with their
+// pre-baked ~640 px thumbnails so another user can drop the file
+// into the tool and see everything without needing the original
+// photo folder. Photos are packaged as {name, lat, lng, bearing,
+// ts, thumb} — full-res originals aren't held in memory so we
+// couldn't include them even if we wanted to.
+document.getElementById('export-pkg').addEventListener('click', function () {
+  var featColl = { type: 'FeatureCollection', features: [] };
+  if (featureLayer) {
+    featureLayer.eachLayer(function (l) {
+      if (l.feature) featColl.features.push(l.feature);
+    });
+  }
+  var photos = [];
+  photoLayer.eachLayer(function (m) {
+    if (!m._gps) return;
+    photos.push({
+      name:    m._name,
+      lat:     m._gps.lat,
+      lng:     m._gps.lng,
+      bearing: (m._gps.bearing != null && isFinite(m._gps.bearing)) ? m._gps.bearing : null,
+      ts:      (m._gps.dateTime instanceof Date) ? m._gps.dateTime.toISOString() : null,
+      thumb:   m._thumb || '',
+    });
+  });
+  if (!featColl.features.length && !photos.length) {
+    setStatus('Nothing to export — load photos or features first.', 'err');
+    return;
+  }
+  var c = map.getCenter();
+  var pkg = {
+    _format:     'pavement-qc-package-v1',
+    exported_at: new Date().toISOString(),
+    center:      [c.lat, c.lng],
+    zoom:        map.getZoom(),
+    features:    featColl,
+    photos:      photos,
+  };
+  var json = JSON.stringify(pkg);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'pavement_qc_package_' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  var mb = Math.round((json.length / 1048576) * 10) / 10;
+  setStatus(
+    'Package exported: ' + featColl.features.length + ' feature(s), '
+    + photos.length + ' photo(s), ~' + mb + ' MB.',
+    'ok'
+  );
+});
+
+// Show the Export button whenever there's anything worth exporting.
+function _updateExportBtnVis() {
+  var hasPhotos = photoLayer.getLayers().length > 0;
+  var hasFeats  = !!featureLayer && featureLayer.getLayers().length > 0;
+  document.getElementById('export-pkg').style.display =
+    (hasPhotos || hasFeats) ? '' : 'none';
+}
+
+// Package-import path — rebuilds features + photo markers from a
+// pavement-qc-package-v1 JSON. Called from the feature-import flow
+// when it detects that format.
+function _importPackage(pkg) {
+  // Features first (uses the existing L.geoJSON path via the same
+  // finalize block the normal feature import uses).
+  photoLayer.clearLayers();
+  if (featureLayer) { try { map.removeLayer(featureLayer); } catch (_) {} featureLayer = null; }
+  var bounds = L.latLngBounds();
+  if (pkg.features && Array.isArray(pkg.features.features) && pkg.features.features.length) {
+    featureLayer = _buildFeatureLayerFromGeoJson(pkg.features);
+    featureLayer.addTo(map);
+    var fb = featureLayer.getBounds && featureLayer.getBounds();
+    if (fb && fb.isValid()) bounds.extend(fb);
+    document.getElementById('trim-view').style.display = '';
+    document.getElementById('clear-features').style.display = '';
+  }
+  // Photos next — build markers with the thumbnails baked in.
+  var okPhotos = 0;
+  (pkg.photos || []).forEach(function (ph) {
+    if (!ph || !isFinite(ph.lat) || !isFinite(ph.lng)) return;
+    var marker = L.circleMarker([ph.lat, ph.lng], {
+      radius: 6, color: '#1e40af', fillColor: '#3b82f6',
+      fillOpacity: 0.85, weight: 2,
+    });
+    marker._name  = ph.name || '';
+    marker._thumb = ph.thumb || '';
+    marker._gps = {
+      lat: ph.lat, lng: ph.lng,
+      bearing: ph.bearing,
+      dateTime: ph.ts ? new Date(ph.ts) : null,
+    };
+    marker.on('click', function () { _openPhotoPopup(marker); });
+    if (marker._thumb) {
+      marker.bindTooltip(
+        '<img src="' + marker._thumb + '" alt="">'
+          + '<div class="cap">' + _esc(marker._name) + '</div>',
+        { direction: 'top', offset: [0, -6], opacity: 1, className: 'photo-hover' }
+      );
+    }
+    photoLayer.addLayer(marker);
+    bounds.extend([ph.lat, ph.lng]);
+    okPhotos++;
+  });
+  // Restore the exporter's view if we have nothing to auto-fit onto.
+  if (bounds.isValid()) {
+    map.fitBounds(bounds, { padding: [40, 40] });
+  } else if (Array.isArray(pkg.center) && pkg.zoom != null) {
+    map.setView(pkg.center, pkg.zoom);
+  }
+  setStatus(
+    'Package loaded: ' + (featureLayer ? featureLayer.getLayers().length : 0)
+    + ' feature(s), ' + okPhotos + ' photo(s).',
+    'ok'
+  );
+  _rebuildLegend();
+  _updateExportBtnVis();
+}
+
+// Small factory used by _importPackage so the feature layer built
+// from a package looks identical to one built from a fresh import.
+function _buildFeatureLayerFromGeoJson(fc) {
+  return L.geoJSON(fc, {
+    pointToLayer: function (feat, latlng) {
+      var pfx = _featurePrefix(feat.properties || {});
+      if (pfx) {
+        return L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'qc-feat-symbol is-' + pfx,
+            html: pfx,
+            iconSize: [22, 22], iconAnchor: [11, 11],
+          }),
+        });
+      }
+      return L.circleMarker(latlng, {
+        radius: 6, color: '#1e40af', fillColor: '#3b82f6',
+        fillOpacity: 0.85, weight: 2,
+      });
+    },
+    style: function () {
+      return {
+        color: '#7f1d1d', weight: 2,
+        fillColor: '#ef4444', fillOpacity: 0.3,
+      };
+    },
+    onEachFeature: function (feat, layer) {
+      var p = feat.properties || {};
+      var keys = Object.keys(p).filter(function (k) {
+        return p[k] != null && p[k] !== '';
+      });
+      var title = p.name || p.NAME || p.description || p.desc || '';
+      var rows = keys.map(function (k) {
+        return '<tr><td>' + _esc(k) + '</td><td>' + _esc(p[k]) + '</td></tr>';
+      }).join('');
+      var body = title
+        ? '<h4>' + _esc(title) + '</h4>' + (rows ? '<table>' + rows + '</table>' : '')
+        : (rows ? '<table>' + rows + '</table>' : '(no attributes)');
+      layer.bindPopup('<div class="feat-popup">' + body + '</div>', { maxWidth: 340 });
+      if (title) {
+        layer.bindTooltip(_esc(title), {
+          sticky: true, direction: 'top', opacity: 0.95,
+        });
+      }
+    },
+  });
+}
 
 // ── Legend ──────────────────────────────────────────────────────
 function _rebuildLegend() {
