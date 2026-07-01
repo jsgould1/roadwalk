@@ -144,11 +144,13 @@
     <h1>📸 Pavement Photo QC</h1>
     <button id="load-photos">📁 Load photo folder…</button>
     <button id="load-features" class="secondary">📍 Import features…</button>
+    <button id="load-pkg" class="secondary" title="Load a JSON package previously produced by the Export package button — restores features + photo thumbnails + the exporter's map view in one step.">📦 Import package…</button>
     <button id="trim-view" class="secondary" style="display:none;" title="Remove features whose geometry is outside the current map viewport. Handy for stripping other-state data out of a national AECOM export.">✂ Trim to view</button>
     <button id="export-pkg" class="secondary" style="display:none;" title="Save features + photos (with thumbnails) as a single JSON package another user can open from the Pavement QC tool.">💾 Export package…</button>
     <button id="clear-features" class="danger" style="display:none;">✕ Clear features</button>
     <input type="file" id="photo-picker" webkitdirectory multiple accept="image/jpeg" hidden>
     <input type="file" id="feat-picker" accept=".json,.geojson,application/geo+json,application/json" hidden>
+    <input type="file" id="pkg-picker" accept=".json,application/json" hidden>
     <span id="status">Ready. Load a photo folder to start.</span>
     <div class="basemap-toggle">
       <button data-map="nearmap" class="active">Nearmap</button>
@@ -688,6 +690,39 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     _updateExportBtnVis();
   }).catch(function (err) {
     setStatus('Feature import failed: ' + err.message, 'err');
+  });
+});
+
+// Dedicated Import package button — same underlying import path as
+// the feature-picker's package detection, but with its own file
+// input so the user's mental model stays clean (Import features =
+// bring in a GeoJSON / AECOM export; Import package = restore a
+// previously-exported Pavement QC snapshot). Rejects anything that
+// isn't the pavement-qc-package-v1 format so a wrong-file pick
+// gives a clear error rather than half-loading.
+document.getElementById('load-pkg').addEventListener('click', function () {
+  document.getElementById('pkg-picker').click();
+});
+document.getElementById('pkg-picker').addEventListener('change', function (e) {
+  var f = (e.target.files || [])[0];
+  e.target.value = '';
+  if (!f) return;
+  var sizeMb = Math.round(f.size / 1048576);
+  setStatus('Reading package ' + f.name + ' (' + sizeMb + ' MB)…');
+  f.text().then(function (txt) {
+    setStatus('Parsing package…');
+    var pkg;
+    try { pkg = JSON.parse(txt); }
+    catch (err) { throw new Error('Not valid JSON: ' + err.message); }
+    if (!pkg || pkg._format !== 'pavement-qc-package-v1') {
+      throw new Error(
+        'Not a Pavement QC package. Expected _format="pavement-qc-package-v1" '
+        + '(use Import features for GeoJSON / AECOM exports).'
+      );
+    }
+    _importPackage(pkg);
+  }).catch(function (err) {
+    setStatus('Package import failed: ' + err.message, 'err');
   });
 });
 
