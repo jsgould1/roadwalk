@@ -127,6 +127,31 @@
     .qc-feat-symbol.is-OT { background: #16a34a; }   /* green */
     .qc-feat-symbol.is-GW { background: #ea580c; }   /* orange */
     .qc-feat-symbol.is-FP { background: #dc2626; }   /* red */
+    /* Feature hover overlay — a fixed-position card at document
+       level so it always centers in the viewport regardless of
+       where the feature marker sits on the map. Leaflet's own
+       tooltips anchor to the marker and don't auto-flip vertically,
+       so a big 640 px thumbnail near the top of the screen would
+       run off. This overlay dodges that entirely. pointer-events
+       none so the cursor still hits the underlying map / marker
+       (so mouseout on the marker reliably closes the card). */
+    .qc-feat-hover {
+      position: fixed;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10001;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid #334155;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #f8fafc;
+      font: 12px system-ui, sans-serif;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+      max-height: 90vh; max-width: 90vw;
+      overflow: hidden;
+      pointer-events: none;
+      display: none;
+    }
     /* Feature hover tooltip — dark card with the title on top and,
        when the feature has drag-linked photos, a small thumbnail
        grid below so hovering a feature shows every photo tied to
@@ -882,6 +907,7 @@ document.getElementById('clear-features').addEventListener('click', function () 
   document.getElementById('trim-view').style.display = 'none';
   _updateExportBtnVis();
   _updateLinkBtnVis();
+  _hideFeatureHover();
   _rebuildLegend();
 });
 
@@ -972,14 +998,20 @@ function _updateFeatureTooltips() {
     }
   });
   featureLayer.eachLayer(function (layer) {
-    if (!layer.feature || !layer.bindTooltip) return;
+    if (!layer.feature) return;
     var props = layer.feature.properties || {};
     var featId = _featureIdent(props);
     var title  = props.name || props.NAME || props.description || props.desc || featId || '';
     var linked = featId ? (byFeat[featId] || []) : [];
+    // Drop any Leaflet tooltip a previous version bound to this layer.
     if (layer.getTooltip && layer.getTooltip()) {
       try { layer.unbindTooltip(); } catch (_) {}
     }
+    // Detach previous custom-hover handlers so a re-run doesn't
+    // stack listeners.
+    if (layer._rwHoverIn)  layer.off('mouseover', layer._rwHoverIn);
+    if (layer._rwHoverOut) layer.off('mouseout',  layer._rwHoverOut);
+    layer._rwHoverIn = layer._rwHoverOut = null;
     if (!title && !linked.length) return;
     var content = '';
     if (title) content += '<div class="feat-title">' + _esc(title) + '</div>';
@@ -992,11 +1024,29 @@ function _updateFeatureTooltips() {
       }).join('');
       content += '<div class="linked-photos-grid">' + items + '</div>';
     }
-    layer.bindTooltip(content, {
-      sticky: true, direction: 'top', opacity: 1,
-      className: linked.length ? 'feat-hover has-linked' : 'feat-hover',
-    });
+    layer._rwHoverIn  = function () { _showFeatureHover(content); };
+    layer._rwHoverOut = function () { _hideFeatureHover(); };
+    layer.on('mouseover', layer._rwHoverIn);
+    layer.on('mouseout',  layer._rwHoverOut);
   });
+}
+function _ensureFeatureHoverEl() {
+  var el = document.querySelector('.qc-feat-hover');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'qc-feat-hover';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function _showFeatureHover(html) {
+  var el = _ensureFeatureHoverEl();
+  el.innerHTML = html;
+  el.style.display = 'block';                          // CSS keeps it centered
+}
+function _hideFeatureHover() {
+  var el = document.querySelector('.qc-feat-hover');
+  if (el) el.style.display = 'none';
 }
 
 function _findFeatureNearScreenPoint(latlng, pxTolerance) {
@@ -1505,6 +1555,7 @@ function _wireFeatureLayerHover(fl) {
   if (!fl || fl._rwPopupHoverWired) return;
   fl._rwPopupHoverWired = true;
   fl.on('popupopen', function (e) {
+    _hideFeatureHover();                              // dismiss the centered hover card
     var root = e.popup && e.popup.getElement && e.popup.getElement();
     if (!root) return;
     root.querySelectorAll('.feat-popup-photo').forEach(function (item) {
