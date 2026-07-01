@@ -91,6 +91,19 @@
       color: #cbd5e1; margin-top: 4px;
       text-align: center; word-break: break-all;
     }
+    /* Feature symbols — one label + color per common prefix so the
+       three AECOM feature types stand out on aerial imagery. Anything
+       that doesn't match a prefix falls back to a plain blue dot. */
+    .qc-feat-symbol {
+      width: 22px; height: 22px; border-radius: 50%;
+      color: #fff; font: 700 10px/22px 'IBM Plex Mono', monospace;
+      text-align: center; letter-spacing: 0.4px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+      border: 2px solid #fff;
+    }
+    .qc-feat-symbol.is-OT { background: #16a34a; }   /* green */
+    .qc-feat-symbol.is-GW { background: #ea580c; }   /* orange */
+    .qc-feat-symbol.is-FP { background: #dc2626; }   /* red */
     /* Feature popup */
     .feat-popup { font: 12px system-ui, sans-serif; }
     .feat-popup h4 {
@@ -454,6 +467,29 @@ function _openPhotoPopup(marker) {
 // Normalises into a Feature[] before handing to L.geoJSON. Photo
 // dataUrls are stripped from every pin's attrs so a 172 MB export
 // (which is 172 MB of base64 photo bytes) doesn't OOM the tab.
+// Detect the AECOM feature-type prefix (OT / GW / FP) from any
+// string-valued property on the feature. Priority-ordered candidates
+// first (id / pin_id / name / etc.); falls back to scanning every
+// string property so we still catch the prefix if it lives under a
+// non-standard key. Returns the two-letter prefix or null.
+function _featurePrefix(props) {
+  var re = /^(OT|GW|FP)-/i;
+  var pri = ['id', 'pin_id', 'ID', 'Id', 'name', 'Name', 'NAME', 'title', 'label'];
+  for (var i = 0; i < pri.length; i++) {
+    var v = props[pri[i]];
+    if (typeof v === 'string') {
+      var m = v.match(re);
+      if (m) return m[1].toUpperCase();
+    }
+  }
+  for (var k in props) {
+    var v2 = props[k];
+    if (typeof v2 !== 'string') continue;
+    var m2 = v2.match(re);
+    if (m2) return m2[1].toUpperCase();
+  }
+  return null;
+}
 function _stripPhotoDataUrls(attrs) {
   if (!attrs || typeof attrs !== 'object') return {};
   var out = {};
@@ -586,9 +622,21 @@ document.getElementById('feat-picker').addEventListener('change', function (e) {
     if (featureLayer) map.removeLayer(featureLayer);
     featureLayer = L.geoJSON({ type: 'FeatureCollection', features: norm.features }, {
       pointToLayer: function (feat, latlng) {
+        var pfx = _featurePrefix(feat.properties || {});
+        if (pfx) {
+          return L.marker(latlng, {
+            icon: L.divIcon({
+              className: 'qc-feat-symbol is-' + pfx,
+              html: pfx,
+              iconSize: [22, 22], iconAnchor: [11, 11],
+            }),
+          });
+        }
+        // Fallback: plain blue dot for any point that doesn't carry
+        // an OT-/GW-/FP- prefix in any string property.
         return L.circleMarker(latlng, {
-          radius: 7, color: '#7f1d1d', fillColor: '#ef4444',
-          fillOpacity: 0.9, weight: 2,
+          radius: 6, color: '#1e40af', fillColor: '#3b82f6',
+          fillOpacity: 0.85, weight: 2,
         });
       },
       style: function () {
@@ -661,10 +709,26 @@ function _rebuildLegend() {
         );
       }
       if (hasFeats) {
-        parts.push(
-          '<div><span class="swatch" style="background:#ef4444;border:2px solid #7f1d1d;"></span>' +
-          'Features (' + featureLayer.getLayers().length + ')</div>'
-        );
+        // Break the feature count into per-prefix tallies so the
+        // legend doubles as a quick sanity check for what got imported.
+        var counts = { OT: 0, GW: 0, FP: 0, other: 0 };
+        featureLayer.eachLayer(function (l) {
+          var pfx = l.feature && l.feature.geometry && l.feature.geometry.type === 'Point'
+            ? _featurePrefix(l.feature.properties || {})
+            : null;
+          if (pfx && counts.hasOwnProperty(pfx)) counts[pfx]++;
+          else counts.other++;
+        });
+        function _row(label, cls, color, n) {
+          var swatch = cls
+            ? '<span class="qc-feat-symbol ' + cls + '" style="display:inline-block;width:14px;height:14px;line-height:14px;font-size:7px;vertical-align:middle;margin-right:6px;"></span>'
+            : '<span class="swatch" style="background:' + color + ';border:2px solid #1e40af;"></span>';
+          return '<div>' + swatch + label + ' (' + n + ')</div>';
+        }
+        if (counts.OT)    parts.push(_row('OT-',    'is-OT', null,      counts.OT));
+        if (counts.GW)    parts.push(_row('GW-',    'is-GW', null,      counts.GW));
+        if (counts.FP)    parts.push(_row('FP-',    'is-FP', null,      counts.FP));
+        if (counts.other) parts.push(_row('Other',  null,    '#3b82f6', counts.other));
       }
       d.innerHTML = parts.join('');
       return d;
