@@ -13178,6 +13178,46 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           });
         });
 
+        // Pass 1b_id — apply the _legacy_photos_cleared flag when the
+        // bundle pin's ULID doesn't match any working-copy pin (fresh
+        // ULID from the pipeline) but the same section+kind+id DOES
+        // exist in the working copy. Runs BEFORE Pass 2 so the flag
+        // treatment lands on the surviving working-copy pin instead
+        // of racing Pass 2b's dedupe.
+        //
+        // Why - the KML+XLSX pipeline generates a fresh ULID whenever
+        // the prior bundle didn't already have (sec_id, culvert_id).
+        // If the working copy still holds the AECOM_FOX-era ULID (the
+        // Phase 1 GRSM rename kept the pin.id but not the ULID
+        // linkage across pipeline generations), Pass 1a and 1b both
+        // skip on ULID mismatch and the flag signal never touches the
+        // working copy. Pass 2 then appends the bundle pin, and the
+        // Pass 2b dedupe drops the bundle pin because the working
+        // copy's photo bonus (+1000 on _pinScore) outranks the empty
+        // flagged pin. Falling back to (section, kind, id) here
+        // catches that case cleanly.
+        _bundleSecs.forEach(function (bundleSec) {
+          if (!bundleSec || !Array.isArray(bundleSec.pins)) return;
+          var destSec = SECTIONS.find(function (s) { return s.id === bundleSec.id; });
+          if (!destSec || destSec._userAdded) return;
+          bundleSec.pins.forEach(function (bp) {
+            if (!bp || !bp.attrs || bp.attrs._legacy_photos_cleared !== true) return;
+            if (!bp.id || !bp.kind) return;
+            if (bp.ulid && savedByUlid[bp.ulid]) return;   // Pass 1b already handled
+            var sp = (destSec.pins || []).find(function (p) {
+              return p && p.kind === bp.kind && p.id === bp.id;
+            });
+            if (!sp) return;
+            var spAttrs = sp.attrs || (sp.attrs = {});
+            spAttrs.photos = [];
+            spAttrs.report_hidden_photos = [];
+            spAttrs._legacy_photos_cleared = true;
+            if (sp.ulid && legacyPhotoClearedUlids.indexOf(sp.ulid) === -1) {
+              legacyPhotoClearedUlids.push(sp.ulid);
+            }
+          });
+        });
+
         // Pass 2 — append brand-new pins to the sections they belong on.
         SECTIONS.forEach(function (sec) {
           if (sec._userAdded) return;
