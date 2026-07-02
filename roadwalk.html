@@ -5047,6 +5047,18 @@ body.rw-sld-photo-dragging .strip-pin {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
+/* Portrait photos taken by field crews (typical phone camera output)
+   are ~3:4 aspect ratio. The parent .sr-photo cell is locked to 4:3
+   with object-fit: cover, which by default crops top AND bottom
+   equally - the crop from the bottom clips the burnt-in watermark
+   right off. Pinning object-position to bottom sacrifices some of
+   the sky/foliage at the top so the caption band on the bottom
+   always survives. Landscape photos wider than 4:3 get the same
+   treatment - left/right still center-crop, only the vertical is
+   biased downward. */
+.sr-card[data-cv-idx] .sr-photo img {
+  object-position: center bottom;
+}
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
