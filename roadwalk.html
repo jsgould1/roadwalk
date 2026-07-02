@@ -11951,6 +11951,7 @@ body.mobile-mode #app {
           <span style="margin-left:auto;display:flex;gap:6px;">
             <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
             <button class="sr-btn" id="cv-prune-photos-btn" title="Find photos whose GPS coordinates fall outside your project area (likely stray imports from another project) and delete them.">🗑 Prune distant…</button>
+            <button class="sr-btn" id="cv-wipe-photos-btn" title="Nuclear option — wipes EVERY photo currently linked to a culvert assessment card (embedded attrs.photos + linked geophotos in IDB). Use this to start fresh before re-running Import matched photos. Does not touch non-culvert photos.">💣 Wipe culvert photos…</button>
             <button class="sr-btn" id="cv-manage-sections-btn" title="View all project sections and delete ones that don't belong (e.g. sections dragged in from another project).">📋 Manage sections…</button>
             <button class="sr-btn" id="cv-import-photos-btn" title="Import the culvert_photos_manifest.json built by data/build_culvert_photos_manifest.py. Pre-matched + pre-watermarked photos auto-link to their culvert via linked_pin_id.">📋 Import matched photos…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
@@ -37712,6 +37713,256 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       });
     }
+    // ── Wipe every culvert photo (nuclear option) ────────────────
+    // Sometimes the incremental legacy-photo clear on Reload leaves
+    // stragglers (AECOM_FOX embeds that skipped every Pass, orphan
+    // linked geophotos from an earlier import batch, stale IDB
+    // inspection overlays, etc). This modal is the belt-and-
+    // suspenders reset: wipe every photo currently reachable from any
+    // culvert card, so the next Import matched photos runs against a
+    // clean slate.
+    //
+    // Removed:
+    //   1. attrs.photos + attrs.report_hidden_photos on every
+    //      culvert pin in the working copy (SECTIONS in memory).
+    //   2. Same fields in every IDB inspection record whose ulid is
+    //      on a culvert pin.
+    //   3. Every geophoto in the geophotos store whose linked_pin_id
+    //      is "<secId>::<pinId>" for any culvert pin (both the record
+    //      AND its bytes are deleted, since the store owns them).
+    //
+    // Preserved:
+    //   - Non-culvert pins (signs, guardrails, gates, walls, etc).
+    //   - Non-linked geophotos (Triage-tagged photos with no
+    //     linked_pin_id, unlinked drop-pin captures, etc).
+    //   - Every culvert pin's conditions, notes, dimensions, and
+    //     geometry — only the photo fields get emptied.
+    //
+    // After the wipe, calls persistSections() so the working copy is
+    // durable, then geophotos.reloadFromIdb() so the in-memory photo
+    // list reflects the deletions, then re-renders the report.
+    function _cvOpenWipePhotosModal() {
+      var api = window._RW && window._RW.geophotos;
+      if (!api || typeof api.reloadFromIdb !== 'function') {
+        alert('Wipe unavailable — geophotos module not ready.');
+        return;
+      }
+
+      // Pre-count what will be removed so the confirmation copy has
+      // real numbers. Cheap - scans the in-memory PHOTOS + SECTIONS
+      // once, no IDB round-trips.
+      var culvertKeys = Object.create(null);
+      var culvertUlids = [];
+      var embeddedCount = 0;
+      (window.SECTIONS || []).forEach(function (sec) {
+        (sec.pins || []).forEach(function (p) {
+          if (!p || p.kind !== 'culvert') return;
+          if (p.id) culvertKeys[sec.id + '::' + p.id] = true;
+          if (p.ulid) culvertUlids.push(p.ulid);
+          var a = p.attrs || {};
+          if (Array.isArray(a.photos))                embeddedCount += a.photos.length;
+          if (Array.isArray(a.report_hidden_photos))  embeddedCount += a.report_hidden_photos.length;
+        });
+      });
+      var linkedCount = 0;
+      if (typeof api.list === 'function') {
+        api.list().forEach(function (gp) {
+          if (gp && gp.linked_pin_id && culvertKeys[gp.linked_pin_id]) linkedCount++;
+        });
+      }
+      var totalToRemove = embeddedCount + linkedCount;
+      var culvertPinCount = culvertUlids.length;
+
+      var backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:8px;max-width:560px;width:92%;'
+        + 'max-height:84vh;overflow:auto;padding:18px 20px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);'
+        + 'font:14px/1.4 system-ui,sans-serif;color:var(--ink,#111);';
+      panel.innerHTML =
+          '<h3 style="margin:0 0 8px;font-size:16px;color:#b91c1c;">💣 Wipe every culvert photo</h3>'
+        + '<p style="margin:0 0 10px;color:var(--ink-3);font-size:13px;">'
+        +   'Nuclear reset for culvert photos only. Use this when the '
+        +   'incremental Reload-based clear leaves stragglers and you '
+        +   'want a truly empty slate before re-running <em>Import '
+        +   'matched photos</em>.'
+        + '</p>'
+        + '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:4px;'
+        +      'padding:10px 12px;font-family:\'IBM Plex Mono\',monospace;font-size:12px;'
+        +      'color:#7f1d1d;margin-bottom:10px;">'
+        +   'This will delete:<br>'
+        +   '&nbsp;&nbsp;• <b>' + embeddedCount + '</b> embedded photo entr(y|ies) '
+        +          '(attrs.photos + attrs.report_hidden_photos)<br>'
+        +   '&nbsp;&nbsp;• <b>' + linkedCount + '</b> linked geophoto(s) '
+        +          '(records + JPEG bytes in IDB)<br>'
+        +   'across <b>' + culvertPinCount + '</b> culvert pin(s).<br>'
+        +   'Non-culvert photos + everything else on the pins '
+        +   '(conditions, notes, dimensions) stays untouched.'
+        + '</div>'
+        + '<p style="margin:0 0 10px;color:var(--ink-3);font-size:12px;">'
+        +   'Cannot be undone. If you meant to preserve some photos, '
+        +   'close this and use the per-photo <b>×</b> hide button on '
+        +   'the report card instead.'
+        + '</p>'
+        + '<div id="cv-wipe-status" style="padding:8px 10px;background:#f1f5f9;border-radius:4px;'
+        +   'font-family:\'IBM Plex Mono\',monospace;font-size:12px;min-height:18px;">'
+        +   (totalToRemove ? 'Ready to wipe.' : 'Nothing to wipe — every culvert already has 0 photos.')
+        + '</div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">'
+        + '<button type="button" data-act="close" style="font:600 13px system-ui;padding:6px 14px;'
+        +   'border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">Cancel</button>'
+        + '<button type="button" data-act="wipe"' + (totalToRemove ? '' : ' disabled') + ' '
+        +   'style="font:700 13px system-ui;padding:6px 14px;border:none;border-radius:4px;'
+        +   'background:#b91c1c;color:#fff;cursor:' + (totalToRemove ? 'pointer' : 'not-allowed')
+        +   ';opacity:' + (totalToRemove ? '1' : '.5') + ';">Wipe ' + totalToRemove + ' photo(s)</button>'
+        + '</div>';
+      backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+
+      var statusEl = panel.querySelector('#cv-wipe-status');
+      var wipeBtn  = panel.querySelector('[data-act="wipe"]');
+      var closeBtn = panel.querySelector('[data-act="close"]');
+      var busy = false;
+
+      function close() {
+        if (busy) return;
+        try { document.body.removeChild(backdrop); } catch (_) {}
+      }
+      backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) close(); });
+      closeBtn.addEventListener('click', close);
+      wipeBtn.addEventListener('click', function () {
+        if (busy) return;
+        busy = true;
+        wipeBtn.disabled = true;
+        closeBtn.disabled = true;
+        statusEl.textContent = 'Wiping…';
+        _cvWipeAllCulvertPhotos(culvertKeys, culvertUlids, statusEl)
+          .then(function () {
+            statusEl.textContent = 'Done. Refreshing report…';
+            return api.reloadFromIdb();
+          })
+          .then(function () {
+            try { renderCulvertsReport(); } catch (_) {}
+            statusEl.textContent = 'Wipe complete. All culvert cards now show PHOTOS (0).';
+            setTimeout(function () {
+              busy = false;
+              close();
+            }, 800);
+          })
+          .catch(function (err) {
+            busy = false;
+            wipeBtn.disabled = false;
+            closeBtn.disabled = false;
+            statusEl.textContent = 'Wipe failed: ' + (err && err.message ? err.message : err);
+          });
+      });
+    }
+
+    // Core wipe. Runs three passes (working copy -> IDB inspections
+    // -> IDB geophotos), reporting progress into statusEl. Returns a
+    // Promise so the modal can chain reloadFromIdb + re-render after.
+    function _cvWipeAllCulvertPhotos(culvertKeys, culvertUlids, statusEl) {
+      // Pass W1 - working copy. Empty the two photo fields on every
+      // culvert pin so the render code (which reads pin.attrs before
+      // any _mergedPin overlay) sees zero photos immediately.
+      (window.SECTIONS || []).forEach(function (sec) {
+        (sec.pins || []).forEach(function (p) {
+          if (!p || p.kind !== 'culvert') return;
+          var a = p.attrs || (p.attrs = {});
+          a.photos = [];
+          a.report_hidden_photos = [];
+          // Stamp the flag so _mergedPin's post-overlay guard also
+          // zeroes photos even if the IDB record's async clear (Pass
+          // W2 below) hasn't landed yet by the time the render fires.
+          a._legacy_photos_cleared = true;
+        });
+      });
+      if (window._RW && typeof window._RW.persistSections === 'function') {
+        try { window._RW.persistSections(); } catch (_) {}
+      }
+      // Sync the in-memory idb cache (if populated) so the very next
+      // _mergedPin call reads zero photos regardless of Pass W2 timing.
+      if (window._RW && window._RW.dataState && window._RW.dataState.idbCacheByUlid) {
+        var cache = window._RW.dataState.idbCacheByUlid;
+        culvertUlids.forEach(function (u) {
+          var rec = cache[u];
+          if (rec && rec.attrs) {
+            rec.attrs.photos = [];
+            rec.attrs.report_hidden_photos = [];
+          }
+        });
+      }
+      statusEl.textContent = 'Working copy cleared. Clearing IDB inspections…';
+
+      // Pass W2 - IDB inspections. One readwrite transaction touches
+      // every culvert record by ulid; skips missing records silently.
+      var inspectionsCleared = 0;
+      var p1 = new Promise(function (resolve) {
+        if (!window.RWIdb || typeof window.RWIdb.openDB !== 'function' || !culvertUlids.length) {
+          return resolve();
+        }
+        window.RWIdb.openDB().then(function (db) {
+          try {
+            var tx    = db.transaction('inspections', 'readwrite');
+            var store = tx.objectStore('inspections');
+            culvertUlids.forEach(function (ulid) {
+              var g = store.get(ulid);
+              g.onsuccess = function (ev) {
+                var rec = ev.target.result;
+                if (!rec || !rec.attrs) return;
+                rec.attrs.photos = [];
+                rec.attrs.report_hidden_photos = [];
+                try { store.put(rec); inspectionsCleared++; } catch (_) {}
+              };
+            });
+            tx.oncomplete = function () { resolve(); };
+            tx.onerror    = function () { resolve(); };
+          } catch (_) { resolve(); }
+        }).catch(function () { resolve(); });
+      });
+
+      // Pass W3 - IDB geophotos. Geophotos live in RoadWalkGeoPhotos_v1
+      // (see line ~17478 for the original pattern). Walk in-memory
+      // list, collect ids whose linked_pin_id matches a culvert key,
+      // batch-delete in one readwrite transaction so the store
+      // reflects the wipe before reloadFromIdb runs.
+      var geophotosRemoved = 0;
+      var p2 = p1.then(function () {
+        statusEl.textContent = 'IDB inspections cleared. Deleting geophotos…';
+        var api = window._RW && window._RW.geophotos;
+        if (!api || typeof api.list !== 'function') return;
+        var toDelete = api.list().filter(function (gp) {
+          return gp && gp.linked_pin_id && culvertKeys[gp.linked_pin_id];
+        });
+        if (!toDelete.length) return;
+        return new Promise(function (resolve) {
+          var req = indexedDB.open('RoadWalkGeoPhotos_v1');
+          req.onsuccess = function () {
+            var db = req.result;
+            if (!db.objectStoreNames.contains('photos')) return resolve();
+            try {
+              var tx    = db.transaction('photos', 'readwrite');
+              var store = tx.objectStore('photos');
+              toDelete.forEach(function (gp) {
+                try { store.delete(gp.id); geophotosRemoved++; } catch (_) {}
+              });
+              tx.oncomplete = function () { resolve(); };
+              tx.onerror    = function () { resolve(); };
+            } catch (_) { resolve(); }
+          };
+          req.onerror = function () { resolve(); };
+        });
+      });
+
+      return p2.then(function () {
+        console.log('[RoadWalk] Culvert photo wipe — cleared '
+          + inspectionsCleared + ' IDB inspection record(s), deleted '
+          + geophotosRemoved + ' linked geophoto(s), stamped '
+          + culvertUlids.length + ' culvert pin(s) with _legacy_photos_cleared.');
+      });
+    }
+
     // ── Import matched culvert photos ────────────────────────────
     // Modal that accepts the JSON manifest produced by
     // data/build_culvert_photos_manifest.py. Each entry is a pre-
@@ -38729,6 +38980,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (importBtn && !importBtn._wired) {
       importBtn._wired = true;
       importBtn.addEventListener('click', function () { _cvOpenImportPhotosModal(); });
+    }
+    var wipeBtn = document.getElementById('cv-wipe-photos-btn');
+    if (wipeBtn && !wipeBtn._wired) {
+      wipeBtn._wired = true;
+      wipeBtn.addEventListener('click', function () { _cvOpenWipePhotosModal(); });
     }
 
     // Export CSV — opens the section picker; on confirm, _cvExportCsv
