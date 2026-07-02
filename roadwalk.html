@@ -38661,6 +38661,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _cvEffectiveCond(pin, 'hw_upstream_cond'),
         _cvEffectiveCond(pin, 'hw_downstream_cond'),
       ]);
+      // Structure Condition — worst of the two end-structure ratings
+      // (Inlet Structure / Outlet Structure) shown on the overall row
+      // beside Overall Condition. Left as null when neither end has a
+      // structure to rate (projecting outfall + no upstream structure),
+      // which renders as the neutral em-dash via _cvColoredCond.
+      var structCond = _cvWorstCond([
+        _cvEffectiveCond(pin, 'hw_upstream_cond'),
+        _cvEffectiveCond(pin, 'hw_downstream_cond'),
+      ]);
 
       // Description — concise summary built per spec:
       //   {length}' || {diameter}" {material} pipe with
@@ -38709,6 +38718,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           '<div class="sr-info-row-name sr-info-row-overall">' +
             '<div><span class="sr-info-name-lbl">Overall Condition:</span>'
               + '<span class="sr-info-name-val">' + _cvColoredCond(ovCond) + '</span></div>' +
+            '<div><span class="sr-info-name-lbl">Structure:</span>'
+              + '<span class="sr-info-name-val">' + _cvColoredCond(structCond) + '</span></div>' +
           '</div>' +
           // Culverts span the road as a LineString, so Side / Offset
           // (which describe a point's left/right placement relative to
@@ -39449,11 +39460,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // its schematic SVG.
     function _surgicallyUpdateCard(card, pin, sec) {
       if (!card || !pin) return;
-      // Overall condition pill
-      var overallVal = card.querySelector('.sr-info-row-overall .sr-info-name-val');
-      if (overallVal) {
+      // Overall condition pill + Structure condition pill. Both live
+      // in .sr-info-row-overall as separate .sr-info-name-val nodes
+      // (Overall in the 1st sub-div, Structure in the 2nd). Update
+      // both in place so a condition-select change refreshes both
+      // pills without a full re-render.
+      var overallVals = card.querySelectorAll('.sr-info-row-overall .sr-info-name-val');
+      if (overallVals[0]) {
         var ovCond = _deriveOverallCondition(pin) || '—';
-        overallVal.innerHTML = _cvColoredCond(ovCond);
+        overallVals[0].innerHTML = _cvColoredCond(ovCond);
+      }
+      if (overallVals[1]) {
+        var structCond = _cvWorstCond([
+          _cvEffectiveCond(pin, 'hw_upstream_cond'),
+          _cvEffectiveCond(pin, 'hw_downstream_cond'),
+        ]);
+        overallVals[1].innerHTML = _cvColoredCond(structCond);
       }
       // Description span (next to Pin ID) — depends on material,
       // length_ft, size_in, in_type, out_type, in_side, out_side. The
