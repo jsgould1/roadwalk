@@ -5070,13 +5070,14 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 /* Row placement: a load-time JS handler on #cv-list stamps each
    figure with data-orient="landscape" or "portrait" from the image's
-   natural dimensions. CSS then routes portraits into row 2 via
-   grid `order`, so row 1 is all landscape and row 2 is all portrait
-   regardless of which slot (Inlet 1 / Inlet 2 / Outlet 1 / Outlet 2)
-   the photo came from. Landscapes default to order:0, portraits
-   push to order:1. */
-.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"]  { order: 1; }
-.sr-card[data-cv-idx] .sr-photo[data-orient="landscape"] { order: 0; }
+   natural dimensions. CSS then pins landscape figures to row 1 and
+   portrait figures to row 2 via explicit grid-row placement — this
+   is stricter than `order`, which with 3 photos (1L + 2P) would
+   still pack the first portrait into row 1 col 2 next to the
+   landscape. grid-row forces the portraits into their own row
+   regardless of count. */
+.sr-card[data-cv-idx] .sr-photo[data-orient="landscape"] { grid-row: 1; }
+.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"]  { grid-row: 2; }
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
@@ -37512,12 +37513,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (!list) return;
 
     // Orientation-aware photo layout: whenever a photo <img> inside a
-    // culvert card finishes loading, tag its parent <figure> with the
-    // orientation and a grid `order` so all landscapes land in row 1
-    // and all portraits in row 2, regardless of the slot (Inlet 1 /
-    // Inlet 2 / Outlet 1 / Outlet 2). Attached to #cv-list once
-    // (capture phase — load events don't bubble) so it survives the
-    // per-culvert surgical photo swap and the print-time img rebuild.
+    // culvert card finishes loading, tag its parent <figure> with
+    // data-orient so the CSS grid-row rules route landscape shots
+    // into row 1 and portrait shots into row 2, regardless of the
+    // slot (Inlet 1 / Inlet 2 / Outlet 1 / Outlet 2). Uses two
+    // catches so no img slips through: (1) a MutationObserver on
+    // #cv-list hooks every new <img> the moment it's added to the
+    // DOM — initial render, surgical photo swap, print-time img
+    // rebuild all mount imgs into #cv-list's subtree so all are
+    // caught. (2) Each hooked img gets its OWN direct load listener
+    // rather than relying on capture-phase bubbling on the parent,
+    // which was occasionally missing photos whose load event fired
+    // between the parent listener attach and this render pass.
     if (!list._orientWired) {
       list._orientWired = true;
       var _applyOrient = function (img) {
@@ -37525,21 +37532,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!img.naturalWidth || !img.naturalHeight) return;
         var fig = img.closest && img.closest('.sr-photo');
         if (!fig) return;
-        // CSS routes portraits into row 2 via grid `order` off the
-        // data-orient attribute — we just stamp the attribute here.
         fig.dataset.orient = img.naturalHeight > img.naturalWidth * 1.05
                              ? 'portrait' : 'landscape';
       };
-      list.addEventListener('load', function (e) {
-        var t = e.target;
-        if (t && t.tagName === 'IMG' && t.closest('.sr-photo')) _applyOrient(t);
-      }, true);
-      // Also catch <img>s that are already decoded by the time the
-      // observer swaps in their src (cached, or synchronously loaded).
-      list._reapplyOrient = function () {
-        list.querySelectorAll('.sr-photo img').forEach(function (img) {
-          if (img.complete) _applyOrient(img);
+      var _hookImg = function (img) {
+        if (!img || img.tagName !== 'IMG' || img._orientHooked) return;
+        if (!img.closest || !img.closest('.sr-photo')) return;
+        img._orientHooked = true;
+        if (img.complete && img.naturalWidth > 0) {
+          _applyOrient(img);
+        } else {
+          img.addEventListener('load',  function () { _applyOrient(img); }, { once: true });
+          // Some browsers dispatch a decode error rather than load
+          // when a bad dataUrl is set; retry on the next successful
+          // load event too.
+          img.addEventListener('error', function () { img._orientHooked = false; }, { once: true });
+        }
+      };
+      if (window.MutationObserver) {
+        var mo = new MutationObserver(function (records) {
+          for (var i = 0; i < records.length; i++) {
+            var added = records[i].addedNodes;
+            for (var j = 0; j < added.length; j++) {
+              var n = added[j];
+              if (n.nodeType !== 1) continue;
+              if (n.tagName === 'IMG') _hookImg(n);
+              else if (n.querySelectorAll) {
+                n.querySelectorAll('img').forEach(_hookImg);
+              }
+            }
+          }
         });
+        mo.observe(list, { childList: true, subtree: true });
+        list._orientObserver = mo;
+      }
+      // Called after each render / surgical update to sweep imgs
+      // that were already in the DOM before the observer attached
+      // (or added synchronously during innerHTML replacement — the
+      // observer batches those into one record but the walk is
+      // cheap either way).
+      list._reapplyOrient = function () {
+        list.querySelectorAll('.sr-photo img').forEach(_hookImg);
       };
     }
 
