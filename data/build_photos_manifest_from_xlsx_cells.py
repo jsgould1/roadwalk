@@ -46,6 +46,38 @@ XLSX_PATH = (
     / "GRSM_Culvert_Stationing_SF+JSG 070126 (original phtoos removed).xlsx"
 )
 OUT_PATH = XLSX_PATH.with_name("culvert_photos_from_xlsx_manifest.jsonl")
+# The manifest builder pulls STA + MP for the watermark from the same
+# prewalk-bundle.json the app consumes, so the watermark reads
+# identical to the report card without duplicating station math here.
+BUNDLE_PATH = Path(__file__).parent / "prewalk-bundle.json"
+
+
+def _load_sta_mp_lookup() -> dict[tuple[str, str], dict]:
+    """Read prewalk-bundle.json and build (sec_id, pin_id) -> {sta, mp}.
+    Returns an empty dict if the bundle isn't there yet (fresh clone
+    without a first-time run) - the watermark will just skip the STA/MP
+    line in that case."""
+    lookup: dict[tuple[str, str], dict] = {}
+    if not BUNDLE_PATH.exists():
+        return lookup
+    try:
+        bundle = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return lookup
+    for sec in bundle.get("sections") or []:
+        sec_id = sec.get("id") or ""
+        mp_start = sec.get("mp_start")
+        for pin in sec.get("pins") or []:
+            if (pin.get("kind") or "") != "culvert":
+                continue
+            pin_id = pin.get("id") or ""
+            sta    = pin.get("sta") or ""
+            sta_ft = pin.get("sta_ft")
+            mp: float | None = None
+            if isinstance(sta_ft, (int, float)) and isinstance(mp_start, (int, float)):
+                mp = mp_start + sta_ft / 5280.0
+            lookup[(sec_id, pin_id)] = {"sta": sta, "mp": mp}
+    return lookup
 
 MAX_SIZE = 1200
 JPEG_QUALITY = 82
@@ -200,7 +232,12 @@ def _burn_watermark(img: Image.Image, lines: list[str]) -> Image.Image:
     band_h = len(lines) * lh + pad_y * 2
     overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
-    draw.rectangle([(0, h - band_h), (w, h)], fill=(0, 0, 0, int(0.58 * 255)))
+    # Fully opaque black band. Previously 58 % alpha, which let older
+    # AECOM_FOX watermarks show through when the same photo carried
+    # a burnt-in caption near the same y-position - the new caption
+    # read like a double exposure. Alpha 255 fully covers whatever
+    # was underneath.
+    draw.rectangle([(0, h - band_h), (w, h)], fill=(0, 0, 0, 255))
     for i, ln in enumerate(lines):
         draw.text((pad_x, h - band_h + pad_y + i * lh), ln,
                   font=font, fill=(255, 255, 255, 255))
@@ -243,6 +280,11 @@ def main() -> int:
         failed_decode: list[str] = []
         seen_paths: set[str] = set()
 
+        # STA / MP lookup pulled once up front - the same lookup gets
+        # hit up to four times per culvert (Q/R/S/T cells), so caching
+        # it saves 3 * 60 = 180 redundant bundle walks per run.
+        sta_mp = _load_sta_mp_lookup()
+
         for row, col, vm in photo_cells:
             body = body_rows.get(row)
             if not body:
@@ -257,10 +299,25 @@ def main() -> int:
             if dedupe_key in seen_paths:
                 continue
             seen_paths.add(dedupe_key)
+            # Three-line watermark. Line 1 combines pin id with the
+            # station + milepost the report card shows; line 2 names
+            # the inlet/outlet slot; line 3 is the raw XLSX media file
+            # (image14.jpeg etc), which is what the manifest builder
+            # actually walked - useful when a photo looks off and the
+            # QC review needs to point at a specific archived image.
+            loc = sta_mp.get((sec_id, cid), {})
+            sta_str = loc.get("sta") or ""
+            mp_val  = loc.get("mp")
+            mp_str  = f"MP {mp_val:.2f}" if isinstance(mp_val, (int, float)) else ""
+            header_bits = []
+            if sta_str: header_bits.append(f"STA {sta_str}")
+            if mp_str:  header_bits.append(mp_str)
+            hdr = f"{cid}  ({', '.join(header_bits)})" if header_bits else cid
+            file_name = media_path.rsplit("/", 1)[-1]
             wm_lines = [
-                f"{cid}",
-                f"{end_label}",
-                f"XLSX SF+JSG 070126",
+                hdr,
+                f"{end.upper()} PHOTO {slot}",
+                file_name,
             ]
             try:
                 data_url = _to_jpeg_dataurl(z.read(media_path), wm_lines)
@@ -295,8 +352,8 @@ def main() -> int:
         "image_settings": {
             "max_size_px":  MAX_SIZE,
             "jpeg_quality": JPEG_QUALITY,
-            "watermark":    "bottom-band black 58% / white mono / "
-                            "culvert_id · end · source",
+            "watermark":    "bottom-band black 100% / white mono / "
+                            "culvert_id + (STA + MP) · end + slot · source_file",
         },
     }
     print()
