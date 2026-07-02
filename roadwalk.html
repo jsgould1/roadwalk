@@ -36671,8 +36671,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
       var prefix = secId + '::' + pin.id;
+      // Match the culvert report's 🔎 Only imported filter so the KMZ
+      // export and the printable Assessment Card show the same photos
+      // per culvert. When the toggle is ON (default), skip any linked
+      // geophoto whose id doesn't start with `xlsx_` - the manifest
+      // prefix that data/build_photos_manifest_from_xlsx_cells.py
+      // stamps on every entry. Leaves the toggle OFF path unchanged
+      // so a user reviewing the full history can flip it and export
+      // everything.
+      var onlyImported = _cvLoadImportedOnly();
       window._RW.geophotos.list().forEach(function (gp) {
         if (!gp || gp.linked_pin_id !== prefix) return;
+        if (onlyImported && !(gp.id && String(gp.id).indexOf('xlsx_') === 0)) return;
         if (hidden.has('gp:' + gp.id)) return;
         var src = gp.dataUrl || '';
         if (!src || seen[src]) return;
