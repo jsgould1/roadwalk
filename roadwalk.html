@@ -39187,23 +39187,40 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       //      frames than never print at all.
       var decodePromises = [];
       var imgs = document.querySelectorAll('.sr-photo img');
+      var srcless = 0, alreadyDone = 0, queued = 0;
       imgs.forEach(function (img) {
-        if (!img.src) return;                                // skip - forceLoadAll couldn't hydrate
-        if (img.complete && img.naturalWidth > 0) return;    // already decoded
+        if (!img.src) { srcless++; return; }
+        if (img.complete && img.naturalWidth > 0) { alreadyDone++; return; }
         if (typeof img.decode === 'function') {
+          queued++;
           decodePromises.push(img.decode().catch(function () {}));
           return;
         }
+        queued++;
         decodePromises.push(new Promise(function (res) {
           if (img.complete) return res();
           img.addEventListener('load',  res, { once: true });
           img.addEventListener('error', res, { once: true });
         }));
       });
+      var _tStart = Date.now();
+      console.log('[RoadWalk] Print prep: ' + imgs.length + ' .sr-photo imgs found ('
+        + srcless + ' srcless / ' + alreadyDone + ' already decoded / '
+        + queued + ' awaiting decode). delayMs=' + delayMs);
 
       var mapWait = new Promise(function (res) { setTimeout(res, delayMs); });
-      var decodeWait = Promise.all(decodePromises);
-      var hardCeiling = new Promise(function (res) { setTimeout(res, 12000); });
+      var decodeWait = Promise.all(decodePromises).then(function () {
+        console.log('[RoadWalk] Print prep: all ' + queued + ' decode(s) done in '
+          + (Date.now() - _tStart) + ' ms');
+      });
+      // Generous ceiling - the previous 12 s was firing mid-decode on
+      // Print Sections runs of 60+ culverts. 45 s covers the worst
+      // case (Chromium decode pipeline saturated by 240+ 1200-px JPEG
+      // dataUrls) with a wide margin.
+      var hardCeiling = new Promise(function (res) { setTimeout(function () {
+        console.warn('[RoadWalk] Print prep: 45 s ceiling reached — printing anyway');
+        res();
+      }, 45000); });
       Promise.race([
         Promise.all([mapWait, decodeWait]),
         hardCeiling,
