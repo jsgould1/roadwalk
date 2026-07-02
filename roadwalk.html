@@ -13256,14 +13256,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           if (!sec || !Array.isArray(sec.pins) || sec.pins.length < 2) return;
           var byKey = new Map();
           var order = [];
+          // Track which merge groups had ANY member carrying the
+          // bundle's _legacy_photos_cleared flag. When the ULID of a
+          // working-copy pin didn't match the bundle's (e.g. the
+          // legacy AECOM_FOX-era ULID stayed on the pin after a rename
+          // from "Culvert 7" to "A-CV-001"), Pass 1b's flag handler
+          // never fired on that pin, and Pass 2 appended the bundle's
+          // freshly-ULID'd A-CV-001 as a "new" pin. Dedupe then
+          // preserves the working copy (which wins _pinScore because
+          // it still carries the legacy photos), so we lose the flag
+          // signal unless we hoist it up here.
+          var flagByKey = Object.create(null);
           sec.pins.forEach(function (p) {
             if (!p || !p.id || !p.kind) { order.push(p); return; }
             var key = p.kind + '::' + p.id;
+            if (p.attrs && p.attrs._legacy_photos_cleared === true) {
+              flagByKey[key] = true;
+            }
             var prior = byKey.get(key);
             if (!prior) { byKey.set(key, p); order.push(key); return; }
             if (_pinScore(p) > _pinScore(prior)) byKey.set(key, p);
             dedupedPinCount++;
           });
+          // Even when NO duplicate was found in this section, a flag
+          // that came in on a single pin still needs the winner-side
+          // treatment below (idempotency on subsequent reloads). But
+          // no-dupe means byKey already has the sole pin, so falling
+          // through applies the flag propagation without a rebuild.
           if (dedupedPinCount > 0) {
             var seen = new Set();
             var keptPins = [];
@@ -13275,6 +13294,25 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             });
             sec.pins = keptPins;
           }
+          // Cross-ULID flag propagation. For every key whose group
+          // saw the flag on at least one member, wipe photos on the
+          // surviving pin and stamp the winner's ULID for Pass 1d's
+          // IDB clear. Safe when the flag was already applied cleanly
+          // by Pass 1b (winner.attrs.photos is already empty; assigning
+          // [] again is a no-op) and safe when there was no dupe at
+          // all (winner IS the flagged pin, we just make sure Pass 1d
+          // sees its ULID).
+          Object.keys(flagByKey).forEach(function (key) {
+            var winner = byKey.get(key);
+            if (!winner) return;
+            var wattrs = winner.attrs || (winner.attrs = {});
+            wattrs.photos = [];
+            wattrs.report_hidden_photos = [];
+            wattrs._legacy_photos_cleared = true;
+            if (winner.ulid && legacyPhotoClearedUlids.indexOf(winner.ulid) === -1) {
+              legacyPhotoClearedUlids.push(winner.ulid);
+            }
+          });
         });
 
         // Pass 2c — cross-section orphan cleanup. Pass 1a moves pins
