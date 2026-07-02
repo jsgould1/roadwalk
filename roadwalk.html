@@ -37287,6 +37287,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + '<Data name="material"><value>'           + _xmlEsc(a.material  || '')                         + '</value></Data>'
       + '<Data name="size_in"><value>'            + _xmlEsc(a.size_in   || '')                         + '</value></Data>'
       + '<Data name="length_ft"><value>'          + _xmlEsc(a.length_ft || '')                         + '</value></Data>'
+      // Machine-readable slope percentage — pulled from the same attr
+      // the culvert card + KML balloon HTML read from (a.slope_pipe_pct),
+      // matches the CSV fix so downstream analytics see one value.
+      + '<Data name="slope_pct"><value>'          + _xmlEsc(a.slope_pipe_pct != null ? a.slope_pipe_pct : '') + '</value></Data>'
       + '<Data name="milepost"><value>'           + _xmlEsc(mpStr)                                     + '</value></Data>'
       + '<Data name="station"><value>'            + _xmlEsc(pin.sta || '')                             + '</value></Data>'
       + '<Data name="latitude"><value>'           + midLat.toFixed(6)                                  + '</value></Data>'
