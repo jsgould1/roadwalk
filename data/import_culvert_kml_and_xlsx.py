@@ -431,13 +431,33 @@ def main() -> int:
                 attrs[k] = v
 
     # ── Orphans: bundle pins in target sections not in new source ──
-    # Split into "safe to delete" (empty legacy pins with no field
-    # data) and "keep + flag" (still carry photos / conditions / notes
-    # the user hasn't decided about). Only auto-drop the empty ones.
+    # Three buckets:
+    #   1. cross-section duplicates - a pin with the same (kind, id)
+    #      is currently active in ANOTHER section from the new source.
+    #      That means the XLSX moved this culvert between sections
+    #      (e.g. "A-CV-041" was in G on the last import, is in A now)
+    #      and we're looking at a stale copy from the prior run.
+    #      Always drop.
+    #   2. legacy stubs — no photos / conditions / notes / user
+    #      edits. Score 0 = safe legacy shell.
+    #   3. carry real field data. Keep + flag for user review.
+    active_ids_by_sec: dict[str, set[str]] = {}
+    for (s_id, c_id) in seen_pin_keys:
+        active_ids_by_sec.setdefault(s_id, set()).add(c_id)
+    active_ids_flat = {k[1] for k in seen_pin_keys}   # every active id across sections
     orphans_dropped = []
     orphans_kept    = []
     for (sec_id, cid), pin in existing_by_sec_id.items():
         if (sec_id, cid) in seen_pin_keys:
+            continue
+        # Cross-section duplicate — same id, different section, active
+        # somewhere else. Stale artifact of a previous XLSX Section
+        # assignment; always drop.
+        if cid in active_ids_flat and cid not in active_ids_by_sec.get(sec_id, set()):
+            sec = sections_by_id.get(sec_id)
+            if sec:
+                sec["pins"] = [p for p in (sec.get("pins") or []) if p is not pin]
+            orphans_dropped.append((sec_id, cid + "  (cross-section stale)"))
             continue
         if _pin_score(pin) == 0:
             # No photos, no conditions, no notes — legacy stub.
