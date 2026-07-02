@@ -5058,6 +5058,19 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-photo img {
   object-position: center bottom;
 }
+/* Orientation-aware layout: a load-time JS handler on #cv-list stamps
+   each figure with data-orient="landscape" or "portrait" from the
+   image's natural dimensions, and sets style.order so landscapes
+   fill row 1 and portraits fill row 2 — regardless of which slot
+   (Inlet 1 / Inlet 2 / Outlet 1 / Outlet 2) the photo came from.
+   Portrait cells use a 3/4 aspect + object-fit: contain so nothing
+   gets clipped — a taller-than-3/4 phone capture just gains thin
+   black bars on the sides against the black .sr-photo background. */
+.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"] img {
+  aspect-ratio: 3/4;
+  object-fit: contain;
+  object-position: center center;
+}
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
@@ -37487,6 +37500,38 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   function renderCulvertsReport() {
     var list = document.getElementById('cv-list');
     if (!list) return;
+
+    // Orientation-aware photo layout: whenever a photo <img> inside a
+    // culvert card finishes loading, tag its parent <figure> with the
+    // orientation and a grid `order` so all landscapes land in row 1
+    // and all portraits in row 2, regardless of the slot (Inlet 1 /
+    // Inlet 2 / Outlet 1 / Outlet 2). Attached to #cv-list once
+    // (capture phase — load events don't bubble) so it survives the
+    // per-culvert surgical photo swap and the print-time img rebuild.
+    if (!list._orientWired) {
+      list._orientWired = true;
+      var _applyOrient = function (img) {
+        if (!img || img.tagName !== 'IMG') return;
+        if (!img.naturalWidth || !img.naturalHeight) return;
+        var fig = img.closest && img.closest('.sr-photo');
+        if (!fig) return;
+        var portrait = img.naturalHeight > img.naturalWidth * 1.05;
+        fig.dataset.orient = portrait ? 'portrait' : 'landscape';
+        fig.style.order    = portrait ? '1' : '0';
+      };
+      list.addEventListener('load', function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'IMG' && t.closest('.sr-photo')) _applyOrient(t);
+      }, true);
+      // Also catch <img>s that are already decoded by the time the
+      // observer swaps in their src (cached, or synchronously loaded).
+      list._reapplyOrient = function () {
+        list.querySelectorAll('.sr-photo img').forEach(function (img) {
+          if (img.complete) _applyOrient(img);
+        });
+      };
+    }
+
     var sections = window.SECTIONS || [];
 
     // Populate section dropdown once per render — list only sections
@@ -39739,6 +39784,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       window._RW.lazyPhotos.observe(list);
     }
 
+    // Any <img>s that were already decoded before our capture-phase
+    // 'load' listener attached (browser cache hits, blob URLs) won't
+    // fire another load event — sweep them synchronously so their
+    // figures still get data-orient + grid order stamped.
+    if (list._reapplyOrient) list._reapplyOrient();
+
     // ── Surgical photo update — used by Auto-add and Select Nearby ──
     // Rather than re-rendering 195 culvert cards after a link change
     // (which OOM'd the tab even with lazy photos), we just rewrite
@@ -39813,6 +39864,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         window._RW.lazyPhotos.observe(photoSec);
       }
       _cvHydrateBlobImgs(photoSec);
+      // Sync-sweep so already-decoded imgs get their figure's
+      // data-orient + row-order stamped without waiting on a
+      // load event that won't fire again.
+      if (list._reapplyOrient) list._reapplyOrient();
       // Visual confirmation flash — yellow fade.
       if (photoSec.animate) {
         try {
