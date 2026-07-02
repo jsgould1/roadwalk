@@ -11952,6 +11952,7 @@ body.mobile-mode #app {
             <button class="sr-btn" id="cv-photo-scope-btn" title="Pick which sections' geophotos load into memory. Sections you're not currently working on stay in IDB; only the active set is loaded.">🗂 Photo scope…</button>
             <button class="sr-btn" id="cv-prune-photos-btn" title="Find photos whose GPS coordinates fall outside your project area (likely stray imports from another project) and delete them.">🗑 Prune distant…</button>
             <button class="sr-btn" id="cv-wipe-photos-btn" title="Nuclear option — wipes EVERY photo currently linked to a culvert assessment card (embedded attrs.photos + linked geophotos in IDB). Use this to start fresh before re-running Import matched photos. Does not touch non-culvert photos.">💣 Wipe culvert photos…</button>
+            <button class="sr-btn" id="cv-imported-only-btn" title="When ON, culvert cards render ONLY XLSX-manifest imported photos (id starts with `xlsx_`). Legacy linked geophotos (auto-add-nearby carryovers, AECOM_FOX embeds, etc) are hidden from the report but stay in IDB. Toggle OFF to see everything.">🔎 Only imported: ON</button>
             <button class="sr-btn" id="cv-manage-sections-btn" title="View all project sections and delete ones that don't belong (e.g. sections dragged in from another project).">📋 Manage sections…</button>
             <button class="sr-btn" id="cv-import-photos-btn" title="Import the culvert_photos_manifest.json built by data/build_culvert_photos_manifest.py. Pre-matched + pre-watermarked photos auto-link to their culvert via linked_pin_id.">📋 Import matched photos…</button>
             <button class="sr-btn" id="cv-print-btn" title="Print the currently filtered culvert cards">🖨 Print</button>
@@ -35944,6 +35945,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       else localStorage.setItem(CV_MUTED_KEY, JSON.stringify(Array.from(set)));
     } catch (_) {}
   }
+  // "Only imported" toggle — when ON (the default), the culvert
+  // report hides linked geophotos whose id doesn't start with the
+  // `xlsx_` prefix that data/build_photos_manifest_from_xlsx_cells.py
+  // stamps on every manifest entry. Persists across reloads so the
+  // toggle stays where the user left it.
+  var CV_IMPORTED_ONLY_KEY = 'rw_cv_photos_imported_only';
+  function _cvLoadImportedOnly() {
+    try {
+      var raw = localStorage.getItem(CV_IMPORTED_ONLY_KEY);
+      if (raw === null) return true;                    // default: ON
+      return raw === '1' || raw === 'true' || raw === 'on';
+    } catch (_) { return true; }
+  }
+  function _cvSaveImportedOnly(on) {
+    try { localStorage.setItem(CV_IMPORTED_ONLY_KEY, on ? '1' : '0'); }
+    catch (_) {}
+  }
   function _cvSrc(pin) {
     return (pin.attrs && pin.attrs.source) || pin.source || '';
   }
@@ -37520,12 +37538,27 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // Pass 2 — linked geophotos (any photo whose linked_pin_id
       // matches this culvert's secId::pinId). These don't have an
       // _emb_idx, so annotate falls back to the hide path only.
+      //
+      // "Only imported" filter — when the toggle is ON (default),
+      // skip any linked geophoto whose id doesn't start with `xlsx_`.
+      // That prefix comes from the XLSX manifest's stable id scheme
+      // (`xlsx_A_A-CV-001_inlet_1` etc); every other linked geophoto
+      // (AECOM_FOX-era imports, auto-add-nearby carryovers, Triage
+      // manual links, drop-pin captures) fails the check and stays
+      // hidden. Records remain in IDB untouched — flip the toggle
+      // OFF to see everything again.
+      var onlyImported = _cvLoadImportedOnly();
+      var filteredOutByToggle = 0;
       if (sec && pin && pin.id
           && window._RW && window._RW.geophotos
           && typeof window._RW.geophotos.list === 'function') {
         var prefix = sec.id + '::' + pin.id;
         window._RW.geophotos.list().forEach(function (gp) {
           if (!gp || gp.linked_pin_id !== prefix) return;
+          if (onlyImported && !(gp.id && String(gp.id).indexOf('xlsx_') === 0)) {
+            filteredOutByToggle++;
+            return;
+          }
           var key = 'gp:' + gp.id;
           if (hidden.has(key)) { hiddenCount++; return; }
           var src = gp.dataUrl || '';
@@ -37543,6 +37576,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         });
       }
       out._hiddenCount = hiddenCount;
+      out._filteredByToggle = filteredOutByToggle;
       return out;
     }
     function _chunkPhotos(photos) {
@@ -38985,6 +39019,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     if (wipeBtn && !wipeBtn._wired) {
       wipeBtn._wired = true;
       wipeBtn.addEventListener('click', function () { _cvOpenWipePhotosModal(); });
+    }
+    // Only-imported toggle. Wires once; label refreshes on every
+    // render so the ON/OFF badge tracks the persisted state (and
+    // the previous session's state after a hard refresh).
+    var onlyImpBtn = document.getElementById('cv-imported-only-btn');
+    if (onlyImpBtn) {
+      var _refreshOnlyImpLabel = function () {
+        var on = _cvLoadImportedOnly();
+        onlyImpBtn.textContent = '🔎 Only imported: ' + (on ? 'ON' : 'OFF');
+        onlyImpBtn.classList.toggle('active', on);
+      };
+      _refreshOnlyImpLabel();
+      if (!onlyImpBtn._wired) {
+        onlyImpBtn._wired = true;
+        onlyImpBtn.addEventListener('click', function () {
+          _cvSaveImportedOnly(!_cvLoadImportedOnly());
+          _refreshOnlyImpLabel();
+          renderCulvertsReport();
+        });
+      }
     }
 
     // Export CSV — opens the section picker; on confirm, _cvExportCsv
