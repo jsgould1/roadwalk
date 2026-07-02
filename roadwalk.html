@@ -5024,15 +5024,28 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-identity-left > :last-child { margin-top: 0; }
 /* Culvert-card location row — bump up from the default 11/9 px so the
    MP / STA / Side / Offset / Lat-Lng metadata row reads at a glance
-   during field walks. */
+   during field walks. Explicit 'IBM Plex Sans' (not var(--sans,
+   system-ui)) so the values render in the same page-wide Plex Sans
+   the properties + conditions text uses — the CSS variable falls back
+   to system-ui, and the mismatch was visible when the values sat next
+   to nearby Plex Sans-rendered text. */
 .sr-card[data-cv-idx] .sr-info-row-loc {
-  font: 400 13px var(--sans, system-ui);
+  font: 400 13px 'IBM Plex Sans', system-ui, sans-serif;
 }
 .sr-card[data-cv-idx] .sr-info-row-loc .sr-lbl {
   font: 700 10px 'IBM Plex Mono', monospace;
 }
 .sr-card[data-cv-idx] .sr-info-row-loc .sr-val {
-  font: 400 13px var(--sans, system-ui);
+  font: 400 13px 'IBM Plex Sans', system-ui, sans-serif;
+}
+/* Culvert photo grid override — 2-wide (default is 3-wide, see
+   .sr-photo-grid above) so each thumb renders larger and the reviewer
+   can read the watermark + condition detail at a glance. The larger
+   thumbs are why photos are pushed off the main identity page onto
+   their own continuation card via PHOTOS_PAGE_1 = 0. */
+.sr-card[data-cv-idx] .sr-photo-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
@@ -36246,14 +36259,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             + '<rect x="' + inletX  + '" y="' + barrelY + '" width="' + inletW  + '" height="' + barrelH + '" fill="' + inletColor  + '" fill-opacity="0.78" />'
             + '<rect x="' + midX_   + '" y="' + barrelY + '" width="' + midW    + '" height="' + barrelH + '" fill="' + barrelColor + '" fill-opacity="0.78" />'
             + '<rect x="' + outletX + '" y="' + barrelY + '" width="' + outletW + '" height="' + barrelH + '" fill="' + outletColor + '" fill-opacity="0.78" />'
-            // Vertical dashed lines at the 10% and 90% marks. They
-            // extend ~10 px above and below the pipe so the segment
-            // boundaries read at a glance even when adjacent ratings
-            // happen to paint the same color. Mid-darkness gray + a
-            // visible 4-on / 3-off dash gives a clear "this is a
-            // boundary" mark without competing with the colored fills.
-            + '<line x1="' + midX_   + '" y1="' + (barrelY - 10) + '" x2="' + midX_   + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
-            + '<line x1="' + outletX + '" y1="' + (barrelY - 10) + '" x2="' + outletX + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
+            // Vertical dashed lines at the 10% and 90% marks. Extend
+            // ~10 px BELOW the pipe only — the top overhang the
+            // previous version drew was landing right where the
+            // INLET / OUTLET direction labels sit (baseline at
+            // barrelY - 6, so text top around barrelY - 18, well
+            // inside the old top overhang from barrelY - 10). Bottom
+            // overhang alone is enough to mark the segment boundary
+            // at a glance; the INLET/OUTLET labels above the pipe
+            // now stand off cleanly.
+            + '<line x1="' + midX_   + '" y1="' + barrelY + '" x2="' + midX_   + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
+            + '<line x1="' + outletX + '" y1="' + barrelY + '" x2="' + outletX + '" y2="' + (barrelY + barrelH + 10) + '" stroke="#374151" stroke-width="1.2" stroke-opacity="0.85" stroke-dasharray="4 3" />'
             // Single outer border around the whole pipe
             + '<rect x="' + barrelStartX + '" y="' + barrelY + '" width="' + totalW + '" height="' + barrelH + '" fill="none" stroke="#111" stroke-width="1.2" />';
         })()
@@ -37466,8 +37482,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // single row of photos at the bottom. Anything past PHOTOS_PAGE_1
     // spills onto continuation cards that mirror the print-card frame
     // (header + footer) but show only the photo grid.
-    var PHOTOS_PAGE_1 = 3;
-    var PHOTOS_PAGE_N = 12;
+    // Culvert photos live on their OWN continuation page (page 2+) so
+    // the identity/schematic/properties/conditions sheet reads clean.
+    // PHOTOS_PAGE_1 = 0 → main card shows the section header + action
+    // buttons but no photo grid; every photo lands on a continuation
+    // card. PHOTOS_PAGE_N = 6 → two-across × three rows per sheet at
+    // the enlarged .sr-photo-grid override (see the CSS rule with the
+    // repeat(2, 1fr) grid-template-columns above).
+    var PHOTOS_PAGE_1 = 0;
+    var PHOTOS_PAGE_N = 6;
     // Returns the photos that should appear in the printed report
     // PLUS the count of report-hidden photos so the main card can
     // surface a Restore (N hidden) button. Walks BOTH the embedded
@@ -38969,18 +38992,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                       : '')
                 + '</span>'
               + '</div>' +
-              _photoGrid(chunk) +
+              // Main card carries the section header + action buttons
+              // but pushes every thumbnail off to a continuation page
+              // (PHOTOS_PAGE_1 = 0 above). The empty-state message is
+              // "See page 2..." when photos actually exist, and the
+              // usual "No photos linked yet." when they don't - so the
+              // user knows immediately whether to scroll on or add.
+              (visiblePhotos.length
+                ? '<div class="sr-tbl-empty">See page 2 for ' + visiblePhotos.length + ' photo(s).</div>'
+                : '<div class="sr-tbl-empty">No photos linked yet.</div>') +
             '</section>' +
             _footer(1, filePageNum) +
           '</article>';
         }
-        // Continuation card.
+        // Continuation card. With PHOTOS_PAGE_1 = 0, chunks[1] is the
+        // FIRST photo page - use plain "Photos (N-M of TOTAL)" for
+        // the first continuation to avoid a "continued" prefix on
+        // page 2 when page 1 carried no photos at all. Later
+        // continuation pages (pi >= 2) still read "continued".
         var startNum = PHOTOS_PAGE_1 + (pi - 1) * PHOTOS_PAGE_N + 1;
         var endNum   = startNum + chunk.length - 1;
+        var contLbl  = (pi === 1)
+          ? 'Photos (' + startNum + '–' + endNum + ' of ' + visiblePhotos.length + ')'
+          : 'Photos (continued · ' + startNum + '–' + endNum + ' of ' + visiblePhotos.length + ')';
         return '<article class="sr-card sr-card-cont" data-cv-idx="' + idx + '">' +
           _headerBlock(false) +
           '<section class="sr-section">' +
-            '<div class="sr-sec-hdr">Photos (continued · ' + startNum + '–' + endNum + ' of ' + visiblePhotos.length + ')</div>' +
+            '<div class="sr-sec-hdr">' + contLbl + '</div>' +
             _photoGrid(chunk) +
           '</section>' +
           _footer(pi + 1, filePageNum) +
