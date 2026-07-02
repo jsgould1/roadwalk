@@ -36829,17 +36829,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // For each pin: walk both embedded + linked geophoto lookups
     // (matches what the on-screen report and printed sheet show),
-    // then resize into two data URIs — 540 px inline thumb, 1400 px
-    // click-to-zoom — the same treatment the sign KMZ uses. Photos
-    // stay inline as data: URIs so the click target opens without
-    // needing to resolve a KMZ-relative path in the OS browser.
+    // Two-tier resize kept for the click-to-zoom behavior but tuned
+    // way down so a full A/G/H/I export stays under ~25 MB instead of
+    // the 50+ MB the previous 540/1400 pair produced. The inline
+    // thumb is set to the same 380 px the balloon's <img> renders at
+    // (previously the source was 40% larger than needed); the click
+    // target drops from 1400 to 900 px and quality slides down two
+    // ticks. Photo quality still reads fine in Google Earth Pro at
+    // typical viewing zoom - a 900 px shot fills a laptop screen at
+    // 60-70% of its native pixel count.
     var bundles = pins.map(function (pin) {
       var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
       var photos = _cvPhotosForKml(merged, sec.id).slice(0, 12);
       var photoPromises = photos.map(function (ph, idx) {
         return Promise.all([
-          _srResizeJpegDataUrl(ph.src,  540, 0.7),
-          _srResizeJpegDataUrl(ph.src, 1400, 0.72),
+          _srResizeJpegDataUrl(ph.src, 380, 0.62),   // inline thumb (~25 kB)
+          _srResizeJpegDataUrl(ph.src, 900, 0.65),   // click-to-zoom (~90 kB)
         ]).then(function (pair) {
           return { thumbUrl: pair[0], fullUrl: pair[1], caption: ph.caption || '', idx: idx };
         }).catch(function () { return null; });

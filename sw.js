@@ -10,7 +10,7 @@
    ---------------------------------------------------------------- */
 'use strict';
 
-var CACHE_VERSION = 'roadwalk-v266';
+var CACHE_VERSION = 'roadwalk-v267';
 
 // Pre-cached on install so the app opens even on a fully cold start.
 var PRECACHE = ['./', './index.html', './roadwalk.html'];
