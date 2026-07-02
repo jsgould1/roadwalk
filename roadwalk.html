@@ -5046,31 +5046,37 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-photo-grid {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  /* Grid children default to align-items: stretch, which was stretching
+     landscape cells down to match the taller portrait's height and
+     filling the extra vertical space with the .sr-photo background
+     (black). align-items: start lets each cell sit at its natural
+     height; the leftover row space stays as the card's white
+     background instead of a black slab under the shorter photo.
+     Restored from the pre-uniform-4:3-clip layout (db66ef0). */
+  align-items: start;
 }
-/* Culvert thumbs share a uniform 4:3 cell (inherited from the .sr-photo
-   img rule above) so a 2-col × 2-row grid packs all four XLSX manifest
-   photos onto a single continuation page. Portrait phone captures get
-   top-cropped instead of top+bottom - object-position: center bottom
-   anchors the visible portion to the bottom of the frame, so the
-   burnt-in caption band survives while the sky/foliage at the top
-   goes off-screen. Landscape shots wider than 4:3 lose left+right
-   equally (default horizontal centering). */
+/* Each culvert thumb renders at its intrinsic aspect (4:3 landscape or
+   3:4 portrait) rather than hard-cropping to the default 4:3+cover.
+   aspect-ratio: auto + height: auto override the .sr-photo img rule
+   above so the img is free to size itself from its natural bitmap;
+   object-fit: contain guarantees no clipping if a rule elsewhere
+   ever pins the cell to a fixed ratio. This is the pre-6200def
+   natural-aspect layout — restored so the burnt-in watermark caption
+   survives on every photo, portrait or landscape. */
 .sr-card[data-cv-idx] .sr-photo img {
-  object-position: center bottom;
-}
-/* Orientation-aware layout: a load-time JS handler on #cv-list stamps
-   each figure with data-orient="landscape" or "portrait" from the
-   image's natural dimensions, and sets style.order so landscapes
-   fill row 1 and portraits fill row 2 — regardless of which slot
-   (Inlet 1 / Inlet 2 / Outlet 1 / Outlet 2) the photo came from.
-   Portrait cells use a 3/4 aspect + object-fit: contain so nothing
-   gets clipped — a taller-than-3/4 phone capture just gains thin
-   black bars on the sides against the black .sr-photo background. */
-.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"] img {
-  aspect-ratio: 3/4;
+  aspect-ratio: auto;
+  height: auto;
   object-fit: contain;
-  object-position: center center;
 }
+/* Row placement: a load-time JS handler on #cv-list stamps each
+   figure with data-orient="landscape" or "portrait" from the image's
+   natural dimensions. CSS then routes portraits into row 2 via
+   grid `order`, so row 1 is all landscape and row 2 is all portrait
+   regardless of which slot (Inlet 1 / Inlet 2 / Outlet 1 / Outlet 2)
+   the photo came from. Landscapes default to order:0, portraits
+   push to order:1. */
+.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"]  { order: 1; }
+.sr-card[data-cv-idx] .sr-photo[data-orient="landscape"] { order: 0; }
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
@@ -37519,9 +37525,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!img.naturalWidth || !img.naturalHeight) return;
         var fig = img.closest && img.closest('.sr-photo');
         if (!fig) return;
-        var portrait = img.naturalHeight > img.naturalWidth * 1.05;
-        fig.dataset.orient = portrait ? 'portrait' : 'landscape';
-        fig.style.order    = portrait ? '1' : '0';
+        // CSS routes portraits into row 2 via grid `order` off the
+        // data-orient attribute — we just stamp the attribute here.
+        fig.dataset.orient = img.naturalHeight > img.naturalWidth * 1.05
+                             ? 'portrait' : 'landscape';
       };
       list.addEventListener('load', function (e) {
         var t = e.target;
