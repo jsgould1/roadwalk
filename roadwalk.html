@@ -36396,6 +36396,109 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
   }
 
+  // Walks the same photo lookup the on-screen report uses —
+  // embedded pin.attrs.photos + linked geophotos (secId::pinId),
+  // deduped by dataUrl, skipping report_hidden entries. Folder-picked
+  // blob refs (_cv_photo_id, no dataUrl in memory) are skipped for
+  // the KMZ export because their bytes live in IDB and we don't have
+  // the async infrastructure to inline them here.
+  function _cvPhotosForKml(pin, secId) {
+    var out = [];
+    var seen = Object.create(null);
+    var a = pin.attrs || {};
+    var hidden = new Set(Array.isArray(a.report_hidden_photos) ? a.report_hidden_photos : []);
+    // Same caption rewrite the report uses so any "Culvert N" leftover
+    // from the AECOM_FOX build reads with the current pin id instead.
+    function fixCap(raw) {
+      if (!raw) return '';
+      if (!pin || !pin.id) return raw;
+      return String(raw).replace(/Culvert\s+\d+/gi, pin.id);
+    }
+    var emb = Array.isArray(a.photos) ? a.photos : [];
+    emb.forEach(function (p, i) {
+      if (!p || hidden.has('emb:' + i)) return;
+      var src = p.dataUrl || '';
+      if (!src || seen[src]) return;
+      seen[src] = true;
+      out.push({ src: src, caption: fixCap(p.caption || ('Form photo ' + (i + 1))) });
+    });
+    if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
+      var prefix = secId + '::' + pin.id;
+      window._RW.geophotos.list().forEach(function (gp) {
+        if (!gp || gp.linked_pin_id !== prefix) return;
+        if (hidden.has('gp:' + gp.id)) return;
+        var src = gp.dataUrl || '';
+        if (!src || seen[src]) return;
+        seen[src] = true;
+        out.push({ src: src, caption: fixCap(gp.description || 'Linked photo') });
+      });
+    }
+    return out;
+  }
+
+  // Mini-map for the culvert KMZ balloon — mirrors the sign report's
+  // inset frame. Section alignment as a blue polyline, every other
+  // culvert as a small gray dot at its midpoint, this culvert as a
+  // highlighted red dot. Equirectangular projection is fine at
+  // section scale.
+  function _cvKmzMakeMiniMapSvg(sec, hereLat, hereLng) {
+    var align = Array.isArray(sec.alignment) ? sec.alignment : [];
+    var otherPins = [];
+    (sec.pins || []).forEach(function (p) {
+      if (!p || p.kind !== 'culvert') return;
+      var g = p.geometry && p.geometry.coordinates;
+      if (!Array.isArray(g) || g.length < 2) return;
+      var lats = [], lngs = [];
+      g.forEach(function (c) {
+        if (Array.isArray(c) && c.length >= 2 && isFinite(+c[0]) && isFinite(+c[1])) {
+          lngs.push(+c[0]); lats.push(+c[1]);
+        }
+      });
+      if (!lats.length) return;
+      var mLat = lats.reduce(function (x, y) { return x + y; }, 0) / lats.length;
+      var mLng = lngs.reduce(function (x, y) { return x + y; }, 0) / lngs.length;
+      otherPins.push({ lat: mLat, lng: mLng });
+    });
+    var minLat = hereLat, maxLat = hereLat, minLng = hereLng, maxLng = hereLng;
+    function _bb(la, ln) {
+      if (la < minLat) minLat = la; if (la > maxLat) maxLat = la;
+      if (ln < minLng) minLng = ln; if (ln > maxLng) maxLng = ln;
+    }
+    align.forEach(function (c) {
+      var la = +c[0], ln = +c[1];
+      if (isFinite(la) && isFinite(ln)) _bb(la, ln);
+    });
+    otherPins.forEach(function (p) { _bb(p.lat, p.lng); });
+    var dLat = (maxLat - minLat) || 0.001;
+    var dLng = (maxLng - minLng) || 0.001;
+    minLat -= dLat * 0.08; maxLat += dLat * 0.08;
+    minLng -= dLng * 0.08; maxLng += dLng * 0.08;
+
+    var W = 240, H = 200;
+    function _x(ln) { return ((ln - minLng) / (maxLng - minLng)) * W; }
+    function _y(la) { return H - ((la - minLat) / (maxLat - minLat)) * H; }
+
+    var polyline = '';
+    if (align.length >= 2) {
+      var pts = align.map(function (c) {
+        var la = +c[0], ln = +c[1];
+        return (isFinite(la) && isFinite(ln)) ? (_x(ln).toFixed(1) + ',' + _y(la).toFixed(1)) : '';
+      }).filter(Boolean).join(' ');
+      polyline = '<polyline points="' + pts + '" fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linejoin="round"/>';
+    }
+    var neighbors = otherPins.map(function (p) {
+      var px = _x(p.lng).toFixed(1), py = _y(p.lat).toFixed(1);
+      return '<circle cx="' + px + '" cy="' + py + '" r="2.5" fill="#9ca3af" stroke="#fff" stroke-width="0.8"/>';
+    }).join('');
+    var here = '<circle cx="' + _x(hereLng).toFixed(1) + '" cy="' + _y(hereLat).toFixed(1) + '" r="6" fill="#dc2626" stroke="#fff" stroke-width="2"/>';
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" '
+      + 'width="' + W + '" height="' + H + '" '
+      + 'style="display:block;border:1px solid #999;background:#f0ead6;">'
+      + polyline + neighbors + here
+      + '</svg>';
+  }
+
   function _cvBuildOneKmz(sec, tip) {
     var info = (window._SR_SECTION_INFO || {})[sec.id];
     var sectionTitle = sec.id + ' — ' + (info ? info.route : (sec.name || ''));
@@ -36421,20 +36524,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     pins.sort(function (a, b) { return (a.sta_ft || 0) - (b.sta_ft || 0); });
 
-    // Resize embedded photos for each pin. Linked geophotos are
-    // skipped here (they live in the geophotos store and may not be
-    // loaded under the current Photo Scope) — the report's full
-    // identity row already documents what's on disk.
+    // For each pin: walk both embedded + linked geophoto lookups
+    // (matches what the on-screen report and printed sheet show),
+    // then resize into two data URIs — 540 px inline thumb, 1400 px
+    // click-to-zoom — the same treatment the sign KMZ uses. Photos
+    // stay inline as data: URIs so the click target opens without
+    // needing to resolve a KMZ-relative path in the OS browser.
     var bundles = pins.map(function (pin) {
       var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
-      var a = merged.attrs || {};
-      var photos = (Array.isArray(a.photos) ? a.photos : [])
-        .filter(function (ph) { return ph && ph.dataUrl; })
-        .slice(0, 8);
+      var photos = _cvPhotosForKml(merged, sec.id).slice(0, 12);
       var photoPromises = photos.map(function (ph, idx) {
         return Promise.all([
-          _srResizeJpegDataUrl(ph.dataUrl,  540, 0.7),
-          _srResizeJpegDataUrl(ph.dataUrl, 1400, 0.72),
+          _srResizeJpegDataUrl(ph.src,  540, 0.7),
+          _srResizeJpegDataUrl(ph.src, 1400, 0.72),
         ]).then(function (pair) {
           return { thumbUrl: pair[0], fullUrl: pair[1], caption: ph.caption || '', idx: idx };
         }).catch(function () { return null; });
@@ -36457,16 +36559,45 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         ? (_xmlEsc(info.route_id) + ' · FMSS ' + info.fmss
            + ' · MP ' + info.mp_start.toFixed(2) + '–' + info.mp_end.toFixed(2))
         : '';
+      // Two styles for culvert placemarks:
+      //   rw-culvert-pin — used when the culvert has a LineString.
+      //     MultiGeometry pins a labeled Point icon at the crossing's
+      //     midpoint so Google Earth shows the culvert id (A-CV-001)
+      //     next to the icon, while the LineString still draws the
+      //     barrel geometry on the ground.
+      //   rw-culvert-point — used when the culvert only has a single
+      //     coord pair; same icon+label but no line.
+      // Icon is the paddle orange-circle (drainage / hydro convention);
+      // LabelStyle sizes the text so it doesn't dominate the map.
       var kml = ''
         + '<?xml version="1.0" encoding="UTF-8"?>'
         + '<kml xmlns="http://www.opengis.net/kml/2.2">'
         + '<Document>'
-        +   '<name>' + _xmlEsc('Culverts — ' + sectionTitle) + '</name>'
+        +   '<name>' + _xmlEsc('Culvert Assessment Report · ' + sectionTitle) + '</name>'
         + (metaLine ? '<description><![CDATA[' + metaLine + ']]></description>' : '')
         +   '<Style id="rw-centerline"><LineStyle><color>ff1d4ed8</color><width>4</width></LineStyle></Style>'
-        +   '<Style id="rw-culvert"><LineStyle><color>ffEB4034</color><width>5</width></LineStyle></Style>'
-        +   centerline
-        +   placemarks
+        +   '<Style id="rw-culvert-pin">'
+        +     '<IconStyle><scale>1.1</scale>'
+        +       '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/orange-circle.png</href></Icon>'
+        +     '</IconStyle>'
+        +     '<LabelStyle><scale>0.9</scale></LabelStyle>'
+        +     '<LineStyle><color>ffEB4034</color><width>5</width></LineStyle>'
+        +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
+        +   '</Style>'
+        +   '<Style id="rw-culvert-point">'
+        +     '<IconStyle><scale>1.1</scale>'
+        +       '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/orange-circle.png</href></Icon>'
+        +     '</IconStyle>'
+        +     '<LabelStyle><scale>0.9</scale></LabelStyle>'
+        +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
+        +   '</Style>'
+        +   '<Folder>'
+        +     '<name>' + _xmlEsc(sectionTitle) + '</name>'
+        +     centerline
+        +     '<Folder><name>Culverts (' + pins.length + ')</name>'
+        +       placemarks
+        +     '</Folder>'
+        +   '</Folder>'
         + '</Document>'
         + '</kml>';
 
@@ -36486,18 +36617,50 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
   }
 
+  // Emit one Placemark per culvert with a balloon that mirrors the
+  // on-screen Culvert Assessment Report card letter-for-letter —
+  // header banner + identity block + mini-map, CULVERT PROPERTIES
+  // card, CULVERT CONDITIONS card, and PHOTOS grid. The Placemark's
+  // <name> is the full A-CV-nnn id (with section prefix) so Google
+  // Earth labels each culvert by number next to the icon.
   function _cvPinPlacemark(b, files) {
     var sec = b.sec, pin = b.pin, a = pin.attrs || {};
-    var safe = String(pin.id || 'cv').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40);
-    // Culvert geometry is a LineString of [[lng, lat], [lng, lat], …].
+
+    // ── Geometry — LineString of [[lng, lat], …]. Midpoint is what
+    //    the Point in MultiGeometry gets (so the label + icon land
+    //    at the crossing) and what MP/STA/lat-lng surface as. ──
     var coords = (pin.geometry && pin.geometry.coordinates) || [];
     var lineStr = '';
-    if (Array.isArray(coords) && coords.length >= 2) {
+    var lats = [], lngs = [];
+    if (Array.isArray(coords) && coords.length) {
+      coords.forEach(function (c) {
+        if (Array.isArray(c) && c.length >= 2 && isFinite(+c[0]) && isFinite(+c[1])) {
+          lngs.push(+c[0]); lats.push(+c[1]);
+        }
+      });
+    }
+    if (lats.length >= 2) {
       lineStr = coords.map(function (c) {
         var lng = +c[0], lat = +c[1];
         return (isFinite(lng) && isFinite(lat)) ? (lng + ',' + lat) : '';
       }).filter(Boolean).join(' ');
     }
+    if (!lats.length) return '';
+    var midLat = lats.reduce(function (x, y) { return x + y; }, 0) / lats.length;
+    var midLng = lngs.reduce(function (x, y) { return x + y; }, 0) / lngs.length;
+
+    // ── Identity ─────────────────────────────────────────────────
+    // Full pin id — GRSM pins already carry the section prefix
+    // ("A-CV-001"); legacy pins whose id is just a number get the
+    // section prefix prepended so Google Earth's label is always
+    // "A-CV-…" and never a bare "3".
+    var pinIdFull;
+    if (pin.id && sec.id && String(pin.id).indexOf(sec.id + '-') === 0) {
+      pinIdFull = pin.id;
+    } else {
+      pinIdFull = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+    }
+
     var ovCond = _cvWorstCond([
       _cvEffectiveCond(pin, 'inlet_condition'),
       _cvEffectiveCond(pin, 'barrel_condition'),
@@ -36505,54 +36668,243 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       _cvEffectiveCond(pin, 'hw_upstream_cond'),
       _cvEffectiveCond(pin, 'hw_downstream_cond'),
     ]);
-    var descStr = _cvBuildDescription(pin, sec.alignment) || '';
+    var descStr = _cvBuildDescription(pin, sec.alignment) || (a.name || '(culvert)');
 
-    // Embed photo files into the KMZ; balloon uses files/… refs.
-    var photoHtml = b.photos.map(function (ph) {
-      var thumbName = 'files/' + safe + '_' + ph.idx + '_thumb.jpg';
-      var fullName  = 'files/' + safe + '_' + ph.idx + '_full.jpg';
-      files.push({ name: thumbName, data: _dataUrlToBytes(ph.thumbUrl) });
-      files.push({ name: fullName,  data: _dataUrlToBytes(ph.fullUrl) });
-      var cap = ph.caption ? ('<div style="font:11px monospace;color:#444;margin-top:2px;">' + _xmlEsc(ph.caption) + '</div>') : '';
-      return '<a href="' + fullName + '"><img src="' + thumbName + '" style="width:260px;display:block;margin:6px 0;" /></a>' + cap;
-    }).join('');
+    // MP — same derivation the report card uses.
+    var mpStartNum = (sec && typeof sec.mpStart === 'number') ? sec.mpStart
+                  : (sec && typeof sec.mp_start === 'number') ? sec.mp_start : null;
+    var mpStr = '';
+    var mpVal = null;
+    if (mpStartNum != null && typeof pin.sta_ft === 'number') mpVal = mpStartNum + pin.sta_ft / 5280;
+    else if (a.mp_start != null) mpVal = +a.mp_start;
+    if (mpVal != null && isFinite(mpVal)) mpStr = mpVal.toFixed(3);
 
-    var rowHtml = function (lbl, val) {
-      return '<tr><td style="font:600 11px monospace;color:#555;padding:2px 8px 2px 0;white-space:nowrap;">'
-        + _xmlEsc(lbl) + '</td><td style="font:13px sans-serif;color:#111;padding:2px 0;">'
-        + _xmlEsc(val == null ? '' : String(val)) + '</td></tr>';
-    };
-    var balloon = ''
-      + '<![CDATA['
-      + '<div style="font:14px sans-serif;color:#111;max-width:560px;">'
-      +   '<div style="font:700 16px sans-serif;border-bottom:2px solid #111;padding-bottom:4px;margin-bottom:6px;">'
-      +     _xmlEsc(pin.id || '') + ' — ' + _xmlEsc(descStr)
-      +   '</div>'
-      +   '<table style="border-collapse:collapse;margin-bottom:6px;">'
-      +     rowHtml('Overall', _cvSpellOrDash(ovCond))
-      +     rowHtml('Inlet',   _cvSpellOrDash(_cvEffectiveCond(pin, 'inlet_condition')))
-      +     rowHtml('Barrel',  _cvSpellOrDash(_cvEffectiveCond(pin, 'barrel_condition')))
-      +     rowHtml('Outlet',  _cvSpellOrDash(_cvEffectiveCond(pin, 'outlet_condition')))
-      +     rowHtml('Inlet Structure',  _cvSpellOrDash(_cvEffectiveCond(pin, 'hw_upstream_cond')))
-      +     rowHtml('Outlet Structure', _cvSpellOrDash(_cvEffectiveCond(pin, 'hw_downstream_cond')))
-      +     rowHtml('Material', a.material || '')
-      +     rowHtml('Size (in)',  a.size_in || '')
-      +     rowHtml('Length (ft)', a.length_ft || '')
-      +     rowHtml('Inlet Type',  a.in_type || '')
-      +     rowHtml('Outlet Type', a.out_type || '')
-      +     (a.notes ? rowHtml('Notes', a.notes) : '')
-      +   '</table>'
-      +   photoHtml
+    // ── Colored rating helper — same palette + weight as the on-
+    //    screen _cvColoredCond, inlined so we can XML-escape safely.
+    function _kmzCond(v) {
+      var n = _cvCondLetter(v);
+      if (!n) return '<span style="color:#6b7280">—</span>';
+      var spelled = _CV_COND_SPELLED[n] || String(v).trim();
+      var color = _CV_COND_COLOR[n];
+      if (!color) return _xmlEsc(spelled);
+      return '<span style="color:' + color + ';font-weight:700">' + _xmlEsc(spelled) + '</span>';
+    }
+    function _dashOr(v) {
+      return (v == null || v === '') ? '—' : String(v);
+    }
+    function _fmt1(v) {
+      if (v == null || v === '') return '';
+      var n = +v;
+      if (!isFinite(n)) return '';
+      return n.toFixed(1);
+    }
+    function _fmtSlope(v) {
+      if (v == null || v === '') return '';
+      var n = Math.round(+v);
+      return isFinite(n) ? String(n) : '';
+    }
+    function _withDeg(v) {
+      var s = _fmt1(v);
+      return s ? (s + '°') : '';
+    }
+
+    // ── Common row + section helpers (mirror the sign KMZ) ─────────
+    var lblStyle = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;vertical-align:top;';
+    var valStyle = 'padding:4px 14px 4px 0;color:#111;vertical-align:top;';
+    function _row2(l1, v1, l2, v2, opts) {
+      opts = opts || {};
+      var v1Html = opts.raw1 ? v1 : _xmlEsc(v1 == null || v1 === '' ? '—' : v1);
+      var v2Html = opts.raw2 ? v2 : _xmlEsc(v2 == null || v2 === '' ? '—' : v2);
+      return '<tr>'
+        + '<td style="' + lblStyle + '">' + l1 + '</td>'
+        + '<td style="' + valStyle + '">' + v1Html + '</td>'
+        + '<td style="' + lblStyle + '">' + (l2 || '') + '</td>'
+        + '<td style="' + valStyle + '">' + (l2 ? v2Html : '') + '</td>'
+        + '</tr>';
+    }
+    function _rowFull(lbl, val) {
+      var vHtml = _xmlEsc(val == null || val === '' ? '—' : val);
+      return '<tr><td style="' + lblStyle + '">' + lbl + '</td>'
+        + '<td colspan="3" style="' + valStyle + '">' + vHtml + '</td></tr>';
+    }
+    function _sectionHdr(label) {
+      return '<p style="margin:18px 0 6px;font:700 14px sans-serif;color:#1d4ed8;letter-spacing:.5px;border-bottom:2px solid #1d4ed8;padding-bottom:3px;">'
+        + label + '</p>';
+    }
+
+    // ── Header banner — mirrors the printed report's top strip.
+    //    "Culvert Assessment Report" title, section id + route,
+    //    route_id/FMSS/MP meta line, and a Pin ID badge on the right
+    //    so the balloon reads as one unit with the printed sheet.
+    var info = (window._SR_SECTION_INFO || {})[sec.id];
+    var subLine, metaLine = '';
+    if (info) {
+      subLine  = _xmlEsc(sec.id) + ' · ' + _xmlEsc(info.route);
+      metaLine = _xmlEsc(info.route_id) + ' · FMSS ' + info.fmss
+               + ' · MP ' + info.mp_start.toFixed(2) + ' – ' + info.mp_end.toFixed(2);
+    } else {
+      subLine = _xmlEsc(sec.id) + ' · ' + _xmlEsc(sec.name || '');
+    }
+    var html = '';
+    html += '<div style="border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px;'
+          + 'display:table;width:100%;font-family:sans-serif;">'
+      + '<div style="display:table-cell;vertical-align:top;">'
+        + '<div style="font:700 17px sans-serif;letter-spacing:.5px;color:#111;">Culvert Assessment Report</div>'
+        + '<div style="font:600 13px sans-serif;color:#333;margin-top:2px;">' + subLine + '</div>'
+        + (metaLine ? '<div style="font:600 11px monospace;color:#555;margin-top:2px;">' + metaLine + '</div>' : '')
       + '</div>'
-      + ']]>';
+      + '<div style="display:table-cell;vertical-align:top;text-align:right;font:700 14px monospace;color:#111;'
+        + 'border:2px solid #111;padding:6px 10px;letter-spacing:.5px;white-space:nowrap;width:1%;">'
+        + _xmlEsc(pinIdFull)
+      + '</div>'
+    + '</div>';
+
+    // ── Identity row — description heading + core metadata on the
+    //    left, mini-map (centerline + this pin) on the right. Culverts
+    //    span the road so Side/Offset aren't meaningful here (as noted
+    //    in the on-screen report), we surface MP / STA / Lat / Lng
+    //    instead. ──
+    var miniMapSvg = _cvKmzMakeMiniMapSvg(sec, midLat, midLng);
+    html += '<table style="border-collapse:collapse;width:100%;margin-bottom:6px;"><tr>'
+      + '<td style="vertical-align:top;padding-right:14px;">'
+        + '<p style="margin:0 0 8px;font-family:sans-serif;font-size:18px;color:#111;"><b>' + _xmlEsc(descStr) + '</b></p>'
+        + '<table style="border-collapse:collapse;font-family:sans-serif;font-size:15px;">'
+        + _row2('Overall Condition', _kmzCond(ovCond),
+                '', '',
+                { raw1: true })
+        + _row2('Milepost', mpStr,
+                'Station', pin.sta)
+        + _row2('Latitude',  midLat.toFixed(6),
+                'Longitude', midLng.toFixed(6))
+        + '</table>'
+      + '</td>'
+      + '<td style="vertical-align:top;width:240px;">' + miniMapSvg + '</td>'
+    + '</tr></table>';
+
+    // ── CULVERT PROPERTIES card — 2×2 grid of the pipe/bearing/end
+    //    fittings/elevations the printed card shows, in the same
+    //    row order. ──
+    html += _sectionHdr('CULVERT PROPERTIES');
+    html += '<div style="border:1px solid #ddd;background:#fafafa;padding:8px 10px;margin-bottom:8px;">'
+      + '<table style="border-collapse:collapse;font:14px sans-serif;width:100%;">'
+      + _row2('Material',         a.material,
+              'Size (in)',        a.size_in)
+      + _row2('Length (ft)',      a.length_ft,
+              'Num Barrels',      a.num_barrels)
+      + _row2('Bearing (in→out)', _withDeg(a.bearing_in_to_out_deg),
+              'Crossing Angle',   _withDeg(a.crossing_angle_deg))
+      + _row2('Skew from CL',     _withDeg(a.skew_from_perp_deg),
+              '', '')
+      + _row2('Inlet Type',       a.in_type,
+              'Inlet Side',       a.in_side)
+      + _row2('Outlet Type',      a.out_type,
+              'Outlet Side',      a.out_side)
+      + _row2('Inlet Elev (ft)',  _fmt1(a.inlet_elev_ditch_ft),
+              'Outlet Elev (ft)', _fmt1(a.outlet_elev_ditch_ft))
+      + _row2('Drop (ft)',        _fmt1(a.drop_ditch_ft),
+              'Slope (%)',        _fmtSlope(a.slope_pipe_pct))
+      + _rowFull('Notes', a.notes)
+      + '</table>'
+    + '</div>';
+
+    // ── CULVERT CONDITIONS card — five components × (rating, notes),
+    //    same order and same colored-rating vocabulary as the on-
+    //    screen conditions table. Ratings render through _kmzCond so
+    //    the color mapping matches the report exactly (Excellent =
+    //    green, Failed = red, etc). ──
+    html += _sectionHdr('CULVERT CONDITIONS');
+    var condLblStyle = 'padding:4px 14px 4px 0;color:#555;font-weight:600;white-space:nowrap;vertical-align:top;width:22%;';
+    var condRatStyle = 'padding:4px 14px 4px 0;color:#111;vertical-align:top;width:18%;white-space:nowrap;';
+    var condNotStyle = 'padding:4px 14px 4px 0;color:#111;vertical-align:top;';
+    function _condRow(label, condVal, notesVal) {
+      return '<tr>'
+        + '<td style="' + condLblStyle + '">' + label + '</td>'
+        + '<td style="' + condRatStyle + '">' + _kmzCond(condVal) + '</td>'
+        + '<td style="' + condNotStyle + '">' + _xmlEsc(_dashOr(notesVal)) + '</td>'
+        + '</tr>';
+    }
+    html += '<div style="border:1px solid #ddd;background:#fafafa;padding:8px 10px;margin-bottom:8px;">'
+      + '<table style="border-collapse:collapse;font:14px sans-serif;width:100%;">'
+      + '<thead><tr>'
+        + '<th style="text-align:left;padding:4px 14px 6px 0;font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.4px;color:#555;border-bottom:1px solid #ddd;">COMPONENT</th>'
+        + '<th style="text-align:left;padding:4px 14px 6px 0;font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.4px;color:#555;border-bottom:1px solid #ddd;">RATING</th>'
+        + '<th style="text-align:left;padding:4px 14px 6px 0;font:700 10px \'IBM Plex Mono\',monospace;letter-spacing:.4px;color:#555;border-bottom:1px solid #ddd;">COMMENTS / NOTES</th>'
+      + '</tr></thead>'
+      + _condRow('Inlet',            _cvEffectiveCond(pin, 'inlet_condition'),    a.inlet_condition_notes)
+      + _condRow('Barrel',           _cvEffectiveCond(pin, 'barrel_condition'),   a.barrel_condition_notes)
+      + _condRow('Outlet',           _cvEffectiveCond(pin, 'outlet_condition'),   a.outlet_condition_notes)
+      + _condRow('Inlet Structure',  _cvEffectiveCond(pin, 'hw_upstream_cond'),   a.hw_upstream_cond_notes)
+      + _condRow('Outlet Structure', _cvEffectiveCond(pin, 'hw_downstream_cond'), a.hw_downstream_cond_notes)
+      + '</table>'
+    + '</div>';
+
+    // ── PHOTOS — mirrors the sign KMZ's 2-up thumb grid. Each thumb
+    //    (540 px) links to the full-size (1400 px) image, both inlined
+    //    as data: URIs so Google Earth's system-browser click target
+    //    works without a KMZ path resolution. ──
+    var realPhotos = b.photos.filter(function (ph) { return ph && ph.thumbUrl; });
+    if (realPhotos.length) {
+      html += _sectionHdr('PHOTOS (' + realPhotos.length + ')');
+      html += '<table style="border-collapse:collapse;">';
+      for (var i = 0; i < realPhotos.length; i += 2) {
+        html += '<tr>';
+        for (var j = 0; j < 2; j++) {
+          var ph = realPhotos[i + j];
+          if (!ph) { html += '<td></td>'; continue; }
+          var fullSrc = ph.fullUrl || ph.thumbUrl;
+          html += '<td style="padding:6px;vertical-align:top;">'
+            + '<a href="' + fullSrc + '" target="_blank" title="Click to open full size">'
+              + '<img src="' + ph.thumbUrl + '" style="width:380px;height:auto;display:block;border:1px solid #999;cursor:zoom-in;">'
+            + '</a>'
+            + (ph.caption ? '<div style="font:11px monospace;color:#555;margin-top:2px;max-width:380px;">' + _xmlEsc(ph.caption) + '</div>' : '')
+            + '</td>';
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+      html += '<p style="margin:6px 0 0;font-family:sans-serif;font-size:11px;color:#888;">Click a thumbnail to open the full-size image in your browser.</p>';
+    }
+
+    // ExtendedData for downstream analytics + GIS tools that read
+    // KML/KMZ fields (matches the CSV column set).
+    var ext = ''
+      + '<Data name="section"><value>'            + _xmlEsc(sec.id)                                    + '</value></Data>'
+      + '<Data name="pin_id"><value>'             + _xmlEsc(pinIdFull)                                 + '</value></Data>'
+      + '<Data name="description"><value>'        + _xmlEsc(descStr)                                   + '</value></Data>'
+      + '<Data name="overall_condition"><value>'  + _xmlEsc(_csvSpellCond(ovCond))                     + '</value></Data>'
+      + '<Data name="inlet_condition"><value>'    + _xmlEsc(_csvSpellCond(_cvEffectiveCond(pin, 'inlet_condition')))    + '</value></Data>'
+      + '<Data name="barrel_condition"><value>'   + _xmlEsc(_csvSpellCond(_cvEffectiveCond(pin, 'barrel_condition')))   + '</value></Data>'
+      + '<Data name="outlet_condition"><value>'   + _xmlEsc(_csvSpellCond(_cvEffectiveCond(pin, 'outlet_condition')))   + '</value></Data>'
+      + '<Data name="material"><value>'           + _xmlEsc(a.material  || '')                         + '</value></Data>'
+      + '<Data name="size_in"><value>'            + _xmlEsc(a.size_in   || '')                         + '</value></Data>'
+      + '<Data name="length_ft"><value>'          + _xmlEsc(a.length_ft || '')                         + '</value></Data>'
+      + '<Data name="milepost"><value>'           + _xmlEsc(mpStr)                                     + '</value></Data>'
+      + '<Data name="station"><value>'            + _xmlEsc(pin.sta || '')                             + '</value></Data>'
+      + '<Data name="latitude"><value>'           + midLat.toFixed(6)                                  + '</value></Data>'
+      + '<Data name="longitude"><value>'          + midLng.toFixed(6)                                  + '</value></Data>';
+
+    // MultiGeometry: Point at midpoint (carries the label + icon) +
+    // LineString for the barrel geometry on the ground. Without the
+    // Point, Google Earth would anchor the label at the first vertex
+    // of the LineString and hide it unless the user hovered.
+    var geom;
+    if (lineStr) {
+      geom = '<MultiGeometry>'
+        + '<Point><coordinates>' + midLng + ',' + midLat + '</coordinates></Point>'
+        + '<LineString><tessellate>1</tessellate><coordinates>' + lineStr + '</coordinates></LineString>'
+      + '</MultiGeometry>';
+    } else {
+      // Single-coord fallback — no line to draw.
+      geom = '<Point><coordinates>' + midLng + ',' + midLat + '</coordinates></Point>';
+    }
+    var styleUrl = lineStr ? '#rw-culvert-pin' : '#rw-culvert-point';
 
     return '<Placemark>'
-      + '<name>' + _xmlEsc(pin.id || '') + '</name>'
-      + '<styleUrl>#rw-culvert</styleUrl>'
-      + '<description>' + balloon + '</description>'
-      + (lineStr
-          ? '<LineString><tessellate>1</tessellate><coordinates>' + lineStr + '</coordinates></LineString>'
-          : '')
+      + '<name>' + _xmlEsc(pinIdFull) + '</name>'
+      + '<styleUrl>' + styleUrl + '</styleUrl>'
+      + '<description><![CDATA[' + html + ']]></description>'
+      + '<ExtendedData>' + ext + '</ExtendedData>'
+      + geom
       + '</Placemark>';
   }
   // Spell out the condition word with a graceful em-dash for blanks
