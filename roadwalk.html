@@ -36395,15 +36395,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             return (isFinite(lng) && isFinite(lat)) ? [lat, lng] : null;
           }).filter(Boolean);
           if (nll.length < 2) return;
-          L.polyline(nll, { color: '#1d4ed8', weight: 1.5, opacity: 0.55 }).addTo(map);
+          L.polyline(nll, { color: '#1d4ed8', weight: 3, opacity: 0.55 }).addTo(map);
         });
       }
     }
     // Active culvert - same blue as neighbors but weight = 1.5x the
     // neighbor line so it reads as the emphasized member of the
     // family without shouting. Opacity 1 (opaque) vs the neighbors'
-    // 0.55 further distinguishes it. No endpoint dots.
-    L.polyline(ll, { color: '#1d4ed8', weight: 2.25, opacity: 1 }).addTo(map);
+    // 0.55 further distinguishes it. No endpoint dots. Weights
+    // doubled per user request - 3 / 4.5 replaces 1.5 / 2.25.
+    L.polyline(ll, { color: '#1d4ed8', weight: 4.5, opacity: 1 }).addTo(map);
     map.fitBounds(L.latLngBounds(ll).pad(0.6));
     // Zoom out FOUR levels from the tight fit. Was five; -1 per user
     // request to zoom back in a level so the neighboring culverts
