@@ -5325,6 +5325,28 @@ body.rw-sld-photo-dragging .strip-pin {
   font: 700 9px 'IBM Plex Mono', monospace; color: var(--ink-3);
 }
 .sr-card-map .leaflet-container { background: #e7e3d6; }
+/* Culvert-ID label anchored to the barrel midpoint in the inset
+   map. Halo (white text-shadow) keeps the id readable over street
+   tiles + darker terrain shading equally. Non-interactive so it
+   never blocks the map-click surface. */
+.cv-inset-label {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cv-inset-label span {
+  font: 700 10px/1 'IBM Plex Mono', monospace;
+  letter-spacing: 0.4px;
+  color: #111;
+  text-shadow:
+     0 0 3px #fff,  0 0 3px #fff,
+     1px 1px 0 #fff, -1px -1px 0 #fff,
+     1px -1px 0 #fff, -1px 1px 0 #fff;
+  white-space: nowrap;
+}
 
 /* Source chips — multi-select filter. Default: all on. */
 .sr-chips { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -36350,6 +36372,33 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     L.circleMarker(ll[0],            { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
     L.circleMarker(ll[ll.length - 1], { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
     map.fitBounds(L.latLngBounds(ll).pad(0.6));
+    // Zoom out two levels from the fit so the report reader gets more
+    // spatial context (approaching roads, adjacent culverts, terrain).
+    // Clamped to the tile layer's minZoom to protect against divs
+    // where fitBounds already picked a low zoom.
+    var _fitZoom = map.getZoom();
+    if (typeof _fitZoom === 'number' && isFinite(_fitZoom)) {
+      map.setZoom(Math.max(0, _fitZoom - 2), { animate: false });
+    }
+    // Culvert-ID label. divIcon anchored on the midpoint of the
+    // barrel so the caret always sits over the drainage line even
+    // when the pipe crosses on a diagonal; a white halo on the text
+    // keeps the label legible against darker aerial tiles too.
+    var pinId = div.getAttribute('data-cv-id');
+    if (pinId) {
+      var midIdx = Math.floor(ll.length / 2);
+      var midLatLng = ll[midIdx];
+      L.marker(midLatLng, {
+        icon: L.divIcon({
+          className: 'cv-inset-label',
+          html: '<span>' + pinId + '</span>',
+          iconSize:   [80, 18],
+          iconAnchor: [40, 24],   // anchor above the point so text sits over/next to the line
+        }),
+        interactive: false,
+        keyboard: false,
+      }).addTo(map);
+    }
     setTimeout(function () { try { map.invalidateSize(); } catch (_) {} }, 50);
     _cvInsetMaps.push(map);
     return map;
@@ -39001,7 +39050,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                     + _esc(JSON.stringify(
                         Array.isArray(pin.geometry && pin.geometry.coordinates)
                           ? pin.geometry.coordinates : []
-                      )) + '"></div>' +
+                      )) + '" data-cv-id="' + _esc(pinIdStr) + '"></div>' +
                 '</div>' +
               '</div>' +
             '</section>' +
