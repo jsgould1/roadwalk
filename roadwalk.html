@@ -13450,10 +13450,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           legacyPhotoClearedUlids.forEach(function (u) { _ulidSet[u] = true; });
           // Sync the in-memory cache first so the very next
           // _mergedPin call sees the cleared state without waiting on
-          // the IDB round-trip.
-          if (_dataState && _dataState.idbCacheByUlid) {
+          // the IDB round-trip. _dataState lives inside the Phase 1
+          // IIFE so applyBundle can only reach it via the
+          // window._RW.dataState bridge exposed there. A bare
+          // _dataState reference throws ReferenceError from this
+          // scope, which was silently aborting Pass 1d + every
+          // downstream step (including persistSections) and leaving
+          // the legacy photo clear only in memory.
+          var _dsCache = (window._RW && window._RW.dataState
+                          && window._RW.dataState.idbCacheByUlid) || null;
+          if (_dsCache) {
             Object.keys(_ulidSet).forEach(function (ulid) {
-              var cached = _dataState.idbCacheByUlid[ulid];
+              var cached = _dsCache[ulid];
               if (cached && cached.attrs) {
                 cached.attrs.photos = [];
                 cached.attrs.report_hidden_photos = [];
@@ -41073,6 +41081,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     idbCache:       {},         // { pin_id → inspectionRecord } — lazy-loaded
     idbCacheByUlid: {},         // { ulid   → inspectionRecord } — parallel index for renumber-safe lookup
   };
+  // Expose to the outer-script scope so applyBundle (which lives
+  // above the Phase 1 IIFE and cannot see _dataState directly) can
+  // sync the IDB overlay cache. Without this bridge, Pass 1d's
+  // in-memory sync throws ReferenceError and the whole applyBundle
+  // promise chain aborts before persistSections fires — meaning
+  // every legacy-photo clear stays in-memory and is lost on the
+  // next reload.
+  window._RW = window._RW || {};
+  window._RW.dataState = _dataState;
 
   /** Load all IDB inspection records once, cache them.
    *  Builds two parallel indexes:
