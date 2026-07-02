@@ -5338,9 +5338,9 @@ body.rw-sld-photo-dragging .strip-pin {
   justify-content: center;
 }
 .cv-inset-label span {
-  font: 700 10px/1 'IBM Plex Mono', monospace;
+  font: 800 10px/1 'IBM Plex Mono', monospace;
   letter-spacing: 0.4px;
-  color: #111;
+  color: #1d4ed8;                                       /* bold blue, matches active + neighbor polylines */
   text-shadow:
      0 0 3px #fff,  0 0 3px #fff,
      1px 1px 0 #fff, -1px -1px 0 #fff,
@@ -36367,11 +36367,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       'esri_street'
     ).addTo(map);
     // Neighbor-culvert reference lines. Every OTHER culvert in the
-    // same section renders as a thin gray polyline (no dots, no
-    // label) so the reader can see how this crossing sits in the
-    // corridor without confusing them for the active feature. Look
-    // up section id via the data-sec-id attribute; if it's not set
-    // (e.g. an older surgical-update card) we just skip neighbors.
+    // same section renders as a thin translucent BLUE polyline (no
+    // dots, no label) so the reader can see how this crossing sits
+    // in the corridor. Same hue as the active line, distinguished
+    // by width + opacity - reads as "this whole family are culverts,
+    // and this darker heavier one is the subject of this card."
     var pinId = div.getAttribute('data-cv-id');
     var secId = div.getAttribute('data-sec-id');
     var secs  = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
@@ -36385,7 +36385,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           if (!np || np.kind !== 'culvert') return;
           var nc = np.geometry && np.geometry.coordinates;
           if (!Array.isArray(nc) || nc.length < 2) return;
-          // Skip THIS culvert - it gets the blue treatment below.
           if (pinId && (np.id === pinId ||
               (secId + '-' + np.id === pinId) ||
               (np.id && pinId.slice(secId.length + 1) === np.id))) {
@@ -36396,25 +36395,22 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             return (isFinite(lng) && isFinite(lat)) ? [lat, lng] : null;
           }).filter(Boolean);
           if (nll.length < 2) return;
-          L.polyline(nll, { color: '#374151', weight: 1.5, opacity: 0.55 }).addTo(map);
+          L.polyline(nll, { color: '#1d4ed8', weight: 1.5, opacity: 0.55 }).addTo(map);
         });
       }
     }
-    // Active culvert - a solo blue line, no endpoint dots. The pips
-    // used to be radius-5 filled circles which, at the previous zoom
-    // scale, entirely covered the ~30-100 ft barrel below them; the
-    // reader lost the ability to see whether the pipe ran EW or NS.
-    L.polyline(ll, { color: '#1d4ed8', weight: 4, opacity: 0.95 }).addTo(map);
+    // Active culvert - same blue as neighbors but weight = 1.5x the
+    // neighbor line so it reads as the emphasized member of the
+    // family without shouting. Opacity 1 (opaque) vs the neighbors'
+    // 0.55 further distinguishes it. No endpoint dots.
+    L.polyline(ll, { color: '#1d4ed8', weight: 2.25, opacity: 1 }).addTo(map);
     map.fitBounds(L.latLngBounds(ll).pad(0.6));
-    // Zoom out FIVE levels from the tight fit so the reader sees the
-    // active culvert in the context of its section corridor -
-    // approaching road, neighbor culverts, drainage direction. -2 was
-    // the previous default; +3 more per QC feedback that the closer
-    // view was too dominated by the culvert itself. Clamped at zero
-    // so a maplet whose fit already picked a low zoom can't underflow.
+    // Zoom out FOUR levels from the tight fit. Was five; -1 per user
+    // request to zoom back in a level so the neighboring culverts
+    // stay visible but the active feature gets a bit more emphasis.
     var _fitZoom = map.getZoom();
     if (typeof _fitZoom === 'number' && isFinite(_fitZoom)) {
-      map.setZoom(Math.max(0, _fitZoom - 5), { animate: false });
+      map.setZoom(Math.max(0, _fitZoom - 4), { animate: false });
     }
     // Culvert-ID label placed with a PERPENDICULAR offset from the
     // barrel midpoint so it never sits on top of the polyline. Take
@@ -36449,7 +36445,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           className: 'cv-inset-label',
           html: '<span>' + pinId + '</span>',
           iconSize:   [80, 18],
-          iconAnchor: [40, 9],   // center-anchor since spatial offset already handles the placement
+          // Shift the anchor DOWN inside the 18-px-tall icon so the
+          // rendered label lands higher on the map. Center was 9;
+          // 22 pushes it up ~13 px above the perpendicular offset
+          // point per the user's "move it up a little" note.
+          iconAnchor: [40, 22],
         }),
         interactive: false,
         keyboard: false,
