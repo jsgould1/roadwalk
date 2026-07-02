@@ -36707,9 +36707,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       if (!pin || !pin.id) return raw;
       return String(raw).replace(/Culvert\s+\d+/gi, pin.id);
     }
+    // Match the culvert report's 🔎 Only imported filter so the KMZ
+    // export and the printable Assessment Card show the same photos
+    // per culvert. When the toggle is ON (default), skip attrs.photos
+    // entirely (all are legacy embeds, none carry the xlsx_ prefix)
+    // AND skip any linked geophoto whose id doesn't start with `xlsx_`.
+    // Prior version filtered geophotos only, so legacy attrs.photos
+    // still rode into the KMZ - Section A alone hit 275 MB because
+    // 54 culverts × 6 pre-clear legacy embeds × ~250 kB per pair.
+    var onlyImported = _cvLoadImportedOnly();
     var emb = Array.isArray(a.photos) ? a.photos : [];
     emb.forEach(function (p, i) {
       if (!p || hidden.has('emb:' + i)) return;
+      if (onlyImported) return;                            // legacy embeds skipped
       var src = p.dataUrl || '';
       if (!src || seen[src]) return;
       seen[src] = true;
@@ -36717,15 +36727,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
     if (window._RW && window._RW.geophotos && typeof window._RW.geophotos.list === 'function') {
       var prefix = secId + '::' + pin.id;
-      // Match the culvert report's 🔎 Only imported filter so the KMZ
-      // export and the printable Assessment Card show the same photos
-      // per culvert. When the toggle is ON (default), skip any linked
-      // geophoto whose id doesn't start with `xlsx_` - the manifest
-      // prefix that data/build_photos_manifest_from_xlsx_cells.py
-      // stamps on every entry. Leaves the toggle OFF path unchanged
-      // so a user reviewing the full history can flip it and export
-      // everything.
-      var onlyImported = _cvLoadImportedOnly();
       window._RW.geophotos.list().forEach(function (gp) {
         if (!gp || gp.linked_pin_id !== prefix) return;
         if (onlyImported && !(gp.id && String(gp.id).indexOf('xlsx_') === 0)) return;
@@ -36829,25 +36830,34 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // For each pin: walk both embedded + linked geophoto lookups
     // (matches what the on-screen report and printed sheet show),
-    // Two-tier resize kept for the click-to-zoom behavior but tuned
-    // way down so a full A/G/H/I export stays under ~25 MB instead of
-    // the 50+ MB the previous 540/1400 pair produced. The inline
-    // thumb is set to the same 380 px the balloon's <img> renders at
-    // (previously the source was 40% larger than needed); the click
-    // target drops from 1400 to 900 px and quality slides down two
-    // ticks. Photo quality still reads fine in Google Earth Pro at
-    // typical viewing zoom - a 900 px shot fills a laptop screen at
-    // 60-70% of its native pixel count.
+    // Single-tier resize + store-as-file. Previously each photo was
+    // embedded twice as base64 data URIs (thumb + click-to-zoom),
+    // which pushed Section A to 275 MB because base64 adds 33%
+    // overhead and doesn't ZIP-compress. Now each photo is resized
+    // once to 720 px @ q=0.65 (~80 kB), the resulting JPEG bytes are
+    // written as a real file inside the KMZ archive at
+    // files/photos/<safeId>_<idx>.jpg, and the balloon's <img src>
+    // references that path. Google Earth Pro resolves KMZ-relative
+    // image paths natively, so the balloon still renders the photo
+    // grid; the click-to-zoom is dropped because KMZ-relative <a>
+    // hrefs would open in the OS browser, which can't fetch them.
+    // For 216 photos (54 pins x 4 xlsx imports) that's ~17 MB vs the
+    // previous ~60 MB - AND legacy attrs.photos are now filtered by
+    // _cvPhotosForKml when Only-imported is ON, saving the rest.
     var bundles = pins.map(function (pin) {
       var merged = (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(pin) : pin;
-      var photos = _cvPhotosForKml(merged, sec.id).slice(0, 12);
+      var photos = _cvPhotosForKml(merged, sec.id).slice(0, 8);
+      var safeId = String(merged.id || 'cv').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'cv';
       var photoPromises = photos.map(function (ph, idx) {
-        return Promise.all([
-          _srResizeJpegDataUrl(ph.src, 380, 0.62),   // inline thumb (~25 kB)
-          _srResizeJpegDataUrl(ph.src, 900, 0.65),   // click-to-zoom (~90 kB)
-        ]).then(function (pair) {
-          return { thumbUrl: pair[0], fullUrl: pair[1], caption: ph.caption || '', idx: idx };
-        }).catch(function () { return null; });
+        return _srResizeJpegDataUrl(ph.src, 720, 0.65)
+          .then(function (dataUrl) {
+            if (!dataUrl) return null;
+            var bytes = _dataUrlToBytes(dataUrl);
+            if (!bytes || !bytes.length) return null;
+            var name = 'files/photos/' + safeId + '_' + (idx + 1) + '.jpg';
+            return { name: name, bytes: bytes, caption: ph.caption || '', idx: idx };
+          })
+          .catch(function () { return null; });
       });
       return Promise.all(photoPromises).then(function (resized) {
         return { sec: sec, pin: merged, photos: resized.filter(Boolean) };
@@ -36856,6 +36866,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     return Promise.all(bundles).then(function (bs) {
       var files = [];
+      // Push every photo's resized JPEG bytes into the archive under
+      // files/photos/… so the balloon HTML's <img src="files/…">
+      // references resolve inside the KMZ. Done here (outside the
+      // per-placemark builder) so a photo shared between pins - not
+      // currently possible but future-proof - only lands in the
+      // archive once.
+      bs.forEach(function (b) {
+        b.photos.forEach(function (ph) {
+          if (ph && ph.name && ph.bytes) {
+            files.push({ name: ph.name, data: ph.bytes });
+          }
+        });
+      });
       var placemarks = bs.map(function (b) { return _cvPinPlacemark(b, files); }).join('\n');
       var centerline = lineCoords ? (
         '<Placemark><name>Centerline — ' + _xmlEsc(sec.id) + '</name>'
@@ -37146,11 +37169,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + '</table>'
     + '</div>';
 
-    // ── PHOTOS — mirrors the sign KMZ's 2-up thumb grid. Each thumb
-    //    (540 px) links to the full-size (1400 px) image, both inlined
-    //    as data: URIs so Google Earth's system-browser click target
-    //    works without a KMZ path resolution. ──
-    var realPhotos = b.photos.filter(function (ph) { return ph && ph.thumbUrl; });
+    // ── PHOTOS — 2-up thumb grid referencing files in the KMZ
+    //    archive (files/photos/…) instead of inline data URIs. Cuts
+    //    Section A from ~275 MB to ~17 MB because base64 encoding is
+    //    gone and ZIP-STORE preserves the raw JPEG bytes. Google
+    //    Earth Pro resolves KMZ-relative <img src> paths natively.
+    //    Click-to-zoom dropped - KMZ-internal <a href> would open in
+    //    the OS browser, which can't fetch archive-relative paths. ──
+    var realPhotos = b.photos.filter(function (ph) { return ph && ph.name; });
     if (realPhotos.length) {
       html += _sectionHdr('PHOTOS (' + realPhotos.length + ')');
       html += '<table style="border-collapse:collapse;">';
@@ -37159,18 +37185,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         for (var j = 0; j < 2; j++) {
           var ph = realPhotos[i + j];
           if (!ph) { html += '<td></td>'; continue; }
-          var fullSrc = ph.fullUrl || ph.thumbUrl;
           html += '<td style="padding:6px;vertical-align:top;">'
-            + '<a href="' + fullSrc + '" target="_blank" title="Click to open full size">'
-              + '<img src="' + ph.thumbUrl + '" style="width:380px;height:auto;display:block;border:1px solid #999;cursor:zoom-in;">'
-            + '</a>'
+            + '<img src="' + ph.name + '" style="width:380px;height:auto;display:block;border:1px solid #999;">'
             + (ph.caption ? '<div style="font:11px monospace;color:#555;margin-top:2px;max-width:380px;">' + _xmlEsc(ph.caption) + '</div>' : '')
             + '</td>';
         }
         html += '</tr>';
       }
       html += '</table>';
-      html += '<p style="margin:6px 0 0;font-family:sans-serif;font-size:11px;color:#888;">Click a thumbnail to open the full-size image in your browser.</p>';
     }
 
     // ExtendedData for downstream analytics + GIS tools that read
