@@ -13277,6 +13277,47 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         });
 
+        // Pass 2c — cross-section orphan cleanup. Pass 1a moves pins
+        // that the bundle reassigned to a different section, BUT only
+        // when the ULID matches. When an earlier bundle epoch put
+        // A-CV-041 in section G, the working copy grabbed a section-G
+        // ULID. When the XLSX was corrected and the next bundle put
+        // A-CV-041 in section A with a fresh ULID, Pass 1a couldn't
+        // reconcile the two (ULIDs didn't match), Pass 2 appended the
+        // new pin to section A, and the section-G phantom persisted
+        // — showing up as "G-A-CV-041" on the culvert card because
+        // the id already carries a section-A prefix.
+        //
+        // Detect the case by pin.id prefix: culvert ids are always
+        // "<section>-CV-<seq>", so any pin whose id-prefix names a
+        // section other than its containing section is a mislabeled
+        // orphan. Only drop when the bundle actually has this id
+        // under the id-prefix's section (so we never delete a pin
+        // the user typed a weird id into).
+        var orphansDropped = 0;
+        var _bundleSecById = {};
+        _bundleSecs.forEach(function (bs) {
+          if (bs && bs.id) _bundleSecById[bs.id] = bs;
+        });
+        SECTIONS.forEach(function (sec) {
+          if (!sec || !Array.isArray(sec.pins) || sec._userAdded) return;
+          sec.pins = sec.pins.filter(function (p) {
+            if (!p || p.kind !== 'culvert' || !p.id) return true;
+            var m = String(p.id).match(/^([A-Za-z]+)-/);
+            if (!m) return true;                       // no section prefix — keep
+            var prefix = m[1];
+            if (prefix === sec.id) return true;         // prefix matches container — keep
+            var otherSec = _bundleSecById[prefix];
+            if (!otherSec || !Array.isArray(otherSec.pins)) return true;
+            var claimed = otherSec.pins.some(function (bp) {
+              return bp && bp.id === p.id && bp.kind === 'culvert';
+            });
+            if (!claimed) return true;                  // prefix isn't authoritative — keep
+            orphansDropped++;
+            return false;                               // stale orphan — drop
+          });
+        });
+
         // Pass 1c — rewrite geophoto.linked_pin_id for every pin
         // renamed above. Photo links are stored as "<sec_id>::<pin_id>"
         // using the MUTABLE pin_id, so any photo whose key matched a
@@ -13374,7 +13415,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             '], +' + addedPinCount + ' new pin(s), ' + movedPinCount +
             ' pin(s) reassigned, ' + renamedSameSection +
             ' pin(s) refreshed in place (id/geom), ' + dedupedPinCount +
-            ' duplicate pin(s) merged, ' + photosRelinked +
+            ' duplicate pin(s) merged, ' + orphansDropped +
+            ' cross-section orphan(s) dropped, ' + photosRelinked +
             ' geophoto(s) re-linked across rename, ' + legacyPhotoClearedUlids.length +
             ' pin(s) flagged for legacy-photo clear, hydrated ' + hydrations.length +
             ' photo dataUrl(s), saved', saved.saved_at);
@@ -13382,7 +13424,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           // + same-section refreshes + dedupes survive the next reload
           // (and are included in any export).
           if ((added.length || addedPinCount || movedPinCount || renamedSameSection
-                || dedupedPinCount || photosRelinked)
+                || dedupedPinCount || orphansDropped || photosRelinked
+                || legacyPhotoClearedUlids.length)
               && window._RW && typeof window._RW.persistSections === 'function') {
             window._RW.persistSections();
           }
