@@ -5068,16 +5068,14 @@ body.rw-sld-photo-dragging .strip-pin {
   height: auto;
   object-fit: contain;
 }
-/* Row placement: a load-time JS handler on #cv-list stamps each
-   figure with data-orient="landscape" or "portrait" from the image's
-   natural dimensions. CSS then pins landscape figures to row 1 and
-   portrait figures to row 2 via explicit grid-row placement — this
-   is stricter than `order`, which with 3 photos (1L + 2P) would
-   still pack the first portrait into row 1 col 2 next to the
-   landscape. grid-row forces the portraits into their own row
-   regardless of count. */
-.sr-card[data-cv-idx] .sr-photo[data-orient="landscape"] { grid-row: 1; }
-.sr-card[data-cv-idx] .sr-photo[data-orient="portrait"]  { grid-row: 2; }
+/* Row placement is now handled by JS (see the _reorganize helper in
+   renderCulvertsReport): after each photo tags its <figure> with
+   data-orient, JS sorts the grid's children into DOM order
+   [landscape…, portrait…] and forces grid-column:1 on the first
+   portrait so it starts a fresh row. That combination gives the
+   right layout for every mix (4L, 4P, 2L+2P, 1L+2P, 3L+1P) — the
+   CSS-only grid-row approach we tried before this collapsed 4L
+   into an overlapping single row. */
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
    No card frame — diagram floats in the white space. */
@@ -37527,6 +37525,39 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // between the parent listener attach and this render pass.
     if (!list._orientWired) {
       list._orientWired = true;
+      // Sort every card's photo grid into DOM order
+      // [all landscape figures, all portrait figures, then any not
+      // yet tagged] and force grid-column:1 on the first portrait
+      // so it starts a fresh row (which only creates a row break
+      // when there's at least one landscape ahead of it). Handles
+      // all mix ratios: 4L / 4P / 2L+2P / 1L+2P / 3L+1P.
+      var _reorganize = function () {
+        list.querySelectorAll('.sr-card[data-cv-idx] .sr-photo-grid').forEach(function (grid) {
+          var figs = Array.prototype.slice.call(grid.querySelectorAll(':scope > .sr-photo'));
+          if (!figs.length) return;
+          var L = [], P = [], U = [];
+          figs.forEach(function (f) {
+            var o = f.dataset.orient;
+            if (o === 'landscape') L.push(f);
+            else if (o === 'portrait') P.push(f);
+            else U.push(f);
+          });
+          var sorted = L.concat(P, U);
+          // Reattach in sorted order (no-op if already in this order —
+          // appendChild moves each node to end, so after the loop the
+          // grid's children end up in `sorted` order).
+          sorted.forEach(function (f) { grid.appendChild(f); });
+          figs.forEach(function (f) { f.style.gridColumn = ''; });
+          if (P.length && L.length) P[0].style.gridColumn = '1';
+        });
+      };
+      var _rafPending = false;
+      var _scheduleReorganize = function () {
+        if (_rafPending) return;
+        _rafPending = true;
+        var raf = window.requestAnimationFrame || function (fn) { setTimeout(fn, 16); };
+        raf(function () { _rafPending = false; _reorganize(); });
+      };
       var _applyOrient = function (img) {
         if (!img || img.tagName !== 'IMG') return;
         if (!img.naturalWidth || !img.naturalHeight) return;
@@ -37534,6 +37565,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         if (!fig) return;
         fig.dataset.orient = img.naturalHeight > img.naturalWidth * 1.05
                              ? 'portrait' : 'landscape';
+        _scheduleReorganize();
       };
       var _hookImg = function (img) {
         if (!img || img.tagName !== 'IMG' || img._orientHooked) return;
@@ -37543,9 +37575,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           _applyOrient(img);
         } else {
           img.addEventListener('load',  function () { _applyOrient(img); }, { once: true });
-          // Some browsers dispatch a decode error rather than load
-          // when a bad dataUrl is set; retry on the next successful
-          // load event too.
           img.addEventListener('error', function () { img._orientHooked = false; }, { once: true });
         }
       };
@@ -37566,13 +37595,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         mo.observe(list, { childList: true, subtree: true });
         list._orientObserver = mo;
       }
-      // Called after each render / surgical update to sweep imgs
-      // that were already in the DOM before the observer attached
-      // (or added synchronously during innerHTML replacement — the
-      // observer batches those into one record but the walk is
-      // cheap either way).
       list._reapplyOrient = function () {
         list.querySelectorAll('.sr-photo img').forEach(_hookImg);
+        _scheduleReorganize();
       };
     }
 
