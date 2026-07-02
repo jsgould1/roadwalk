@@ -13076,6 +13076,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         // the inspection layer the field crew owns: condition ratings,
         // condition notes, attrs.photos, and report_hidden_photos.
         var renamedSameSection = 0;
+        // ULIDs of pins that the bundle flagged with
+        // _legacy_photos_cleared. Populated below during Pass 1b so
+        // that Pass 1d (a new step after the photo-relink) can wipe
+        // the matching IDB inspection records too — otherwise
+        // _mergedPin's `idb.attrs.photos` overlay silently restores
+        // the legacy embeds on the very next re-render (which is
+        // exactly the "old photos came back after import" symptom
+        // we saw once the inspection cache finished loading).
+        var legacyPhotoClearedUlids = [];
         var XLSX_OWNED_ATTRS = [
           // User-editable fields per the XLSX (text)
           'material', 'coating', 'in_type', 'out_type',
@@ -13154,13 +13163,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
               // the working copy's stale legacy embeds so the freshly
               // imported XLSX manifest photos aren't buried under them.
               if (battrs._legacy_photos_cleared === true) {
-                if (Array.isArray(attrs.photos) && attrs.photos.length) {
-                  attrs.photos = [];
-                }
-                if (Array.isArray(attrs.report_hidden_photos)
-                    && attrs.report_hidden_photos.length) {
-                  attrs.report_hidden_photos = [];
-                }
+                // Always empty the working copy's photo arrays — the
+                // length gate here would skip an already-empty working
+                // copy, but we still need to run Pass 1d for it below
+                // (the IDB inspection record may still carry the
+                // legacy embeds even when the working copy has been
+                // cleared in a prior run). Idempotent — mutating an
+                // empty array to another empty array is free.
+                attrs.photos = [];
+                attrs.report_hidden_photos = [];
+                if (sp.ulid) legacyPhotoClearedUlids.push(sp.ulid);
               }
             }
           });
@@ -13297,6 +13309,62 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             });
           }
         }
+
+        // Pass 1d — wipe stale legacy embeds from IDB inspection
+        // records for every pin that Pass 1b marked with the
+        // _legacy_photos_cleared flag. Without this, _mergedPin
+        // silently restores the pre-clear photos on the next render:
+        // its merge is `Object.assign({}, bundlePin.attrs, idb.attrs)`
+        // — the idb overlay wins, and _migrateBundleToInspections
+        // seeded those idb.attrs.photos back when the bundle was
+        // originally applied (so every pin in the inspections store
+        // still carries the AECOM_FOX "Culvert N" bytes even after
+        // Pass 1b cleared the working copy). The reason it *looked*
+        // clean on the first render after Reload but the legacy
+        // photos returned once Import matched photos ran is that
+        // idbCacheByUlid is populated lazily on the first Data-module
+        // open — the initial render saw an empty overlay, but once
+        // the import path warmed the cache, the overlay kicked in.
+        var legacyPhotosClearedInIdb = 0;
+        if (legacyPhotoClearedUlids.length) {
+          var _ulidSet = {};
+          legacyPhotoClearedUlids.forEach(function (u) { _ulidSet[u] = true; });
+          // Sync the in-memory cache first so the very next
+          // _mergedPin call sees the cleared state without waiting on
+          // the IDB round-trip.
+          if (_dataState && _dataState.idbCacheByUlid) {
+            Object.keys(_ulidSet).forEach(function (ulid) {
+              var cached = _dataState.idbCacheByUlid[ulid];
+              if (cached && cached.attrs) {
+                cached.attrs.photos = [];
+                cached.attrs.report_hidden_photos = [];
+              }
+            });
+          }
+          // One transaction covers the whole batch — Section A is 62
+          // pins so this is sub-100 ms even with the round-trip per
+          // record. Preserves every other attr on the inspection
+          // record (conditions, notes, user edits); only these two
+          // photo fields get emptied.
+          if (window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+            window.RWIdb.openDB().then(function (db) {
+              try {
+                var tx    = db.transaction('inspections', 'readwrite');
+                var store = tx.objectStore('inspections');
+                Object.keys(_ulidSet).forEach(function (ulid) {
+                  var gr = store.get(ulid);
+                  gr.onsuccess = function (ev) {
+                    var rec = ev.target.result;
+                    if (!rec || !rec.attrs) return;
+                    rec.attrs.photos = [];
+                    rec.attrs.report_hidden_photos = [];
+                    try { store.put(rec); legacyPhotosClearedInIdb++; } catch (_) {}
+                  };
+                });
+              } catch (_) {}
+            }).catch(function () {});
+          }
+        }
         Promise.all(hydrations).then(function () {
           if (typeof renderSectionList === 'function') renderSectionList('all');
           if (typeof window.renderDashboard === 'function') window.renderDashboard('all');
@@ -13307,7 +13375,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             ' pin(s) reassigned, ' + renamedSameSection +
             ' pin(s) refreshed in place (id/geom), ' + dedupedPinCount +
             ' duplicate pin(s) merged, ' + photosRelinked +
-            ' geophoto(s) re-linked across rename, hydrated ' + hydrations.length +
+            ' geophoto(s) re-linked across rename, ' + legacyPhotoClearedUlids.length +
+            ' pin(s) flagged for legacy-photo clear, hydrated ' + hydrations.length +
             ' photo dataUrl(s), saved', saved.saved_at);
           // Persist the merged copy so the new sections + pins + moves
           // + same-section refreshes + dedupes survive the next reload
