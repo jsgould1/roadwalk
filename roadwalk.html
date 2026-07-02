@@ -13091,6 +13091,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           'inlet_elev_point_ft', 'outlet_elev_point_ft',
           'drop_point_ft', 'slope_point_pct', 'flow_check', 'geom_note',
           'pla94_sta_label', 'perp_offset_ft', 'perp_side', 'sta_formatted',
+          // Provenance — needs to flow through so the Sources filter
+          // chip actually flips when the pipeline retags a pin from
+          // "AECOM_FOX" to "SF_KML_070126". Without this, Pass 1b
+          // matched existing pins by ULID but skipped copying source,
+          // and the report still filtered them under the old label.
+          'source',
+          // Culvert survey number from the corrected KML (e.g. "5",
+          // "21A"). Rides along so the report can surface the No. as
+          // an alternate identifier alongside pin.id.
+          'survey_num',
         ];
         _bundleSecs.forEach(function (bundleSec) {
           if (!bundleSec || !Array.isArray(bundleSec.pins)) return;
