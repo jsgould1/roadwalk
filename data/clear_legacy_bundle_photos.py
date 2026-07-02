@@ -70,6 +70,15 @@ def main() -> int:
                 hides_dropped += n_hides
                 attrs.pop("photos", None)
                 attrs.pop("report_hidden_photos", None)
+            # Always stamp the flag on every SF_KML_070126 pin, even
+            # if THIS run didn't have anything to drop. Rationale: the
+            # bundle-side photos may already be empty (a previous run
+            # of this script cleared them) while a user's IDB working
+            # copy still holds the old embeds. The flag is what
+            # applyBundle Pass 1b keys off to wipe the working copy.
+            # Idempotent — later reloads see the flag, find nothing to
+            # clear, and no-op.
+            attrs["_legacy_photos_cleared"] = True
 
     BUNDLE_PATH.write_text(json.dumps(bundle, separators=(",", ":")) + "\n",
                            encoding="utf-8")

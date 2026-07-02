@@ -13145,6 +13145,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                   delete attrs[k];
                 }
               });
+              // Explicit legacy-photo clearing signal from the Python
+              // side (data/clear_legacy_bundle_photos.py). Bundle-side
+              // photos alone can't wipe the working copy — attrs.photos
+              // isn't on the XLSX_OWNED_ATTRS whitelist because form-
+              // captured photos need to survive normal reloads. But
+              // when the pipeline explicitly stamps this flag, drop
+              // the working copy's stale legacy embeds so the freshly
+              // imported XLSX manifest photos aren't buried under them.
+              if (battrs._legacy_photos_cleared === true) {
+                if (Array.isArray(attrs.photos) && attrs.photos.length) {
+                  attrs.photos = [];
+                }
+                if (Array.isArray(attrs.report_hidden_photos)
+                    && attrs.report_hidden_photos.length) {
+                  attrs.report_hidden_photos = [];
+                }
+              }
             }
           });
         });
