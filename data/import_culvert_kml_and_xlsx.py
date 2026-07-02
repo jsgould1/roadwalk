@@ -418,6 +418,12 @@ def main() -> int:
             "stationing_label":    x["stationing_label"],
             "pla94_sta_label":     x["pla94_sta_label"],
             "survey_num":          m["kml"]["num"],
+            # Provenance tag — every pin the KML+XLSX pipeline touches
+            # gets stamped with the source id so the report's source-
+            # filter chip labels it distinctly from the older
+            # AECOM_FOX / GRSM_INDEX_2026 imports. Rename here if a
+            # future revision needs a fresh label.
+            "source":              "SF_KML_070126",
         }.items():
             if v == "" or v is None:
                 attrs.pop(k, None)
