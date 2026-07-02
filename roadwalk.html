@@ -36960,13 +36960,90 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
           }
         });
       });
-      var placemarks = bs.map(function (b) { return _cvPinPlacemark(b, files); }).join('\n');
+      // Passing the pin index so _cvPinPlacemark can alternate the
+      // label offset direction (odd pins push to one side of the
+      // road, even pins to the other) — prevents labels stacking on
+      // top of each other when culverts are closely spaced.
+      var placemarks = bs.map(function (b, idx) { return _cvPinPlacemark(b, files, idx); }).join('\n');
       var centerline = lineCoords ? (
         '<Placemark><name>Centerline — ' + _xmlEsc(sec.id) + '</name>'
         + '<styleUrl>#rw-centerline</styleUrl>'
         + '<LineString><tessellate>1</tessellate><coordinates>' + lineCoords + '</coordinates></LineString>'
         + '</Placemark>'
       ) : '';
+
+      // ── Alignment endpoints + station-tick marks ───────────────
+      // Sum haversine distance across the alignment to derive the
+      // section's end STA. Ticks are short perpendicular LineStrings
+      // every 500 ft; they're too small to see when zoomed way out
+      // but pop when the user zooms to street level in GE Pro.
+      var startEndPlacemarks = '';
+      var tickPlacemarks = '';
+      if (Array.isArray(sec.alignment) && sec.alignment.length >= 2) {
+        var mpStart = info ? info.mp_start : 0;
+        var mpEnd   = info ? info.mp_end   : null;
+        var totalFt = 0;
+        for (var _i = 0; _i < sec.alignment.length - 1; _i++) {
+          totalFt += havFt(sec.alignment[_i], sec.alignment[_i + 1]);
+        }
+        if (mpEnd == null) mpEnd = mpStart + totalFt / 5280;
+        var startLat = +sec.alignment[0][0], startLng = +sec.alignment[0][1];
+        var endLat   = +sec.alignment[sec.alignment.length - 1][0];
+        var endLng   = +sec.alignment[sec.alignment.length - 1][1];
+        var startLabel = 'Start · STA 0+00 · MP ' + mpStart.toFixed(2);
+        var endLabel   = 'End · STA '   + fmtSta(totalFt) + ' · MP ' + mpEnd.toFixed(2);
+        startEndPlacemarks =
+            '<Placemark><name>' + _xmlEsc(startLabel) + '</name>'
+          +   '<styleUrl>#rw-endpoint-label</styleUrl>'
+          +   '<Point><coordinates>' + startLng + ',' + startLat + '</coordinates></Point>'
+          + '</Placemark>'
+          + '<Placemark><name>' + _xmlEsc(endLabel) + '</name>'
+          +   '<styleUrl>#rw-endpoint-label</styleUrl>'
+          +   '<Point><coordinates>' + endLng + ',' + endLat + '</coordinates></Point>'
+          + '</Placemark>';
+
+        // Station ticks every 500 ft — 30 ft long, perpendicular to
+        // the local segment direction. Skip 0+00 (start-label owns
+        // it) and skip anything past the last full 500-ft mark.
+        var TICK_INTERVAL_FT = 500;
+        var TICK_LEN_FT      = 30;
+        var FT_PER_DEG_LAT   = 364000;
+        var cumFt = 0, nextTick = TICK_INTERVAL_FT;
+        var tickLines = [];
+        for (var _s = 0; _s < sec.alignment.length - 1; _s++) {
+          var a = sec.alignment[_s], b2 = sec.alignment[_s + 1];
+          var segLen = havFt(a, b2);
+          if (segLen < 1e-6) { cumFt += segLen; continue; }
+          while (nextTick <= cumFt + segLen && nextTick < totalFt) {
+            var t = (nextTick - cumFt) / segLen;
+            var tLat = a[0] + t * (b2[0] - a[0]);
+            var tLng = a[1] + t * (b2[1] - a[1]);
+            var cosLat = Math.cos(tLat * Math.PI / 180);
+            // Perpendicular in ft-space: rotate segment 90° CCW.
+            var dyFt =  (b2[0] - a[0]) * FT_PER_DEG_LAT;
+            var dxFt =  (b2[1] - a[1]) * cosLat * FT_PER_DEG_LAT;
+            var magFt = Math.sqrt(dxFt * dxFt + dyFt * dyFt);
+            if (magFt > 1e-9) {
+              var pxFt = -dyFt / magFt * (TICK_LEN_FT / 2);
+              var pyFt =  dxFt / magFt * (TICK_LEN_FT / 2);
+              var pDlat = pyFt / FT_PER_DEG_LAT;
+              var pDlng = pxFt / (cosLat * FT_PER_DEG_LAT);
+              var lat1 = tLat - pDlat, lng1 = tLng - pDlng;
+              var lat2 = tLat + pDlat, lng2 = tLng + pDlng;
+              tickLines.push(
+                '<Placemark><styleUrl>#rw-station-tick</styleUrl>'
+                + '<LineString><tessellate>1</tessellate><coordinates>'
+                + lng1 + ',' + lat1 + ' ' + lng2 + ',' + lat2
+                + '</coordinates></LineString></Placemark>'
+              );
+            }
+            nextTick += TICK_INTERVAL_FT;
+          }
+          cumFt += segLen;
+        }
+        tickPlacemarks = tickLines.join('');
+      }
+
       var metaLine = info
         ? (_xmlEsc(info.route_id) + ' · FMSS ' + info.fmss
            + ' · MP ' + info.mp_start.toFixed(2) + '–' + info.mp_end.toFixed(2))
@@ -36990,12 +37067,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + '<Document>'
         +   '<name>' + _xmlEsc('Culvert Assessment Report · ' + sectionTitle) + '</name>'
         + (metaLine ? '<description><![CDATA[' + metaLine + ']]></description>' : '')
+        // KML color format is aabbggrr (alpha, blue, green, red). #1d4ed8 →
+        // r=1d, g=4e, b=d8 → "ffd84e1d". Google Earth Pro renders bright
+        // labels like this with a subtle white halo/outline automatically
+        // (contrast-based), which is what we want for legibility over the
+        // orange centerline and satellite imagery.
         +   '<Style id="rw-centerline"><LineStyle><color>ff1d4ed8</color><width>4</width></LineStyle></Style>'
         +   '<Style id="rw-culvert-pin">'
         +     '<IconStyle><scale>0</scale>'
         +       '<Icon><href></href></Icon>'
         +     '</IconStyle>'
-        +     '<LabelStyle><scale>0.75</scale><color>ff000000</color></LabelStyle>'
+        +     '<LabelStyle><scale>0.85</scale><color>ffd84e1d</color></LabelStyle>'
         +     '<LineStyle><color>ffEB4034</color><width>5</width></LineStyle>'
         +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
         +   '</Style>'
@@ -37003,12 +37085,27 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         +     '<IconStyle><scale>0</scale>'
         +       '<Icon><href></href></Icon>'
         +     '</IconStyle>'
-        +     '<LabelStyle><scale>0.75</scale><color>ff000000</color></LabelStyle>'
+        +     '<LabelStyle><scale>0.85</scale><color>ffd84e1d</color></LabelStyle>'
         +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
+        +   '</Style>'
+        // Alignment endpoints — bigger blue label so Start / End STA /
+        // MP anchor the section visually. No icon (scale 0).
+        +   '<Style id="rw-endpoint-label">'
+        +     '<IconStyle><scale>0</scale><Icon><href></href></Icon></IconStyle>'
+        +     '<LabelStyle><scale>1.0</scale><color>ffd84e1d</color></LabelStyle>'
+        +   '</Style>'
+        // Station tick — short perpendicular blue line at every
+        // 500-ft station along the centerline.
+        +   '<Style id="rw-station-tick">'
+        +     '<LineStyle><color>ff1d4ed8</color><width>2</width></LineStyle>'
         +   '</Style>'
         +   '<Folder>'
         +     '<name>' + _xmlEsc(sectionTitle) + '</name>'
         +     centerline
+        +     startEndPlacemarks
+        +     (tickPlacemarks
+        +       ? '<Folder><name>Station Ticks (500 ft)</name>' + tickPlacemarks + '</Folder>'
+        +       : '')
         +     '<Folder><name>Culverts (' + pins.length + ')</name>'
         +       placemarks
         +     '</Folder>'
@@ -37038,7 +37135,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // card, CULVERT CONDITIONS card, and PHOTOS grid. The Placemark's
   // <name> is the full A-CV-nnn id (with section prefix) so Google
   // Earth labels each culvert by number next to the icon.
-  function _cvPinPlacemark(b, files) {
+  function _cvPinPlacemark(b, files, pinIdx) {
     var sec = b.sec, pin = b.pin, a = pin.attrs || {};
 
     // ── Geometry — LineString of [[lng, lat], …]. Midpoint is what
@@ -37301,18 +37398,50 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       + '<Data name="latitude"><value>'           + midLat.toFixed(6)                                  + '</value></Data>'
       + '<Data name="longitude"><value>'          + midLng.toFixed(6)                                  + '</value></Data>';
 
-    // MultiGeometry: Point at midpoint (carries the label + icon) +
-    // LineString for the barrel geometry on the ground. Without the
+    // Label offset: shove the label off the road centerline so it
+    // doesn't sit on top of the orange linework and neighbor culvert
+    // segments. We use the culvert's own axis (endpoint→midpoint) as
+    // a proxy for "perpendicular to road" since a culvert almost
+    // always crosses the road at ~90°. Alternate direction by pin
+    // index parity so adjacent culverts' labels land on opposite
+    // sides of the road and don't stack on each other. When the pin
+    // has only a single coord (no barrel LineString), we can't infer
+    // a direction — the label stays at the point.
+    var labelLat = midLat, labelLng = midLng;
+    if (lats.length >= 2) {
+      var epLat, epLng;
+      if (((pinIdx || 0) % 2) === 0) {
+        epLat = lats[0];                 epLng = lngs[0];
+      } else {
+        epLat = lats[lats.length - 1];   epLng = lngs[lngs.length - 1];
+      }
+      var dLat = epLat - midLat;
+      var dLng = epLng - midLng;
+      var mag  = Math.sqrt(dLat * dLat + dLng * dLng);
+      if (mag > 1e-9) {
+        // ~0.00025° ≈ 90 ft at 35.7°N — clear of the road stripe
+        // but close enough that the label still reads as "this
+        // culvert" and not the next one over.
+        var OFFSET_DEG = 0.00025;
+        labelLat = midLat + (dLat / mag) * OFFSET_DEG;
+        labelLng = midLng + (dLng / mag) * OFFSET_DEG;
+      }
+    }
+
+    // MultiGeometry: Point at the offset label anchor + LineString
+    // for the barrel geometry (which stays at the actual crossing so
+    // the on-map segment is still true to ground). Without the
     // Point, Google Earth would anchor the label at the first vertex
     // of the LineString and hide it unless the user hovered.
     var geom;
     if (lineStr) {
       geom = '<MultiGeometry>'
-        + '<Point><coordinates>' + midLng + ',' + midLat + '</coordinates></Point>'
+        + '<Point><coordinates>' + labelLng + ',' + labelLat + '</coordinates></Point>'
         + '<LineString><tessellate>1</tessellate><coordinates>' + lineStr + '</coordinates></LineString>'
       + '</MultiGeometry>';
     } else {
-      // Single-coord fallback — no line to draw.
+      // Single-coord fallback — no line to draw and no direction
+      // to infer, so the label stays at the point.
       geom = '<Point><coordinates>' + midLng + ',' + midLat + '</coordinates></Point>';
     }
     var styleUrl = lineStr ? '#rw-culvert-pin' : '#rw-culvert-point';
