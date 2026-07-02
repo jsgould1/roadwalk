@@ -95,9 +95,16 @@ def _cell_ref_to_rc(ref: str) -> tuple[int, int]:
 def _load_lookup_chain(z: zipfile.ZipFile) -> tuple[dict[int, str], dict[str, bytes]]:
     """Return (vm → media_zip_path, media_zip_path → bytes)."""
     # 1. metadata.xml — 144 <bk> entries. Each carries xlrd:rvb i.
+    #    Excel's `vm="N"` cell attribute is 1-BASED per the OOXML spec
+    #    (the Nth entry in the metadata table). The previous version
+    #    of this script enumerated starting at 0, which silently
+    #    shifted every photo mapping by +1 (A-CV-001 got image15
+    #    when it should have gotten image14, and so on all the way
+    #    through the sheet). Fix - start=1 aligns the dict key with
+    #    the cell's vm value.
     md = z.read("xl/metadata.xml").decode("utf-8", errors="replace")
     vm_to_rvb = {i: int(m.group(1))
-                 for i, m in enumerate(_BK_RE.finditer(md))}
+                 for i, m in enumerate(_BK_RE.finditer(md), start=1)}
     # 2. rdrichvalue.xml — <rv> per rich value, first <v> is the rel key.
     rv_xml = z.read("xl/richData/rdrichvalue.xml").decode("utf-8", errors="replace")
     rvb_to_key = {i: int(m.group(1))
