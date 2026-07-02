@@ -39143,6 +39143,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // screen view restores even if the user prints + cancels.
     function _cvTriggerPrint(msg, delayMs, afterPrint) {
       _cvForceInitAllMaps();
+      // Force-load every lazy-observed thumbnail on the culvert report
+      // BEFORE the print dialog opens. The IntersectionObserver on
+      // img[data-photo-id] elements only fires when the img enters the
+      // viewport, so continuation cards below the fold render as empty
+      // photo frames in Print / Save-as-PDF (which is exactly what the
+      // user saw). forceLoadAll walks the whole document, looks up
+      // each id's dataUrl from PHOTOS synchronously, and sets img.src.
+      // Also runs the folder-picked blob-URL hydration (data-cv-photo-id
+      // → IDB Blob → object URL) so that path prints too.
+      try {
+        if (window._RW && window._RW.lazyPhotos
+            && typeof window._RW.lazyPhotos.forceLoadAll === 'function') {
+          window._RW.lazyPhotos.forceLoadAll(document);
+        }
+      } catch (_) {}
+      try {
+        if (typeof _cvHydrateBlobImgs === 'function') _cvHydrateBlobImgs(document);
+      } catch (_) {}
       var tip = document.createElement('div');
       tip.textContent = msg;
       tip.style.cssText = 'position:fixed;top:50%;left:50%;'
