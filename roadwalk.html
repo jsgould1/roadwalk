@@ -39143,24 +39143,79 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // screen view restores even if the user prints + cancels.
     function _cvTriggerPrint(msg, delayMs, afterPrint) {
       _cvForceInitAllMaps();
-      // Force-load every lazy-observed thumbnail on the culvert report
-      // BEFORE the print dialog opens. The IntersectionObserver on
-      // img[data-photo-id] elements only fires when the img enters the
-      // viewport, so continuation cards below the fold render as empty
-      // photo frames in Print / Save-as-PDF. forceLoadAll walks the
-      // whole document, looks up each id's dataUrl from PHOTOS
-      // synchronously, and sets img.src. Also runs the folder-picked
-      // blob-URL hydration (data-cv-photo-id → IDB Blob → object URL)
-      // so that path prints too.
-      try {
-        if (window._RW && window._RW.lazyPhotos
-            && typeof window._RW.lazyPhotos.forceLoadAll === 'function') {
-          window._RW.lazyPhotos.forceLoadAll(document);
+      // Print pre-flight, rebuilt to sidestep Chromium's lazy-load
+      // intervention. Prior versions used forceLoadAll + img.decode()
+      // on the existing <img loading="lazy" data-photo-id="…"> nodes;
+      // once the DOM crossed ~150 photos the intervention "replaced
+      // with placeholders", refused every subsequent decode, and the
+      // 45 s ceiling silently ran out (see v262 diagnostics - 146
+      // awaiting decode / 45 s ceiling reached). Rather than fight
+      // that, this replaces every .sr-photo img with a fresh eager
+      // <img> whose src is set BEFORE it enters the DOM. New nodes
+      // aren't lazy-tainted, so the intervention lets them decode.
+      var toReplace = document.querySelectorAll('.sr-photo img');
+      var _tStart = Date.now();
+      var replaced = 0, srcless = 0;
+      toReplace.forEach(function (oldImg) {
+        // Resolve the src for the fresh img. Prefer the current src if
+        // the observer already hydrated it; else look up via the id
+        // helpers so we don't need the observer at all.
+        var src = oldImg.getAttribute('src') || '';
+        if (!src) {
+          // Linked geophoto path - look up dataUrl from PHOTOS by id.
+          var gpid = oldImg.getAttribute('data-photo-id');
+          if (gpid && window._RW && window._RW.geophotos
+              && typeof window._RW.geophotos.get === 'function') {
+            var p = window._RW.geophotos.get(gpid);
+            if (p && p.dataUrl) src = p.dataUrl;
+          }
         }
-      } catch (_) {}
-      try {
-        if (typeof _cvHydrateBlobImgs === 'function') _cvHydrateBlobImgs(document);
-      } catch (_) {}
+        if (!src) {
+          // Folder-picked path - if a blob URL was already assigned
+          // by _cvHydrateBlobImgs, the src is on the current node;
+          // if not, the pre-print rebuild can't recover it here
+          // (Blob→URL needs an async IDB read), so we leave the frame
+          // empty rather than block. Bump srcless so it shows in the
+          // log for diagnosis.
+          srcless++;
+          return;
+        }
+        var fresh = document.createElement('img');
+        fresh.alt = oldImg.alt || '';
+        // No loading="lazy" attribute at all - eager by default. The
+        // decoding=sync hint asks Chromium to finish decoding before
+        // running paint, which is exactly what we want for the print
+        // snapshot.
+        fresh.decoding = 'sync';
+        // Set src BEFORE swap so decode kicks off immediately on a
+        // fresh, non-lazy node.
+        fresh.src = src;
+        oldImg.parentNode.replaceChild(fresh, oldImg);
+        replaced++;
+      });
+      console.log('[RoadWalk] Print prep: ' + toReplace.length + ' photo img(s) seen; '
+        + replaced + ' rebuilt as eager, ' + srcless + ' skipped (no src).');
+
+      // Now wait for every rebuilt img to decode. Fresh eager <img>
+      // nodes don't trip the lazy intervention, so img.decode()
+      // actually resolves on this path. Small hardware still needs a
+      // few seconds - the map-tile delay and decode-wait run in
+      // parallel and the print fires when both are done.
+      var decodePromises = [];
+      document.querySelectorAll('.sr-photo img').forEach(function (img) {
+        if (!img.src) return;
+        if (img.complete && img.naturalWidth > 0) return;
+        if (typeof img.decode === 'function') {
+          decodePromises.push(img.decode().catch(function () {}));
+        } else {
+          decodePromises.push(new Promise(function (res) {
+            if (img.complete) return res();
+            img.addEventListener('load',  res, { once: true });
+            img.addEventListener('error', res, { once: true });
+          }));
+        }
+      });
+
       var tip = document.createElement('div');
       tip.textContent = msg;
       tip.style.cssText = 'position:fixed;top:50%;left:50%;'
@@ -39169,58 +39224,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + 'border:1px solid #fff;border-radius:4px;';
       document.body.appendChild(tip);
 
-      // Setting img.src to a data-URL kicks off an ASYNC decode. Print
-      // was firing while the majority of photos were still mid-decode
-      // - only the first culvert's four thumbs made it through the
-      // ~2.5 s tile-fetch delay before window.print() snapshot froze
-      // the frame. Fix - await img.decode() on every .sr-photo img in
-      // the document, in parallel with the map-tile delay.
-      //
-      // Two defensive guards keep the wait from hanging forever.
-      //   1. Skip any img whose src is empty (photo scope narrowed
-      //      out the geophoto record, so forceLoadAll had nothing to
-      //      set) - img.decode() on a src-less img can stall in
-      //      Chromium.
-      //   2. Wrap the whole batch in a Promise.race with a 12 s
-      //      ceiling; whichever finishes first wins. If a decode
-      //      genuinely takes longer, better to print with a few blank
-      //      frames than never print at all.
-      var decodePromises = [];
-      var imgs = document.querySelectorAll('.sr-photo img');
-      var srcless = 0, alreadyDone = 0, queued = 0;
-      imgs.forEach(function (img) {
-        if (!img.src) { srcless++; return; }
-        if (img.complete && img.naturalWidth > 0) { alreadyDone++; return; }
-        if (typeof img.decode === 'function') {
-          queued++;
-          decodePromises.push(img.decode().catch(function () {}));
-          return;
-        }
-        queued++;
-        decodePromises.push(new Promise(function (res) {
-          if (img.complete) return res();
-          img.addEventListener('load',  res, { once: true });
-          img.addEventListener('error', res, { once: true });
-        }));
-      });
-      var _tStart = Date.now();
-      console.log('[RoadWalk] Print prep: ' + imgs.length + ' .sr-photo imgs found ('
-        + srcless + ' srcless / ' + alreadyDone + ' already decoded / '
-        + queued + ' awaiting decode). delayMs=' + delayMs);
-
       var mapWait = new Promise(function (res) { setTimeout(res, delayMs); });
       var decodeWait = Promise.all(decodePromises).then(function () {
-        console.log('[RoadWalk] Print prep: all ' + queued + ' decode(s) done in '
-          + (Date.now() - _tStart) + ' ms');
+        console.log('[RoadWalk] Print prep: all ' + decodePromises.length
+          + ' decode(s) done in ' + (Date.now() - _tStart) + ' ms');
       });
-      // Generous ceiling - the previous 12 s was firing mid-decode on
-      // Print Sections runs of 60+ culverts. 45 s covers the worst
-      // case (Chromium decode pipeline saturated by 240+ 1200-px JPEG
-      // dataUrls) with a wide margin.
+      // 60 s safety net. Fresh eager imgs typically finish in under
+      // 8 s for a full A/G/H/I run; the ceiling only fires if the
+      // browser really has stalled and we'd rather ship blank frames
+      // than never open the dialog.
       var hardCeiling = new Promise(function (res) { setTimeout(function () {
-        console.warn('[RoadWalk] Print prep: 45 s ceiling reached — printing anyway');
+        console.warn('[RoadWalk] Print prep: 60 s ceiling reached — printing anyway');
         res();
-      }, 45000); });
+      }, 60000); });
       Promise.race([
         Promise.all([mapWait, decodeWait]),
         hardCeiling,
