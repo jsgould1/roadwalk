@@ -36366,34 +36366,90 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       { maxZoom: 19 },
       'esri_street'
     ).addTo(map);
-    // The culvert line + endpoint pips. Blue per spec to read as the
-    // drainage feature rather than the road centerline.
+    // Neighbor-culvert reference lines. Every OTHER culvert in the
+    // same section renders as a thin gray polyline (no dots, no
+    // label) so the reader can see how this crossing sits in the
+    // corridor without confusing them for the active feature. Look
+    // up section id via the data-sec-id attribute; if it's not set
+    // (e.g. an older surgical-update card) we just skip neighbors.
+    var pinId = div.getAttribute('data-cv-id');
+    var secId = div.getAttribute('data-sec-id');
+    var secs  = (window.SECTIONS && Array.isArray(window.SECTIONS)) ? window.SECTIONS : [];
+    if (secId) {
+      var sec = null;
+      for (var si = 0; si < secs.length; si++) {
+        if (secs[si] && secs[si].id === secId) { sec = secs[si]; break; }
+      }
+      if (sec && Array.isArray(sec.pins)) {
+        sec.pins.forEach(function (np) {
+          if (!np || np.kind !== 'culvert') return;
+          var nc = np.geometry && np.geometry.coordinates;
+          if (!Array.isArray(nc) || nc.length < 2) return;
+          // Skip THIS culvert - it gets the blue treatment below.
+          if (pinId && (np.id === pinId ||
+              (secId + '-' + np.id === pinId) ||
+              (np.id && pinId.slice(secId.length + 1) === np.id))) {
+            return;
+          }
+          var nll = nc.map(function (c) {
+            var lng = +c[0], lat = +c[1];
+            return (isFinite(lng) && isFinite(lat)) ? [lat, lng] : null;
+          }).filter(Boolean);
+          if (nll.length < 2) return;
+          L.polyline(nll, { color: '#374151', weight: 1.5, opacity: 0.55 }).addTo(map);
+        });
+      }
+    }
+    // Active culvert - a solo blue line, no endpoint dots. The pips
+    // used to be radius-5 filled circles which, at the previous zoom
+    // scale, entirely covered the ~30-100 ft barrel below them; the
+    // reader lost the ability to see whether the pipe ran EW or NS.
     L.polyline(ll, { color: '#1d4ed8', weight: 4, opacity: 0.95 }).addTo(map);
-    L.circleMarker(ll[0],            { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
-    L.circleMarker(ll[ll.length - 1], { radius: 5, color: '#fff', weight: 2, fillColor: '#1d4ed8', fillOpacity: 1 }).addTo(map);
     map.fitBounds(L.latLngBounds(ll).pad(0.6));
-    // Zoom out two levels from the fit so the report reader gets more
-    // spatial context (approaching roads, adjacent culverts, terrain).
-    // Clamped to the tile layer's minZoom to protect against divs
-    // where fitBounds already picked a low zoom.
+    // Zoom out FIVE levels from the tight fit so the reader sees the
+    // active culvert in the context of its section corridor -
+    // approaching road, neighbor culverts, drainage direction. -2 was
+    // the previous default; +3 more per QC feedback that the closer
+    // view was too dominated by the culvert itself. Clamped at zero
+    // so a maplet whose fit already picked a low zoom can't underflow.
     var _fitZoom = map.getZoom();
     if (typeof _fitZoom === 'number' && isFinite(_fitZoom)) {
-      map.setZoom(Math.max(0, _fitZoom - 2), { animate: false });
+      map.setZoom(Math.max(0, _fitZoom - 5), { animate: false });
     }
-    // Culvert-ID label. divIcon anchored on the midpoint of the
-    // barrel so the caret always sits over the drainage line even
-    // when the pipe crosses on a diagonal; a white halo on the text
-    // keeps the label legible against darker aerial tiles too.
-    var pinId = div.getAttribute('data-cv-id');
+    // Culvert-ID label placed with a PERPENDICULAR offset from the
+    // barrel midpoint so it never sits on top of the polyline. Take
+    // the segment direction (midpoint → next vertex), rotate 90° CCW
+    // to get the perpendicular, and shift the label anchor a small
+    // step in that direction. The magnitude (~0.00025 deg ≈ 90 ft)
+    // stays inside the maplet frame at any zoom in the range we
+    // land on after the -5 step and still deconflicts on typical
+    // culvert lengths.
     if (pinId) {
       var midIdx = Math.floor(ll.length / 2);
       var midLatLng = ll[midIdx];
-      L.marker(midLatLng, {
+      var nextLL = ll[Math.min(midIdx + 1, ll.length - 1)];
+      var dLat = nextLL[0] - midLatLng[0];
+      var dLng = nextLL[1] - midLatLng[1];
+      var segLen = Math.sqrt(dLat * dLat + dLng * dLng);
+      var OFFSET_DEG = 0.00025;
+      var labelLL;
+      if (segLen > 0) {
+        // Rotate (dLat, dLng) 90° CCW → (-dLng, dLat), then normalize.
+        labelLL = [
+          midLatLng[0] + (-dLng / segLen) * OFFSET_DEG,
+          midLatLng[1] + ( dLat / segLen) * OFFSET_DEG,
+        ];
+      } else {
+        // Degenerate segment (both points identical) — fall back to
+        // a straight north shift so we still clear the pip location.
+        labelLL = [midLatLng[0] + OFFSET_DEG, midLatLng[1]];
+      }
+      L.marker(labelLL, {
         icon: L.divIcon({
           className: 'cv-inset-label',
           html: '<span>' + pinId + '</span>',
           iconSize:   [80, 18],
-          iconAnchor: [40, 24],   // anchor above the point so text sits over/next to the line
+          iconAnchor: [40, 9],   // center-anchor since spatial offset already handles the placement
         }),
         interactive: false,
         keyboard: false,
@@ -36892,14 +36948,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         : '';
       // Two styles for culvert placemarks:
       //   rw-culvert-pin — used when the culvert has a LineString.
-      //     MultiGeometry pins a labeled Point icon at the crossing's
-      //     midpoint so Google Earth shows the culvert id (A-CV-001)
-      //     next to the icon, while the LineString still draws the
-      //     barrel geometry on the ground.
-      //   rw-culvert-point — used when the culvert only has a single
-      //     coord pair; same icon+label but no line.
-      // Icon is the paddle orange-circle (drainage / hydro convention);
-      // LabelStyle sizes the text so it doesn't dominate the map.
+      //     MultiGeometry pins the label at the crossing midpoint so
+      //     the culvert id (A-CV-001) reads adjacent to the barrel
+      //     polyline. Icon is HIDDEN via IconStyle scale=0 — the
+      //     previous orange-circle paddle read as too dominant on
+      //     the map, per QC review.
+      //   rw-culvert-point — used when the culvert has only a single
+      //     coord pair; same label treatment, still no visible icon.
+      // Label sized to a small bold-looking rendering (scale=0.75)
+      // that stays legible without shouting over Google Earth's
+      // basemap labels; the icon-less anchor keeps it snug against
+      // the polyline.
       var kml = ''
         + '<?xml version="1.0" encoding="UTF-8"?>'
         + '<kml xmlns="http://www.opengis.net/kml/2.2">'
@@ -36908,18 +36967,18 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + (metaLine ? '<description><![CDATA[' + metaLine + ']]></description>' : '')
         +   '<Style id="rw-centerline"><LineStyle><color>ff1d4ed8</color><width>4</width></LineStyle></Style>'
         +   '<Style id="rw-culvert-pin">'
-        +     '<IconStyle><scale>1.1</scale>'
-        +       '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/orange-circle.png</href></Icon>'
+        +     '<IconStyle><scale>0</scale>'
+        +       '<Icon><href></href></Icon>'
         +     '</IconStyle>'
-        +     '<LabelStyle><scale>0.9</scale></LabelStyle>'
+        +     '<LabelStyle><scale>0.75</scale><color>ff000000</color></LabelStyle>'
         +     '<LineStyle><color>ffEB4034</color><width>5</width></LineStyle>'
         +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
         +   '</Style>'
         +   '<Style id="rw-culvert-point">'
-        +     '<IconStyle><scale>1.1</scale>'
-        +       '<Icon><href>http://maps.google.com/mapfiles/kml/paddle/orange-circle.png</href></Icon>'
+        +     '<IconStyle><scale>0</scale>'
+        +       '<Icon><href></href></Icon>'
         +     '</IconStyle>'
-        +     '<LabelStyle><scale>0.9</scale></LabelStyle>'
+        +     '<LabelStyle><scale>0.75</scale><color>ff000000</color></LabelStyle>'
         +     '<BalloonStyle><text>$[description]</text></BalloonStyle>'
         +   '</Style>'
         +   '<Folder>'
@@ -39077,7 +39136,8 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                     + _esc(JSON.stringify(
                         Array.isArray(pin.geometry && pin.geometry.coordinates)
                           ? pin.geometry.coordinates : []
-                      )) + '" data-cv-id="' + _esc(pinIdStr) + '"></div>' +
+                      )) + '" data-cv-id="' + _esc(pinIdStr)
+                        + '" data-sec-id="' + _esc(sec.id || '') + '"></div>' +
                 '</div>' +
               '</div>' +
             '</section>' +
