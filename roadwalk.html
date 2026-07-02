@@ -36703,7 +36703,13 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         _csvSpellCond(_cvEffectiveCond(pin, 'hw_upstream_cond')),   a.hw_upstream_cond_notes   || '',
         _csvSpellCond(_cvEffectiveCond(pin, 'hw_downstream_cond')), a.hw_downstream_cond_notes || '',
         a.material || '', a.coating || '', a.shape || '',
-        a.size_in || '', a.length_ft || '', a.num_barrels || '', a.slope || '',
+        a.size_in || '', a.length_ft || '', a.num_barrels || '',
+        // The pipe slope % lives at a.slope_pipe_pct (that's the
+        // field the properties card writes to and the CSV column
+        // "slope" is meant to surface). The prior a.slope reference
+        // was a legacy attr name that never got populated by any
+        // pipeline, so this column was blank on every row.
+        a.slope_pipe_pct != null ? a.slope_pipe_pct : '',
         a.in_type || '', a.out_type || '',
         mpStr, pin.sta || '', (pin.sta_ft != null ? pin.sta_ft : ''),
         lat, lng, _csvSrc(pin), photos, a.notes || '',
