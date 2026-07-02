@@ -41230,6 +41230,24 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
     var merged = Object.assign({}, bundlePin);
     merged.attrs  = Object.assign({}, bundlePin.attrs, idb.attrs || {});
+    // Legacy-photo clear signal beats the IDB overlay. Pass 1b (and
+    // fallbacks 1b_id / 2b) sets `_legacy_photos_cleared: true` on
+    // the working-copy pin's attrs whenever the pipeline stamped the
+    // corresponding flag on the bundle side. Without the extra guard
+    // here, the Object.assign above lets an IDB record that hasn't
+    // been rewritten yet (Pass 1d's IDB write is async — races with
+    // the culvert-report render if _loadIdbCache warmed the cache
+    // just before the write landed) pull the six legacy embeds back
+    // on top of the freshly-cleared bundle. Zeroing photos AFTER the
+    // overlay closes that race for good.
+    var mattrs = merged.attrs;
+    if (mattrs && (
+          (bundlePin.attrs && bundlePin.attrs._legacy_photos_cleared === true) ||
+          mattrs._legacy_photos_cleared === true
+        )) {
+      mattrs.photos = [];
+      mattrs.report_hidden_photos = [];
+    }
     merged.status = idb.status || bundlePin.status || 'pending';
     merged.ulid   = idb.ulid || bundlePin.ulid || null;
     return merged;
