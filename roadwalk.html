@@ -5046,6 +5046,14 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-photo-grid {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  /* Grid children default to align-items: stretch, which was
+     stretching the landscape cell in an inlet/outlet pair down to
+     match the portrait's height and filling the extra vertical
+     space with the .sr-photo background (black). Setting align-items
+     to start lets each cell sit at its natural height; the leftover
+     row height stays as the card's white background instead of a
+     giant black slab under the shorter photo. */
+  align-items: start;
 }
 /* Let each culvert thumb render at its intrinsic aspect ratio (4:3
    landscape OR 3:4 portrait) instead of hard-cropping to the default
