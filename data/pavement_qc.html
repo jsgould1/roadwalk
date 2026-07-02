@@ -316,6 +316,19 @@
       border-radius: 50%; margin-right: 6px;
       vertical-align: middle;
     }
+    /* Per-row toggle. Click the checkbox to hide that feature type
+       (both the map marker AND any photos linked to that feature type).
+       Dimmed label text on unchecked rows mirrors the map state at a
+       glance. */
+    .legend-row {
+      display: flex; align-items: center; gap: 2px;
+      margin: 1px 0; user-select: none;
+    }
+    .legend-toggle {
+      margin: 0 4px 0 0; cursor: pointer;
+      accent-color: #1e40af;
+    }
+    .legend-row.off { opacity: 0.45; }
   </style>
 </head>
 <body>
@@ -1601,6 +1614,72 @@ function _wireFeatureLayerHover(fl) {
 }
 
 // ── Legend ──────────────────────────────────────────────────────
+// Per-type visibility state. Each entry gates BOTH the map marker
+// (photo dot or feature symbol) AND any photos linked to that feature
+// type. Persisted across rebuilds so a legend redraw after an import
+// preserves the user's current filter selections.
+var _typeVisibility = {
+  photos: true,
+  OT:     true,
+  GW:     true,
+  FP:     true,
+  other:  true,
+};
+
+// Walk both layers and toggle each marker's DOM element based on the
+// current visibility state. Photo markers additionally check their
+// linked feature's prefix - so unchecking OT hides OT markers AND
+// hides every photo whose _linked_feature_id points at an OT feature.
+// Cheap enough to run on every checkbox change (typical scene has
+// a few hundred markers).
+function _applyLegendFilters() {
+  // Build feature.id -> prefix lookup once so the photo pass can
+  // resolve each linked_feature_id without re-scanning the feature
+  // layer per photo.
+  var featPfxById = {};
+  if (featureLayer) {
+    featureLayer.eachLayer(function (l) {
+      var feat = l.feature || {};
+      var fid = feat.id;
+      if (fid == null && feat.properties) fid = feat.properties.id;
+      if (fid == null) return;
+      var pfx = feat.geometry && feat.geometry.type === 'Point'
+        ? _featurePrefix(feat.properties || {}) : null;
+      featPfxById[fid] = pfx || 'other';
+    });
+  }
+  function _setElVis(el, visible) {
+    if (!el) return;
+    el.style.display = visible ? '' : 'none';
+  }
+  // Feature markers. Point features rendered as L.marker (divIcon)
+  // have layer.getElement(); the "other" fallback is a circleMarker
+  // whose DOM element lives on layer._path.
+  if (featureLayer) {
+    featureLayer.eachLayer(function (l) {
+      var feat = l.feature || {};
+      if (!(feat.geometry && feat.geometry.type === 'Point')) return;
+      var pfx = _featurePrefix(feat.properties || {}) || 'other';
+      var visible = _typeVisibility[pfx] !== false;
+      var el = (l.getElement && l.getElement()) || l._path || null;
+      _setElVis(el, visible);
+    });
+  }
+  // Photo markers. Hidden if the Photos toggle is off OR the linked
+  // feature's type is hidden. Unlinked photos are governed by the
+  // Photos toggle alone.
+  if (photoLayer) {
+    photoLayer.eachLayer(function (m) {
+      var visible = _typeVisibility.photos !== false;
+      if (visible && m._linked_feature_id != null) {
+        var linkedPfx = featPfxById[m._linked_feature_id] || 'other';
+        if (_typeVisibility[linkedPfx] === false) visible = false;
+      }
+      _setElVis(m.getElement && m.getElement(), visible);
+    });
+  }
+}
+
 function _rebuildLegend() {
   if (legendControl) {
     try { map.removeControl(legendControl); } catch (_) {}
@@ -1613,12 +1692,25 @@ function _rebuildLegend() {
     options: { position: 'bottomleft' },
     onAdd: function () {
       var d = L.DomUtil.create('div', 'legend');
+      // Keep clicks (checkbox toggles + label taps) from reaching the
+      // map and firing pan/zoom actions.
+      L.DomEvent.disableClickPropagation(d);
+      L.DomEvent.disableScrollPropagation(d);
       var parts = ['<h5>Legend</h5>'];
+      function _row(key, swatch, label, count) {
+        var on = _typeVisibility[key] !== false;
+        return '<label class="legend-row' + (on ? '' : ' off') + '" data-type="' + key + '">'
+          + '<input type="checkbox" class="legend-toggle" data-type="' + key + '"' + (on ? ' checked' : '') + '>'
+          + swatch + label + ' (' + count + ')'
+          + '</label>';
+      }
       if (hasPhotos) {
-        parts.push(
-          '<div><span class="swatch" style="background:#3b82f6;border:2px solid #1e40af;"></span>' +
-          'Photos (' + photoLayer.getLayers().length + ')</div>'
-        );
+        parts.push(_row(
+          'photos',
+          '<span class="swatch" style="background:#3b82f6;border:2px solid #1e40af;"></span>',
+          'Photos',
+          photoLayer.getLayers().length
+        ));
       }
       if (hasFeats) {
         // Break the feature count into per-prefix tallies so the
@@ -1631,22 +1723,35 @@ function _rebuildLegend() {
           if (pfx && counts.hasOwnProperty(pfx)) counts[pfx]++;
           else counts.other++;
         });
-        function _row(label, cls, color, n) {
-          var swatch = cls
+        function _typeSwatch(cls, color) {
+          return cls
             ? '<span class="qc-feat-symbol ' + cls + '" style="display:inline-block;width:14px;height:14px;line-height:14px;font-size:7px;vertical-align:middle;margin-right:6px;"></span>'
             : '<span class="swatch" style="background:' + color + ';border:2px solid #1e40af;"></span>';
-          return '<div>' + swatch + label + ' (' + n + ')</div>';
         }
-        if (counts.OT)    parts.push(_row('OT-',    'is-OT', null,      counts.OT));
-        if (counts.GW)    parts.push(_row('GW-',    'is-GW', null,      counts.GW));
-        if (counts.FP)    parts.push(_row('FP-',    'is-FP', null,      counts.FP));
-        if (counts.other) parts.push(_row('Other',  null,    '#3b82f6', counts.other));
+        if (counts.OT)    parts.push(_row('OT',    _typeSwatch('is-OT', null),     'OT-',   counts.OT));
+        if (counts.GW)    parts.push(_row('GW',    _typeSwatch('is-GW', null),     'GW-',   counts.GW));
+        if (counts.FP)    parts.push(_row('FP',    _typeSwatch('is-FP', null),     'FP-',   counts.FP));
+        if (counts.other) parts.push(_row('other', _typeSwatch(null,    '#3b82f6'), 'Other', counts.other));
       }
       d.innerHTML = parts.join('');
+      // Wire the toggles. onchange updates state + reapplies filters
+      // + adds the .off dim class for the visual dimmed-row feedback.
+      d.querySelectorAll('.legend-toggle').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          var key = cb.getAttribute('data-type');
+          _typeVisibility[key] = cb.checked;
+          var row = cb.closest('.legend-row');
+          if (row) row.classList.toggle('off', !cb.checked);
+          _applyLegendFilters();
+        });
+      });
       return d;
     },
   });
   legendControl = new Ctrl().addTo(map);
+  // Reapply filters after a rebuild so newly-drawn markers respect
+  // whatever the user had toggled off before the rebuild fired.
+  _applyLegendFilters();
 }
 // Rebuild legend when the photo layer finishes (called from status loop).
 var _origSetStatus = setStatus;
