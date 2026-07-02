@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Culvert Assessment Report — Print</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:   #111;
+  --ink-2: #333;
+  --ink-3: #555;
+  --rule:  #d1d5db;
+  --paper: #fff;
+  --paper-2:#f4f1ea;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font: 400 12px/1.4 'IBM Plex Sans', system-ui, sans-serif;
+  color: var(--ink);
+  background: #f3f4f6;
+}
+#status {
+  position: fixed; top: 12px; right: 12px;
+  background: #111; color: #fff;
+  padding: 8px 14px; border-radius: 4px;
+  font: 600 12px 'IBM Plex Mono', monospace;
+  z-index: 9999;
+  max-width: 440px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+#cards { display: flex; flex-direction: column; gap: 20px; padding: 20px 0; align-items: center; }
+
+.cv-card {
+  width: 8.5in;
+  min-height: 10.5in;
+  background: #fff;
+  border: 1px solid var(--rule);
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  padding: 0.5in 0.5in 0.6in;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+  display: flex; flex-direction: column;
+}
+
+.cv-hdr {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+}
+.cv-title {
+  font: 700 20px 'IBM Plex Mono', monospace;
+  letter-spacing: 1px;
+  color: var(--ink);
+  margin: 0;
+}
+.cv-sub {
+  margin-top: 3px;
+  font: 400 15px 'IBM Plex Mono', monospace;
+  color: var(--ink-2);
+}
+.cv-meta {
+  margin-top: 3px;
+  font: 400 11px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .3px;
+}
+.cv-logos { display: flex; gap: 8px; align-items: flex-end; }
+.cv-logos img { height: 44px; width: auto; display: block; }
+
+.cv-idrow {
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.cv-idlbl {
+  font: 700 12px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .35px;
+}
+.cv-idval { font: 700 12px 'IBM Plex Sans'; }
+
+.cv-overall {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.cv-overall .cv-idlbl { margin-right: 6px; }
+
+.cv-locrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 0 10px;
+  font: 400 13px 'IBM Plex Sans';
+}
+.cv-locrow > div { display: flex; flex-direction: column; }
+.cv-locrow .cv-loclbl {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .35px;
+  text-transform: uppercase;
+}
+.cv-locrow .cv-locval { font: 400 13px 'IBM Plex Sans'; }
+
+.cv-section-hdr {
+  background: #f9fafb;
+  border: 1px solid var(--rule);
+  border-bottom: none;
+  padding: 4px 10px;
+  font: 700 11px 'IBM Plex Mono', monospace;
+  letter-spacing: .5px;
+  color: var(--ink-3);
+}
+.cv-props, .cv-conds {
+  border: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  font: 400 12px 'IBM Plex Sans';
+}
+.cv-props-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+.cv-props-grid .cv-lbl {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .35px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cv-props-grid .cv-val { color: var(--ink); font: 400 12px 'IBM Plex Sans'; }
+.cv-props-notes {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--rule);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+.cv-props-notes .cv-lbl {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .35px;
+  text-transform: uppercase;
+}
+.cv-props-notes .cv-val { font: 400 12px 'IBM Plex Sans'; }
+
+.cv-conds table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 400 12px 'IBM Plex Sans';
+}
+.cv-conds th {
+  text-align: left;
+  padding: 4px 10px 6px 0;
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--rule);
+  text-transform: uppercase;
+}
+.cv-conds td {
+  padding: 4px 10px 4px 0;
+  vertical-align: top;
+}
+.cv-conds col.c-lbl { width: 30%; }
+.cv-conds col.c-rat { width: 18%; }
+.cv-conds col.c-not { width: 52%; }
+.cv-conds .cv-lbl {
+  font: 700 11px 'IBM Plex Mono', monospace;
+  color: var(--ink-3);
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.cv-notes-cell { font: 400 12px 'IBM Plex Sans'; color: var(--ink); }
+.cv-notes-cell:empty::before { content: '—'; color: #c7c7c7; }
+
+.cv-photos-hdr {
+  margin: 6px 0 8px;
+  font: 700 12px 'IBM Plex Mono', monospace;
+  letter-spacing: .4px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 4px;
+}
+.cv-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.cv-photo {
+  border: 1px solid var(--rule);
+  background: #000;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  display: block;
+}
+.cv-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  display: block;
+}
+
+.cv-footer {
+  position: absolute;
+  left: 0.5in; right: 0.5in; bottom: 0.3in;
+  padding-top: 6px;
+  border-top: 1px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font: 700 10px 'IBM Plex Mono', monospace;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: #fff;
+}
+.cv-footer-mid {
+  text-align: center;
+  letter-spacing: .3px;
+  flex: 1;
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cv-footer-right { text-align: right; }
+
+@media print {
+  html, body { background: #fff; }
+  #status { display: none; }
+  #cards { padding: 0; gap: 0; }
+  .cv-card {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    width: 100%;
+    min-height: auto;
+    padding: 0.5in 0.5in 0.6in;
+  }
+  @page { size: letter portrait; margin: 0; }
+}
+
+/* Condition color palette — matches the main app's _CV_COND_COLOR. */
+.cond-1 { color: #15803d; font-weight: 700; }   /* Excellent */
+.cond-2 { color: #22c55e; font-weight: 700; }   /* Good */
+.cond-3 { color: #ca8a04; font-weight: 700; }   /* Fair */
+.cond-4 { color: #b91c1c; font-weight: 700; }   /* Poor */
+.cond-5 { color: #ef4444; font-weight: 700; }   /* Failed */
+.cond-x { color: #6b7280; }                     /* N/A / blank */
+</style>
+</head>
+<body>
+<div id="status">Loading…</div>
+<div id="cards"></div>
+
+<script>
+'use strict';
+
+// ── Config ───────────────────────────────────────────────────────
+var SECTIONS_OF_INTEREST = ['A', 'G', 'H', 'I'];
+// Rendering happens in batches so decode work stays bounded. After
+// the last batch, auto-print fires (query ?auto=0 disables it and
+// leaves a ready-banner instead).
+var BATCH_SIZE = 4;
+var AUTO_PRINT = /(?:^|[?&])auto=0(?:$|&)/.test(location.search) === false;
+
+// SF_KML_070126 pins carry these attrs; everything else on the pin
+// (conditions, notes) flows through untouched from the working copy.
+var SPELL_COND = { 1: 'Excellent', 2: 'Good', 3: 'Fair', 4: 'Poor', 5: 'Failed' };
+function condLetter(v) {
+  if (v == null || v === '') return null;
+  var m = String(v).trim().match(/^([1-5])/);
+  return m ? +m[1] : null;
+}
+function condColor(v) {
+  var n = condLetter(v);
+  if (!n) return '<span class="cond-x">—</span>';
+  return '<span class="cond-' + n + '">' + SPELL_COND[n] + '</span>';
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c];
+  });
+}
+function fmt1(v) {
+  if (v == null || v === '') return '';
+  var n = +v; return isFinite(n) ? n.toFixed(1) : '';
+}
+function fmtSlope(v) {
+  if (v == null || v === '') return '';
+  var n = Math.round(+v); return isFinite(n) ? String(n) : '';
+}
+function dashOr(v) { return (v == null || v === '') ? '—' : esc(String(v)); }
+
+// Effective condition — inlet/barrel/outlet default to Fair when
+// blank; end-structure ratings only default when a structure is
+// actually present. Mirrors the app's _cvEffectiveCond.
+function hasEndStructure(pin, side) {
+  var v = (pin.attrs || {})[side === 'in' ? 'in_type' : 'out_type'];
+  if (v == null) return false;
+  var s = String(v).trim().toLowerCase();
+  return !!s && s !== 'none' && s !== 'n/a' && s !== '—' && s !== '-';
+}
+function effectiveCond(pin, field) {
+  var a = (pin && pin.attrs) || {};
+  var v = a[field];
+  if (v != null && String(v).trim() !== '') return v;
+  if (field === 'inlet_condition' || field === 'barrel_condition' || field === 'outlet_condition') return '3 – Fair';
+  if (field === 'hw_upstream_cond')   return hasEndStructure(pin, 'in')  ? '3 – Fair' : '';
+  if (field === 'hw_downstream_cond') return hasEndStructure(pin, 'out') ? '3 – Fair' : '';
+  return '';
+}
+function worstCond(codes) {
+  var worst = null, worstN = -1;
+  codes.forEach(function (c) {
+    var n = condLetter(c);
+    if (n != null && n > worstN) { worstN = n; worst = c; }
+  });
+  return worst;
+}
+
+// Description one-liner: "78' || 18\" Box Culvert with Wingwalls (right), Headwall (right)"
+function sideOfPoint(pt, alignment) {
+  if (!Array.isArray(alignment) || alignment.length < 2) return '';
+  var lat0 = pt.lat;
+  var coslat = Math.cos(lat0 * Math.PI / 180);
+  var FT = 364000;
+  var px = pt.lng * coslat * FT, py = pt.lat * FT;
+  var bestD = Infinity, bestSide = '';
+  for (var i = 0; i < alignment.length - 1; i++) {
+    var a = alignment[i], b = alignment[i + 1];
+    // Alignment coords in bundle are [lng, lat]; convert accordingly.
+    var aLng = +a[0], aLat = +a[1];
+    var bLng = +b[0], bLat = +b[1];
+    if (!isFinite(aLng) || !isFinite(bLng)) continue;
+    var ax = aLng * coslat * FT, ay = aLat * FT;
+    var bx = bLng * coslat * FT, by = bLat * FT;
+    var dx = bx - ax, dy = by - ay;
+    var len2 = dx * dx + dy * dy;
+    if (len2 === 0) continue;
+    var t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+    var projx = ax + t * dx, projy = ay + t * dy;
+    var ex = px - projx, ey = py - projy;
+    var d = ex * ex + ey * ey;
+    if (d < bestD) {
+      bestD = d;
+      var cross = dx * (py - ay) - dy * (px - ax);
+      bestSide = cross > 0 ? 'left' : cross < 0 ? 'right' : '';
+    }
+  }
+  return bestSide;
+}
+function buildDescription(pin, alignment) {
+  var a = pin.attrs || {};
+  var coords = (pin.geometry && pin.geometry.coordinates) || [];
+  var inSide = '', outSide = '';
+  if (Array.isArray(coords) && coords.length >= 2) {
+    var p0 = coords[0], pN = coords[coords.length - 1];
+    inSide  = sideOfPoint({ lng: +p0[0], lat: +p0[1] }, alignment);
+    outSide = sideOfPoint({ lng: +pN[0], lat: +pN[1] }, alignment);
+  }
+  var head = [];
+  if (a.length_ft) head.push(a.length_ft + "'");
+  if (a.size_in)   head.push(a.size_in   + '"');
+  var _isBoxMat = a.material && /box/i.test(a.material);
+  var pipeBit = a.material ? (_isBoxMat ? a.material : (a.material + ' pipe')) : 'pipe';
+  var headStr = head.length ? (head.join(' || ') + ' ' + pipeBit) : pipeBit;
+  var tail = [];
+  if (a.in_type) tail.push(a.in_type + (inSide ? ' (' + inSide + ')' : ''));
+  if (a.out_type) tail.push(a.out_type + (outSide ? ' (' + outSide + ')' : ''));
+  return headStr + (tail.length ? (' with ' + tail.join(', ')) : '');
+}
+
+// ── IDB ──────────────────────────────────────────────────────────
+function openMainDB() {
+  return new Promise(function (res, rej) {
+    var req = indexedDB.open('RoadWalkDB', 2);
+    req.onsuccess = function () { res(req.result); };
+    req.onerror   = function () { rej(req.error); };
+    req.onblocked = function () { rej(new Error('IDB blocked')); };
+  });
+}
+function openGeophotosDB() {
+  return new Promise(function (res, rej) {
+    var req = indexedDB.open('RoadWalkGeoPhotos_v1');
+    req.onsuccess = function () { res(req.result); };
+    req.onerror   = function () { rej(req.error); };
+    req.onblocked = function () { rej(new Error('IDB blocked')); };
+  });
+}
+function idbGet(db, storeName, key) {
+  return new Promise(function (res) {
+    try {
+      var tx = db.transaction(storeName, 'readonly');
+      var rq = tx.objectStore(storeName).get(key);
+      rq.onsuccess = function () { res(rq.result); };
+      rq.onerror   = function () { res(null); };
+    } catch (e) { res(null); }
+  });
+}
+function idbCursor(db, storeName, onRecord) {
+  return new Promise(function (res) {
+    try {
+      var tx = db.transaction(storeName, 'readonly');
+      var rq = tx.objectStore(storeName).openCursor();
+      rq.onsuccess = function (e) {
+        var cur = e.target.result;
+        if (!cur) return res();
+        onRecord(cur.value);
+        cur.continue();
+      };
+      rq.onerror = function () { res(); };
+    } catch (e) { res(); }
+  });
+}
+
+// ── Load data ────────────────────────────────────────────────────
+var $status = document.getElementById('status');
+function status(msg) { $status.textContent = msg; }
+
+async function loadEverything() {
+  status('Fetching bundle…');
+  var bundle;
+  try {
+    bundle = await fetch('data/prewalk-bundle.json', { cache: 'no-cache' }).then(function (r) { return r.json(); });
+  } catch (e) {
+    status('ERROR: bundle fetch failed — ' + e.message);
+    throw e;
+  }
+  var projectId = bundle.id || 'proj';
+  var safetyKey = 'rw_sections_' + projectId;
+
+  status('Opening IDB (working copy)…');
+  var mainDb = null;
+  try { mainDb = await openMainDB(); } catch (_) { /* fall back to bundle */ }
+
+  var sections = null;
+  if (mainDb) {
+    status('Reading working copy from IDB…');
+    try {
+      var saved = await idbGet(mainDb, 'safety', safetyKey);
+      if (saved && Array.isArray(saved.sections) && saved.sections.length) {
+        sections = saved.sections;
+      }
+    } catch (_) {}
+  }
+  if (!sections) sections = bundle.sections || [];
+
+  // Overlay section-level metadata from bundle (mp_start, name, project_code, alignment).
+  var bundleSecById = {};
+  (bundle.sections || []).forEach(function (s) { if (s && s.id) bundleSecById[s.id] = s; });
+  sections = sections.map(function (s) {
+    var b = bundleSecById[s && s.id] || {};
+    // Alignment in the safety copy is [[lat, lng], …] (Leaflet convention).
+    // Bundle alignment is [[lng, lat], …] (GeoJSON). Prefer bundle since
+    // sideOfPoint expects lng-first.
+    return Object.assign({}, s, {
+      alignment:   b.alignment || s.alignment || [],
+      mp_start:    (typeof s.mp_start === 'number') ? s.mp_start : b.mp_start,
+      mp_end:      (typeof s.mp_end   === 'number') ? s.mp_end   : b.mp_end,
+      name:        s.name        || b.name,
+      project_code:s.project_code|| b.project_code,
+    });
+  });
+
+  // Merge IDB inspection overlays (attrs.notes, conditions, etc) so
+  // any hand-edits made in the main app come through.
+  var idbCache = {};
+  if (mainDb) {
+    status('Reading IDB inspections…');
+    await idbCursor(mainDb, 'inspections', function (rec) {
+      if (rec && rec.ulid) idbCache[rec.ulid] = rec;
+    });
+  }
+
+  // Filter to A/G/H/I culverts and merge overlays.
+  var wanted = {};
+  SECTIONS_OF_INTEREST.forEach(function (id) { wanted[id] = true; });
+  var culvertRows = [];
+  sections.forEach(function (sec) {
+    if (!sec || !wanted[sec.id]) return;
+    (sec.pins || []).forEach(function (pin) {
+      if (!pin || pin.kind !== 'culvert') return;
+      var idb = pin.ulid ? (idbCache[pin.ulid] || {}) : {};
+      var merged = Object.assign({}, pin);
+      merged.attrs = Object.assign({}, pin.attrs, idb.attrs || {});
+      // The main app's _mergedPin flag guard - if the bundle says
+      // photos are legacy-cleared, the merged attrs.photos wins as [].
+      if ((pin.attrs || {})._legacy_photos_cleared === true
+          || (merged.attrs || {})._legacy_photos_cleared === true) {
+        merged.attrs.photos = [];
+      }
+      culvertRows.push({ sec: sec, pin: merged });
+    });
+  });
+
+  // Sort by section then culvert numeric suffix (A-CV-001 < A-CV-002 < …).
+  function idSeq(id) {
+    var m = String(id || '').match(/(\d+)\s*$/);
+    return m ? parseInt(m[1], 10) : Number.POSITIVE_INFINITY;
+  }
+  culvertRows.sort(function (a, b) {
+    if (a.sec.id !== b.sec.id) return a.sec.id < b.sec.id ? -1 : 1;
+    return idSeq(a.pin.id) - idSeq(b.pin.id);
+  });
+
+  status(culvertRows.length + ' culvert(s) queued. Loading photos…');
+
+  // Load ONLY xlsx_ geophotos linked to a culvert in scope. Keeps
+  // the memory footprint bounded even when the geophotos store has
+  // 4500+ records total.
+  var photosByPin = {};   // "sec::pinId" -> [{id, dataUrl, description, slot}]
+  var linkedPrefixes = {};
+  culvertRows.forEach(function (r) {
+    linkedPrefixes[r.sec.id + '::' + r.pin.id] = true;
+  });
+
+  var gpDb = null;
+  try { gpDb = await openGeophotosDB(); } catch (e) { /* photos will be empty */ }
+  var photoCount = 0;
+  if (gpDb) {
+    await idbCursor(gpDb, 'photos', function (rec) {
+      if (!rec || !rec.linked_pin_id || !rec.dataUrl) return;
+      if (!linkedPrefixes[rec.linked_pin_id]) return;
+      if (!(rec.id && String(rec.id).indexOf('xlsx_') === 0)) return;   // Only imported
+      (photosByPin[rec.linked_pin_id] = photosByPin[rec.linked_pin_id] || []).push({
+        id:          rec.id,
+        dataUrl:     rec.dataUrl,
+        description: rec.description || '',
+        slot:        _slotOrder(rec.id),
+      });
+      photoCount++;
+    });
+  }
+  // Sort each pin's photos by slot (inlet 1, inlet 2, outlet 1, outlet 2).
+  Object.keys(photosByPin).forEach(function (k) {
+    photosByPin[k].sort(function (a, b) { return a.slot - b.slot; });
+  });
+
+  status(culvertRows.length + ' culvert(s) · ' + photoCount + ' imported photo(s). Rendering…');
+  return { culvertRows: culvertRows, photosByPin: photosByPin, bundle: bundle };
+}
+
+// Slot ordering derived from the manifest's stable id scheme
+// (xlsx_A_A-CV-001_inlet_1, _inlet_2, _outlet_1, _outlet_2).
+function _slotOrder(id) {
+  var s = String(id || '');
+  var m = s.match(/_(inlet|outlet)_(\d+)$/);
+  if (!m) return 999;
+  var base = m[1] === 'inlet' ? 0 : 100;
+  return base + parseInt(m[2], 10);
+}
+
+// ── Render ──────────────────────────────────────────────────────
+function fmtMp(v) { return (typeof v === 'number' && isFinite(v)) ? v.toFixed(2) : ''; }
+
+function renderCard(row, photos, seq, total) {
+  var sec = row.sec, pin = row.pin;
+  var a = pin.attrs || {};
+  var coords = (pin.geometry && pin.geometry.coordinates) || [];
+  var midLat = '', midLng = '';
+  if (Array.isArray(coords) && coords.length) {
+    var lats = 0, lngs = 0, n = 0;
+    coords.forEach(function (c) {
+      if (Array.isArray(c) && c.length >= 2 && isFinite(+c[0]) && isFinite(+c[1])) {
+        lngs += +c[0]; lats += +c[1]; n++;
+      }
+    });
+    if (n) { midLat = (lats / n).toFixed(6); midLng = (lngs / n).toFixed(6); }
+  }
+  var mp = '';
+  if (typeof sec.mp_start === 'number' && typeof pin.sta_ft === 'number') {
+    mp = (sec.mp_start + pin.sta_ft / 5280).toFixed(3);
+  }
+  var pinIdFull;
+  if (pin.id && sec.id && String(pin.id).indexOf(sec.id + '-') === 0) pinIdFull = pin.id;
+  else pinIdFull = (sec.id ? sec.id + '-' : '') + (pin.id || '');
+  var descStr = buildDescription(pin, sec.alignment) || (a.name || '(culvert)');
+
+  var ovCond = worstCond([
+    effectiveCond(pin, 'inlet_condition'),
+    effectiveCond(pin, 'barrel_condition'),
+    effectiveCond(pin, 'outlet_condition'),
+    effectiveCond(pin, 'hw_upstream_cond'),
+    effectiveCond(pin, 'hw_downstream_cond'),
+  ]);
+
+  var metaLine = sec.project_code
+    ? (esc(sec.project_code) + ' · MP ' + fmtMp(sec.mp_start) + ' – ' + fmtMp(sec.mp_end))
+    : '';
+
+  var photoGrid = photos.length
+    ? '<div class="cv-photos-grid">' + photos.map(function (p) {
+        return '<figure class="cv-photo"><img src="' + p.dataUrl + '" alt="" decoding="async"></figure>';
+      }).join('') + '</div>'
+    : '<div style="color:#999;font-style:italic;">No imported photos linked yet.</div>';
+
+  var html = ''
+    + '<article class="cv-card">'
+    +   '<header class="cv-hdr">'
+    +     '<div>'
+    +       '<div class="cv-title">Culvert Assessment Report</div>'
+    +       '<div class="cv-sub">' + esc(sec.id) + ' · ' + esc(sec.name || '') + '</div>'
+    +       (metaLine ? '<div class="cv-meta">' + metaLine + '</div>' : '')
+    +     '</div>'
+    +     '<div class="cv-logos">'
+    +       '<img src="data/logos/dot-seal.png" alt="USDOT">'
+    +       '<img src="data/logos/nps-arrowhead.png" alt="NPS">'
+    +     '</div>'
+    +   '</header>'
+    +   '<section>'
+    +     '<div class="cv-idrow">'
+    +       '<div><span class="cv-idlbl">Pin ID:</span> <span class="cv-idval">' + esc(pinIdFull) + '</span></div>'
+    +       '<div><span class="cv-idlbl">Description:</span> <span class="cv-idval">' + esc(descStr) + '</span></div>'
+    +     '</div>'
+    +     '<div class="cv-overall"><span class="cv-idlbl">Overall Condition:</span> ' + condColor(ovCond) + '</div>'
+    +     '<div class="cv-locrow">'
+    +       '<div><span class="cv-loclbl">MP</span><span class="cv-locval">' + esc(mp || '—') + '</span></div>'
+    +       '<div><span class="cv-loclbl">STA</span><span class="cv-locval">' + esc(pin.sta || '—') + '</span></div>'
+    +       '<div><span class="cv-loclbl">Lat/Lng</span><span class="cv-locval">' + esc(midLat || '—') + ', ' + esc(midLng || '—') + '</span></div>'
+    +     '</div>'
+    +   '</section>'
+    +   '<div class="cv-section-hdr">Culvert Properties</div>'
+    +   '<section class="cv-props">'
+    +     '<div class="cv-props-grid">'
+    +       '<span class="cv-lbl">Material</span><span class="cv-val">' + esc(a.material || '—') + '</span>'
+    +       '<span class="cv-lbl">Size (in)</span><span class="cv-val">' + esc(a.size_in || '—') + '</span>'
+    +       '<span class="cv-lbl">Length (ft)</span><span class="cv-val">' + esc(a.length_ft || '—') + '</span>'
+    +       '<span class="cv-lbl">Num Barrels</span><span class="cv-val">' + esc(a.num_barrels || '—') + '</span>'
+    +       '<span class="cv-lbl">Bearing (in→out)</span><span class="cv-val">' + esc(fmt1(a.bearing_in_to_out_deg) ? fmt1(a.bearing_in_to_out_deg) + '°' : '—') + '</span>'
+    +       '<span class="cv-lbl">Crossing Angle</span><span class="cv-val">' + esc(fmt1(a.crossing_angle_deg) ? fmt1(a.crossing_angle_deg) + '°' : '—') + '</span>'
+    +       '<span class="cv-lbl">Skew from CL</span><span class="cv-val">' + esc(fmt1(a.skew_from_perp_deg) ? fmt1(a.skew_from_perp_deg) + '°' : '—') + '</span>'
+    +       '<span class="cv-lbl">Slope (%)</span><span class="cv-val">' + esc(fmtSlope(a.slope_pipe_pct) || '—') + '</span>'
+    +       '<span class="cv-lbl">Inlet Type</span><span class="cv-val">' + esc(a.in_type || '—') + '</span>'
+    +       '<span class="cv-lbl">Inlet Side</span><span class="cv-val">' + esc(a.in_side || '—') + '</span>'
+    +       '<span class="cv-lbl">Outlet Type</span><span class="cv-val">' + esc(a.out_type || '—') + '</span>'
+    +       '<span class="cv-lbl">Outlet Side</span><span class="cv-val">' + esc(a.out_side || '—') + '</span>'
+    +       '<span class="cv-lbl">Inlet Elev</span><span class="cv-val">' + esc(fmt1(a.inlet_elev_ditch_ft) || '—') + '</span>'
+    +       '<span class="cv-lbl">Outlet Elev</span><span class="cv-val">' + esc(fmt1(a.outlet_elev_ditch_ft) || '—') + '</span>'
+    +       '<span class="cv-lbl">Drop (ft)</span><span class="cv-val">' + esc(fmt1(a.drop_ditch_ft) || '—') + '</span>'
+    +       '<span class="cv-lbl"></span><span class="cv-val"></span>'
+    +     '</div>'
+    +     '<div class="cv-props-notes">'
+    +       '<span class="cv-lbl">Notes</span><span class="cv-val">' + esc(a.notes || '—') + '</span>'
+    +     '</div>'
+    +   '</section>'
+    +   '<div class="cv-section-hdr">Culvert Conditions</div>'
+    +   '<section class="cv-conds">'
+    +     '<table>'
+    +       '<colgroup><col class="c-lbl"><col class="c-rat"><col class="c-not"></colgroup>'
+    +       '<thead><tr><th>Component</th><th>Rating</th><th>Comments / Notes</th></tr></thead>'
+    +       '<tbody>'
+    +         condRow('Inlet',            effectiveCond(pin, 'inlet_condition'),    a.inlet_condition_notes)
+    +         + condRow('Barrel',           effectiveCond(pin, 'barrel_condition'),   a.barrel_condition_notes)
+    +         + condRow('Outlet',           effectiveCond(pin, 'outlet_condition'),   a.outlet_condition_notes)
+    +         + condRow('Inlet Structure',  effectiveCond(pin, 'hw_upstream_cond'),   a.hw_upstream_cond_notes)
+    +         + condRow('Outlet Structure', effectiveCond(pin, 'hw_downstream_cond'), a.hw_downstream_cond_notes)
+    +       '</tbody>'
+    +     '</table>'
+    +   '</section>'
+    +   '<div class="cv-photos-hdr">Photos (' + photos.length + ')</div>'
+    +   photoGrid
+    +   '<div class="cv-footer">'
+    +     '<div>AECOM</div>'
+    +     '<div class="cv-footer-mid">' + esc(metaLine) + '</div>'
+    +     '<div class="cv-footer-right">' + esc(pinIdFull) + ' — ' + seq + ' of ' + total + '</div>'
+    +   '</div>'
+    + '</article>';
+  return html;
+}
+function condRow(label, condVal, notesVal) {
+  return '<tr>'
+    + '<td><span class="cv-lbl">' + esc(label) + '</span></td>'
+    + '<td>' + condColor(condVal) + '</td>'
+    + '<td class="cv-notes-cell">' + esc(notesVal || '') + '</td>'
+    + '</tr>';
+}
+
+// ── Decode + auto-print ────────────────────────────────────────
+function awaitImgDecode(rootEl) {
+  var promises = [];
+  rootEl.querySelectorAll('img').forEach(function (img) {
+    if (!img.src) return;
+    if (img.complete && img.naturalWidth > 0) return;
+    if (typeof img.decode === 'function') {
+      promises.push(img.decode().catch(function () {}));
+    } else {
+      promises.push(new Promise(function (res) {
+        if (img.complete) return res();
+        img.addEventListener('load',  res, { once: true });
+        img.addEventListener('error', res, { once: true });
+      }));
+    }
+  });
+  return Promise.all(promises);
+}
+
+async function render(data) {
+  var $cards = document.getElementById('cards');
+  var rows = data.culvertRows, photos = data.photosByPin;
+  var total = rows.length;
+  var batchStart = 0;
+  var buf = document.createDocumentFragment();
+  while (batchStart < total) {
+    var batchEnd = Math.min(batchStart + BATCH_SIZE, total);
+    var batchHtml = '';
+    for (var i = batchStart; i < batchEnd; i++) {
+      var r = rows[i];
+      var linked = photos[r.sec.id + '::' + r.pin.id] || [];
+      batchHtml += renderCard(r, linked, i + 1, total);
+    }
+    var tmp = document.createElement('div');
+    tmp.innerHTML = batchHtml;
+    while (tmp.firstChild) {
+      var el = tmp.firstChild;
+      tmp.removeChild(el);
+      $cards.appendChild(el);
+    }
+    // Await decode of the batch before continuing so we don't queue
+    // 240+ dataUrl decodes in one shot (which is what tripped the
+    // browser's lazy-load intervention on the main app's print path).
+    status('Rendered ' + batchEnd + ' / ' + total + ' — decoding photos…');
+    await awaitImgDecode($cards);
+    batchStart = batchEnd;
+  }
+  status('Ready. ' + total + ' culvert(s) rendered.');
+  if (AUTO_PRINT) {
+    // Give layout one more frame to settle before opening the dialog.
+    await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
+    status('Opening print dialog…');
+    window.print();
+    status('Ready. ' + total + ' culvert(s) rendered. Print/Save-as-PDF from the browser dialog.');
+  }
+}
+
+(async function main() {
+  try {
+    var data = await loadEverything();
+    await render(data);
+  } catch (err) {
+    console.error(err);
+    status('ERROR: ' + (err && err.message ? err.message : err));
+  }
+})();
+</script>
+</body>
+</html>
