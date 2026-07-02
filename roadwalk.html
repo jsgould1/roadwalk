@@ -39147,11 +39147,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       // BEFORE the print dialog opens. The IntersectionObserver on
       // img[data-photo-id] elements only fires when the img enters the
       // viewport, so continuation cards below the fold render as empty
-      // photo frames in Print / Save-as-PDF (which is exactly what the
-      // user saw). forceLoadAll walks the whole document, looks up
-      // each id's dataUrl from PHOTOS synchronously, and sets img.src.
-      // Also runs the folder-picked blob-URL hydration (data-cv-photo-id
-      // → IDB Blob → object URL) so that path prints too.
+      // photo frames in Print / Save-as-PDF. forceLoadAll walks the
+      // whole document, looks up each id's dataUrl from PHOTOS
+      // synchronously, and sets img.src. Also runs the folder-picked
+      // blob-URL hydration (data-cv-photo-id → IDB Blob → object URL)
+      // so that path prints too.
       try {
         if (window._RW && window._RW.lazyPhotos
             && typeof window._RW.lazyPhotos.forceLoadAll === 'function') {
@@ -39168,11 +39168,42 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
         + 'padding:10px 16px;font:600 12px monospace;z-index:99999;'
         + 'border:1px solid #fff;border-radius:4px;';
       document.body.appendChild(tip);
-      setTimeout(function () {
+
+      // Setting img.src to a data-URL kicks off an ASYNC decode. Print
+      // was firing while the majority of photos were still mid-decode
+      // - only the first culvert's four thumbs made it through the
+      // ~2.5 s tile-fetch delay before window.print() snapshot froze
+      // the frame; the remaining 60-ish culverts printed empty. Fix -
+      // await img.decode() on every .sr-photo img in the document. In
+      // parallel with the map-tile delay so the total wait is
+      // max(delayMs, slowest photo decode), not their sum. With
+      // 240+ 1200-px watermarked JPEGs at ~300 KB base64 each,
+      // Chromium's decoder finishes the batch well under 6 s on
+      // typical hardware.
+      var decodePromises = [];
+      var imgs = document.querySelectorAll('.sr-photo img');
+      imgs.forEach(function (img) {
+        if (img.complete && img.naturalWidth > 0) return;
+        if (typeof img.decode === 'function') {
+          decodePromises.push(img.decode().catch(function () {}));
+          return;
+        }
+        // Legacy browser fallback - wait for the load event.
+        decodePromises.push(new Promise(function (res) {
+          if (img.complete) return res();
+          img.addEventListener('load',  res, { once: true });
+          img.addEventListener('error', res, { once: true });
+        }));
+      });
+
+      // Compose the two waits - map-tile fetch AND photo decode - so
+      // the shorter one doesn't gate on the longer.
+      var mapWait = new Promise(function (res) { setTimeout(res, delayMs); });
+      Promise.all([mapWait, Promise.all(decodePromises)]).then(function () {
         if (tip.parentNode) tip.parentNode.removeChild(tip);
         try { window.print(); } catch (_) {}
         if (typeof afterPrint === 'function') setTimeout(afterPrint, 0);
-      }, delayMs);
+      });
     }
 
     // 🖨 Print — print the current dropdown's section (or all sections
