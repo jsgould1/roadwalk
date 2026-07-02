@@ -5046,28 +5046,17 @@ body.rw-sld-photo-dragging .strip-pin {
 .sr-card[data-cv-idx] .sr-photo-grid {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  /* Grid children default to align-items: stretch, which was
-     stretching the landscape cell in an inlet/outlet pair down to
-     match the portrait's height and filling the extra vertical
-     space with the .sr-photo background (black). Setting align-items
-     to start lets each cell sit at its natural height; the leftover
-     row height stays as the card's white background instead of a
-     giant black slab under the shorter photo. */
-  align-items: start;
 }
-/* Let each culvert thumb render at its intrinsic aspect ratio (4:3
-   landscape OR 3:4 portrait) instead of hard-cropping to the default
-   4:3 with object-fit: cover. The parent .sr-photo cell's black
-   background fills the extra vertical space when a row's tallest
-   photo is portrait but its neighbour is landscape - so the grid
-   still reads as a clean rectangle overall, but every image renders
-   full-frame with its bottom-band watermark intact. aspect-ratio
-   defaults from the .sr-photo img rule above are overridden to auto;
-   height: auto stops the fixed-ratio cell from stretching the img. */
+/* Culvert thumbs share a uniform 4:3 cell (inherited from the .sr-photo
+   img rule above) so a 2-col × 2-row grid packs all four XLSX manifest
+   photos onto a single continuation page. Portrait phone captures get
+   top-cropped instead of top+bottom - object-position: center bottom
+   anchors the visible portion to the bottom of the frame, so the
+   burnt-in caption band survives while the sky/foliage at the top
+   goes off-screen. Landscape shots wider than 4:3 lose left+right
+   equally (default horizontal centering). */
 .sr-card[data-cv-idx] .sr-photo img {
-  aspect-ratio: auto;
-  height: auto;
-  object-fit: contain;
+  object-position: center bottom;
 }
 /* Plan-view schematic: straightline barrel + end fittings + callout.
    Sits below the identity block, fills the remaining left-column width.
@@ -37518,11 +37507,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     // the identity/schematic/properties/conditions sheet reads clean.
     // PHOTOS_PAGE_1 = 0 → main card shows the section header + action
     // buttons but no photo grid; every photo lands on a continuation
-    // card. PHOTOS_PAGE_N = 6 → two-across × three rows per sheet at
-    // the enlarged .sr-photo-grid override (see the CSS rule with the
-    // repeat(2, 1fr) grid-template-columns above).
+    // card. PHOTOS_PAGE_N = 4 → 2-col × 2-row grid on each sheet fits
+    // the standard 4 XLSX manifest photos (Inlet 1/2, Outlet 1/2) on
+    // ONE continuation page thanks to the uniform 4:3 clip applied to
+    // every thumb (portrait phone captures crop from the top, keeping
+    // the bottom-band watermark visible). Culverts with more than 4
+    // photos spill onto extra continuation cards, 4 photos per sheet.
     var PHOTOS_PAGE_1 = 0;
-    var PHOTOS_PAGE_N = 6;
+    var PHOTOS_PAGE_N = 4;
     // Returns the photos that should appear in the printed report
     // PLUS the count of report-hidden photos so the main card can
     // surface a Restore (N hidden) button. Walks BOTH the embedded
