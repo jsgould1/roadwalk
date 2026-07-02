@@ -327,20 +327,33 @@ def main() -> int:
             existing_by_sec_id[key] = pin
 
     # ── Join KML → XLSX by Num string ───────────────────────────
-    dup_nums: dict[str, int] = {}
+    # Group KML features by Num; when a Num has multiple Placemarks
+    # (currently: Num 5 has a 3-vertex leftover + a 2-vertex correction,
+    # Num 44 has two identical 2-vertex copies) keep the one with the
+    # FEWEST vertices, ties broken by KML file order.
+    by_num: dict[str, list[dict]] = {}
     for f in kml_features:
-        dup_nums[f["num"]] = dup_nums.get(f["num"], 0) + 1
-    dupes = {k: v for k, v in dup_nums.items() if v > 1}
+        by_num.setdefault(f["num"], []).append(f)
+    dupes = {k: [len(x["coords"]) for x in v] for k, v in by_num.items() if len(v) > 1}
     if dupes:
-        print(f"\n⚠ KML has duplicate Num values (kept first, dropped rest): {dupes}")
+        print(f"\n⚠ KML duplicate Num values — keeping the fewest-vertex Placemark:")
+        for k, vs in dupes.items():
+            print(f"     Num {k}: vertex counts {vs} → keeping the {min(vs)}-vertex line")
 
     consumed = set()
     matched: list[dict] = []                            # {kml, xlsx, sec_id, culvert_id}
     kml_only: list[str] = []
+    # Walk in file order but for each duplicate group take the min-vertex one.
+    preferred_by_num = {
+        k: min(v, key=lambda x: (len(x["coords"]),))
+        for k, v in by_num.items()
+    }
     for f in kml_features:
         num = f["num"]
         if num in consumed:
             continue                                    # duplicate — skip
+        if f is not preferred_by_num[num]:
+            continue                                    # not the preferred one
         consumed.add(num)
         xrow = xlsx.get(num)
         if not xrow:
