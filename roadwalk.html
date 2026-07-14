@@ -5534,6 +5534,13 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sldr-chip.on  { background: var(--paper-2); border-color: var(--ink-2); }
 .sldr-chip.off { opacity: 0.35; text-decoration: line-through; }
+/* Zero-count chip — the kind isn't drawn in the picked section yet,
+   but the user can still toggle it on (say, before doing a walk).
+   Slightly dimmed + italicized so it reads as "available, but empty"
+   at a glance. Overrides .off's line-through so the label stays
+   readable when the chip is off. */
+.sldr-chip.sldr-chip-empty { opacity: 0.55; font-style: italic; }
+.sldr-chip.sldr-chip-empty.off { text-decoration: none; }
 .sldr-chip-all {
   padding: 3px 8px; border: 1px solid var(--rule); background: #fff;
   color: var(--ink); font: 600 10px 'IBM Plex Mono', monospace;
@@ -14647,6 +14654,11 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     const h = Math.sin(dlat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dlon/2)**2;
     return 2 * _R_FT * Math.asin(Math.sqrt(h));
   }
+  // Expose so sibling <script> blocks (SLD report, etc) can use the
+  // same haversine implementation without duplicating it. Takes
+  // [lat, lng] pairs and returns feet.
+  window.havFt = havFt;
+
   // Project a cursor L.LatLng onto a polyline (array of [lat, lng]).
   // Returns [sta_ft_from_start, perpendicular_distance_ft, side] where
   // side is -1 (left of forward direction of travel), +1 (right) or 0
@@ -40455,24 +40467,48 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return p && p.kind && p.sta_ft != null && isFinite(+p.sta_ft);
     });
 
-    // ── Build / refresh chip row (one chip per kind present) ──────
+    // ── Build / refresh chip row ───────────────────────────────────
+    // Every catalog kind gets a chip, not just kinds present in the
+    // picked section — otherwise edge-drop / paved-edge-drop / pvmt-
+    // widening / edge-drop-area chips never appear until someone has
+    // already drawn one, which defeats the point of a "toggle
+    // features for print" preview. Present kinds default ON; absent
+    // kinds default OFF so the summary + strips don't fill with
+    // zero-count rows the user has to un-check every time.
     var kindCounts = {};
     pins.forEach(function (p) { kindCounts[p.kind] = (kindCounts[p.kind] || 0) + 1; });
-    var kinds = Object.keys(kindCounts).sort();
+
+    // Catalog kinds = every kind the map knows how to draw. Pulls
+    // FEATURE_CATALOG (user-drawn) + PIN_STYLE (pre-walk bundle
+    // kinds like culvert/sign/gate) and de-dupes.
+    var catalogSet = {};
+    (window.FEATURE_CATALOG || []).forEach(function (cat) {
+      (cat.items || []).forEach(function (it) { catalogSet[it.value] = true; });
+    });
+    Object.keys(window.PIN_STYLE || {}).forEach(function (k) { catalogSet[k] = true; });
+    Object.keys(kindCounts).forEach(function (k) { catalogSet[k] = true; });
+    // 'point' / 'line' / 'polygon' are FALLBACK style keys in
+    // PIN_STYLE, not real kinds — skip them so they don't turn into
+    // chips.
+    delete catalogSet.point; delete catalogSet.line; delete catalogSet.polygon;
+    var kinds = Object.keys(catalogSet).sort();
+
     _sldrEnabled = _sldrEnabled || {};
-    // Default: everything on the first time a section loads.
+    // Default: present kinds ON, absent kinds OFF.
     kinds.forEach(function (k) {
-      if (_sldrEnabled[k] == null) _sldrEnabled[k] = true;
+      if (_sldrEnabled[k] == null) _sldrEnabled[k] = (kindCounts[k] || 0) > 0;
     });
     if (chipsEl) {
       chipsEl.innerHTML = kinds.map(function (k) {
         var style = (window.PIN_STYLE || {})[k] || {};
         var color = style.color || '#888';
         var lbl = _sldrKindLabel(k);
+        var count = kindCounts[k] || 0;
         var on = _sldrEnabled[k] !== false;
-        return '<button type="button" class="sldr-chip ' + (on ? 'on' : 'off') + '" data-kind="' + _esc(k) + '">'
+        var extraCls = count === 0 ? ' sldr-chip-empty' : '';
+        return '<button type="button" class="sldr-chip ' + (on ? 'on' : 'off') + extraCls + '" data-kind="' + _esc(k) + '" title="' + _esc(k) + '">'
           +      '<span class="sldr-chip-sw" style="background:' + color + '"></span>'
-          +      _esc(lbl) + ' <span style="opacity:.6">(' + kindCounts[k] + ')</span>'
+          +      _esc(lbl) + ' <span style="opacity:.6">(' + count + ')</span>'
           +    '</button>';
       }).join('');
       if (!chipsEl._sldrWired) {
@@ -40488,9 +40524,12 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // ── Compute alignment length + pagination ─────────────────────
+    // havFt is defined in a sibling <script> block; access via
+    // window.havFt (exposed at its definition site).
+    var _havFt = window.havFt || function () { return 0; };
     var totalFt = 0;
     for (var _i = 0; _i < sec.alignment.length - 1; _i++) {
-      totalFt += havFt(sec.alignment[_i], sec.alignment[_i + 1]);
+      totalFt += _havFt(sec.alignment[_i], sec.alignment[_i + 1]);
     }
     var stripLen = +((lenSel && lenSel.value) || 500) || 500;
     var STRIPS_PER_PAGE = 3;
@@ -40554,7 +40593,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     for (var i = 0; i < coords.length - 1; i++) {
       var a = coords[i], b = coords[i + 1];
       if (!Array.isArray(a) || !Array.isArray(b)) continue;
-      total += havFt([+a[1], +a[0]], [+b[1], +b[0]]);
+      total += (window.havFt || function(){return 0;})([+a[1], +a[0]], [+b[1], +b[0]]);
     }
     return total;
   }
