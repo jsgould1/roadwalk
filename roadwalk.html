@@ -40632,6 +40632,51 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return t;
     };
 
+    // Async IDB scan — reads the persisted working copy directly from
+    // the safety store and reports whether pavement-QC pins exist in
+    // persistent storage but not in memory (which would flag a
+    // load-time filter bug we could then chase). Runs fire-and-forget;
+    // updates the diagnostic banner when it completes.
+    if (pickedSectionPavementCount === 0 && Object.keys(crossHits).length === 0
+        && window.RWIdb && typeof window.RWIdb.get === 'function'
+        && window.PROJECT && window.PROJECT.id) {
+      var _pidKey = 'rw_sections_' + (window.PROJECT.id || 'default');
+      window.RWIdb.get('safety', _pidKey).then(function (rec) {
+        if (!rec || !Array.isArray(rec.sections)) return;
+        var idbHits = {};
+        rec.sections.forEach(function (s) {
+          if (!s || !Array.isArray(s.pins)) return;
+          var hits = {};
+          s.pins.forEach(function (p) {
+            if (PAVEMENT_KINDS.indexOf(p && p.kind) >= 0) {
+              hits[p.kind] = (hits[p.kind] || 0) + 1;
+            }
+          });
+          if (Object.keys(hits).length) idbHits[s.id || '(no id)'] = hits;
+        });
+        var diag = document.getElementById('sldr-diag');
+        if (!diag) return;
+        if (Object.keys(idbHits).length) {
+          // These pins ARE in persistent storage but not in memory —
+          // means SECTIONS got clobbered between load + this render.
+          var msg = '‼ Pavement-QC features FOUND in persisted IDB storage but not in memory: ';
+          msg += Object.keys(idbHits).map(function (sid) {
+            var f = idbHits[sid];
+            return sid + ' (' + Object.keys(f).map(function (k) {
+              return _sldrKindLabel(k) + ':' + f[k];
+            }).join(', ') + ')';
+          }).join(' · ');
+          msg += ' — reload the page (Ctrl+Shift+R) to force a fresh load from IDB.';
+          diag.textContent = msg;
+          diag.style.background = '#fee2e2';
+          diag.style.color = '#7f1d1d';
+          diag.style.borderBottomColor = '#dc2626';
+        } else {
+          diag.textContent += ' Confirmed: IDB persisted storage also has 0 pavement-QC features — nothing to restore, they need to be drawn.';
+        }
+      }).catch(function () {});
+    }
+
     // ── Summary aggregation (page-1 table): count / length / % / area
     //    per kind. Line pins get length + %-of-route; polygon pins get
     //    area; point-inventory pins get count only. Only ENABLED kinds
