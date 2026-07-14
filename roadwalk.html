@@ -5586,6 +5586,55 @@ body.rw-sld-photo-dragging .strip-pin {
   width: 100%; height: 100%; display: block; overflow: visible;
 }
 
+/* Section-summary table — only rendered on .sldr-page-first (page 1).
+   Flex-slot lives between .sldr-page-hdr and .sldr-page-strips, so
+   the strips below auto-shrink to fill remaining space when the
+   summary block is present. */
+.sldr-summary {
+  border: 1px solid #ccc; background: #fafafa;
+  padding: 6px 10px; margin-bottom: 10px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #111;
+  flex-shrink: 0;
+}
+.sldr-summary-hdr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font: 700 11px sans-serif; color: #111; letter-spacing: .3px;
+  border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 4px;
+}
+.sldr-summary-tbl {
+  width: 100%; border-collapse: collapse;
+  font: 400 10px 'IBM Plex Mono', monospace;
+}
+.sldr-summary-tbl th, .sldr-summary-tbl td {
+  padding: 2px 6px; text-align: right; vertical-align: middle;
+  border-bottom: 1px solid #e5e5e5;
+}
+.sldr-summary-tbl th {
+  font-weight: 700; color: #333; text-align: right;
+  border-bottom: 1px solid #999;
+}
+.sldr-summary-tbl .c-kind  { text-align: left; }
+.sldr-summary-tbl .c-geom  { text-align: left; color: #555; }
+.sldr-summary-tbl .c-cnt,
+.sldr-summary-tbl .c-len,
+.sldr-summary-tbl .c-area  { font-variant-numeric: tabular-nums; }
+.sldr-summary-tbl .c-pct   {
+  font-variant-numeric: tabular-nums; color: #1d4ed8; font-weight: 600;
+}
+.sldr-summary-tbl tfoot td {
+  border-top: 2px solid #333; border-bottom: none;
+  padding-top: 3px;
+}
+.sldr-summary-tbl .sldr-sw {
+  display: inline-block; width: 8px; height: 8px; margin-right: 4px;
+  border-radius: 2px; vertical-align: -1px;
+}
+.sldr-summary-tbl .sldr-code {
+  display: inline-block; min-width: 20px; padding: 0 3px; margin-right: 4px;
+  border: 1px solid #999; border-radius: 2px; background: #fff;
+  font: 700 9px 'IBM Plex Mono', monospace; color: #111; text-align: center;
+}
+
 /* Print: only the .sldr-page sheets go to paper — everything else
    in this module (chips, headers, section picker) stays on screen
    only. The umbrella @media print block below already hides the
@@ -40455,10 +40504,17 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                           + pageCount + ' page' + (pageCount === 1 ? '' : 's');
     }
 
+    // ── Summary aggregation (page-1 table): count / length / % / area
+    //    per kind. Line pins get length + %-of-route; polygon pins get
+    //    area; point-inventory pins get count only. Only ENABLED kinds
+    //    are counted so the table matches what the user is about to
+    //    print.
+    var summary = _sldrBuildSummary(pins, totalFt);
+
     // ── Render every page ─────────────────────────────────────────
     var html = '';
     for (var p = 0; p < pageCount; p++) {
-      html += '<div class="sldr-page">';
+      html += '<div class="sldr-page' + (p === 0 ? ' sldr-page-first' : '') + '">';
       html +=   '<div class="sldr-page-hdr">';
       html +=     '<div>';
       html +=       '<div class="sldr-page-title">Straight-Line Diagram · ' + _esc(sec.id)
@@ -40470,6 +40526,9 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       html +=     '</div>';
       html +=     '<div class="sldr-page-sub">Page ' + (p + 1) + ' of ' + pageCount + '</div>';
       html +=   '</div>';
+      // Summary table lives only on page 1 — it's a section-level
+      // overview, not a per-strip detail.
+      if (p === 0) html += _sldrSummaryHtml(summary, totalFt);
       html +=   '<div class="sldr-page-strips">';
       for (var s = 0; s < STRIPS_PER_PAGE; s++) {
         var staStart = (p * STRIPS_PER_PAGE + s) * stripLen;
@@ -40483,6 +40542,155 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     pagesEl.innerHTML = html;
   }
   window.renderSldReport = renderSldReport;
+
+  // ── Geometry helpers ────────────────────────────────────────────
+  // Coordinates in pin.geometry follow GeoJSON convention: [lng, lat].
+  // havFt expects [lat, lng] pairs, so every call swaps first.
+  function _sldrLineLengthFt(pin) {
+    var g = pin.geometry || {};
+    var coords = g.coordinates || [];
+    if (!Array.isArray(coords) || coords.length < 2) return 0;
+    var total = 0;
+    for (var i = 0; i < coords.length - 1; i++) {
+      var a = coords[i], b = coords[i + 1];
+      if (!Array.isArray(a) || !Array.isArray(b)) continue;
+      total += havFt([+a[1], +a[0]], [+b[1], +b[0]]);
+    }
+    return total;
+  }
+  // Shoelace formula on the outer ring, in local ft-space (equirect at
+  // the ring's mean latitude). GeoJSON polygons are nested — the outer
+  // ring is coordinates[0]; if the caller stored a flat ring array
+  // (older pre-walk kinds), we fall back to using coords directly.
+  function _sldrPolyAreaSqFt(pin) {
+    var g = pin.geometry || {};
+    var coords = g.coordinates || [];
+    if (!Array.isArray(coords) || !coords.length) return 0;
+    var ring = Array.isArray(coords[0]) && Array.isArray(coords[0][0])
+             ? coords[0]     // GeoJSON Polygon: coordinates[0] = outer ring
+             : coords;       // flat [ [lng, lat], … ] array
+    if (!Array.isArray(ring) || ring.length < 3) return 0;
+    var meanLat = 0, n = 0;
+    for (var i = 0; i < ring.length; i++) {
+      if (Array.isArray(ring[i])) { meanLat += +ring[i][1]; n++; }
+    }
+    if (!n) return 0;
+    meanLat /= n;
+    var cosLat = Math.cos(meanLat * Math.PI / 180);
+    var FT_PER_DEG = 364000;
+    var area = 0;
+    for (var j = 0; j < ring.length; j++) {
+      var k = (j + 1) % ring.length;
+      var p1 = ring[j], p2 = ring[k];
+      if (!Array.isArray(p1) || !Array.isArray(p2)) continue;
+      var x1 = (+p1[0]) * cosLat * FT_PER_DEG;
+      var y1 = (+p1[1]) * FT_PER_DEG;
+      var x2 = (+p2[0]) * cosLat * FT_PER_DEG;
+      var y2 = (+p2[1]) * FT_PER_DEG;
+      area += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(area / 2);
+  }
+
+  // ── Summary aggregation ─────────────────────────────────────────
+  // Returns an array of { kind, label, code, color, geom, count,
+  // lengthFt, areaSqFt, pctRoute } sorted first by geom (line >
+  // polygon > point — length/area rows read at the top) then by
+  // -count. Only ENABLED kinds are counted, matching what the user
+  // sees on the strips.
+  function _sldrBuildSummary(pins, totalRouteFt) {
+    var byKind = {};
+    pins.forEach(function (p) {
+      if (_sldrEnabled[p.kind] === false) return;
+      var style = (window.PIN_STYLE || {})[p.kind] || {};
+      var geom = style.kind || (
+        p.kind && p.kind.indexOf('ln_') === 0 ? 'line' :
+        p.kind && p.kind.indexOf('pg_') === 0 ? 'polygon' : 'point'
+      );
+      if (!byKind[p.kind]) {
+        byKind[p.kind] = {
+          kind: p.kind, label: _sldrKindLabel(p.kind),
+          code: style.code || '?', color: style.color || '#888',
+          geom: geom, count: 0, lengthFt: 0, areaSqFt: 0
+        };
+      }
+      var row = byKind[p.kind];
+      row.count += 1;
+      if (geom === 'line')    row.lengthFt += _sldrLineLengthFt(p);
+      if (geom === 'polygon') row.areaSqFt += _sldrPolyAreaSqFt(p);
+    });
+    var rows = Object.keys(byKind).map(function (k) {
+      var r = byKind[k];
+      r.pctRoute = (r.geom === 'line' && totalRouteFt > 0)
+        ? (r.lengthFt / totalRouteFt * 100) : null;
+      return r;
+    });
+    var geomOrder = { line: 0, polygon: 1, point: 2 };
+    rows.sort(function (a, b) {
+      var ga = geomOrder[a.geom] || 3;
+      var gb = geomOrder[b.geom] || 3;
+      if (ga !== gb) return ga - gb;
+      return b.count - a.count;
+    });
+    return rows;
+  }
+
+  // ── Summary table HTML ──────────────────────────────────────────
+  function _sldrSummaryHtml(rows, totalRouteFt) {
+    if (!rows.length) return '';
+    var head = ''
+      + '<div class="sldr-summary">'
+      +   '<div class="sldr-summary-hdr">'
+      +     '<span>Section Summary</span>'
+      +     '<span style="font-weight:400;color:#555">'
+      +       'Route ' + Math.round(totalRouteFt).toLocaleString() + ' ft'
+      +       ' &nbsp;·&nbsp; ' + rows.reduce(function (s, r) { return s + r.count; }, 0) + ' pins'
+      +     '</span>'
+      +   '</div>'
+      +   '<table class="sldr-summary-tbl">'
+      +   '<thead><tr>'
+      +     '<th class="c-kind">Kind</th>'
+      +     '<th class="c-geom">Type</th>'
+      +     '<th class="c-cnt">Count</th>'
+      +     '<th class="c-len">Length (ft)</th>'
+      +     '<th class="c-pct">% Route</th>'
+      +     '<th class="c-area">Area (sq ft)</th>'
+      +   '</tr></thead><tbody>';
+    var body = rows.map(function (r) {
+      var lenCell = r.geom === 'line'    ? Math.round(r.lengthFt).toLocaleString() : '—';
+      var pctCell = r.pctRoute != null   ? r.pctRoute.toFixed(1) + '%'             : '—';
+      var areaCell= r.geom === 'polygon' ? Math.round(r.areaSqFt).toLocaleString() : '—';
+      var geomTxt = r.geom === 'line' ? 'Line' : r.geom === 'polygon' ? 'Area' : 'Point';
+      return ''
+        + '<tr>'
+        +   '<td class="c-kind">'
+        +     '<span class="sldr-sw" style="background:' + r.color + '"></span>'
+        +     '<span class="sldr-code">' + _esc(r.code) + '</span> '
+        +     _esc(r.label)
+        +   '</td>'
+        +   '<td class="c-geom">' + geomTxt + '</td>'
+        +   '<td class="c-cnt">' + r.count + '</td>'
+        +   '<td class="c-len">' + lenCell + '</td>'
+        +   '<td class="c-pct">' + pctCell + '</td>'
+        +   '<td class="c-area">' + areaCell + '</td>'
+        + '</tr>';
+    }).join('');
+    // Totals footer — line-features total length + % of route, polygon
+    // total area, grand count.
+    var totLen = rows.filter(function (r) { return r.geom === 'line'; }).reduce(function (s, r) { return s + r.lengthFt; }, 0);
+    var totArea= rows.filter(function (r) { return r.geom === 'polygon'; }).reduce(function (s, r) { return s + r.areaSqFt; }, 0);
+    var totCnt = rows.reduce(function (s, r) { return s + r.count; }, 0);
+    var totPct = totalRouteFt > 0 ? (totLen / totalRouteFt * 100).toFixed(1) + '%' : '—';
+    var foot = ''
+      + '<tfoot><tr>'
+      +   '<td class="c-kind" colspan="2"><b>Total</b></td>'
+      +   '<td class="c-cnt"><b>' + totCnt + '</b></td>'
+      +   '<td class="c-len"><b>' + Math.round(totLen).toLocaleString() + '</b></td>'
+      +   '<td class="c-pct"><b>' + totPct + '</b></td>'
+      +   '<td class="c-area"><b>' + Math.round(totArea).toLocaleString() + '</b></td>'
+      + '</tr></tfoot>';
+    return head + body + foot + '</tbody></table></div>';
+  }
 
   // ── Chip / kind label helpers ───────────────────────────────────
   // Enabled-kind map, module-scoped so the state survives re-renders.
