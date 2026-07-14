@@ -40979,31 +40979,48 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     svg +=   '</div>';
     svg += '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
 
-    // ── Pavement band — matches the map SLD's 40 px black band that
-    //    the linear features sit alongside (bars above = Left of road,
-    //    bars below = Right of road). Reads as "this is the road".
+    // ── Pavement band — light gray so STA labels can sit ON the
+    //    centerline and still read clearly. Bars above the band =
+    //    Left of road; bars below = Right of road.
     var BAND_H = 22;
+    var BAND_FILL = '#d4d4d4';
     svg += '<rect x="' + PAD_L + '" y="' + (AXIS_Y - BAND_H / 2) + '" '
          + 'width="' + (W - PAD_L - PAD_R) + '" height="' + BAND_H + '" '
-         + 'fill="#2a2a2a"/>';
-    // Dashed centerline down the middle of the band.
+         + 'fill="' + BAND_FILL + '" stroke="#888" stroke-width="0.6"/>';
+    // Dashed yellow centerline down the middle of the band — the STA
+    // labels land ON the centerline, interrupting the dashes so the
+    // text reads (each label gets a matching-band rectangle punched
+    // through the line behind it below).
     svg += '<line x1="' + PAD_L + '" y1="' + AXIS_Y + '" x2="' + (W - PAD_R) + '" y2="' + AXIS_Y + '" '
-         + 'stroke="#F5D062" stroke-width="1.2" stroke-dasharray="10 6"/>';
+         + 'stroke="#c99515" stroke-width="1.4" stroke-dasharray="10 6"/>';
 
-    // Station ticks — every 50 ft, labeled every 100 ft. Ticks
-    // drop below the pavement band; labels sit below the ticks.
-    var TICK_STEP = 50, TICK_BASE = AXIS_Y + BAND_H / 2 + 1;
+    // Station ticks — every 50 ft, labeled every 100 ft. Ticks are
+    // short marks INSIDE the pavement band (dropping from the top
+    // edge inward). STA labels land ON the centerline itself,
+    // vertically centered inside the band with a small band-colored
+    // rectangle punched behind them so the yellow dashes don't run
+    // through the text.
+    var TICK_STEP = 50;
+    var BAND_TOP  = AXIS_Y - BAND_H / 2;
     var firstTick = Math.ceil(staStart / TICK_STEP) * TICK_STEP;
     for (var f = firstTick; f <= staEnd + 0.001; f += TICK_STEP) {
       var xt = xForSta(f);
       var isMajor = (Math.round(f) % 100) === 0;
-      var tickH = isMajor ? 10 : 5;
-      svg += '<line x1="' + xt + '" y1="' + TICK_BASE + '" x2="' + xt + '" y2="' + (TICK_BASE + tickH) + '" '
-           + 'stroke="#333" stroke-width="1"/>';
+      // Tick length: 6 px inside the band for major, 3 px for minor.
+      var tickH = isMajor ? 6 : 3;
+      svg += '<line x1="' + xt + '" y1="' + BAND_TOP + '" x2="' + xt + '" y2="' + (BAND_TOP + tickH) + '" '
+           + 'stroke="#555" stroke-width="0.9"/>';
       if (isMajor) {
-        svg += '<text x="' + xt + '" y="' + (TICK_BASE + 22) + '" text-anchor="middle" '
-             + 'font-family="\'IBM Plex Mono\',monospace" font-size="10" fill="#333">'
-             + _sldrFmtSta(f) + '</text>';
+        var staText = _sldrFmtSta(f);
+        // Approx text width in this font (8.5 px chars) so the
+        // knock-out rectangle covers the label. dominant-baseline
+        // centers vertically at the STA line.
+        var textHalf = Math.max(14, staText.length * 3.4);
+        svg += '<rect x="' + (xt - textHalf) + '" y="' + (AXIS_Y - 5) + '" '
+             + 'width="' + (2 * textHalf) + '" height="10" fill="' + BAND_FILL + '"/>';
+        svg += '<text x="' + xt + '" y="' + AXIS_Y + '" text-anchor="middle" dominant-baseline="middle" '
+             + 'font-family="\'IBM Plex Mono\',monospace" font-size="9" font-weight="700" fill="#222">'
+             + staText + '</text>';
       }
     }
     // End caps — bold vertical bars at strip start + end.
@@ -41034,7 +41051,15 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var sb = +(b.sta_ft != null ? b.sta_ft : 0);
       return sa - sb;
     });
-    var laneOccL = [], laneOccR = [];   // per-side lane last-x-end
+    // Two-pass render:
+    //   1. Place every bar (lane-packed per side so bars never
+    //      overlap).
+    //   2. Place labels last, checking a global bounding-box list to
+    //      skip any label that would collide with a previously-placed
+    //      one. Ensures no two labels overlap regardless of how many
+    //      bars share a stretch of station.
+    var laneOccL = [], laneOccR = [];
+    var placedBars = [];
     linePins.forEach(function (pin) {
       var extent = _sldrLineExtent(pin, sec, mpStart);
       if (!extent) return;
@@ -41057,19 +41082,51 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var y = side === 'L'
         ? (AXIS_Y - BAND_H / 2 - BASE_GAP - SLOT_H - lane * (SLOT_H + 2))
         : (AXIS_Y + BAND_H / 2 + BASE_GAP + lane * (SLOT_H + 2));
-      // Bar with fill + thin outline.
       svg += '<rect x="' + xL + '" y="' + y + '" width="' + (xR - xL) + '" height="' + SLOT_H + '" '
            + 'fill="' + color + '" stroke="#111" stroke-width="0.4"/>';
-      // Length label above (L) / below (R) the bar when width allows.
-      if (xR - xL > 40) {
-        var lenText = code;
-        var pinLen = pinEnd - pinStart;
-        if (isFinite(pinLen)) lenText += ' · ' + Math.round(pinLen) + '\'';
-        var labelY = side === 'L' ? (y - 2) : (y + SLOT_H + 8);
-        svg += '<text x="' + ((xL + xR) / 2) + '" y="' + labelY + '" text-anchor="middle" '
-             + 'font-family="\'IBM Plex Mono\',monospace" font-size="8" font-weight="700" fill="' + color + '">'
-             + _esc(lenText) + '</text>';
+      placedBars.push({
+        pin: pin, xL: xL, xR: xR, y: y, side: side, color: color, code: code,
+        pinLen: pinEnd - pinStart,
+      });
+    });
+
+    // Label pass — global collision guard. Each candidate label has
+    // an approximate bounding box; any that overlaps an already-
+    // placed label is dropped. Labels only render when the bar is
+    // wide enough to hold the text (> 40 px).
+    var placedLabels = [];
+    function _rectsOverlap(a, b) {
+      return !(a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0);
+    }
+    placedBars.forEach(function (bar) {
+      if (bar.xR - bar.xL <= 40) return;
+      var lenText = bar.code;
+      if (isFinite(bar.pinLen)) lenText += ' · ' + Math.round(bar.pinLen) + '\'';
+      var midX = (bar.xL + bar.xR) / 2;
+      var labelY = bar.side === 'L' ? (bar.y - 2) : (bar.y + 8 + 8);   // 8 = SLOT_H
+      var halfW = Math.max(14, lenText.length * 2.8);
+      var box = { x0: midX - halfW, x1: midX + halfW,
+                  y0: labelY - 5,   y1: labelY + 4 };
+      // Bump vertically up to 2 slots if it would collide.
+      var yOffsets = bar.side === 'L' ? [0, -10, -20] : [0, 10, 20];
+      var placed = false;
+      for (var oi = 0; oi < yOffsets.length; oi++) {
+        var trial = {
+          x0: box.x0, x1: box.x1,
+          y0: box.y0 + yOffsets[oi], y1: box.y1 + yOffsets[oi],
+        };
+        var hit = placedLabels.some(function (p) { return _rectsOverlap(trial, p); });
+        if (!hit) {
+          placedLabels.push(trial);
+          svg += '<text x="' + midX + '" y="' + (labelY + yOffsets[oi]) + '" text-anchor="middle" '
+               + 'font-family="\'IBM Plex Mono\',monospace" font-size="8" font-weight="700" fill="' + bar.color + '">'
+               + _esc(lenText) + '</text>';
+          placed = true;
+          break;
+        }
       }
+      // Dropped label — no space; the bar itself still conveys
+      // position + color, so silence over clutter.
     });
 
     // ── Point markers — one per point-kind pin whose sta_ft falls in
