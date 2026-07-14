@@ -40634,23 +40634,29 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
     // Async IDB scan — walks the entire safety IDB store looking for
     // every rw_sections_<pid> record, not just the current project's.
-    // Reports whether pavement-QC pins exist under ANY project id
-    // (this catches the case where the user drew features under a
-    // different project id, e.g. before switching projects, and the
-    // working copy still lives in IDB under that old id).
-    if (pickedSectionPavementCount === 0 && Object.keys(crossHits).length === 0
-        && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
-      var currentPid = (window.PROJECT && window.PROJECT.id) || 'default';
+    // Every step is console-logged with the [SLD-diag] prefix so we
+    // can trace what's happening in the browser dev tools.
+    var currentPid = (window.PROJECT && window.PROJECT.id) || 'default';
+    console.log('[SLD-diag] Starting IDB scan. Current PROJECT.id =', currentPid);
+    console.log('[SLD-diag] window.RWIdb =', !!window.RWIdb, 'openDB =', typeof (window.RWIdb && window.RWIdb.openDB));
+    if (window.RWIdb && typeof window.RWIdb.openDB === 'function') {
       window.RWIdb.openDB().then(function (db) {
+        console.log('[SLD-diag] IDB opened. Object stores:', Array.from(db.objectStoreNames));
         return new Promise(function (resolve) {
+          if (Array.from(db.objectStoreNames).indexOf('safety') < 0) {
+            console.warn('[SLD-diag] No safety store in this IDB.');
+            return resolve({});
+          }
           var tx    = db.transaction('safety', 'readonly');
           var store = tx.objectStore('safety');
           var req   = store.openCursor();
           var perProject = {};
+          var everyKey = [];
           req.onsuccess = function (e) {
             var cur = e.target.result;
             if (!cur) return;
             var key = String(cur.key || '');
+            everyKey.push(key);
             if (key.indexOf('rw_sections_') === 0) {
               var rec = cur.value;
               var pid = key.substring('rw_sections_'.length);
@@ -40665,15 +40671,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
                 });
               });
               perProject[pid] = { total: totalPins, pav: pav, saved_at: rec && rec.saved_at };
+              console.log('[SLD-diag] Found rw_sections_' + pid + ':', totalPins, 'total pins, pavement:', pav);
             }
             cur.continue();
           };
-          tx.oncomplete = function () { resolve(perProject); };
-          tx.onerror    = function () { resolve(perProject); };
+          req.onerror = function (e) {
+            console.error('[SLD-diag] Cursor error:', e.target.error);
+          };
+          tx.oncomplete = function () {
+            console.log('[SLD-diag] Cursor complete. All safety-store keys:', everyKey);
+            console.log('[SLD-diag] Per-project pavement summary:', perProject);
+            resolve(perProject);
+          };
+          tx.onerror = function (e) {
+            console.error('[SLD-diag] Transaction error:', e.target.error);
+            resolve(perProject);
+          };
         });
       }).then(function (perProject) {
         var diag = document.getElementById('sldr-diag');
-        if (!diag) return;
+        if (!diag) { console.warn('[SLD-diag] No diag element to update.'); return; }
         var projectsWithPav = Object.keys(perProject).filter(function (pid) {
           return perProject[pid].pav && Object.keys(perProject[pid].pav).length > 0;
         });
@@ -40686,25 +40703,26 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
             }).join(', ');
             return 'Project "' + pid + '" (' + p.total + ' total pins, saved ' + (p.saved_at || '?') + ') — ' + pavStr;
           }).join(' · ');
-          msg += ' — switch to that project via Dashboard → Project picker to see them.';
+          msg += ' — switch to that project via Dashboard → Project picker.';
           diag.textContent = msg;
           diag.style.background = '#fee2e2';
           diag.style.color = '#7f1d1d';
           diag.style.borderBottomColor = '#dc2626';
         } else {
-          // Truly nothing anywhere. List every project that has ANY
-          // pin so the user can see what's here.
-          var otherProjects = Object.keys(perProject).filter(function (p) { return p !== currentPid; });
-          var extra = '';
-          if (otherProjects.length) {
-            extra = ' Other projects found in IDB (none have pavement-QC pins): '
-                  + otherProjects.map(function (pid) {
-                      return pid + '(' + perProject[pid].total + ' pins)';
-                    }).join(', ');
-          }
-          diag.textContent += ' Confirmed: IDB has 0 pavement-QC features across ALL projects.' + extra;
+          var pids = Object.keys(perProject);
+          var extra = pids.length
+            ? (' Every rw_sections_<pid> record in IDB: '
+                + pids.map(function (pid) {
+                    return pid + '(' + perProject[pid].total + ' pins)';
+                  }).join(', '))
+            : ' No rw_sections_<pid> records in IDB at all.';
+          diag.textContent += ' [IDB scan: 0 pavement-QC pins across all projects.' + extra + ']';
         }
-      }).catch(function () {});
+      }).catch(function (err) {
+        console.error('[SLD-diag] Scan chain rejected:', err);
+        var diag = document.getElementById('sldr-diag');
+        if (diag) diag.textContent += ' [IDB scan errored — see console for [SLD-diag] logs.]';
+      });
     }
 
     // ── Summary aggregation (page-1 table): count / length / % / area
