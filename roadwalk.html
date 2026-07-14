@@ -5488,6 +5488,133 @@ body.rw-sld-photo-dragging .strip-pin {
 /* Hide the picker in print so a stuck-open modal can't bleed onto a sheet. */
 @media print { .sr-picker { display: none !important; } }
 
+/* ============================================================
+   STRAIGHT-LINE DIAGRAM (SLD) MODULE
+   Landscape letter (11 x 8.5) with three 500-ft strips per
+   sheet. Head bar with section picker + chip row. All chip /
+   header state hidden in print; only the .sldr-page sheets
+   land on paper. ============================================ */
+#mod-sld_report { flex-direction: column; overflow: hidden; }
+.sldr-head {
+  padding: 8px 12px; border-bottom: 1px solid var(--rule);
+  background: var(--paper-1); flex-shrink: 0;
+}
+.sldr-head-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 4px 0;
+}
+.sldr-head-lbl {
+  font: 700 10px 'IBM Plex Mono', monospace;
+  color: var(--ink-2); text-transform: uppercase; letter-spacing: .4px;
+}
+.sldr-count {
+  font: 400 11px 'IBM Plex Mono', monospace; color: var(--ink-2);
+  margin-left: 6px;
+}
+.sldr-btn {
+  padding: 6px 12px; border: 1px solid var(--rule); background: #fff;
+  color: var(--ink); font: 600 11px 'IBM Plex Mono', monospace;
+  cursor: pointer; letter-spacing: .4px;
+}
+.sldr-btn:hover { background: var(--paper-2); border-color: var(--ink); }
+.sldr-chips {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  flex: 1 1 auto; min-width: 0;
+}
+.sldr-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border: 1px solid var(--rule); border-radius: 3px;
+  background: #fff; cursor: pointer;
+  font: 600 10px 'IBM Plex Mono', monospace; color: var(--ink);
+  user-select: none;
+}
+.sldr-chip .sldr-chip-sw {
+  display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+  background: #888;
+}
+.sldr-chip.on  { background: var(--paper-2); border-color: var(--ink-2); }
+.sldr-chip.off { opacity: 0.35; text-decoration: line-through; }
+.sldr-chip-all {
+  padding: 3px 8px; border: 1px solid var(--rule); background: #fff;
+  color: var(--ink); font: 600 10px 'IBM Plex Mono', monospace;
+  cursor: pointer; text-transform: uppercase; letter-spacing: .4px;
+}
+.sldr-chip-all:hover { background: var(--paper-2); }
+
+.sldr-pages {
+  flex: 1 1 auto; overflow-y: auto; overflow-x: hidden;
+  padding: 12px; background: var(--paper-1);
+}
+/* One landscape letter sheet — 11" x 8.5" at 96 dpi = 1056 x 816 CSS px.
+   Screen preview uses those exact dimensions so the on-screen page
+   matches the print output; the box-shadow makes the sheet look like
+   a physical page floating on the panel background. */
+.sldr-page {
+  width: 1056px; height: 816px;
+  margin: 0 auto 20px; padding: 40px 48px;
+  background: #fff; color: #111;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+  page-break-after: always; break-after: page;
+}
+.sldr-page:last-child { page-break-after: auto; break-after: auto; }
+.sldr-page-hdr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 10px;
+  font-family: sans-serif;
+}
+.sldr-page-title {
+  font: 700 15px sans-serif; letter-spacing: .5px; color: #111;
+}
+.sldr-page-sub {
+  font: 600 11px 'IBM Plex Mono', monospace; color: #555;
+}
+.sldr-page-strips {
+  flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px;
+}
+.sldr-strip {
+  border: 1px solid #ddd; background: #fafafa; padding: 8px 12px;
+  flex: 1 1 0; display: flex; flex-direction: column; min-height: 0;
+}
+.sldr-strip-hdr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font: 700 10px 'IBM Plex Mono', monospace; color: #333;
+  padding-bottom: 4px; margin-bottom: 4px; letter-spacing: .3px;
+}
+.sldr-strip svg {
+  width: 100%; height: 100%; display: block; overflow: visible;
+}
+
+/* Print: only the .sldr-page sheets go to paper — everything else
+   in this module (chips, headers, section picker) stays on screen
+   only. The umbrella @media print block below already hides the
+   inactive modules and app chrome; these rules refine for SLD. */
+@media print {
+  #mod-sld_report .sldr-head { display: none !important; }
+  #mod-sld_report .sldr-pages {
+    overflow: visible !important; padding: 0 !important; background: #fff !important;
+  }
+  #mod-sld_report .sldr-page {
+    margin: 0 !important; box-shadow: none !important;
+    /* Native landscape letter — Print dialog needs to be set to
+       Landscape orientation for the 1056 x 816 sheet to fit
+       edge-to-edge without scaling. */
+    width: 100% !important; height: 100vh !important;
+  }
+  /* Force landscape orientation regardless of last-used media */
+  #mod-sld_report ~ * .sldr-page { break-inside: avoid; }
+}
+/* One @page rule per module scope wouldn't work cross-browser, so
+   the SLD module uses a body-level attribute switch triggered by
+   renderSldReport() right before print: body[data-sld-print] flips
+   the @page size to landscape letter. See the JS wiring in
+   renderSldReport() for the toggle. */
+body[data-sld-print="1"] { }
+@media print {
+  body[data-sld-print="1"] { }
+}
+
 @media print {
   @page { size: letter; margin: 0; }
   /* Release every layer of the screen layout that anchors content to
@@ -10360,6 +10487,9 @@ body.mobile-mode #app {
       <button class="app-tab" data-module="culverts_report" role="tab" aria-selected="false"
               title="Culvert assessment report — one printable page per culvert">
         <span class="app-tab-icon">🚰</span><span class="app-tab-label">Culverts</span></button>
+      <button class="app-tab" data-module="sld_report" role="tab" aria-selected="false"
+              title="Straight-Line Diagram — 3 strips per landscape page, toggle features for print">
+        <span class="app-tab-icon">📏</span><span class="app-tab-label">SLD</span></button>
       <button class="app-tab app-tab-gear" id="header-styleguide-btn" type="button"
               title="Style Guide &amp; Labels" aria-label="Style Guide">
         <span class="app-tab-icon">◈</span><span class="app-tab-label">Style</span></button>
@@ -12058,6 +12188,45 @@ body.mobile-mode #app {
             <button type="button" class="sr-picker-confirm" id="cv-picker-confirm">Continue</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODULE: STRAIGHT-LINE DIAGRAM (SLD)
+         Print-focused: renders three 500-ft strips per landscape sheet
+         (0-500, 500-1000, 1000-1500 on the first page, and so on),
+         one section per print run. A toggle chip per pin-kind controls
+         which features appear on the strips before hitting Print. All
+         renderers live in renderSldReport() — SVG, no Leaflet — so
+         window.print() from this module hits the printer directly.
+         ============================================================ -->
+    <div id="mod-sld_report" class="module-view">
+      <div class="sldr-head">
+        <div class="sldr-head-row">
+          <label class="sldr-head-lbl">Section</label>
+          <select id="sldr-section"><option value="">(pick section)</option></select>
+          <label class="sldr-head-lbl">Strip length</label>
+          <select id="sldr-strip-len" title="How much station each strip covers">
+            <option value="500" selected>500 ft</option>
+            <option value="250">250 ft</option>
+            <option value="1000">1000 ft</option>
+          </select>
+          <span class="sldr-count" id="sldr-count">— pick a section</span>
+          <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="sldr-btn" id="sldr-print-btn" title="Open the browser Print dialog (landscape letter, 3 strips per sheet)">🖨 Print</button>
+          </span>
+        </div>
+        <div class="sldr-head-row" id="sldr-chip-row">
+          <label class="sldr-head-lbl">Show</label>
+          <div class="sldr-chips" id="sldr-chips">
+            <!-- One chip per pin.kind. Click to toggle visibility on strips. -->
+          </div>
+          <button type="button" class="sldr-chip-all" id="sldr-chips-all" title="Show every feature kind">All</button>
+          <button type="button" class="sldr-chip-all" id="sldr-chips-none" title="Hide every feature kind">None</button>
+        </div>
+      </div>
+      <div class="sldr-pages" id="sldr-pages">
+        <!-- Populated by renderSldReport() once a section is picked. -->
       </div>
     </div>
 
@@ -16505,6 +16674,14 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   PIN_STYLE.pavement     = { code: 'PV', color: '#9CA3AF', kind: 'polygon', weight: 2 };
   PIN_STYLE.overlook     = { code: 'OV', color: '#DC2626', kind: 'point' };
   PIN_STYLE.ngs_monument = { code: 'NG', color: '#0EA5E9', kind: 'point',   shape: 'triangle' };
+
+  // Expose PIN_STYLE + FEATURE_CATALOG on window so modules living in
+  // sibling <script> blocks (SLD report, etc) can pull colors + kind
+  // labels without needing to duplicate the catalog. Both are live
+  // references, so any late-added kinds (see the pre-walk bundle
+  // extensions above) are visible immediately.
+  window.PIN_STYLE       = PIN_STYLE;
+  window.FEATURE_CATALOG = FEATURE_CATALOG;
 
   // Expose showView + showProjectPicker globally so the Phase 1 Dashboard
   // module can navigate into sections and trigger the project picker without
@@ -31873,7 +32050,7 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
 
   function showModule(name) {
     // Guard: ignore unknown module names
-    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings', 'project', 'triage', 'tracks', 'signs_report', 'culverts_report'];
+    const VALID = ['map', 'dashboard', 'data', 'safety', 'log', 'settings', 'project', 'triage', 'tracks', 'signs_report', 'culverts_report', 'sld_report'];
     if (!VALID.includes(name)) {
       console.warn('[RoadWalk] showModule: unknown module "' + name + '"');
       return;
@@ -31948,6 +32125,19 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var _cvList = document.getElementById('cv-list');
       if (!_cvList || !_cvList.children.length) {
         window.renderCulvertsReport();
+      }
+    }
+
+    // ── SLD Report: render on tab entry ────────────────────────
+    // Same "render only if empty" pattern the Signs / Culverts
+    // reports use so the module doesn't rebuild on every tab
+    // switch (SVG-heavy pages are moderately expensive). Chip
+    // toggles + section-change trigger their own re-render from
+    // renderSldReport()'s own event wiring.
+    if (name === 'sld_report' && typeof window.renderSldReport === 'function') {
+      var _sldrPages = document.getElementById('sldr-pages');
+      if (!_sldrPages || !_sldrPages.children.length) {
+        window.renderSldReport();
       }
     }
 
@@ -40143,6 +40333,312 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     });
   }
   window.renderCulvertsReport = renderCulvertsReport;
+
+  /* ==================================================================
+     SLD REPORT — renderSldReport()
+     Print-focused Straight-Line Diagram: renders three N-ft strips per
+     landscape letter sheet (default N = 500 ft, first-page ranges
+     0-500, 500-1000, 1000-1500, and so on across the alignment). Each
+     strip is a self-contained SVG with a centered horizontal
+     centerline, station tick marks every 50 ft (labeled every 100),
+     and one marker per pin whose sta_ft falls in the window. Kind
+     visibility is driven by chip toggles above the pages, and the
+     chip set is auto-built from every kind currently present in the
+     picked section — kinds with zero pins are omitted so the chip
+     row stays tight for lean sections. Print CSS + a JIT @page rule
+     injected around window.print() force landscape letter regardless
+     of the browser's remembered orientation from the last print job.
+     ================================================================== */
+  function renderSldReport() {
+    var pagesEl = document.getElementById('sldr-pages');
+    if (!pagesEl) return;
+    var secSel   = document.getElementById('sldr-section');
+    var lenSel   = document.getElementById('sldr-strip-len');
+    var countEl  = document.getElementById('sldr-count');
+    var chipsEl  = document.getElementById('sldr-chips');
+    var printBtn = document.getElementById('sldr-print-btn');
+    var allBtn   = document.getElementById('sldr-chips-all');
+    var noneBtn  = document.getElementById('sldr-chips-none');
+    if (!secSel) return;
+
+    // ── One-shot control wiring — guard so a re-entry doesn't stack
+    //    handlers on top of the previous ones.
+    if (!secSel._sldrWired) {
+      secSel._sldrWired = true;
+      // Populate section dropdown from window.SECTIONS. Only include
+      // sections that carry ≥ 2 alignment coords (a bare pin dump
+      // section can't render an SLD).
+      var _secs = (window.SECTIONS || []).filter(function (s) {
+        return s && Array.isArray(s.alignment) && s.alignment.length >= 2;
+      });
+      var _opts = ['<option value="">(pick section)</option>'].concat(_secs.map(function (s) {
+        var info = (window._SR_SECTION_INFO || {})[s.id];
+        var lbl  = s.id + ' — ' + (info ? info.route : (s.name || ''));
+        return '<option value="' + _esc(s.id) + '">' + _esc(lbl) + '</option>';
+      }));
+      secSel.innerHTML = _opts.join('');
+      secSel.addEventListener('change', renderSldReport);
+      if (lenSel)   lenSel.addEventListener('change', renderSldReport);
+      if (allBtn)   allBtn.addEventListener('click',  function () { _sldrChipsSetAll(true);  });
+      if (noneBtn)  noneBtn.addEventListener('click', function () { _sldrChipsSetAll(false); });
+      if (printBtn) printBtn.addEventListener('click', _sldrPrint);
+    }
+
+    if (!secSel.value) {
+      pagesEl.innerHTML = '';
+      if (countEl) countEl.textContent = '— pick a section';
+      if (chipsEl) chipsEl.innerHTML = '';
+      return;
+    }
+
+    var sec = (window.SECTIONS || []).find(function (s) { return s && s.id === secSel.value; });
+    if (!sec || !Array.isArray(sec.alignment) || sec.alignment.length < 2) {
+      pagesEl.innerHTML = '<div style="padding:20px;color:var(--ink-2)">Section has no alignment — SLD cannot render.</div>';
+      if (countEl) countEl.textContent = '';
+      return;
+    }
+
+    // Merged pins so any field edits (condition changes, added notes,
+    // moved coords) land on the SLD too.
+    var pins = (sec.pins || []).map(function (p) {
+      return (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(p) : p;
+    }).filter(function (p) {
+      return p && p.kind && p.sta_ft != null && isFinite(+p.sta_ft);
+    });
+
+    // ── Build / refresh chip row (one chip per kind present) ──────
+    var kindCounts = {};
+    pins.forEach(function (p) { kindCounts[p.kind] = (kindCounts[p.kind] || 0) + 1; });
+    var kinds = Object.keys(kindCounts).sort();
+    _sldrEnabled = _sldrEnabled || {};
+    // Default: everything on the first time a section loads.
+    kinds.forEach(function (k) {
+      if (_sldrEnabled[k] == null) _sldrEnabled[k] = true;
+    });
+    if (chipsEl) {
+      chipsEl.innerHTML = kinds.map(function (k) {
+        var style = (window.PIN_STYLE || {})[k] || {};
+        var color = style.color || '#888';
+        var lbl = _sldrKindLabel(k);
+        var on = _sldrEnabled[k] !== false;
+        return '<button type="button" class="sldr-chip ' + (on ? 'on' : 'off') + '" data-kind="' + _esc(k) + '">'
+          +      '<span class="sldr-chip-sw" style="background:' + color + '"></span>'
+          +      _esc(lbl) + ' <span style="opacity:.6">(' + kindCounts[k] + ')</span>'
+          +    '</button>';
+      }).join('');
+      if (!chipsEl._sldrWired) {
+        chipsEl._sldrWired = true;
+        chipsEl.addEventListener('click', function (e) {
+          var btn = e.target.closest('.sldr-chip[data-kind]');
+          if (!btn) return;
+          var k = btn.dataset.kind;
+          _sldrEnabled[k] = !(_sldrEnabled[k] !== false);
+          renderSldReport();
+        });
+      }
+    }
+
+    // ── Compute alignment length + pagination ─────────────────────
+    var totalFt = 0;
+    for (var _i = 0; _i < sec.alignment.length - 1; _i++) {
+      totalFt += havFt(sec.alignment[_i], sec.alignment[_i + 1]);
+    }
+    var stripLen = +((lenSel && lenSel.value) || 500) || 500;
+    var STRIPS_PER_PAGE = 3;
+    var pageStrip = stripLen * STRIPS_PER_PAGE;
+    var pageCount = Math.max(1, Math.ceil(totalFt / pageStrip));
+    var info = (window._SR_SECTION_INFO || {})[sec.id];
+    var mpStart = info ? info.mp_start : null;
+
+    if (countEl) {
+      countEl.textContent = pins.length + ' pins · ' + Math.round(totalFt) + ' ft · '
+                          + pageCount + ' page' + (pageCount === 1 ? '' : 's');
+    }
+
+    // ── Render every page ─────────────────────────────────────────
+    var html = '';
+    for (var p = 0; p < pageCount; p++) {
+      html += '<div class="sldr-page">';
+      html +=   '<div class="sldr-page-hdr">';
+      html +=     '<div>';
+      html +=       '<div class="sldr-page-title">Straight-Line Diagram · ' + _esc(sec.id)
+                  + (info ? ' — ' + _esc(info.route) : '') + '</div>';
+      if (info) {
+        html +=     '<div class="sldr-page-sub">' + _esc(info.route_id) + ' · FMSS ' + info.fmss
+                  + ' · MP ' + info.mp_start.toFixed(2) + ' – ' + info.mp_end.toFixed(2) + '</div>';
+      }
+      html +=     '</div>';
+      html +=     '<div class="sldr-page-sub">Page ' + (p + 1) + ' of ' + pageCount + '</div>';
+      html +=   '</div>';
+      html +=   '<div class="sldr-page-strips">';
+      for (var s = 0; s < STRIPS_PER_PAGE; s++) {
+        var staStart = (p * STRIPS_PER_PAGE + s) * stripLen;
+        var staEnd   = staStart + stripLen;
+        if (staStart >= totalFt) break;
+        html += _sldrStripSvg(sec, pins, staStart, staEnd, mpStart);
+      }
+      html +=   '</div>';
+      html += '</div>';
+    }
+    pagesEl.innerHTML = html;
+  }
+  window.renderSldReport = renderSldReport;
+
+  // ── Chip / kind label helpers ───────────────────────────────────
+  // Enabled-kind map, module-scoped so the state survives re-renders.
+  var _sldrEnabled = {};
+  // Station formatter — this <script> block is a sibling IIFE of the
+  // one that defines the app-wide fmtSta, so we can't reach fmtSta
+  // by name. Inlined here to avoid piping it through window.*.
+  function _sldrFmtSta(ft) {
+    if (ft == null || !isFinite(+ft)) return '';
+    var h = Math.floor(ft / 100), r = Math.round(ft % 100);
+    if (r >= 100) { h += 1; r -= 100; }
+    return String(h) + '+' + String(r).padStart(2, '0');
+  }
+  function _sldrChipsSetAll(on) {
+    Object.keys(_sldrEnabled).forEach(function (k) { _sldrEnabled[k] = on; });
+    renderSldReport();
+  }
+  // Map internal kind slug → human label. Prefers FEATURE_CATALOG
+  // (user-drawn kinds like ln_edge_drop → "Edge Drop"), falls back
+  // to unprefixed pre-walk kinds (culvert → "Culvert").
+  function _sldrKindLabel(kind) {
+    var cat = window.FEATURE_CATALOG || [];
+    for (var i = 0; i < cat.length; i++) {
+      var items = cat[i].items || [];
+      for (var j = 0; j < items.length; j++) {
+        if (items[j].value === kind) return items[j].label;
+      }
+    }
+    if (!kind) return '';
+    return kind.charAt(0).toUpperCase() + kind.slice(1).replace(/_/g, ' ');
+  }
+
+  // ── One strip SVG ───────────────────────────────────────────────
+  // Fixed 900 x 210 viewBox — the .sldr-strip CSS scales it to fill
+  // width. Layout: axis at y=110 (centered vertically), pins render
+  // as colored markers above the axis with the 2-letter code + STA
+  // label; station ticks below with STA numbers every 100 ft. Line
+  // and polygon features that span the window render as thin bars
+  // along the axis showing their in-window extent.
+  function _sldrStripSvg(sec, pins, staStart, staEnd, mpStart) {
+    var W = 900, H = 210;
+    var AXIS_Y = 110, PAD_L = 32, PAD_R = 24;
+    var innerW = W - PAD_L - PAD_R;
+    var lengthFt = staEnd - staStart;
+    var xForSta = function (sta) {
+      var clamped = Math.max(staStart, Math.min(staEnd, sta));
+      return PAD_L + (clamped - staStart) / lengthFt * innerW;
+    };
+    var mpFor = function (sta) {
+      if (mpStart == null) return '';
+      return ' · MP ' + (mpStart + sta / 5280).toFixed(3);
+    };
+
+    var svg = '';
+    svg += '<div class="sldr-strip">';
+    svg +=   '<div class="sldr-strip-hdr">';
+    svg +=     '<span>STA ' + _sldrFmtSta(staStart) + ' → ' + _sldrFmtSta(staEnd)
+             + (mpStart != null ? ' &nbsp;·&nbsp; MP ' + (mpStart + staStart/5280).toFixed(3)
+                                 + ' – ' + (mpStart + staEnd/5280).toFixed(3)
+                                 : '') + '</span>';
+    svg +=     '<span>' + Math.round(lengthFt) + ' ft</span>';
+    svg +=   '</div>';
+    svg += '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
+
+    // Centerline
+    svg += '<line x1="' + PAD_L + '" y1="' + AXIS_Y + '" x2="' + (W - PAD_R) + '" y2="' + AXIS_Y + '" '
+         + 'stroke="#111" stroke-width="1.8"/>';
+
+    // Station ticks — every 50 ft, labeled every 100 ft.
+    var TICK_STEP = 50;
+    var firstTick = Math.ceil(staStart / TICK_STEP) * TICK_STEP;
+    for (var f = firstTick; f <= staEnd + 0.001; f += TICK_STEP) {
+      var xt = xForSta(f);
+      var isMajor = (Math.round(f) % 100) === 0;
+      var tickH = isMajor ? 10 : 5;
+      svg += '<line x1="' + xt + '" y1="' + AXIS_Y + '" x2="' + xt + '" y2="' + (AXIS_Y + tickH) + '" '
+           + 'stroke="#333" stroke-width="1"/>';
+      if (isMajor) {
+        svg += '<text x="' + xt + '" y="' + (AXIS_Y + 22) + '" text-anchor="middle" '
+             + 'font-family="\'IBM Plex Mono\',monospace" font-size="10" fill="#333">'
+             + _sldrFmtSta(f) + '</text>';
+      }
+    }
+    // End caps — bold vertical bars at strip start + end so the
+    // window boundary reads immediately.
+    svg += '<line x1="' + PAD_L + '" y1="' + (AXIS_Y - 14) + '" x2="' + PAD_L + '" y2="' + (AXIS_Y + 14) + '" stroke="#111" stroke-width="2"/>';
+    svg += '<line x1="' + (W - PAD_R) + '" y1="' + (AXIS_Y - 14) + '" x2="' + (W - PAD_R) + '" y2="' + (AXIS_Y + 14) + '" stroke="#111" stroke-width="2"/>';
+
+    // Feature markers — one per pin whose sta_ft falls in the window
+    // and whose kind is enabled. Line / polygon features may cross
+    // out of the window on either side; the marker lands at their
+    // sta_ft anchor. Vertical stacking prevents overlap by nudging
+    // successive same-x markers up by one row.
+    var inWindow = pins.filter(function (p) {
+      if (_sldrEnabled[p.kind] === false) return false;
+      var sta = +p.sta_ft;
+      return sta >= staStart && sta <= staEnd;
+    }).sort(function (a, b) { return (+a.sta_ft) - (+b.sta_ft); });
+
+    // Nudge overlapping markers vertically. Rough algorithm: for each
+    // pin, if its x is within 18 px of a previous same-side marker,
+    // bump its lane.
+    var LANE_H = 22;
+    var lanes = [];  // array of x positions of last placed in each lane
+    inWindow.forEach(function (pin) {
+      var x = xForSta(+pin.sta_ft);
+      var lane = 0;
+      for (; lane < lanes.length; lane++) {
+        if (x - lanes[lane] > 18) break;
+      }
+      lanes[lane] = x;
+      var yBase = AXIS_Y - 20 - (lane * LANE_H);
+      var style = (window.PIN_STYLE || {})[pin.kind] || {};
+      var color = style.color || '#888';
+      var code  = style.code  || '?';
+      // Stem from axis to the marker.
+      svg += '<line x1="' + x + '" y1="' + AXIS_Y + '" x2="' + x + '" y2="' + (yBase + 8) + '" '
+           + 'stroke="' + color + '" stroke-width="1.4"/>';
+      // Marker: filled circle with the 2-letter code inside.
+      svg += '<circle cx="' + x + '" cy="' + yBase + '" r="10" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>';
+      svg += '<text x="' + x + '" y="' + (yBase + 3.5) + '" text-anchor="middle" '
+           + 'font-family="\'IBM Plex Mono\',monospace" font-size="9" font-weight="700" fill="#fff">'
+           + _esc(code) + '</text>';
+      // ID label above the marker (small).
+      var idShort = String(pin.id || '').replace(/^[A-Z]+-CV-/, '').slice(0, 8);
+      if (idShort) {
+        svg += '<text x="' + x + '" y="' + (yBase - 14) + '" text-anchor="middle" '
+             + 'font-family="\'IBM Plex Mono\',monospace" font-size="8" fill="#333">'
+             + _esc(idShort) + '</text>';
+      }
+    });
+
+    svg += '</svg></div>';
+    return svg;
+  }
+
+  // ── Print handler — landscape letter override ───────────────────
+  // The app-wide print CSS pins @page size to letter portrait. To
+  // print the SLD as landscape letter, we inject a temporary <style>
+  // block right before window.print() and remove it on afterprint
+  // (or a defensive setTimeout for browsers that don't fire that
+  // event reliably).
+  function _sldrPrint() {
+    var css = '@media print { @page { size: 11in 8.5in; margin: 0; } }';
+    var s = document.createElement('style');
+    s.id = 'sldr-print-style'; s.textContent = css;
+    document.head.appendChild(s);
+    var cleanup = function () {
+      var el = document.getElementById('sldr-print-style');
+      if (el) el.parentNode.removeChild(el);
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(cleanup, 15000);   // defensive backstop
+    setTimeout(function () { window.print(); }, 50);
+  }
 
   /** Wire Dashboard tab buttons and the three action-bar buttons. */
   function initDashboard() {
