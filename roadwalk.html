@@ -5579,10 +5579,19 @@ body.rw-sld-photo-dragging .strip-pin {
 }
 .sldr-page-strips {
   flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px;
+  /* Bias children to the top of the container so the last page —
+     which may only carry 1 or 2 strips — leaves the unused vertical
+     space below rather than stretching each strip to fill it. */
+  justify-content: flex-start;
 }
 .sldr-strip {
   border: 1px solid #ddd; background: #fafafa; padding: 8px 12px;
-  flex: 1 1 0; display: flex; flex-direction: column; min-height: 0;
+  display: flex; flex-direction: column; min-height: 0;
+  /* Fixed 1/3-of-container height regardless of how many strips are
+     on this page, so proportions match pages with 3 strips exactly.
+     24 px = 2 × gap:12px. flex-basis: auto with a fixed height on
+     the box makes flex-shrink irrelevant. */
+  flex: 0 0 calc((100% - 24px) / 3);
 }
 .sldr-strip-hdr {
   display: flex; justify-content: space-between; align-items: baseline;
