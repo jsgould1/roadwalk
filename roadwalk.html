@@ -40632,47 +40632,77 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       return t;
     };
 
-    // Async IDB scan — reads the persisted working copy directly from
-    // the safety store and reports whether pavement-QC pins exist in
-    // persistent storage but not in memory (which would flag a
-    // load-time filter bug we could then chase). Runs fire-and-forget;
-    // updates the diagnostic banner when it completes.
+    // Async IDB scan — walks the entire safety IDB store looking for
+    // every rw_sections_<pid> record, not just the current project's.
+    // Reports whether pavement-QC pins exist under ANY project id
+    // (this catches the case where the user drew features under a
+    // different project id, e.g. before switching projects, and the
+    // working copy still lives in IDB under that old id).
     if (pickedSectionPavementCount === 0 && Object.keys(crossHits).length === 0
-        && window.RWIdb && typeof window.RWIdb.get === 'function'
-        && window.PROJECT && window.PROJECT.id) {
-      var _pidKey = 'rw_sections_' + (window.PROJECT.id || 'default');
-      window.RWIdb.get('safety', _pidKey).then(function (rec) {
-        if (!rec || !Array.isArray(rec.sections)) return;
-        var idbHits = {};
-        rec.sections.forEach(function (s) {
-          if (!s || !Array.isArray(s.pins)) return;
-          var hits = {};
-          s.pins.forEach(function (p) {
-            if (PAVEMENT_KINDS.indexOf(p && p.kind) >= 0) {
-              hits[p.kind] = (hits[p.kind] || 0) + 1;
+        && window.RWIdb && typeof window.RWIdb.openDB === 'function') {
+      var currentPid = (window.PROJECT && window.PROJECT.id) || 'default';
+      window.RWIdb.openDB().then(function (db) {
+        return new Promise(function (resolve) {
+          var tx    = db.transaction('safety', 'readonly');
+          var store = tx.objectStore('safety');
+          var req   = store.openCursor();
+          var perProject = {};
+          req.onsuccess = function (e) {
+            var cur = e.target.result;
+            if (!cur) return;
+            var key = String(cur.key || '');
+            if (key.indexOf('rw_sections_') === 0) {
+              var rec = cur.value;
+              var pid = key.substring('rw_sections_'.length);
+              var pav = {};
+              var totalPins = 0;
+              (rec && rec.sections || []).forEach(function (s) {
+                totalPins += (s.pins || []).length;
+                (s.pins || []).forEach(function (p) {
+                  if (PAVEMENT_KINDS.indexOf(p && p.kind) >= 0) {
+                    pav[p.kind] = (pav[p.kind] || 0) + 1;
+                  }
+                });
+              });
+              perProject[pid] = { total: totalPins, pav: pav, saved_at: rec && rec.saved_at };
             }
-          });
-          if (Object.keys(hits).length) idbHits[s.id || '(no id)'] = hits;
+            cur.continue();
+          };
+          tx.oncomplete = function () { resolve(perProject); };
+          tx.onerror    = function () { resolve(perProject); };
         });
+      }).then(function (perProject) {
         var diag = document.getElementById('sldr-diag');
         if (!diag) return;
-        if (Object.keys(idbHits).length) {
-          // These pins ARE in persistent storage but not in memory —
-          // means SECTIONS got clobbered between load + this render.
-          var msg = '‼ Pavement-QC features FOUND in persisted IDB storage but not in memory: ';
-          msg += Object.keys(idbHits).map(function (sid) {
-            var f = idbHits[sid];
-            return sid + ' (' + Object.keys(f).map(function (k) {
-              return _sldrKindLabel(k) + ':' + f[k];
-            }).join(', ') + ')';
+        var projectsWithPav = Object.keys(perProject).filter(function (pid) {
+          return perProject[pid].pav && Object.keys(perProject[pid].pav).length > 0;
+        });
+        if (projectsWithPav.length) {
+          var msg = '‼ Pavement-QC features found in a DIFFERENT project\'s IDB record (not the one currently loaded — "' + currentPid + '"). ';
+          msg += projectsWithPav.map(function (pid) {
+            var p = perProject[pid];
+            var pavStr = Object.keys(p.pav).map(function (k) {
+              return _sldrKindLabel(k) + ':' + p.pav[k];
+            }).join(', ');
+            return 'Project "' + pid + '" (' + p.total + ' total pins, saved ' + (p.saved_at || '?') + ') — ' + pavStr;
           }).join(' · ');
-          msg += ' — reload the page (Ctrl+Shift+R) to force a fresh load from IDB.';
+          msg += ' — switch to that project via Dashboard → Project picker to see them.';
           diag.textContent = msg;
           diag.style.background = '#fee2e2';
           diag.style.color = '#7f1d1d';
           diag.style.borderBottomColor = '#dc2626';
         } else {
-          diag.textContent += ' Confirmed: IDB persisted storage also has 0 pavement-QC features — nothing to restore, they need to be drawn.';
+          // Truly nothing anywhere. List every project that has ANY
+          // pin so the user can see what's here.
+          var otherProjects = Object.keys(perProject).filter(function (p) { return p !== currentPid; });
+          var extra = '';
+          if (otherProjects.length) {
+            extra = ' Other projects found in IDB (none have pavement-QC pins): '
+                  + otherProjects.map(function (pid) {
+                      return pid + '(' + perProject[pid].total + ' pins)';
+                    }).join(', ');
+          }
+          diag.textContent += ' Confirmed: IDB has 0 pavement-QC features across ALL projects.' + extra;
         }
       }).catch(function () {});
     }
