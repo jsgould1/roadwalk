@@ -5641,6 +5641,14 @@ body.rw-sld-photo-dragging .strip-pin {
   border: 1px solid #999; border-radius: 2px; background: #fff;
   font: 700 9px 'IBM Plex Mono', monospace; color: #111; text-align: center;
 }
+/* Cover page — summary alone, no strips. Give the summary block room
+   to breathe: bigger padding, slightly larger type, header takes some
+   air. */
+.sldr-page-summary .sldr-summary { flex: 1 1 auto; padding: 14px 18px; font-size: 11px; }
+.sldr-page-summary .sldr-summary-hdr { font-size: 13px; padding-bottom: 6px; margin-bottom: 8px; }
+.sldr-page-summary .sldr-summary-tbl { font-size: 11px; }
+.sldr-page-summary .sldr-summary-tbl th,
+.sldr-page-summary .sldr-summary-tbl td { padding: 4px 8px; }
 
 /* Print: only the .sldr-page sheets go to paper — everything else
    in this module (chips, headers, section picker) stays on screen
@@ -14658,6 +14666,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
   // same haversine implementation without duplicating it. Takes
   // [lat, lng] pairs and returns feet.
   window.havFt = havFt;
+  // Function declarations are hoisted to the top of the enclosing
+  // IIFE, so referencing projectOntoAlignment here works even though
+  // its source-order definition is a few lines below.
+  window.projectOntoAlignment = projectOntoAlignment;
 
   // Project a cursor L.LatLng onto a polyline (array of [lat, lng]).
   // Returns [sta_ft_from_start, perpendicular_distance_ft, side] where
@@ -40460,11 +40472,23 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     }
 
     // Merged pins so any field edits (condition changes, added notes,
-    // moved coords) land on the SLD too.
+    // moved coords) land on the SLD too. Filter is per-geom:
+    //  · Point pins need pin.sta_ft to render a marker at a station.
+    //  · Line / polygon pins can be positioned from their geometry
+    //    via projectOntoAlignment when sta_ft isn't set, so we keep
+    //    any that carry either sta_ft OR coordinates.
     var pins = (sec.pins || []).map(function (p) {
       return (window._RW && window._RW.mergedPin) ? window._RW.mergedPin(p) : p;
     }).filter(function (p) {
-      return p && p.kind && p.sta_ft != null && isFinite(+p.sta_ft);
+      if (!p || !p.kind) return false;
+      var style = (window.PIN_STYLE || {})[p.kind] || {};
+      var geom = style.kind || (
+        p.kind.indexOf('ln_') === 0 ? 'line' :
+        p.kind.indexOf('pg_') === 0 ? 'polygon' : 'point'
+      );
+      if (geom === 'point') return p.sta_ft != null && isFinite(+p.sta_ft);
+      return (p.sta_ft != null && isFinite(+p.sta_ft))
+          || (p.geometry && p.geometry.coordinates);
     });
 
     // ── Build / refresh chip row ───────────────────────────────────
@@ -40534,7 +40558,10 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     var stripLen = +((lenSel && lenSel.value) || 500) || 500;
     var STRIPS_PER_PAGE = 3;
     var pageStrip = stripLen * STRIPS_PER_PAGE;
-    var pageCount = Math.max(1, Math.ceil(totalFt / pageStrip));
+    // Page 1 is a summary-only cover page; the strip pages start on
+    // page 2. Total page count = 1 (summary) + ceil(route / 1500ft).
+    var stripPageCount = Math.max(1, Math.ceil(totalFt / pageStrip));
+    var pageCount = 1 + stripPageCount;
     var info = (window._SR_SECTION_INFO || {})[sec.id];
     var mpStart = info ? info.mp_start : null;
 
@@ -40548,12 +40575,16 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     //    area; point-inventory pins get count only. Only ENABLED kinds
     //    are counted so the table matches what the user is about to
     //    print.
-    var summary = _sldrBuildSummary(pins, totalFt);
+    var summary = _sldrBuildSummary(pins, totalFt, sec.alignment);
 
     // ── Render every page ─────────────────────────────────────────
+    // Page 0 (printed as "Page 1") is the summary-only cover.
+    // Pages 1..stripPageCount (printed as "Page 2..N") each carry
+    // three station strips.
     var html = '';
     for (var p = 0; p < pageCount; p++) {
-      html += '<div class="sldr-page' + (p === 0 ? ' sldr-page-first' : '') + '">';
+      var isSummary = (p === 0);
+      html += '<div class="sldr-page' + (isSummary ? ' sldr-page-first sldr-page-summary' : '') + '">';
       html +=   '<div class="sldr-page-hdr">';
       html +=     '<div>';
       html +=       '<div class="sldr-page-title">Straight-Line Diagram · ' + _esc(sec.id)
@@ -40565,17 +40596,20 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       html +=     '</div>';
       html +=     '<div class="sldr-page-sub">Page ' + (p + 1) + ' of ' + pageCount + '</div>';
       html +=   '</div>';
-      // Summary table lives only on page 1 — it's a section-level
-      // overview, not a per-strip detail.
-      if (p === 0) html += _sldrSummaryHtml(summary, totalFt);
-      html +=   '<div class="sldr-page-strips">';
-      for (var s = 0; s < STRIPS_PER_PAGE; s++) {
-        var staStart = (p * STRIPS_PER_PAGE + s) * stripLen;
-        var staEnd   = staStart + stripLen;
-        if (staStart >= totalFt) break;
-        html += _sldrStripSvg(sec, pins, staStart, staEnd, mpStart);
+      if (isSummary) {
+        html += _sldrSummaryHtml(summary, totalFt);
+      } else {
+        html += '<div class="sldr-page-strips">';
+        for (var s = 0; s < STRIPS_PER_PAGE; s++) {
+          // Subtract 1 for the summary page so the first strip page
+          // starts at STA 0+00 (not 0+00 + one page of offset).
+          var staStart = ((p - 1) * STRIPS_PER_PAGE + s) * stripLen;
+          var staEnd   = staStart + stripLen;
+          if (staStart >= totalFt) break;
+          html += _sldrStripSvg(sec, pins, staStart, staEnd, mpStart);
+        }
+        html += '</div>';
       }
-      html +=   '</div>';
       html += '</div>';
     }
     pagesEl.innerHTML = html;
@@ -40778,10 +40812,6 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
       var clamped = Math.max(staStart, Math.min(staEnd, sta));
       return PAD_L + (clamped - staStart) / lengthFt * innerW;
     };
-    var mpFor = function (sta) {
-      if (mpStart == null) return '';
-      return ' · MP ' + (mpStart + sta / 5280).toFixed(3);
-    };
 
     var svg = '';
     svg += '<div class="sldr-strip">';
@@ -40794,76 +40824,211 @@ console.log('%c[RoadWalk] BUILD v20260514 loaded OK', 'color:#16a34a;font-weight
     svg +=   '</div>';
     svg += '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
 
-    // Centerline
+    // ── Pavement band — matches the map SLD's 40 px black band that
+    //    the linear features sit alongside (bars above = Left of road,
+    //    bars below = Right of road). Reads as "this is the road".
+    var BAND_H = 22;
+    svg += '<rect x="' + PAD_L + '" y="' + (AXIS_Y - BAND_H / 2) + '" '
+         + 'width="' + (W - PAD_L - PAD_R) + '" height="' + BAND_H + '" '
+         + 'fill="#2a2a2a"/>';
+    // Dashed centerline down the middle of the band.
     svg += '<line x1="' + PAD_L + '" y1="' + AXIS_Y + '" x2="' + (W - PAD_R) + '" y2="' + AXIS_Y + '" '
-         + 'stroke="#111" stroke-width="1.8"/>';
+         + 'stroke="#F5D062" stroke-width="1.2" stroke-dasharray="10 6"/>';
 
-    // Station ticks — every 50 ft, labeled every 100 ft.
-    var TICK_STEP = 50;
+    // Station ticks — every 50 ft, labeled every 100 ft. Ticks
+    // drop below the pavement band; labels sit below the ticks.
+    var TICK_STEP = 50, TICK_BASE = AXIS_Y + BAND_H / 2 + 1;
     var firstTick = Math.ceil(staStart / TICK_STEP) * TICK_STEP;
     for (var f = firstTick; f <= staEnd + 0.001; f += TICK_STEP) {
       var xt = xForSta(f);
       var isMajor = (Math.round(f) % 100) === 0;
       var tickH = isMajor ? 10 : 5;
-      svg += '<line x1="' + xt + '" y1="' + AXIS_Y + '" x2="' + xt + '" y2="' + (AXIS_Y + tickH) + '" '
+      svg += '<line x1="' + xt + '" y1="' + TICK_BASE + '" x2="' + xt + '" y2="' + (TICK_BASE + tickH) + '" '
            + 'stroke="#333" stroke-width="1"/>';
       if (isMajor) {
-        svg += '<text x="' + xt + '" y="' + (AXIS_Y + 22) + '" text-anchor="middle" '
+        svg += '<text x="' + xt + '" y="' + (TICK_BASE + 22) + '" text-anchor="middle" '
              + 'font-family="\'IBM Plex Mono\',monospace" font-size="10" fill="#333">'
              + _sldrFmtSta(f) + '</text>';
       }
     }
-    // End caps — bold vertical bars at strip start + end so the
-    // window boundary reads immediately.
-    svg += '<line x1="' + PAD_L + '" y1="' + (AXIS_Y - 14) + '" x2="' + PAD_L + '" y2="' + (AXIS_Y + 14) + '" stroke="#111" stroke-width="2"/>';
-    svg += '<line x1="' + (W - PAD_R) + '" y1="' + (AXIS_Y - 14) + '" x2="' + (W - PAD_R) + '" y2="' + (AXIS_Y + 14) + '" stroke="#111" stroke-width="2"/>';
+    // End caps — bold vertical bars at strip start + end.
+    svg += '<line x1="' + PAD_L + '" y1="' + (AXIS_Y - BAND_H / 2 - 10) + '" x2="' + PAD_L + '" y2="' + (AXIS_Y + BAND_H / 2 + 10) + '" stroke="#111" stroke-width="2"/>';
+    svg += '<line x1="' + (W - PAD_R) + '" y1="' + (AXIS_Y - BAND_H / 2 - 10) + '" x2="' + (W - PAD_R) + '" y2="' + (AXIS_Y + BAND_H / 2 + 10) + '" stroke="#111" stroke-width="2"/>';
 
-    // Feature markers — one per pin whose sta_ft falls in the window
-    // and whose kind is enabled. Line / polygon features may cross
-    // out of the window on either side; the marker lands at their
-    // sta_ft anchor. Vertical stacking prevents overlap by nudging
-    // successive same-x markers up by one row.
-    var inWindow = pins.filter(function (p) {
+    // ── Line features — horizontal bars offset above (L side) or
+    //    below (R side) the pavement band, mirroring the map SLD's
+    //    layout. Each linear pin's [startSta, endSta] range is
+    //    clipped to the strip window; anything outside is skipped.
+    //    Same color palette as the map SLD via PIN_STYLE. Side comes
+    //    from pin.attrs.side, falling back to projectOntoAlignment
+    //    on the pin's midpoint when unset. Slot levels stack multiple
+    //    bars on the same side without overlap.
+    var linePins = pins.filter(function (p) {
       if (_sldrEnabled[p.kind] === false) return false;
+      var style = (window.PIN_STYLE || {})[p.kind] || {};
+      var geom = style.kind || (
+        p.kind.indexOf('ln_') === 0 ? 'line' :
+        p.kind.indexOf('pg_') === 0 ? 'polygon' : 'point'
+      );
+      return geom === 'line';
+    });
+    // Sort so we lay bars in stable STA order and can lane-pack
+    // both sides independently.
+    linePins.sort(function (a, b) {
+      var sa = +(a.sta_ft != null ? a.sta_ft : 0);
+      var sb = +(b.sta_ft != null ? b.sta_ft : 0);
+      return sa - sb;
+    });
+    var laneOccL = [], laneOccR = [];   // per-side lane last-x-end
+    linePins.forEach(function (pin) {
+      var extent = _sldrLineExtent(pin, sec, mpStart);
+      if (!extent) return;
+      var pinStart = extent[0], pinEnd = extent[1];
+      if (pinEnd < staStart || pinStart > staEnd) return;
+      var xL = xForSta(Math.max(pinStart, staStart));
+      var xR = xForSta(Math.min(pinEnd, staEnd));
+      if (xR - xL < 1.5) xR = xL + 1.5;   // guarantee visible width
+      var style = (window.PIN_STYLE || {})[pin.kind] || {};
+      var color = style.color || '#666';
+      var code  = style.code  || '?';
+      var side  = _sldrPinSide(pin, sec);
+      var SLOT_H = 8, BASE_GAP = 4;
+      var laneArr = side === 'L' ? laneOccL : laneOccR;
+      var lane = 0;
+      for (; lane < laneArr.length; lane++) {
+        if (xL - laneArr[lane] > 4) break;
+      }
+      laneArr[lane] = xR;
+      var y = side === 'L'
+        ? (AXIS_Y - BAND_H / 2 - BASE_GAP - SLOT_H - lane * (SLOT_H + 2))
+        : (AXIS_Y + BAND_H / 2 + BASE_GAP + lane * (SLOT_H + 2));
+      // Bar with fill + thin outline.
+      svg += '<rect x="' + xL + '" y="' + y + '" width="' + (xR - xL) + '" height="' + SLOT_H + '" '
+           + 'fill="' + color + '" stroke="#111" stroke-width="0.4"/>';
+      // Length label above (L) / below (R) the bar when width allows.
+      if (xR - xL > 40) {
+        var lenText = code;
+        var pinLen = pinEnd - pinStart;
+        if (isFinite(pinLen)) lenText += ' · ' + Math.round(pinLen) + '\'';
+        var labelY = side === 'L' ? (y - 2) : (y + SLOT_H + 8);
+        svg += '<text x="' + ((xL + xR) / 2) + '" y="' + labelY + '" text-anchor="middle" '
+             + 'font-family="\'IBM Plex Mono\',monospace" font-size="8" font-weight="700" fill="' + color + '">'
+             + _esc(lenText) + '</text>';
+      }
+    });
+
+    // ── Point markers — one per point-kind pin whose sta_ft falls in
+    //    the window and whose kind is enabled. Vertical lane-stacking
+    //    prevents overlap when pins cluster at the same station.
+    var pointPins = pins.filter(function (p) {
+      if (_sldrEnabled[p.kind] === false) return false;
+      var style = (window.PIN_STYLE || {})[p.kind] || {};
+      var geom = style.kind || (
+        p.kind.indexOf('ln_') === 0 ? 'line' :
+        p.kind.indexOf('pg_') === 0 ? 'polygon' : 'point'
+      );
+      if (geom !== 'point') return false;
       var sta = +p.sta_ft;
       return sta >= staStart && sta <= staEnd;
     }).sort(function (a, b) { return (+a.sta_ft) - (+b.sta_ft); });
 
-    // Nudge overlapping markers vertically. Rough algorithm: for each
-    // pin, if its x is within 18 px of a previous same-side marker,
-    // bump its lane.
     var LANE_H = 22;
-    var lanes = [];  // array of x positions of last placed in each lane
-    inWindow.forEach(function (pin) {
+    var lanes = [];
+    pointPins.forEach(function (pin) {
       var x = xForSta(+pin.sta_ft);
       var lane = 0;
       for (; lane < lanes.length; lane++) {
         if (x - lanes[lane] > 18) break;
       }
       lanes[lane] = x;
-      var yBase = AXIS_Y - 20 - (lane * LANE_H);
+      var yBase = AXIS_Y - BAND_H / 2 - 20 - (lane * LANE_H);
       var style = (window.PIN_STYLE || {})[pin.kind] || {};
       var color = style.color || '#888';
       var code  = style.code  || '?';
-      // Stem from axis to the marker.
-      svg += '<line x1="' + x + '" y1="' + AXIS_Y + '" x2="' + x + '" y2="' + (yBase + 8) + '" '
-           + 'stroke="' + color + '" stroke-width="1.4"/>';
-      // Marker: filled circle with the 2-letter code inside.
-      svg += '<circle cx="' + x + '" cy="' + yBase + '" r="10" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>';
-      svg += '<text x="' + x + '" y="' + (yBase + 3.5) + '" text-anchor="middle" '
+      // Stem from axis edge to the marker.
+      svg += '<line x1="' + x + '" y1="' + (AXIS_Y - BAND_H / 2) + '" x2="' + x + '" y2="' + (yBase + 8) + '" '
+           + 'stroke="' + color + '" stroke-width="1.2"/>';
+      svg += '<circle cx="' + x + '" cy="' + yBase + '" r="9" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>';
+      svg += '<text x="' + x + '" y="' + (yBase + 3) + '" text-anchor="middle" '
            + 'font-family="\'IBM Plex Mono\',monospace" font-size="9" font-weight="700" fill="#fff">'
            + _esc(code) + '</text>';
-      // ID label above the marker (small).
-      var idShort = String(pin.id || '').replace(/^[A-Z]+-CV-/, '').slice(0, 8);
-      if (idShort) {
-        svg += '<text x="' + x + '" y="' + (yBase - 14) + '" text-anchor="middle" '
-             + 'font-family="\'IBM Plex Mono\',monospace" font-size="8" fill="#333">'
-             + _esc(idShort) + '</text>';
-      }
     });
 
     svg += '</svg></div>';
     return svg;
+  }
+
+  // Compute a linear pin's [startSta, endSta] along the alignment.
+  // Preferred: pin.sta_ft (start) + pin.attrs.length_ft (span).
+  // Fallback 1: attrs.mp_start / mp_end shifted by the section's MP
+  //             origin (so a plain pathweb-imported segment still
+  //             lands at the right station).
+  // Fallback 2: project pin.geometry endpoints onto sec.alignment via
+  //             window.projectOntoAlignment (exposed elsewhere).
+  function _sldrLineExtent(pin, sec, mpStart) {
+    var a = pin.attrs || {};
+    var s0 = null, s1 = null;
+    if (pin.sta_ft != null && isFinite(+pin.sta_ft)) {
+      s0 = +pin.sta_ft;
+      if (a.length_ft && isFinite(+a.length_ft)) s1 = s0 + +a.length_ft;
+    }
+    if (s0 == null && a.mp_start != null && mpStart != null) {
+      s0 = (+a.mp_start - mpStart) * 5280;
+    }
+    if (s1 == null && a.mp_end != null && mpStart != null) {
+      s1 = (+a.mp_end - mpStart) * 5280;
+    }
+    if ((s0 == null || s1 == null) && typeof window.projectOntoAlignment === 'function'
+        && sec && sec.alignment && pin.geometry) {
+      var c = pin.geometry.coordinates || [];
+      if (Array.isArray(c) && c.length >= 2) {
+        try {
+          var p0 = c[0], pN = c[c.length - 1];
+          var sa = window.projectOntoAlignment({ lat: +p0[1], lng: +p0[0] }, sec.alignment)[0];
+          var sb = window.projectOntoAlignment({ lat: +pN[1], lng: +pN[0] }, sec.alignment)[0];
+          if (s0 == null) s0 = Math.min(sa, sb);
+          if (s1 == null) s1 = Math.max(sa, sb);
+        } catch (_) {}
+      }
+    }
+    if (s0 == null || s1 == null) return null;
+    return s0 <= s1 ? [s0, s1] : [s1, s0];
+  }
+
+  // Determine which side of the road a linear pin sits on.
+  //  · pin.attrs.side is authoritative when set to 'L' or 'R'.
+  //  · Otherwise project the pin's midpoint onto sec.alignment and
+  //    use the signed cross-product returned in the [sta, dist, side]
+  //    triple (-1 = left, +1 = right).
+  //  · Falls back to 'R' when everything else fails, so at least the
+  //    bar renders somewhere.
+  function _sldrPinSide(pin, sec) {
+    var a = pin.attrs || {};
+    if (a.side === 'L' || a.side === 'R') return a.side;
+    if (typeof window.projectOntoAlignment === 'function'
+        && sec && sec.alignment && pin.geometry) {
+      var c = pin.geometry.coordinates;
+      var pt = null;
+      if (Array.isArray(c)) {
+        if (Array.isArray(c[0]) && Array.isArray(c[0][0])) {
+          // Polygon: outer ring centroid
+          var ring = c[0], sx = 0, sy = 0;
+          ring.forEach(function (v) { sx += +v[0]; sy += +v[1]; });
+          pt = [sx / ring.length, sy / ring.length];
+        } else if (Array.isArray(c[0])) {
+          // LineString: midpoint vertex
+          pt = c[Math.floor(c.length / 2)];
+        }
+      }
+      if (pt) {
+        try {
+          var res = window.projectOntoAlignment({ lat: +pt[1], lng: +pt[0] }, sec.alignment);
+          if (res && res[2] === -1) return 'L';
+          if (res && res[2] === 1)  return 'R';
+        } catch (_) {}
+      }
+    }
+    return 'R';
   }
 
   // ── Print handler — landscape letter override ───────────────────
